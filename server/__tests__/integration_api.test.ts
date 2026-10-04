@@ -263,7 +263,7 @@ describe("integration API", () => {
         request(app).get("/api/integration/seerrng/v1/library/lookup").query({ igdbIds: "42,43" })
       );
       expect(response.status).toBe(200);
-      expect(response.body.games).toEqual([{ igdbId: 42, status: "owned" }]);
+      expect(response.body.games).toEqual([{ igdbId: 42, status: "owned", deliverable: false }]);
       expect(storage.getUserGamesByIgdbIds).toHaveBeenCalledWith(USER.id, [42, 43]);
     });
 

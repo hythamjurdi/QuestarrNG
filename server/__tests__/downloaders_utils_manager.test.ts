@@ -21,6 +21,13 @@ import { isSafeUrl, safeFetch } from "../ssrf.js";
 import type { DownloaderClient } from "../downloaders/types.js";
 
 vi.mock("../logger.js", () => ({
+  logger: {
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    child: vi.fn(() => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() })),
+  },
   downloadersLogger: {
     debug: vi.fn(),
     error: vi.fn(),
