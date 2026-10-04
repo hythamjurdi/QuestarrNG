@@ -43,6 +43,13 @@
       "when": 1791129861883,
       "tag": "0005_lumpy_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791136444198,
+      "tag": "0006_married_rictor",
+      "breakpoints": true
     }
   ]
 }

@@ -41,13 +41,14 @@ contract is [`contracts/seerrng-v1.openapi.yaml`](contracts/seerrng-v1.openapi.y
   "service": "QuestarrNG",
   "version": "<installed-version>",
   "apiVersion": 1,
-  "requestContractVersion": 1,
+  "requestContractVersion": 2,
   "capabilities": {
     "catalog": true,
     "pcAcquisition": true,
     "emulationAcquisition": false,
     "requestActions": { "retry": true, "cancel": true },
-    "assetStreaming": true
+    "assetStreaming": true,
+    "assetBundles": true
   }
 }
 ```
@@ -58,7 +59,10 @@ requests.
 ## Compatibility and release discipline
 
 The `/v1` route prefix and `apiVersion` identify the provider API surface;
-`requestContractVersion` tracks the persisted request lifecycle semantics.
+`requestContractVersion` tracks persisted request identity and lifecycle
+semantics. Version 2 preserves the optional IGDB identity in the durable ledger
+and rejects replays whose catalog identity differs. Existing title-only
+requests remain readable and title-only clients remain accepted.
 SeerrNG should gate optional behavior on the advertised capabilities. Additive
 fields and optional routes stay in v1; changing a required field, status
 meaning, idempotency rule, or retry/cancel behavior requires an intentional
@@ -79,6 +83,12 @@ in QuestarrNG without exposing them to the browser. Responses use the same
 normalized game shape as QuestarrNG's discovery API, including the stable IGDB
 ID, artwork, release date, genres, and platform IDs and names. The authenticated
 QuestarrNG account's content filters apply to game search and detail results.
+Games also include `steamAppId` when IGDB exposes a Steam store link. SeerrNG
+may send those IDs alongside `igdbIds` to `library/lookup`; QuestarrNG then
+returns `steamGames: [{steamAppId, owned}]` for the public Steam library linked
+to the authenticated QuestarrNG account. `owned` is `null` when QuestarrNG
+cannot verify the profile or lacks a Steam Web API key, so consumers should
+show only verified ownership. This Steam signal is independent of local files.
 
 | Method | Path                                                 | Query                                                  | Result                      |
 | ------ | ---------------------------------------------------- | ------------------------------------------------------ | --------------------------- |
@@ -94,7 +104,15 @@ configured acquisition provider.
 Paged catalog routes are also available: `catalog/search-page` accepts a
 query, cursor, platform IDs, genre, and release year; `catalog/popular-page`
 accepts an offset and the same filters. `catalog/games/{igdbId}` includes
-bounded screenshots, video IDs, rating, publishers, and developers.
+bounded screenshots, video IDs, rating, publishers, developers, and best-effort
+IGDB community completion-time estimates in hours (`hastily`, `normally`, and
+`completely`). Missing estimates are returned as `null`, never as zero.
+`library/lookup` accepts up to 100 comma-separated IDs in each of `igdbIds`
+and optional `steamAppIds`. Its `games` entries report QuestarrNG game status
+and whether registered files are currently deliverable. Its optional
+`steamGames` entries report verified ownership separately from those local
+files. Steam ownership requires a Steam Web API key configured on QuestarrNG
+and a public game library on the linked Steam profile.
 
 ## Submit and reconcile a request
 
@@ -107,7 +125,8 @@ bounded screenshots, video IDs, rating, publishers, and developers.
   "variant": {
     "operatingSystem": "windows",
     "architecture": "x64"
-  }
+  },
+  "igdbId": 42
 }
 ```
 
@@ -121,9 +140,10 @@ Explicit architecture markers must match; an unmarked release is not used for
 an ARM64 request.
 
 `externalRequestId` is an idempotency key scoped to the authenticated user and
-persisted across restarts. A new request returns `201`; replaying the same ID,
+persisted across restarts. SeerrNG sends the exact `igdbId` selected in its
+catalog. A new request returns `201`; replaying the same ID, catalog identity,
 title, and variant returns its current state (`200`). Reusing an ID with a
-different title or variant returns `409`. No matching PC catalog title returns
+different identity, title, or variant returns `409`. No matching PC catalog title returns
 `404`, and a game already linked to another request returns `409`. A matching
 title already in the user's collection is bound only when Questarr can
 reconcile it to an active acquisition or verified files.
@@ -173,7 +193,9 @@ configured library root:
       "url": "/api/integration/seerrng/v1/requests/seerrng%3Arequest%3A123/assets/opaque-game-file-id"
     }
   ],
-  "bundleSupported": false
+  "bundleSupported": true,
+  "bundleName": "Example Game.tar.gz",
+  "bundleUrl": "/api/integration/seerrng/v1/requests/seerrng%3Arequest%3A123/assets/bundle"
 }
 ```
 
@@ -181,7 +203,11 @@ The asset route rechecks request ownership, file registration, and library-root
 containment, then streams a single file with a safe attachment filename,
 `Cache-Control: no-store`, and single-range byte support. Asset IDs are
 request-scoped by lookup: an ID from another game or request is not accepted.
-QuestarrNG does not claim to bundle multi-file games in this contract version.
+When at least two registered files are available, the bundle route streams a
+gzip-compressed TAR archive made from those same files. Archive entries use
+safe basenames; duplicate names receive a numeric suffix. SeerrNG keeps the
+individual file links beside the bundle option and proxies both through its
+requester-scoped routes.
 
 SeerrNG must authorize its own request before using this API, then proxy the
 stream through its requester-scoped download route. The browser receives only

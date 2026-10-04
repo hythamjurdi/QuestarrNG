@@ -4,6 +4,7 @@ import request from "supertest";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { gunzipSync } from "node:zlib";
 import { load as loadYaml } from "js-yaml";
 
 const mocks = vi.hoisted(() => ({
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
     getImportConfig: vi.fn(),
     getDownloadsByGameId: vi.fn(),
     getUserGamesByIgdbIds: vi.fn(),
+    getUser: vi.fn(),
     updateGame: vi.fn(),
     claimSeerrOperation: vi.fn(),
     finishSeerrOperation: vi.fn(),
@@ -31,7 +33,9 @@ const mocks = vi.hoisted(() => ({
     getPlatforms: vi.fn(),
     getGameById: vi.fn(),
     getGameByIdForPlatform: vi.fn(),
+    getTimeToBeats: vi.fn(),
   },
+  getSteamOwnership: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   checkAutoSearch: vi.fn(),
   removeDownload: vi.fn(),
@@ -64,6 +68,10 @@ vi.mock("../downloaders/manager.js", () => ({
 }));
 vi.mock("../game-quick-add.js", () => ({ quickAddGameByTitle: mocks.quickAddGameByTitle }));
 vi.mock("../logger.js", () => ({ routesLogger: mocks.logger }));
+vi.mock("../steam.js", () => ({
+  steamService: { getOwnedGameAppIds: mocks.getSteamOwnership },
+}));
+vi.mock("../config.js", () => ({ config: { steam: { apiKey: "steam-test-key" } } }));
 vi.mock("../content-filter.js", () => ({
   getContentFilterFlags: async () => ({ hideAdultContent: false }),
   excludeFilteredContent: (
@@ -183,6 +191,8 @@ describe("SeerrNG software-provider contract", () => {
     mocks.storage.getUserGamesByIgdbIds.mockImplementation(async (_userId: string, ids: number[]) =>
       games.filter((game) => ids.includes(game.igdbId))
     );
+    mocks.storage.getUser.mockResolvedValue({ steamId64: "76561198000000000" });
+    mocks.getSteamOwnership.mockResolvedValue(new Set([570]));
     mocks.storage.updateGame.mockImplementation(async (id: string, values: Partial<TestGame>) => {
       const game = games.find((item) => item.id === id);
       if (game) Object.assign(game, values);
@@ -203,6 +213,7 @@ describe("SeerrNG software-provider contract", () => {
     mocks.igdb.getPopularGames.mockResolvedValue([]);
     mocks.igdb.getPlatforms.mockResolvedValue([]);
     mocks.igdb.getGameById.mockResolvedValue(undefined);
+    mocks.igdb.getTimeToBeats.mockResolvedValue(new Map());
     mocks.checkAutoSearch.mockResolvedValue(undefined);
     mocks.removeDownload.mockResolvedValue({ success: true });
     mocks.quickAddGameByTitle.mockImplementation(
@@ -240,13 +251,14 @@ describe("SeerrNG software-provider contract", () => {
       service: "QuestarrNG",
       version: expect.any(String),
       apiVersion: 1,
-      requestContractVersion: 1,
+      requestContractVersion: 2,
       capabilities: {
         catalog: true,
         pcAcquisition: true,
         emulationAcquisition: false,
         requestActions: { retry: true, cancel: true },
         assetStreaming: true,
+        assetBundles: true,
       },
     });
 
@@ -359,9 +371,11 @@ describe("SeerrNG software-provider contract", () => {
       summary: "",
       coverUrl: "",
       releaseDate: "",
+      steamAppId: null,
       platforms: [],
       platformOptions: ["PC"],
       genres: [],
+      timeToBeat: null,
     });
     expect(mocks.igdb.searchGames).toHaveBeenCalledWith("Example", 7);
 
@@ -473,6 +487,7 @@ describe("SeerrNG software-provider contract", () => {
       { name: "", videoId: "12345678901" },
     ]);
     expect(detail.body.rating).toBe(90);
+    expect(detail.body.timeToBeat).toBeNull();
     mocks.igdb.getGameByIdForPlatform.mockResolvedValueOnce({
       igdbId: 42,
       title: "Details",
@@ -497,7 +512,7 @@ describe("SeerrNG software-provider contract", () => {
       .get("/api/integration/seerrng/v1/library/lookup")
       .query({ igdbIds: "42,42" });
     expect(response.status).toBe(200);
-    expect(response.body.games).toEqual([{ igdbId: 42, status: "wanted" }]);
+    expect(response.body.games).toEqual([{ igdbId: 42, status: "wanted", deliverable: false }]);
     expect(
       (await request(app).get("/api/integration/seerrng/v1/library/lookup").query({ igdbIds: "" }))
         .status
@@ -510,6 +525,19 @@ describe("SeerrNG software-provider contract", () => {
           .query({ igdbIds: "42" })
       ).status
     ).toBe(500);
+  });
+
+  it("reports verified Steam ownership separately from Questarr library status", async () => {
+    const response = await request(app)
+      .get("/api/integration/seerrng/v1/library/lookup")
+      .query({ igdbIds: "42", steamAppIds: "570,440" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.steamGames).toEqual([
+      { steamAppId: 570, owned: true },
+      { steamAppId: 440, owned: false },
+    ]);
+    expect(mocks.getSteamOwnership).toHaveBeenCalledWith("steam-test-key", "76561198000000000");
   });
 
   it("creates idempotent software requests and reports acquisition-search results", async () => {
@@ -571,6 +599,13 @@ describe("SeerrNG software-provider contract", () => {
       variant: USER_VARIANT,
     });
     expect(sameRequest.status).toBe(200);
+    const changedIdentity = await request(app).post("/api/integration/seerrng/v1/requests").send({
+      externalRequestId: "request-created",
+      title: "New Game",
+      igdbId: 43,
+      variant: USER_VARIANT,
+    });
+    expect(changedIdentity.status).toBe(409);
     const changedRequest = await request(app).post("/api/integration/seerrng/v1/requests").send({
       externalRequestId: "request-created",
       title: "Other Game",
@@ -869,6 +904,39 @@ describe("SeerrNG software-provider contract", () => {
       (await request(app).get(`/api/integration/seerrng/v1/requests/${REQUEST_ID}/assets/missing`))
         .status
     ).toBe(404);
+  });
+
+  it("streams a request-scoped archive for multiple registered files", async () => {
+    const game = addLinkedGame();
+    const first = path.join(libraryRoot, "first.dat");
+    const second = path.join(libraryRoot, "second.dat");
+    await Promise.all([
+      fs.writeFile(first, "first payload"),
+      fs.writeFile(second, "second payload"),
+    ]);
+    gameFiles = [
+      { id: "first", gameId: game.id, filePath: first, originalName: "shared.bin" },
+      { id: "second", gameId: game.id, filePath: second, originalName: "shared.bin" },
+    ];
+
+    const list = await request(app).get(
+      `/api/integration/seerrng/v1/requests/${REQUEST_ID}/assets`
+    );
+    expect(list.body.bundleSupported).toBe(true);
+    expect(list.body.bundleName).toBe("Test Game.tar.gz");
+    expect(list.body.bundleUrl).toContain("/assets/bundle");
+
+    const bundle = await request(app).get(
+      `/api/integration/seerrng/v1/requests/${REQUEST_ID}/assets/bundle`
+    );
+    expect(bundle.status).toBe(200);
+    expect(bundle.headers["content-type"]).toContain("application/gzip");
+    expect(bundle.headers["content-disposition"]).toContain("Test%20Game.tar.gz");
+    const tar = gunzipSync(bundle.body).toString("utf8");
+    expect(tar).toContain("shared.bin");
+    expect(tar).toContain("shared (2).bin");
+    expect(tar).toContain("first payload");
+    expect(tar).toContain("second payload");
   });
 
   it("returns empty or unavailable asset results for stale roots and storage errors", async () => {

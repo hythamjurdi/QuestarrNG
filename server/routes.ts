@@ -42,6 +42,11 @@ import { newznabClient } from "./newznab.js";
 import { rssService } from "./rss.js";
 import { DownloaderManager } from "./downloaders.js";
 import {
+  pollRealDebridDeviceAuth,
+  startRealDebridDeviceAuth,
+} from "./downloaders/realdebrid-auth.js";
+import { REAL_DEBRID_API_URL } from "./downloaders/realdebrid.js";
+import {
   DOWNLOADER_DEBUG_LOGGING_CONFIG_KEY,
   isDownloaderDebugLoggingEnabled,
   setCachedDownloaderDebugLogging,
@@ -3215,6 +3220,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const downloaderData = insertDownloaderSchema.parse(req.body);
+        if (downloaderData.type === "realdebrid") {
+          downloaderData.url = REAL_DEBRID_API_URL;
+          downloaderData.port = null;
+          downloaderData.useSsl = true;
+          downloaderData.urlPath = null;
+          downloaderData.username = null;
+          downloaderData.password = null;
+        }
 
         if (!(await isSafeUrl(downloaderData.url))) {
           return res.status(400).json({ error: "Invalid or unsafe URL" });
@@ -3242,6 +3255,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { id } = req.params as { id: string };
         const updates = { ...req.body }; // Partial updates
+
+        const currentDownloader = await storage.getDownloader(id);
+        if (!currentDownloader) {
+          return res.status(404).json({ error: "Downloader not found" });
+        }
+        const resultingType = updates.type ?? currentDownloader.type;
+        if (resultingType === "realdebrid") {
+          const stagingPath = updates.downloadPath ?? currentDownloader.downloadPath;
+          if (typeof stagingPath !== "string" || !path.isAbsolute(stagingPath)) {
+            return res.status(400).json({
+              error: "Real-Debrid needs an absolute local staging path on the QuestarrNG server.",
+            });
+          }
+          updates.url = REAL_DEBRID_API_URL;
+          updates.port = null;
+          updates.useSsl = true;
+          updates.urlPath = null;
+          updates.username = null;
+          if (currentDownloader.type !== "realdebrid") updates.password = null;
+        } else if (currentDownloader.type === "realdebrid") {
+          updates.password = null;
+        }
 
         if (updates.url && !(await isSafeUrl(updates.url))) {
           return res.status(400).json({ error: "Invalid or unsafe URL" });
@@ -3536,6 +3571,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  app.post(
+    "/api/downloaders/:id/realdebrid/auth/start",
+    sensitiveEndpointLimiter,
+    async (req, res) => {
+      try {
+        const downloaderId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!downloaderId) return res.status(400).json({ error: "Downloader ID is required" });
+        const downloader = await storage.getDownloader(downloaderId);
+        if (!downloader || downloader.type !== "realdebrid") {
+          return res.status(404).json({ error: "Real-Debrid downloader not found" });
+        }
+        const authorization = await startRealDebridDeviceAuth(downloader.id);
+        return res.json(authorization);
+      } catch (error) {
+        routesLogger.warn({ error }, "Could not start Real-Debrid authorization");
+        return res.status(502).json({ error: "Real-Debrid account linking could not be started." });
+      }
+    }
+  );
+
+  app.post(
+    "/api/downloaders/:id/realdebrid/auth/poll",
+    sensitiveEndpointLimiter,
+    async (req, res) => {
+      const handle = req.body && typeof req.body.handle === "string" ? req.body.handle : "";
+      if (!/^[0-9a-f-]{36}$/i.test(handle)) {
+        return res.status(400).json({ error: "Invalid Real-Debrid authorization session." });
+      }
+      try {
+        const downloaderId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!downloaderId) return res.status(400).json({ error: "Downloader ID is required" });
+        const downloader = await storage.getDownloader(downloaderId);
+        if (!downloader || downloader.type !== "realdebrid") {
+          return res.status(404).json({ error: "Real-Debrid downloader not found" });
+        }
+        const result = await pollRealDebridDeviceAuth(downloader, handle);
+        return res.json(result);
+      } catch (error) {
+        routesLogger.warn({ error }, "Real-Debrid account linking did not complete");
+        return res.status(400).json({
+          error: error instanceof Error ? error.message : "Real-Debrid authorization failed.",
+        });
+      }
+    }
+  );
 
   // Add download to downloader
   app.post(

@@ -18,6 +18,13 @@ interface SteamWishlistApiResponse {
   };
 }
 
+interface SteamOwnedGamesApiResponse {
+  response?: {
+    game_count?: number;
+    games?: Array<{ appid: number }>;
+  };
+}
+
 export interface SteamWishlistGame {
   steamAppId: number;
   title: string;
@@ -32,6 +39,9 @@ export interface SteamWishlistGame {
  */
 const STEAM_WISHLIST_API_URL = (steamId: string) =>
   `https://api.steampowered.com/IWishlistService/GetWishlist/v1/?steamid=${steamId}`;
+
+const STEAM_OWNED_GAMES_TTL_MS = 6 * 60 * 60 * 1000;
+const ownedGamesCache = new Map<string, { appIds: Set<number>; expiry: number }>();
 
 function getSteamApiErrorMessage(status: number): string {
   switch (status) {
@@ -240,6 +250,46 @@ export const steamService = {
     } catch (error) {
       igdbLogger.error({ steamId, error }, "Failed to fetch Steam wishlist");
       throw error;
+    }
+  },
+
+  /**
+   * Fetches the public Steam library for one linked Questarr user. Steam
+   * exposes this only when the profile's game details are public. A null
+   * result means the profile could not be checked; it must not be interpreted
+   * as an empty library.
+   */
+  async getOwnedGameAppIds(apiKey: string, steamId: string): Promise<Set<number> | null> {
+    if (!this.validateSteamId(steamId)) return null;
+    const cached = ownedGamesCache.get(steamId);
+    if (cached && Date.now() < cached.expiry) return new Set(cached.appIds);
+
+    const url = new URL("https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/");
+    url.searchParams.set("key", apiKey);
+    url.searchParams.set("steamid", steamId);
+    url.searchParams.set("include_appinfo", "0");
+    url.searchParams.set("include_played_free_games", "1");
+    try {
+      const response = await safeFetch(url.toString(), { requireHttps: true });
+      if (!response.ok) return null;
+      const payload = (await response.json()) as SteamOwnedGamesApiResponse;
+      const games = payload.response?.games;
+      const count = payload.response?.game_count;
+      // Private profiles and malformed responses can omit the owned-games
+      // fields. Preserve an explicit unknown state rather than claiming that
+      // the user does not own a catalog title.
+      if (!Array.isArray(games) || !Number.isSafeInteger(count) || count! < 0) return null;
+      const appIds = new Set(
+        games.map((game) => game.appid).filter((appId) => Number.isSafeInteger(appId) && appId > 0)
+      );
+      ownedGamesCache.set(steamId, {
+        appIds,
+        expiry: Date.now() + STEAM_OWNED_GAMES_TTL_MS,
+      });
+      return new Set(appIds);
+    } catch (error) {
+      igdbLogger.info({ steamId, error }, "Steam owned-games lookup unavailable");
+      return null;
     }
   },
 };

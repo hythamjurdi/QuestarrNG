@@ -486,7 +486,10 @@ export interface IStorage {
     userId: string,
     externalRequestId: string,
     updates: Partial<
-      Pick<IntegrationRequest, "gameId" | "downloadId" | "status" | "errorMessage" | "attemptedAt">
+      Pick<
+        IntegrationRequest,
+        "gameId" | "downloadId" | "status" | "errorMessage" | "attemptedAt" | "igdbId"
+      >
     >
   ): Promise<IntegrationRequest | undefined>;
 
@@ -2000,6 +2003,7 @@ export class MemStorage implements IStorage {
       downloadId: request.downloadId ?? null,
       operatingSystem: request.operatingSystem ?? null,
       architecture: request.architecture ?? null,
+      igdbId: request.igdbId ?? null,
       status: request.status ?? "accepted",
       errorMessage: request.errorMessage ?? null,
       attemptedAt: request.attemptedAt ?? now,
@@ -2014,7 +2018,10 @@ export class MemStorage implements IStorage {
     userId: string,
     externalRequestId: string,
     updates: Partial<
-      Pick<IntegrationRequest, "gameId" | "downloadId" | "status" | "errorMessage" | "attemptedAt">
+      Pick<
+        IntegrationRequest,
+        "gameId" | "downloadId" | "status" | "errorMessage" | "attemptedAt" | "igdbId"
+      >
     >
   ): Promise<IntegrationRequest | undefined> {
     const key = `${userId}\0${externalRequestId}`;
@@ -3869,7 +3876,10 @@ export class DatabaseStorage implements IStorage {
     userId: string,
     externalRequestId: string,
     updates: Partial<
-      Pick<IntegrationRequest, "gameId" | "downloadId" | "status" | "errorMessage" | "attemptedAt">
+      Pick<
+        IntegrationRequest,
+        "gameId" | "downloadId" | "status" | "errorMessage" | "attemptedAt" | "igdbId"
+      >
     >
   ): Promise<IntegrationRequest | undefined> {
     const [row] = await db

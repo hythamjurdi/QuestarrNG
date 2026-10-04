@@ -698,7 +698,17 @@ export const insertDownloaderSchema = createInsertSchema(downloaders, {
   .refine((data) => !(data.type === "sabnzbd" && !data.username), {
     message: "API key is required for SABnzbd",
     path: ["username"],
-  });
+  })
+  .refine(
+    (data) =>
+      data.type !== "realdebrid" ||
+      (typeof data.downloadPath === "string" &&
+        /^(?:\/|[a-zA-Z]:[\\/])/.test(data.downloadPath.trim())),
+    {
+      message: "Real-Debrid needs an absolute local staging path on the QuestarrNG server.",
+      path: ["downloadPath"],
+    }
+  );
 
 export const insertGameDownloadSchema = createInsertSchema(gameDownloads).omit({
   id: true,
@@ -1268,6 +1278,9 @@ export const integrationRequests = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     externalRequestId: text("external_request_id").notNull(),
+    // Exact IGDB identity supplied by SeerrNG. Kept nullable for requests
+    // created by older clients that only sent a title.
+    igdbId: integer("igdb_id"),
     gameId: text("game_id").references(() => games.id, { onDelete: "set null" }),
     downloadId: text("download_id").references(() => gameDownloads.id, { onDelete: "set null" }),
     title: text("title").notNull(),
