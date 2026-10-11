@@ -1,6 +1,6 @@
 // Copyright (c) QuestarrNG contributors. All rights reserved.
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -34,6 +34,10 @@ const candidate = {
   ],
 };
 
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 function githubContext() {
   return {
     workflow: 'CI',
@@ -56,7 +60,7 @@ function testReceipt(overrides = {}) {
     runId: 'test-engine-run',
     completedAt: '2026-10-11T20:00:00.000Z',
     status: 'passed',
-    candidate: structuredClone(candidate),
+    candidate: clone(candidate),
     inventoryCounts: { ...laneCounts },
     inventoryLaneDigests: { ...laneDigests },
     executionContext: {
@@ -87,7 +91,7 @@ function buildReceipt(major, overrides = {}) {
     runId: 'build-engine-run-' + major,
     completedAt: '2026-10-11T20:00:00.000Z',
     status: 'passed',
-    candidate: structuredClone(candidate),
+    candidate: clone(candidate),
     inventoryCounts: { ...laneCounts },
     inventoryLaneDigests: { ...laneDigests },
     executionContext: {
