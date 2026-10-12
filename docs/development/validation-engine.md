@@ -28,6 +28,26 @@ executed, passed, failed, blocked, excluded, and active-case totals. A workspace
 lock prevents two engine runs from competing over the same checkout. A stale
 lock is reported and left for an operator to inspect.
 
+Runtime probes and child commands inherit only the executable path, platform
+process variables, locale, and timezone. Each task receives run-owned home,
+temporary, and XDG configuration/cache directories; registered task settings
+remain task-scoped. Unapproved `passEnv` requests fail during planning. `CI` is
+forced to `true`, and test tasks use
+`NODE_ENV=test` so ambient credentials, proxy settings, loader options, and
+workflow context do not leak into test processes. Task environment directories
+are removed when each command finishes, leaving logs and the receipt as the
+run's retained evidence. CI explicitly shares the runner-local npm cache
+between `setup-node` and the dependency-install task; only that task receives
+the cache path, and local runs without it use a cache under their temporary home
+that is removed with the task environment.
+
+During a run, the engine writes a task summary to stderr when each task starts
+and finishes, and repeats it every minute while a task is still running. This
+keeps progress visible in a terminal or live GitHub Actions log without mixing
+status text into the final JSON summary on stdout. Native case counts are
+authoritative when each native command finishes; the heartbeat reports task
+status and elapsed time while that command is running.
+
 The GitHub workflow runs the full Vitest suite once on Node 26 and checks the
 production build on Node 22 and Node 26. Each run exports a short-lived,
 source-bound receipt. The final reconciliation job requires one passing test

@@ -4,7 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { spawn, spawnSync } from 'node:child_process';
 import process from 'node:process';
-import { clearTimeout, setTimeout } from 'node:timers';
+import { clearInterval, clearTimeout, setInterval, setTimeout } from 'node:timers';
 import {
   accessSync,
   chmodSync,
@@ -19,6 +19,7 @@ import {
   realpathSync,
   readlinkSync,
   readdirSync,
+  rmSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -30,6 +31,7 @@ export const ENGINE_VERSION = 1;
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = path.resolve(ENGINE_DIR, '..', '..');
 const MAX_BUFFER = 8 * 1024 * 1024;
+const PROGRESS_INTERVAL_MS = 60_000;
 const IGNORED_DIRS = new Set([
   '.git',
   '.next',
@@ -43,8 +45,13 @@ const IGNORED_DIRS = new Set([
   '_tests',
   'TestResults',
 ]);
-const SECRET_ENV = /(?:TOKEN|PASSWORD|SECRET|API[_-]?KEY|CREDENTIAL|COOKIE|AUTH|IDENTITY|DENYLIST|DATABASE_URL|DB_PASS|AWS_|AZURE_|GCP_)/i;
-const TEST_HARNESS_ENV = new Set(['NODE_TEST_CONTEXT', 'VALIDATION_RECEIPT_EXPORT']);
+const INHERITED_ENVIRONMENT_KEYS = new Set([
+  'ASDF_DATA_DIR', 'ASDF_DIR', 'COMSPEC', 'LANG', 'LC_ALL', 'LC_CTYPE',
+  'MISE_DATA_DIR', 'MISE_HOME', 'NVM_DIR', 'PATH', 'PATHEXT',
+  'VOLTA_HOME', 'SYSTEMROOT', 'TZ', 'WINDIR',
+]);
+const APPROVED_TASK_PASS_ENVIRONMENT = new Map();
+APPROVED_TASK_PASS_ENVIRONMENT.set('install-dependencies', new Set(['NPM_CONFIG_CACHE']));
 
 function fail(message) {
   throw new Error(message);
@@ -269,6 +276,35 @@ function commandAvailable(command) {
   });
 }
 
+function sanitizedEnvironment(inherited = process.env) {
+  const values = new Map();
+  for (const [key, value] of Object.entries(inherited)) {
+    const normalized = key.toUpperCase();
+    if (!INHERITED_ENVIRONMENT_KEYS.has(normalized) || typeof value !== 'string') continue;
+    if (!values.has(normalized) || key === normalized) values.set(normalized, value);
+  }
+  return Object.fromEntries(values);
+}
+
+function preserveVersionManagerDataDirectories(env, inherited) {
+  const originalHome = inherited.HOME || inherited.USERPROFILE;
+  if (!env.ASDF_DATA_DIR && originalHome) {
+    const defaultAsdfDataDir = path.join(originalHome, '.asdf');
+    env.ASDF_DATA_DIR = existsSync(defaultAsdfDataDir)
+      ? defaultAsdfDataDir
+      : (env.ASDF_DIR || defaultAsdfDataDir);
+  }
+  if (!env.MISE_DATA_DIR) {
+    const originalDataHome = inherited.XDG_DATA_HOME || (
+      process.platform === 'win32'
+        ? inherited.LOCALAPPDATA || (originalHome && path.join(originalHome, 'AppData', 'Local'))
+        : (originalHome && path.join(originalHome, '.local', 'share'))
+    );
+    if (originalDataHome) env.MISE_DATA_DIR = path.join(originalDataHome, 'mise');
+  }
+  return env;
+}
+
 function inspectRuntime(root, runtime) {
   const available = commandAvailable(runtime.command);
   if (!available) return { ...runtime, available, version: null, exitCode: null };
@@ -277,7 +313,7 @@ function inspectRuntime(root, runtime) {
     encoding: 'utf8',
     timeout: 10_000,
     maxBuffer: 1024 * 1024,
-    env: sanitizedEnvironment(),
+    env: preserveVersionManagerDataDirectories(sanitizedEnvironment(), process.env),
   });
   const version = (result.stdout ?? '') + (result.stderr ?? '');
   const versionLine = version.trim().split(/\r?\n/, 1)[0] ?? '';
@@ -315,6 +351,10 @@ function validateConfig(config) {
     }
     if (!Array.isArray(task.passEnv ?? [])) {
       fail('Explicitly inherited environment variables must be listed by task: ' + task.id);
+    }
+    if ((task.passEnv ?? []).some((name) => typeof name !== 'string' ||
+        !APPROVED_TASK_PASS_ENVIRONMENT.get(task.id)?.has(name))) {
+      fail('Task requests an unapproved inherited environment variable: ' + task.id);
     }
   }
   const laneIds = new Set(config.inventory.map((rule) => rule.id));
@@ -454,17 +494,67 @@ export function createPlan(root, config, options = {}) {
   return plan;
 }
 
-function sanitizedEnvironment(additional = {}, passEnv = []) {
-  const env = {};
-  const allowed = new Set(passEnv);
-  for (const [key, value] of Object.entries(process.env)) {
-    if ((!SECRET_ENV.test(key) || allowed.has(key)) && !TEST_HARNESS_ENV.has(key)) {
-      env[key] = value;
-    }
+export function isolatedTaskEnvironment(task, runRoot, inherited = process.env) {
+  if (typeof task?.id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(task.id)) {
+    fail('Validation task ID must be a safe lowercase identifier.');
   }
-  env.NO_COLOR = '1';
-  env.CI = env.CI ?? 'true';
-  return { ...env, ...additional };
+  const env = sanitizedEnvironment(inherited);
+  const approvedPassEnv = APPROVED_TASK_PASS_ENVIRONMENT.get(task.id) ?? new Set();
+  const passEnv = task.passEnv ?? [];
+  if (!Array.isArray(passEnv) || passEnv.some((name) =>
+    typeof name !== 'string' || !approvedPassEnv.has(name))) {
+    fail('Task requests an unapproved inherited environment variable: ' + task.id);
+  }
+  for (const name of passEnv) {
+    const match = Object.entries(inherited).find(([key]) => key.toUpperCase() === name.toUpperCase());
+    if (match && typeof match[1] === 'string') env[name] = match[1];
+  }
+  for (const [key, value] of Object.entries(task.env ?? {})) {
+    if (typeof value === 'string') env[key] = value;
+  }
+
+  // Keep version-manager shims pointed at their host installs after HOME is isolated.
+  preserveVersionManagerDataDirectories(env, inherited);
+  const environmentRoot = path.join(runRoot, `${task.id}-environment`);
+  const directories = {
+    HOME: path.join(environmentRoot, 'home'),
+    USERPROFILE: path.join(environmentRoot, 'home'),
+    TMPDIR: path.join(environmentRoot, 'tmp'),
+    TMP: path.join(environmentRoot, 'tmp'),
+    TEMP: path.join(environmentRoot, 'tmp'),
+    XDG_CONFIG_HOME: path.join(environmentRoot, 'xdg-config'),
+    XDG_CACHE_HOME: path.join(environmentRoot, 'xdg-cache'),
+    APPDATA: path.join(environmentRoot, 'AppData', 'Roaming'),
+    LOCALAPPDATA: path.join(environmentRoot, 'AppData', 'Local'),
+  };
+  for (const directory of new Set(Object.values(directories))) {
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+  }
+  Object.assign(env, directories, {
+    CI: 'true',
+    NO_COLOR: '1',
+  });
+  if (task.kind === 'test') env.NODE_ENV = 'test';
+  return env;
+}
+
+function formatElapsed(milliseconds) {
+  const seconds = Math.floor(milliseconds / 1000);
+  return `${Math.floor(seconds / 60)}m${String(seconds % 60).padStart(2, '0')}s`;
+}
+
+export function formatValidationProgress(repository, tasks, results, currentTask = null, elapsedMs = 0) {
+  const receipts = tasks.map((task) => results.get(task.id)).filter(Boolean);
+  const passed = receipts.filter((receipt) => receipt.status === 'passed').length;
+  const failed = receipts.filter((receipt) => ['failed', 'incomplete'].includes(receipt.status)).length;
+  const blocked = receipts.filter((receipt) => receipt.status === 'blocked').length;
+  const notRun = receipts.filter((receipt) => receipt.status === 'not-run').length;
+  const completed = passed + failed;
+  const pending = Math.max(0, tasks.length - completed - blocked - notRun);
+  const active = currentTask
+    ? `; running ${currentTask.name ?? currentTask.id} (${formatElapsed(elapsedMs)})`
+    : '';
+  return `[validation] ${repository}: ${completed}/${tasks.length} selected tasks complete (${passed} passed, ${failed} failed, ${blocked} blocked, ${notRun} not-run, ${pending} pending)${active}`;
 }
 
 function terminate(child) {
@@ -495,7 +585,7 @@ export async function runCommand(task, root, logPath) {
   let timedOut = false;
   const child = spawn(command, args, {
     cwd,
-    env: sanitizedEnvironment(task.env, task.passEnv),
+    env: isolatedTaskEnvironment(task, path.dirname(logPath)),
     stdio: ['ignore', 'pipe', 'pipe'],
     detached: process.platform !== 'win32',
     windowsHide: true,
@@ -622,11 +712,31 @@ export async function executePlan(root, config, plan, options = {}) {
       totals: { planned: selectedIds.size, executed: 0, passed: 0, failed: 0, blocked: 0, excluded: plan.tasks.length - selectedIds.size, activeCases: 0 },
     };
     writeFileSync(path.join(runRoot, 'receipt.json'), JSON.stringify(receipt, null, 2), { mode: 0o600 });
+    options.onProgress?.(formatValidationProgress(
+      config.repository,
+      plan.tasks.filter((task) => task.selected),
+      new Map(receipt.tasks.map((task) => [task.taskId, task])),
+    ));
     return { receipt, runRoot, exitCode: 1 };
   }
 
   let sourceChanged = false;
-  for (const task of plan.tasks.filter((item) => item.selected)) {
+  const selectedTasks = plan.tasks.filter((item) => item.selected);
+  let lastProgressSummary = null;
+  const reportProgress = (currentTask = null, taskStartedAt = 0) => {
+    if (typeof options.onProgress !== 'function') return;
+    const summary = formatValidationProgress(
+      config.repository,
+      selectedTasks,
+      receiptById,
+      currentTask,
+      currentTask ? Date.now() - taskStartedAt : 0,
+    );
+    if (summary === lastProgressSummary) return;
+    lastProgressSummary = summary;
+    options.onProgress(summary);
+  };
+  for (const task of selectedTasks) {
     const dependencyReceipts = (task.dependsOn ?? []).map((id) => receiptById.get(id));
     const failedDependency = dependencyReceipts.find((item) => item?.status !== 'passed');
     if (failedDependency) {
@@ -636,6 +746,7 @@ export async function executePlan(root, config, plan, options = {}) {
         reason: 'dependency did not pass',
         required: task.required !== false,
       });
+      reportProgress();
       continue;
     }
     if (captureCandidate(root, config.inputs ?? [], {
@@ -648,21 +759,36 @@ export async function executePlan(root, config, plan, options = {}) {
         reason: 'candidate source changed after planning',
         required: task.required !== false,
       });
+      reportProgress();
       break;
     }
     const configuredTask = config.tasks.find((item) => item.id === task.id);
     if (!configuredTask) fail('Selected task is missing from the registered configuration: ' + task.id);
-    const taskReceipt = await runCommand(
-      configuredTask,
-      root,
-      path.join(runRoot, task.id + '.log'),
+    const taskStartedAt = Date.now();
+    reportProgress(task, taskStartedAt);
+    const heartbeat = setInterval(
+      () => reportProgress(task, taskStartedAt),
+      options.progressIntervalMs ?? PROGRESS_INTERVAL_MS,
     );
+    heartbeat.unref();
+    let taskReceipt;
+    try {
+      taskReceipt = await runCommand(
+        configuredTask,
+        root,
+        path.join(runRoot, task.id + '.log'),
+      );
+    } finally {
+      clearInterval(heartbeat);
+      rmSync(path.join(runRoot, `${task.id}-environment`), { recursive: true, force: true });
+    }
     taskReceipt.inventory = (configuredTask.inventoryLanes ?? []).map((lane) => ({
       lane,
       discoveredFiles: plan.inventoryCounts[lane] ?? 0,
       inventorySha256: plan.inventoryLaneDigests[lane],
     }));
     receiptById.set(task.id, taskReceipt);
+    reportProgress();
     if (captureCandidate(root, config.inputs ?? [], {
       entries: plan.inventory,
     }).sourceSha256 !== plan.candidate.sourceSha256) {
@@ -713,6 +839,7 @@ export async function executePlan(root, config, plan, options = {}) {
     totals,
   };
   writeFileSync(path.join(runRoot, 'receipt.json'), JSON.stringify(receipt, null, 2), { mode: 0o600 });
+  reportProgress();
   return { receipt, runRoot, exitCode: status === 'passed' ? 0 : 1 };
 }
 
@@ -767,7 +894,9 @@ export async function main(argv = process.argv.slice(2), root = DEFAULT_ROOT, co
   const lock = acquireRunLock(root, loaded.repository);
   let result;
   try {
-    result = await executePlan(root, loaded, plan);
+    result = await executePlan(root, loaded, plan, {
+      onProgress: (summary) => process.stderr.write(summary + '\n'),
+    });
   } finally {
     releaseRunLock(lock);
   }

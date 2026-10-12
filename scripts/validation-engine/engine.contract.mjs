@@ -1,6 +1,7 @@
 // Copyright (c) QuestarrNG contributors. All rights reserved.
 import assert from 'node:assert/strict';
 import {
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -21,10 +22,13 @@ import {
   createPlan,
   discoverInventory,
   executePlan,
+  formatValidationProgress,
   globRegex,
+  isolatedTaskEnvironment,
   main as runEngine,
   releaseRunLock,
 } from './engine.mjs';
+import { validation } from './config.mjs';
 
 const temporaryRoots = [];
 
@@ -85,6 +89,34 @@ function fixture() {
 
 after(() => {
   for (const root of temporaryRoots) rmSync(root, { recursive: true, force: true });
+});
+
+test('Playwright installation and execution share the package-local browser cache', () => {
+  const install = validation.tasks.find((task) => task.id === 'playwright-browser-install');
+  const e2e = validation.tasks.find((task) => task.id === 'playwright-e2e');
+  assert.ok(install);
+  assert.ok(e2e);
+  assert.equal(install.env?.PLAYWRIGHT_BROWSERS_PATH, '0');
+  assert.equal(e2e.env?.PLAYWRIGHT_BROWSERS_PATH, '0');
+});
+
+test('only the dependency installer receives the configured npm cache', () => {
+  const runRoot = mkdtempSync(path.join(os.tmpdir(), 'questarrng-npm-cache-contract-'));
+  temporaryRoots.push(runRoot);
+  const install = validation.tasks.find((task) => task.id === 'install-dependencies');
+  const lint = validation.tasks.find((task) => task.id === 'lint');
+  assert.ok(install);
+  assert.ok(lint);
+  assert.deepEqual(install.passEnv, ['NPM_CONFIG_CACHE']);
+  const inherited = {
+    PATH: process.env.PATH,
+    NPM_CONFIG_CACHE: path.join(runRoot, 'shared-npm-cache'),
+  };
+  assert.equal(
+    isolatedTaskEnvironment(install, runRoot, inherited).NPM_CONFIG_CACHE,
+    inherited.NPM_CONFIG_CACHE,
+  );
+  assert.equal(isolatedTaskEnvironment(lint, runRoot, inherited).NPM_CONFIG_CACHE, undefined);
 });
 
 test('glob matching covers root and nested files without crossing sibling names', () => {
@@ -151,6 +183,92 @@ test('plan binds the candidate and closes test selection over its dependencies',
   assert.match(plan.inventoryLaneDigests.unit, /^[a-f0-9]{64}$/);
 });
 
+test('runtime probes receive only the toolchain environment allowlist', () => {
+  const { root, config } = fixture();
+  const injected = {
+    GITHUB_TOKEN: 'synthetic-runtime-token',
+    NODE_OPTIONS: '--require=/nonexistent-questarr-runtime-module.cjs',
+    TMPDIR: '/operator/nonexistent-temp',
+  };
+  const previous = new Map(Object.keys(injected).map((name) => [name, process.env[name]]));
+  Object.assign(process.env, injected);
+  config.runtimes = [{
+    command: process.execPath,
+    args: ['-e', `process.stdout.write(JSON.stringify(${JSON.stringify(Object.keys(injected))}.map((name) => process.env[name] ?? null)))`],
+    versionPattern: '^\\[null,null,null\\]$',
+  }];
+  try {
+    const plan = createPlan(root, config);
+    assert.equal(plan.runtimes[0].version, '[null,null,null]');
+    assert.equal(plan.runtimes[0].available, true);
+    assert.equal(plan.runtimes[0].versionCompatible, true);
+  } finally {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+});
+
+test('runtime probes keep default asdf and mise shims usable after environment sanitization', {
+  skip: process.platform === 'win32',
+}, () => {
+  const { root, config } = fixture();
+  const hostHome = mkdtempSync(path.join(os.tmpdir(), 'questarrng-runtime-shim-home-'));
+  temporaryRoots.push(hostHome);
+  const asdfDataDir = path.join(hostHome, '.asdf');
+  const asdfShimDirectory = path.join(asdfDataDir, 'shims');
+  const miseDataDir = path.join(hostHome, '.local', 'share', 'mise');
+  const miseShimDirectory = path.join(hostHome, '.local', 'share', 'mise-shims');
+  mkdirSync(asdfShimDirectory, { recursive: true });
+  mkdirSync(miseShimDirectory, { recursive: true });
+  writeFileSync(
+    path.join(asdfShimDirectory, 'node'),
+    `#!/bin/sh\nif [ "$ASDF_DATA_DIR" != '${asdfDataDir}' ]; then printf '%s\\n' 'missing asdf data directory' >&2; exit 70; fi\nprintf '%s\\n' 'asdf-shim-ok'\n`,
+    { mode: 0o755 },
+  );
+  writeFileSync(
+    path.join(miseShimDirectory, 'npm'),
+    `#!/bin/sh\nif [ "$MISE_DATA_DIR" != '${miseDataDir}' ]; then printf '%s\\n' 'missing mise data directory' >&2; exit 71; fi\nprintf '%s\\n' 'mise-shim-ok'\n`,
+    { mode: 0o755 },
+  );
+
+  const overrides = {
+    HOME: hostHome,
+    PATH: [asdfShimDirectory, miseShimDirectory, process.env.PATH].filter(Boolean).join(path.delimiter),
+    ASDF_DATA_DIR: null,
+    ASDF_DIR: null,
+    MISE_DATA_DIR: null,
+    XDG_DATA_HOME: null,
+    LOCALAPPDATA: null,
+  };
+  const previous = new Map(Object.keys(overrides).map((name) => [name, process.env[name]]));
+  for (const [name, value] of Object.entries(overrides)) {
+    if (value === null) delete process.env[name];
+    else process.env[name] = value;
+  }
+  config.runtimes = [
+    { command: 'node', args: ['--version'], versionPattern: '^asdf-shim-ok$' },
+    { command: 'npm', args: ['--version'], versionPattern: '^mise-shim-ok$' },
+  ];
+  try {
+    const plan = createPlan(root, config);
+    assert.deepEqual(plan.runtimes.map(({ available, version, versionCompatible }) => ({
+      available,
+      version,
+      versionCompatible,
+    })), [
+      { available: true, version: 'asdf-shim-ok', versionCompatible: true },
+      { available: true, version: 'mise-shim-ok', versionCompatible: true },
+    ]);
+  } finally {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+});
+
 test('executor rejects a plan whose task contract was changed after hashing', async () => {
   const { root, config } = fixture();
   const plan = createPlan(root, config);
@@ -174,6 +292,43 @@ test('native execution records passing case counts, source identity and private 
   const log = path.join(runRoot, result.receipt.tasks[0].logFile);
   assert.equal(statSync(log).mode & 0o777, 0o600);
   assert.match(readFileSync(path.join(runRoot, 'receipt.json'), 'utf8'), /"status": "passed"/);
+});
+
+test('live progress reports task start, heartbeat, and completion', async () => {
+  const { root, config } = fixture();
+  config.tasks[0].command = [
+    process.execPath,
+    '-e',
+    'console.log("# pass 1"); setTimeout(() => {}, 1300);',
+  ];
+  const messages = [];
+  const result = await executePlan(root, config, createPlan(root, config), {
+    progressIntervalMs: 100,
+    onProgress: (summary) => messages.push(summary),
+  });
+  assert.equal(result.exitCode, 0);
+  assert.ok(messages.some((summary) => summary.includes('running Unit tests (0m00s)')));
+  assert.ok(messages.some((summary) => summary.includes('running Unit tests (0m01s)')));
+  assert.equal(messages.at(-1),
+    '[validation] fixture: 1/1 selected tasks complete (1 passed, 0 failed, 0 blocked, 0 not-run, 0 pending)');
+});
+
+test('progress formatter reports completed, blocked, pending, and active tasks', () => {
+  const tasks = [
+    { id: 'passed', name: 'Passed task' },
+    { id: 'blocked', name: 'Blocked task' },
+    { id: 'not-run', name: 'Not-run task' },
+    { id: 'running', name: 'Long task' },
+  ];
+  const results = new Map([
+    ['passed', { status: 'passed' }],
+    ['blocked', { status: 'blocked' }],
+    ['not-run', { status: 'not-run' }],
+  ]);
+  assert.equal(
+    formatValidationProgress('sample', tasks, results, tasks[3], 65_000),
+    '[validation] sample: 1/4 selected tasks complete (1 passed, 0 failed, 1 blocked, 1 not-run, 1 pending); running Long task (1m05s)',
+  );
 });
 
 test('execution fails closed when a test reports zero active cases', async () => {
@@ -262,31 +417,119 @@ test('exports a private receipt only to a location beneath the system temporary 
   }
 });
 
-test('child environments hide sensitive values unless a task explicitly needs them', async () => {
+test('child environments hide inherited secrets and reject unapproved passEnv requests', async () => {
+  const { root, config } = fixture();
+  const runRoot = mkdtempSync(path.join(os.tmpdir(), 'questarrng-isolated-environment-'));
+  temporaryRoots.push(runRoot);
+  assert.throws(
+    () => isolatedTaskEnvironment({ id: '../outside' }, runRoot),
+    /safe lowercase identifier/,
+  );
   const key = 'VALIDATION_ENGINE_TEST_SECRET';
-  const previous = process.env[key];
-  process.env[key] = 'do-not-log-me';
+  const injected = {
+    [key]: 'do-not-log-me',
+    GITHUB_TOKEN: 'synthetic-github-token',
+    NODE_OPTIONS: '--require=/nonexistent-questarr-validation-module.cjs',
+    HOME: '/operator/home',
+    TMPDIR: '/operator/tmp',
+    XDG_CONFIG_HOME: '/operator/config',
+    HTTPS_PROXY: 'http://proxy.invalid',
+    RANDOM_PRIVATE_VALUE: 'synthetic-private-value',
+  };
+  const previous = new Map(Object.keys(injected).map((name) => [name, process.env[name]]));
+  Object.assign(process.env, injected);
   try {
-    const { root, config } = fixture();
     config.tasks[0].kind = 'check';
     config.tasks[0].command = [
       process.execPath,
       '-e',
-      `process.stdout.write(process.env.${key} ?? '')`,
+      `const fs = require('node:fs');
+const path = require('node:path');
+const keys = ${JSON.stringify([...Object.keys(injected), 'CI'])};
+fs.mkdirSync(path.join(process.env.HOME, '.npm'), { recursive: true });
+fs.writeFileSync(path.join(process.env.HOME, '.npm', 'cache'), 'temporary npm cache');
+process.stdout.write(JSON.stringify(Object.fromEntries(keys.map((name) => [name, process.env[name] ?? null]))))`,
     ];
-    let result = await executePlan(root, config, createPlan(root, config));
-    let log = path.join(result.runRoot, result.receipt.tasks[0].logFile);
-    assert.equal(readFileSync(log, 'utf8'), '');
+    const result = await executePlan(root, config, createPlan(root, config), { runRoot });
+    const log = path.join(result.runRoot, result.receipt.tasks[0].logFile);
+    const childEnvironment = JSON.parse(readFileSync(log, 'utf8'));
+    assert.equal(childEnvironment[key], null);
+    assert.equal(childEnvironment.GITHUB_TOKEN, null);
+    assert.equal(childEnvironment.NODE_OPTIONS, null);
+    assert.equal(childEnvironment.HTTPS_PROXY, null);
+    assert.equal(childEnvironment.RANDOM_PRIVATE_VALUE, null);
+    assert.equal(childEnvironment.HOME, path.join(result.runRoot, 'unit-tests-environment', 'home'));
+    assert.equal(childEnvironment.TMPDIR, path.join(result.runRoot, 'unit-tests-environment', 'tmp'));
+    assert.equal(childEnvironment.XDG_CONFIG_HOME, path.join(result.runRoot, 'unit-tests-environment', 'xdg-config'));
+    assert.equal(childEnvironment.CI, 'true');
+    assert.equal(existsSync(path.join(result.runRoot, 'unit-tests-environment')), false);
 
     config.tasks[0].passEnv = [key];
-    result = await executePlan(root, config, createPlan(root, config));
-    log = path.join(result.runRoot, result.receipt.tasks[0].logFile);
-    assert.equal(readFileSync(log, 'utf8'), 'do-not-log-me');
-    assert.deepEqual(result.receipt.tasks[0].envKeys, [key]);
+    assert.throws(() => createPlan(root, config), /unapproved inherited environment variable/);
+    assert.throws(
+      () => isolatedTaskEnvironment(config.tasks[0], runRoot, process.env),
+      /unapproved inherited environment variable/,
+    );
   } finally {
-    if (previous === undefined) delete process.env[key];
-    else process.env[key] = previous;
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
   }
+});
+
+test('isolated task environments preserve default version-manager data directories', () => {
+  const runRoot = mkdtempSync(path.join(os.tmpdir(), 'questarrng-version-manager-environment-'));
+  const hostHome = mkdtempSync(path.join(os.tmpdir(), 'questarrng-version-manager-home-'));
+  temporaryRoots.push(runRoot, hostHome);
+  const asdfDataDir = path.join(hostHome, '.asdf');
+  const xdgDataHome = path.join(hostHome, 'xdg-data');
+  const shimDirectory = path.join(asdfDataDir, 'shims');
+  mkdirSync(shimDirectory, { recursive: true });
+  writeFileSync(
+    path.join(shimDirectory, 'node'),
+    `#!/bin/sh\nif [ "$ASDF_DATA_DIR" != '${asdfDataDir}' ]; then exit 70; fi\nprintf '%s\\n' 'asdf-shim-ok'\n`,
+    { mode: 0o755 },
+  );
+
+  const environment = isolatedTaskEnvironment(
+    { id: 'unit-tests' },
+    runRoot,
+    {
+      HOME: hostHome,
+      PATH: shimDirectory,
+      XDG_DATA_HOME: xdgDataHome,
+    },
+  );
+
+  assert.equal(environment.HOME, path.join(runRoot, 'unit-tests-environment', 'home'));
+  assert.notEqual(environment.HOME, hostHome);
+  assert.equal(environment.ASDF_DATA_DIR, asdfDataDir);
+  assert.equal(environment.MISE_DATA_DIR, path.join(xdgDataHome, 'mise'));
+
+  if (process.platform !== 'win32') {
+    const shimResult = spawnSync('node', ['--version'], { env: environment, encoding: 'utf8' });
+    assert.equal(shimResult.status, 0, shimResult.error?.message ?? shimResult.stderr);
+    assert.equal(shimResult.stdout, 'asdf-shim-ok\n');
+  }
+});
+
+test('version-manager defaults fall back to ASDF_DIR and the host data directory', () => {
+  const runRoot = mkdtempSync(path.join(os.tmpdir(), 'questarrng-version-manager-fallback-'));
+  const hostHome = mkdtempSync(path.join(os.tmpdir(), 'questarrng-version-manager-home-'));
+  temporaryRoots.push(runRoot, hostHome);
+  const asdfInstall = path.join(hostHome, 'asdf-install');
+  const environment = isolatedTaskEnvironment(
+    { id: 'unit-tests' },
+    runRoot,
+    { HOME: hostHome, ASDF_DIR: asdfInstall, PATH: process.env.PATH },
+  );
+
+  assert.equal(environment.ASDF_DATA_DIR, asdfInstall);
+  const hostDataHome = process.platform === 'win32'
+    ? path.join(hostHome, 'AppData', 'Local')
+    : path.join(hostHome, '.local', 'share');
+  assert.equal(environment.MISE_DATA_DIR, path.join(hostDataHome, 'mise'));
 });
 
 test('plan and executor reject dependency cycles and report missing tools', async () => {
@@ -315,10 +558,19 @@ test('plan and executor reject dependency cycles and report missing tools', asyn
     requiredCommands: ['command-that-is-not-installed-validation-test'],
   });
   const plan = createPlan(missingRoot, missingConfig);
-  const result = await executePlan(missingRoot, missingConfig, plan);
+  const progress = [];
+  const result = await executePlan(missingRoot, missingConfig, plan, {
+    onProgress: (summary) => progress.push(summary),
+  });
   assert.equal(result.receipt.status, 'incomplete');
+  assert.equal(result.receipt.tasks[0].status, 'not-run');
   assert.equal(result.receipt.totals.executed, 0);
+  assert.equal(result.receipt.totals.blocked, 0);
   assert.equal(result.receipt.prerequisites.some((item) => !item.available), true);
+  assert.equal(
+    progress.at(-1),
+    '[validation] fixture: 0/1 selected tasks complete (0 passed, 0 failed, 0 blocked, 1 not-run, 0 pending)',
+  );
 });
 
 test('candidate digests change after tracked source edits', () => {
