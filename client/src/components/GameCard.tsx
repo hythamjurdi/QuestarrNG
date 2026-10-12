@@ -258,9 +258,10 @@ const GameCard = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 role="img"
                 aria-label={`IGDB rating: ${game.rating ? game.rating + " out of 10" : "Not rated"}`}
+                tabIndex={0}
               >
                 <Star className="w-3 h-3 text-accent" aria-hidden="true" />
                 <span data-testid={`text-rating-${game.id}`}>
@@ -276,9 +277,10 @@ const GameCard = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   role="img"
                   aria-label={`My rating: ${game.userRating} out of 10`}
+                  tabIndex={0}
                 >
                   <Star className="w-3 h-3 fill-primary text-primary" aria-hidden="true" />
                   <span data-testid={`text-user-rating-${game.id}`}>{game.userRating}/10</span>
@@ -292,9 +294,10 @@ const GameCard = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 role="img"
                 aria-label={`Release Date: ${releaseYear}`}
+                tabIndex={0}
               >
                 <Calendar className="w-3 h-3" aria-hidden="true" />
                 <span data-testid={`text-release-${game.id}`}>{releaseYear}</span>

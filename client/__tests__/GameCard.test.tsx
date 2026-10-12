@@ -107,6 +107,19 @@ describe("GameCard", () => {
     expect(screen.getByTestId("text-release-1")).toHaveTextContent("2024");
   });
 
+  it("makes rating and release-date tooltip triggers keyboard-focusable", () => {
+    renderComponent();
+
+    expect(screen.getByRole("img", { name: "IGDB rating: 8.5 out of 10" })).toHaveAttribute(
+      "tabindex",
+      "0"
+    );
+    expect(screen.getByRole("img", { name: "Release Date: 2024" })).toHaveAttribute(
+      "tabindex",
+      "0"
+    );
+  });
+
   it("displays a rating of 0 as 'N/A' since 0 is unrated", () => {
     renderComponent({ game: { ...mockGame, rating: 0 } });
     expect(screen.getByTestId("text-rating-1")).toHaveTextContent("N/A");

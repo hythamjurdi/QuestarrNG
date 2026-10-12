@@ -52,6 +52,19 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
     fetchMock = vi.mocked(safeFetch);
   });
 
+  it("reuses cached popular-game responses for identical requests", async () => {
+    const games = [{ id: 42, name: "Cached Game" }];
+    fetchMock.mockResolvedValueOnce(authResponse).mockResolvedValueOnce(gamesResponse(games));
+
+    const { igdbClient } = await import("../igdb.js");
+    const first = await igdbClient.getPopularGames(1);
+    const second = await igdbClient.getPopularGames(1);
+
+    expect(first).toEqual(games);
+    expect(second).toEqual(games);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("getGamesByGenres returns [] for an empty genre list without hitting the network", async () => {
     const { igdbClient } = await import("../igdb.js");
     const results = await igdbClient.getGamesByGenres([]);

@@ -445,3 +445,25 @@ superseded**, **978 unreviewed**, **4 not-applicable**, **1
 implemented-but-unverified**, and **1 needs-implementation** record. Issue #37
 remains the outstanding implementation item. See
 [batch 16 evidence](evidence/validation-batch-16.txt).
+
+## Follow-up: config, search, health, cache, and tooltip PRs #155–161
+
+Settings no longer shows database connection state or a connection URL, and its
+initial load has explicit success and error outcomes. Search already uses the
+shared 500 ms debounce hook. The health endpoints expose only a generic status,
+and the IGDB client reuses successful responses within their TTL. The separate
+Dashboard refactor in #156 has no target in QuestarrNG's current page layout;
+#158 was closed unmerged after newer dependency updates became available, and
+the fork's current package versions are newer than that PR's requests.
+
+GameCard's rating and release-date tooltips were present but skipped by keyboard
+focus. Their triggers are now focusable with a visible focus ring. A keyboard
+interaction in the running app captured the tooltip:
+[GameCard metadata tooltip](../pr-evidence/upstream-gamecard-metadata-tooltips.png).
+
+All 4,030 tests passed, with 7 skipped; typecheck, lint, format check, and the
+production build passed. Vite continues to report its existing large-chunk
+advisory. The ledger now records **164 verified**, **6 superseded**, **971
+unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and **1
+needs-implementation** record. Issue #37 remains the outstanding
+implementation item. See [batch 17 evidence](evidence/validation-batch-17.txt).

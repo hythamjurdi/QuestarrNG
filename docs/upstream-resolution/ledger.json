@@ -4413,10 +4413,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "68697a5b28b1fe8fc34736765deabd8bb460c68e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The authenticated /api/config response has no database connection object, and Settings no longer displays the database URL or connection state. The page has explicit loading and error branches."
+        ],
+        "acceptance": [
+          "Configuration and Settings do not disclose database connection details, and initial loading terminates with either content or an error state."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/155",
+          "server/routes.ts",
+          "shared/schema.ts",
+          "client/src/pages/settings.tsx",
+          "server/__tests__/security.test.ts",
+          "client/__tests__/SettingsPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4433,10 +4444,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "6b79d3d38707039041a52ec526b5b023198bab02",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "This refactor targets Dashboard.tsx, which is absent from QuestarrNG separate-page navigation. Discover and Search use the shared debounce hook for their current search flows."
+        ],
+        "acceptance": [
+          "There is no Dashboard search effect to replace; the applicable search pages already share the debounce hook."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/156",
+          "client/src/lib/routes.ts",
+          "client/src/pages/discover.tsx",
+          "client/src/pages/search.tsx",
+          "client/src/hooks/use-debounce.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4453,10 +4474,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "a6f609f3840d896a8608fcb6728d19b0abfd728b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SearchPage applies the shared useDebounce hook at 500 ms. The indexer request key, request function, and enabled condition all use the debounced term; the library match query uses it too. Hook tests cover delay, rapid changes, and timer cleanup."
+        ],
+        "acceptance": [
+          "Typing waits 500 ms before search requests run, and a newer value cancels the previous pending update."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/157",
+          "client/src/pages/search.tsx",
+          "client/src/hooks/use-debounce.ts",
+          "client/__tests__/use-debounce.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4473,10 +4503,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR was closed without merge. Dependabot noted the updates were available another way; QuestarrNG package manifests and lockfiles now use newer versions than all ten requested updates."
+        ],
+        "acceptance": [
+          "Keep the current dependency set; none of the PR older version pins need to be backported."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/158",
+          "https://github.com/Doezer/Questarr/pull/158#issuecomment-3695992212",
+          "package.json",
+          "package-lock.json",
+          "pnpm-lock.yaml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4493,10 +4533,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b890c4232cfd8420d23a7c3fe238c15b8e77a5e6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The liveness endpoint returns only a generic status. The readiness endpoint keeps database and IGDB details in server logs and returns only a generic error status with HTTP 503 when checks fail."
+        ],
+        "acceptance": [
+          "Health responses contain no database or IGDB status fields; readiness failure is generic and non-200."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/159",
+          "server/routes.ts",
+          "server/__tests__/auth-boundary.test.ts",
+          "server/__tests__/health.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4513,10 +4562,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "a4c0557a0cc8fd55ffbc21f623a7f3ae293ca0ac",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The IGDB client caches responses by endpoint and normalized query with explicit TTLs, including 15-minute search results and one-hour catalog requests. A regression test confirms a repeated popular-games request reuses the cached payload without another IGDB request."
+        ],
+        "acceptance": [
+          "Repeated identical IGDB requests within the TTL avoid duplicate API calls."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/160",
+          "server/igdb.ts",
+          "server/__tests__/igdb_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4533,10 +4590,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "54dab2c22e1639b6764c3e4f9a25f4fa70d0b97f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCard metadata tooltips now expose accessible image names and can be reached by keyboard. Rating, personal rating, and release-date triggers show a visible focus ring; the running UI screenshot captures the focused rating tooltip."
+        ],
+        "acceptance": [
+          "Rating and release-date tooltip triggers participate in keyboard focus order and retain accessible labels."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/161",
+          "client/src/components/GameCard.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "docs/pr-evidence/upstream-gamecard-metadata-tooltips.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
