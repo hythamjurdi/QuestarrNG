@@ -84,10 +84,15 @@ lint pass. [Before](evidence/sabnzbd-before.txt) and
 [after](evidence/sabnzbd-after.txt) results are retained.
 
 The reporter subsequently said the upstream fix still did not work on a dev
-image. This adapter fix therefore remains `implemented-unverified` in the ledger
-pending configuration persistence and a real SABnzbd reproduction. Mocked HTTP
-tests demonstrate the outgoing category, not the downstream installation's
-behavior. This SABnzbd report is not yet marked fully resolved.
+image. We reproduced the full path through Questarr's authenticated downloader
+API and SABnzbd 5.1.3: the configured category survived save and reload, Test
+Connection succeeded, a request without its own category entered the saved
+category, and an explicit request category overrode it. With no configured
+category, the adapter uses `games`. SABnzbd maps unregistered category names to
+`*` (Default), so the compatibility guide now calls out that the category must
+also exist in SABnzbd. Both entries are now `verified`; the test queue was
+cleared and no Usenet server was configured, so no content was downloaded.
+See [batch 6](evidence/validation-batch-6.txt).
 
 ## Refresh and review workflow
 

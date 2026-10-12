@@ -30,7 +30,7 @@ Questarr targets the qBittorrent WebUI API. Historical documentation exists for 
 
 ### SABnzbd
 
-Questarr supports SABnzbd through its HTTP API. The current API supports both `addurl` and multipart `addfile` flows, and modern releases such as 5.0.4 are in scope for this integration.
+Questarr supports SABnzbd through its HTTP API, including `addurl` and multipart `addfile` flows; a live integration was verified on SABnzbd 5.1.3. For each download Questarr uses the request category when supplied, otherwise the saved downloader category, then `games`. Add any custom category to SABnzbd's category list as well: an unregistered category is reported in the queue as `*` (Default).
 
 ### NZBGet
 
