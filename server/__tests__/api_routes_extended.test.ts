@@ -881,5 +881,28 @@ describe("API Routes - Additional Coverage", () => {
       expect(res.status).toBe(400);
       expect(res.body.error).toBe("Validation failed");
     });
+
+    it("PATCH /api/indexers validates and strips fields outside the shared schema", async () => {
+      vi.mocked(storage.updateIndexer).mockResolvedValue(testIndexer);
+
+      const res = await request(app)
+        .patch("/api/indexers/idx-1")
+        .send({ priority: 2, unexpected: "ignored" });
+
+      expect(res.status).toBe(200);
+      expect(storage.updateIndexer).toHaveBeenCalledWith("idx-1", { priority: 2 });
+    });
+
+    it("PATCH /api/downloaders validates and strips fields outside the shared schema", async () => {
+      vi.mocked(storage.getDownloader).mockResolvedValue(testDownloader);
+      vi.mocked(storage.updateDownloader).mockResolvedValue(testDownloader);
+
+      const res = await request(app)
+        .patch("/api/downloaders/dl-1")
+        .send({ priority: 2, unexpected: "ignored" });
+
+      expect(res.status).toBe(200);
+      expect(storage.updateDownloader).toHaveBeenCalledWith("dl-1", { priority: 2 });
+    });
   });
 });

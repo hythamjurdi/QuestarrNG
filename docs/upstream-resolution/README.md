@@ -167,7 +167,9 @@ are excluded with the limitation shown in the running UI. Issue #336 is verified
 operators can configure Hydra-format public HTTPS catalogs, and their torrent
 links join normal aggregated search with source attribution. Catalog origin does
 not certify release safety; the existing scanning controls remain applicable.
-The ledger currently has 1,134 unreviewed records, including newly opened PR #1186.
+The ledger currently has 1,105 unreviewed records. Each of the four open issues
+and four open PRs has a preliminary disposition; review status is tracked
+separately from GitHub state.
 
 ## Follow-up: v1.5.0 release-preparation coverage (#1172)
 
@@ -200,6 +202,31 @@ private `notifyUser` event is routed to the authenticated owner's socket room,
 including download status, library scan progress, game refreshes and import task
 updates. Events without a known owner are dropped. Socket tests cover delivery
 between two users and unknown-owner suppression; the full unit suite passes.
+
+## Follow-up: early API, download and startup requests (#1–25, #237/#245/#260)
+
+The shared download-status contract now lives in `shared/schema.ts`. Database
+environment settings are validated through Zod with an explicit Postgres opt-in,
+and indexer/downloader PATCH bodies pass through shared Zod schemas before
+reaching storage. QuestarrNG's Copilot instructions now describe the current
+React 19/Vite 8/Express 5 stack and the dual-database layout. Existing discovery
+download actions, qBittorrent support, download details/history, indexer
+categories/testing, carousel controls, and first-user setup/login were checked
+against their original requests.
+
+The production image was rebuilt and smoke-tested: `nanoid` resolved at runtime,
+both migration journals were packaged, first-start migrations completed, and
+the health and protected SeerrNG routes returned their expected responses. Issue
+#260 is `not-applicable`: the report showed a Compose hostname/internal-port
+mismatch, and the reporter confirmed that a clean pull fixed it.
+
+The ledger now has 1,105 unreviewed items, 38 verified, 3 `not-applicable`, and
+one implemented-but-unverified integration. The full suite passed with 4,016
+tests and 7 skips; typecheck, lint, format, production build, and PostgreSQL
+schema checks also passed. The downloads-page screenshot was captured after its
+loading state settled and is included in the review evidence:
+
+![Downloads page after loading](../pr-evidence/upstream-download-status.png)
 
 Public source snapshots redact database connection strings found in support
 reports; the collection script applies the same redaction on refresh.

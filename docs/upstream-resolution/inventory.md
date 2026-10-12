@@ -6,31 +6,31 @@ Snapshot: 2026-10-12T21:06:33.750Z. 1147 items. All ancestry observations requir
 
 | Item | Title | GitHub state | History observation | Review |
 | --- | --- | --- | --- | --- |
-| [issue #1](https://github.com/Doezer/Questarr/issues/1) | Ajouter un middleware d’erreur global pour uniformiser réponses { error, details } | CLOSED | no-merge-commit | unreviewed |
-| [issue #2](https://github.com/Doezer/Questarr/issues/2) | Créer  src/server/config.ts avec validation environnement (IGDB, DATABASE_URL). | CLOSED | no-merge-commit | unreviewed |
-| [issue #3](https://github.com/Doezer/Questarr/issues/3) | Extraire types DownloadStatus partagés dans shared pour éviter duplication | CLOSED | no-merge-commit | unreviewed |
-| [issue #4](https://github.com/Doezer/Questarr/issues/4) | Filtrer champs côté client avant POST (ne pas envoyer id, isReleased, inCollection dans AddGame). | CLOSED | no-merge-commit | unreviewed |
-| [pr #5](https://github.com/Doezer/Questarr/pull/5) | Filter client-side fields before POST to prevent sending database-generated fields | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #6](https://github.com/Doezer/Questarr/issues/6) | ✨ Set up Copilot instructions | CLOSED | no-merge-commit | unreviewed |
-| [pr #7](https://github.com/Doezer/Questarr/pull/7) | Add Copilot instructions file | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #8](https://github.com/Doezer/Questarr/issues/8) | Configuration centralisÃ©e des variables dâ€™environnement | CLOSED | no-merge-commit | unreviewed |
-| [issue #9](https://github.com/Doezer/Questarr/issues/9) | Corriger/exclure composants d'exemples (erreurs tsc) | CLOSED | no-merge-commit | unreviewed |
-| [issue #10](https://github.com/Doezer/Questarr/issues/10) | Endpoint agrÃ©gÃ© multi-indexers | CLOSED | no-merge-commit | unreviewed |
-| [issue #11](https://github.com/Doezer/Questarr/issues/11) | Action Download depuis grille dÃ©couverte | CLOSED | no-merge-commit | unreviewed |
-| [issue #12](https://github.com/Doezer/Questarr/issues/12) | Client qBittorrent minimal | CLOSED | no-merge-commit | unreviewed |
-| [issue #13](https://github.com/Doezer/Questarr/issues/13) | Validation centralisÃ©e req.body Zod | CLOSED | no-merge-commit | unreviewed |
-| [issue #14](https://github.com/Doezer/Questarr/issues/14) | config.ts + validation env zod | CLOSED | no-merge-commit | unreviewed |
-| [issue #15](https://github.com/Doezer/Questarr/issues/15) | Middleware d'erreur global | CLOSED | no-merge-commit | unreviewed |
-| [issue #16](https://github.com/Doezer/Questarr/issues/16) | config.ts avec validation env | CLOSED | no-merge-commit | unreviewed |
-| [issue #17](https://github.com/Doezer/Questarr/issues/17) | Types DownloadStatus partagÃ©s | CLOSED | no-merge-commit | unreviewed |
-| [issue #18](https://github.com/Doezer/Questarr/issues/18) | Filtrer champs AddGame cÃ´tÃ© client | CLOSED | no-merge-commit | unreviewed |
-| [issue #19](https://github.com/Doezer/Questarr/issues/19) | Bouton Download sur resultats IGDB | CLOSED | no-merge-commit | unreviewed |
-| [issue #20](https://github.com/Doezer/Questarr/issues/20) | Details torrent (fichier, trackers) | CLOSED | no-merge-commit | unreviewed |
-| [issue #21](https://github.com/Doezer/Questarr/issues/21) | Historique / Completed downloads | CLOSED | no-merge-commit | unreviewed |
-| [issue #22](https://github.com/Doezer/Questarr/issues/22) | Edition categories indexer (UI) | CLOSED | no-merge-commit | unreviewed |
-| [issue #23](https://github.com/Doezer/Questarr/issues/23) | Test connexion indexer (UI) | CLOSED | no-merge-commit | unreviewed |
-| [issue #24](https://github.com/Doezer/Questarr/issues/24) | fix game carousel UI | CLOSED | no-merge-commit | unreviewed |
-| [issue #25](https://github.com/Doezer/Questarr/issues/25) | Comptes utilisateurs / sessions | CLOSED | no-merge-commit | unreviewed |
+| [issue #1](https://github.com/Doezer/Questarr/issues/1) | Ajouter un middleware d’erreur global pour uniformiser réponses { error, details } | CLOSED | no-merge-commit | verified |
+| [issue #2](https://github.com/Doezer/Questarr/issues/2) | Créer  src/server/config.ts avec validation environnement (IGDB, DATABASE_URL). | CLOSED | no-merge-commit | verified |
+| [issue #3](https://github.com/Doezer/Questarr/issues/3) | Extraire types DownloadStatus partagés dans shared pour éviter duplication | CLOSED | no-merge-commit | verified |
+| [issue #4](https://github.com/Doezer/Questarr/issues/4) | Filtrer champs côté client avant POST (ne pas envoyer id, isReleased, inCollection dans AddGame). | CLOSED | no-merge-commit | verified |
+| [pr #5](https://github.com/Doezer/Questarr/pull/5) | Filter client-side fields before POST to prevent sending database-generated fields | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #6](https://github.com/Doezer/Questarr/issues/6) | ✨ Set up Copilot instructions | CLOSED | no-merge-commit | verified |
+| [pr #7](https://github.com/Doezer/Questarr/pull/7) | Add Copilot instructions file | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #8](https://github.com/Doezer/Questarr/issues/8) | Configuration centralisÃ©e des variables dâ€™environnement | CLOSED | no-merge-commit | verified |
+| [issue #9](https://github.com/Doezer/Questarr/issues/9) | Corriger/exclure composants d'exemples (erreurs tsc) | CLOSED | no-merge-commit | verified |
+| [issue #10](https://github.com/Doezer/Questarr/issues/10) | Endpoint agrÃ©gÃ© multi-indexers | CLOSED | no-merge-commit | verified |
+| [issue #11](https://github.com/Doezer/Questarr/issues/11) | Action Download depuis grille dÃ©couverte | CLOSED | no-merge-commit | verified |
+| [issue #12](https://github.com/Doezer/Questarr/issues/12) | Client qBittorrent minimal | CLOSED | no-merge-commit | verified |
+| [issue #13](https://github.com/Doezer/Questarr/issues/13) | Validation centralisÃ©e req.body Zod | CLOSED | no-merge-commit | verified |
+| [issue #14](https://github.com/Doezer/Questarr/issues/14) | config.ts + validation env zod | CLOSED | no-merge-commit | verified |
+| [issue #15](https://github.com/Doezer/Questarr/issues/15) | Middleware d'erreur global | CLOSED | no-merge-commit | verified |
+| [issue #16](https://github.com/Doezer/Questarr/issues/16) | config.ts avec validation env | CLOSED | no-merge-commit | verified |
+| [issue #17](https://github.com/Doezer/Questarr/issues/17) | Types DownloadStatus partagÃ©s | CLOSED | no-merge-commit | verified |
+| [issue #18](https://github.com/Doezer/Questarr/issues/18) | Filtrer champs AddGame cÃ´tÃ© client | CLOSED | no-merge-commit | verified |
+| [issue #19](https://github.com/Doezer/Questarr/issues/19) | Bouton Download sur resultats IGDB | CLOSED | no-merge-commit | verified |
+| [issue #20](https://github.com/Doezer/Questarr/issues/20) | Details torrent (fichier, trackers) | CLOSED | no-merge-commit | verified |
+| [issue #21](https://github.com/Doezer/Questarr/issues/21) | Historique / Completed downloads | CLOSED | no-merge-commit | verified |
+| [issue #22](https://github.com/Doezer/Questarr/issues/22) | Edition categories indexer (UI) | CLOSED | no-merge-commit | verified |
+| [issue #23](https://github.com/Doezer/Questarr/issues/23) | Test connexion indexer (UI) | CLOSED | no-merge-commit | verified |
+| [issue #24](https://github.com/Doezer/Questarr/issues/24) | fix game carousel UI | CLOSED | no-merge-commit | verified |
+| [issue #25](https://github.com/Doezer/Questarr/issues/25) | Comptes utilisateurs / sessions | CLOSED | no-merge-commit | verified |
 | [issue #26](https://github.com/Doezer/Questarr/issues/26) | Recherche multi-indexer aggregee | CLOSED | no-merge-commit | unreviewed |
 | [issue #27](https://github.com/Doezer/Questarr/issues/27) | Toasts pour operations background | CLOSED | no-merge-commit | unreviewed |
 | [issue #28](https://github.com/Doezer/Questarr/issues/28) | Dashboard stats globales | CLOSED | no-merge-commit | unreviewed |
@@ -71,7 +71,7 @@ Snapshot: 2026-10-12T21:06:33.750Z. 1147 items. All ancestry observations requir
 | [pr #63](https://github.com/Doezer/Questarr/pull/63) | [WIP] Add download button to IGDB/Torznab search results | CLOSED | no-merge-commit | unreviewed |
 | [pr #64](https://github.com/Doezer/Questarr/pull/64) | [WIP] Add background toast notifications for operations | CLOSED | no-merge-commit | unreviewed |
 | [pr #65](https://github.com/Doezer/Questarr/pull/65) | Filter client-only fields before POST in AddGameModal | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #66](https://github.com/Doezer/Questarr/pull/66) | Add Copilot instructions for repository | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #66](https://github.com/Doezer/Questarr/pull/66) | Add Copilot instructions for repository | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #67](https://github.com/Doezer/Questarr/pull/67) | Standardize error responses to { error, details } format | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #68](https://github.com/Doezer/Questarr/pull/68) | Add unit tests for IGDB fallback, insertGame status default, and Transmission 409 retry | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #69](https://github.com/Doezer/Questarr/pull/69) | Remove unused Neon and ws dependencies | MERGED | merge-commit-not-in-either-main-history | unreviewed |
@@ -230,14 +230,14 @@ Snapshot: 2026-10-12T21:06:33.750Z. 1147 items. All ancestry observations requir
 | [issue #228](https://github.com/Doezer/Questarr/issues/228) | Support for Usenet | CLOSED | no-merge-commit | unreviewed |
 | [issue #230](https://github.com/Doezer/Questarr/issues/230) | Smart release management | CLOSED | no-merge-commit | unreviewed |
 | [pr #233](https://github.com/Doezer/Questarr/pull/233) | Feature/usenet-support | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #237](https://github.com/Doezer/Questarr/issues/237) | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'nanoid' imported from /app/dist/server/vite.js | CLOSED | no-merge-commit | unreviewed |
+| [issue #237](https://github.com/Doezer/Questarr/issues/237) | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'nanoid' imported from /app/dist/server/vite.js | CLOSED | no-merge-commit | verified |
 | [pr #239](https://github.com/Doezer/Questarr/pull/239) | Add new logger and fix drizzle-kit dependency issue | CLOSED | no-merge-commit | unreviewed |
 | [issue #240](https://github.com/Doezer/Questarr/issues/240) | > questarr@1.0.0 db:push > drizzle-kit push sh: drizzle-kit: not found | CLOSED | no-merge-commit | unreviewed |
 | [issue #241](https://github.com/Doezer/Questarr/issues/241) | ./logger.js has no exported member named 'applogger' | CLOSED | no-merge-commit | unreviewed |
 | [issue #242](https://github.com/Doezer/Questarr/issues/242) | Not adding to qBittorrent behind Gluetun VPN | CLOSED | no-merge-commit | unreviewed |
 | [pr #243](https://github.com/Doezer/Questarr/pull/243) | ⚡ Bolt: Parallelize fallback search in IGDB client | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #244](https://github.com/Doezer/Questarr/pull/244) | 🎨 Palette: [UX improvement] Fix NotificationItem accessibility | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #245](https://github.com/Doezer/Questarr/issues/245) | App container has issues when first starting | CLOSED | no-merge-commit | unreviewed |
+| [issue #245](https://github.com/Doezer/Questarr/issues/245) | App container has issues when first starting | CLOSED | no-merge-commit | verified |
 | [issue #246](https://github.com/Doezer/Questarr/issues/246) | Fresh install from readme "does not exist on type" | CLOSED | no-merge-commit | unreviewed |
 | [pr #247](https://github.com/Doezer/Questarr/pull/247) | ⚡ Bolt: parallelize downloader requests in routes | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #248](https://github.com/Doezer/Questarr/pull/248) | 🎨 Palette: Add ARIA labels to icon-only buttons | MERGED | merge-commit-not-in-either-main-history | unreviewed |
@@ -252,7 +252,7 @@ Snapshot: 2026-10-12T21:06:33.750Z. 1147 items. All ancestry observations requir
 | [pr #257](https://github.com/Doezer/Questarr/pull/257) | chore(deps): bump @tanstack/react-query from 5.90.7 to 5.90.16 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #258](https://github.com/Doezer/Questarr/pull/258) | chore(deps): bump drizzle-orm from 0.44.7 to 0.45.1 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #259](https://github.com/Doezer/Questarr/pull/259) | chore(deps): bump recharts from 2.15.2 to 2.15.4 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #260](https://github.com/Doezer/Questarr/issues/260) | Error: Failed to connect to database. Please check your DATABASE_URL configuration. | CLOSED | no-merge-commit | unreviewed |
+| [issue #260](https://github.com/Doezer/Questarr/issues/260) | Error: Failed to connect to database. Please check your DATABASE_URL configuration. | CLOSED | no-merge-commit | not-applicable |
 | [issue #261](https://github.com/Doezer/Questarr/issues/261) | Error on startup connecting to databse | CLOSED | no-merge-commit | unreviewed |
 | [issue #262](https://github.com/Doezer/Questarr/issues/262) | Error Adding Usenet Download Via Prowlarr | CLOSED | no-merge-commit | unreviewed |
 | [pr #263](https://github.com/Doezer/Questarr/pull/263) | Downloader field behaviour alignment | MERGED | merge-commit-not-in-either-main-history | unreviewed |

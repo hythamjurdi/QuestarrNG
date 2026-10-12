@@ -10,6 +10,9 @@ describe("Config Module", () => {
     // Clear all environment variables used by config
     process.env = { ...originalEnv };
     delete process.env.SQLITE_DB_PATH;
+    delete process.env.DB_DIALECT;
+    delete process.env.DATABASE_URL;
+    delete process.env.DATABASE_POOL_MAX;
     delete process.env.IGDB_CLIENT_ID;
     delete process.env.IGDB_CLIENT_SECRET;
     delete process.env.PORT;
@@ -28,8 +31,73 @@ describe("Config Module", () => {
       // Import the config module - should not throw, should use default URL
       const { config } = await import("../config.js");
       expect(config.database.url).toBe("sqlite.db");
+      expect(config.database.dialect).toBe("sqlite");
+      expect(config.database.poolMax).toBe(10);
       expect(config.server.port).toBe(5000);
       expect(config.server.host).toBe("0.0.0.0");
+    });
+  });
+
+  describe("Postgres environment validation", () => {
+    it("loads a valid Postgres URL and pool size through the typed config", async () => {
+      process.env.DB_DIALECT = "postgres";
+      process.env.DATABASE_URL = "postgres://questarr:secret@localhost:5432/questarr";
+      process.env.DATABASE_POOL_MAX = "4";
+
+      const { config } = await import("../config.js");
+
+      expect(config.database.dialect).toBe("postgres");
+      expect(config.database.connectionString).toBe(process.env.DATABASE_URL);
+      expect(config.database.poolMax).toBe(4);
+    });
+
+    it("fails clearly when Postgres is selected without DATABASE_URL", async () => {
+      process.env.DB_DIALECT = "postgres";
+      const mockProcessExit = vi.spyOn(process, "exit").mockImplementation((code) => {
+        throw new Error(`process.exit called with code ${code}`);
+      });
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await expect(import("../config.js")).rejects.toThrow("process.exit called with code 1");
+
+      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("DATABASE_URL"));
+    });
+
+    it("rejects a non-Postgres URL when Postgres is selected", async () => {
+      process.env.DB_DIALECT = "postgres";
+      process.env.DATABASE_URL = "https://example.com/database";
+      const mockProcessExit = vi.spyOn(process, "exit").mockImplementation((code) => {
+        throw new Error(`process.exit called with code ${code}`);
+      });
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await expect(import("../config.js")).rejects.toThrow("process.exit called with code 1");
+
+      expect(mockProcessExit).toHaveBeenCalledWith(1);
+    });
+
+    it("rejects pool sizes that cannot support migration locking", async () => {
+      process.env.DB_DIALECT = "postgres";
+      process.env.DATABASE_URL = "postgres://questarr:secret@localhost:5432/questarr";
+      process.env.DATABASE_POOL_MAX = "1";
+      const mockProcessExit = vi.spyOn(process, "exit").mockImplementation((code) => {
+        throw new Error(`process.exit called with code ${code}`);
+      });
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await expect(import("../config.js")).rejects.toThrow("process.exit called with code 1");
+
+      expect(mockProcessExit).toHaveBeenCalledWith(1);
+    });
+
+    it("does not treat a stale URL as opting an installation into Postgres", async () => {
+      process.env.DATABASE_URL = "stale connection string from an old compose file";
+
+      const { config } = await import("../config.js");
+
+      expect(config.database.dialect).toBe("sqlite");
+      expect(config.database.connectionString).toBe(process.env.DATABASE_URL);
     });
   });
 

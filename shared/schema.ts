@@ -690,25 +690,30 @@ export const updateGameScreenshotSchema = z.object({
     .transform((val) => val?.trim() || null),
 });
 
-export const insertIndexerSchema = createInsertSchema(indexers, {
+const indexerInputSchema = createInsertSchema(indexers, {
   name: (schema) => schema.trim().min(1, "Name is required"),
   url: (schema) => schema.trim().min(1, "URL is required"),
   apiKey: (schema) => schema.trim(),
-})
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .refine((value) => value.protocol === "json-catalog" || value.apiKey.length > 0, {
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertIndexerSchema = indexerInputSchema.refine(
+  (value) => value.protocol === "json-catalog" || value.apiKey.length > 0,
+  {
     path: ["apiKey"],
     message: "API key is required",
-  });
+  }
+);
+
+export const updateIndexerSchema = indexerInputSchema.partial();
 
 // Trim helper for nullable/optional string fields in Zod schemas.
 const trimIfString = <T>(v: T): T => (typeof v === "string" ? (v.trim() as T) : v);
 
-export const insertDownloaderSchema = createInsertSchema(downloaders, {
+const downloaderInputSchema = createInsertSchema(downloaders, {
   name: (schema) => schema.trim().min(1, "Name is required"),
   type: (schema) => schema.trim().min(1, "Type is required"),
   url: (schema) => schema.trim().min(1, "Host is required"),
@@ -716,12 +721,13 @@ export const insertDownloaderSchema = createInsertSchema(downloaders, {
   password: (schema) => schema.transform(trimIfString),
   urlPath: (schema) => schema.transform(trimIfString),
   downloadPath: (schema) => schema.transform(trimIfString),
-})
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDownloaderSchema = downloaderInputSchema
   .refine((data) => !(data.type === "sabnzbd" && !data.username), {
     message: "API key is required for SABnzbd",
     path: ["username"],
@@ -736,6 +742,8 @@ export const insertDownloaderSchema = createInsertSchema(downloaders, {
       path: ["downloadPath"],
     }
   );
+
+export const updateDownloaderSchema = downloaderInputSchema.partial();
 
 export const insertGameDownloadSchema = createInsertSchema(gameDownloads).omit({
   id: true,
@@ -1080,21 +1088,25 @@ export interface DownloadTracker {
   error?: string | undefined;
 }
 
+export type DownloadStatusType =
+  | "downloading"
+  | "seeding"
+  | "completed"
+  | "paused"
+  | "error"
+  | "repairing"
+  | "unpacking"
+  | "completed_pending_import"
+  | "manual_review_required"
+  | "imported";
+
+export type DownloadType = "torrent" | "usenet";
+
 export interface DownloadStatus {
   id: string;
   name: string;
-  downloadType?: "torrent" | "usenet"; // Type of download
-  status:
-    | "downloading"
-    | "seeding"
-    | "completed"
-    | "paused"
-    | "error"
-    | "repairing"
-    | "unpacking"
-    | "completed_pending_import"
-    | "manual_review_required"
-    | "imported";
+  downloadType?: DownloadType; // Type of download
+  status: DownloadStatusType;
   progress: number; // 0-100
   downloadSpeed?: number | undefined; // bytes per second
   uploadSpeed?: number | undefined; // bytes per second (torrents only)
@@ -1115,6 +1127,10 @@ export interface DownloadStatus {
   // Questarr tracking fields
   trackedByQuestarr?: boolean; // True if the download was initiated through Questarr
   downloaderCategory?: string; // The category configured on the downloader (for display purposes)
+  downloaderId?: string;
+  downloaderName?: string;
+  gameStatus?: GameStatus;
+  grabs?: number;
 }
 
 export interface DownloadDetails extends DownloadStatus {

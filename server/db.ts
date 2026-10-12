@@ -3,6 +3,7 @@ import { connectSqlite } from "./db/connect-sqlite.js";
 import { connectPostgres } from "./db/connect-postgres.js";
 import { connectPglite } from "./db/connect-pglite.js";
 import type { AppDatabase, Dialect } from "./db/types.js";
+import { config } from "./config.js";
 
 export type { AppDatabase, Dialect } from "./db/types.js";
 
@@ -19,10 +20,10 @@ export type { AppDatabase, Dialect } from "./db/types.js";
  * which is a data-loss-class regression. Opting in has to be explicit.
  */
 function resolveDialect(): Dialect {
-  const requested = (process.env.DB_DIALECT ?? "").trim().toLowerCase();
+  const requested = config.database.dialect;
 
-  if (requested === "" || requested === "sqlite") {
-    if (process.env.DATABASE_URL) {
+  if (requested === "sqlite") {
+    if (config.database.connectionString) {
       logger.warn(
         "DATABASE_URL is set but DB_DIALECT is not 'postgres' -- continuing on SQLite. " +
           "Set DB_DIALECT=postgres to use the Postgres backend."
@@ -38,8 +39,8 @@ function resolveDialect(): Dialect {
     return "postgres";
   }
 
-  logger.error(`Unknown DB_DIALECT '${process.env.DB_DIALECT}'. Valid values: sqlite, postgres.`);
-  process.exit(1);
+  const exhaustiveCheck: never = requested;
+  return exhaustiveCheck;
 }
 
 /**

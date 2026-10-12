@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { sql } from "drizzle-orm";
 import * as pgSchema from "../../shared/schema.pg.js";
 import { logger } from "../logger.js";
+import { config } from "../config.js";
 import type { AppDatabase, DatabaseConnection } from "./types.js";
 
 const { Pool } = pg;
@@ -15,7 +16,7 @@ const { Pool } = pg;
  * diagnostics below target those instead.
  */
 export function connectPostgres(): DatabaseConnection {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = config.database.connectionString;
   if (!connectionString) {
     logger.error(
       "DB_DIALECT=postgres requires DATABASE_URL to be set, " +
@@ -24,14 +25,14 @@ export function connectPostgres(): DatabaseConnection {
     process.exit(1);
   }
 
-  const max = Number(process.env.DATABASE_POOL_MAX ?? 10);
+  const max = config.database.poolMax;
   // runPgMigrations() checks out one connection for the whole run to hold the
   // migration advisory lock, then migrate() needs a second one from the same
   // pool to apply migrations. A pool of 1 deadlocks startup silently: the lock
   // holder never releases, migrate() waits forever for a connection that will
   // never free up.
   if (!Number.isFinite(max) || max < 2) {
-    logger.error(`DATABASE_POOL_MAX must be at least 2, got: ${process.env.DATABASE_POOL_MAX}`);
+    logger.error(`DATABASE_POOL_MAX must be at least 2, got: ${max}`);
     process.exit(1);
   }
 

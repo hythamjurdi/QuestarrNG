@@ -21,7 +21,9 @@ import {
   updateGameInstalledVersionSchema,
   updateGameTargetPlatformSchema,
   insertIndexerSchema,
+  updateIndexerSchema,
   insertDownloaderSchema,
+  updateDownloaderSchema,
   insertNotificationSchema,
   updateUserSettingsSchema,
   updatePasswordSchema,
@@ -3398,7 +3400,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const { id } = req.params as { id: string };
-        const updates = { ...req.body }; // Partial updates
+        const parsedUpdates = updateIndexerSchema.safeParse(req.body);
+        if (!parsedUpdates.success) {
+          return respondWithZodError(res, parsedUpdates.error, "Invalid indexer data");
+        }
+        const updates = Object.fromEntries(
+          Object.entries(parsedUpdates.data).filter(([, value]) => value !== undefined)
+        ) as Parameters<typeof storage.updateIndexer>[1];
 
         if (updates.url && !(await isSafeUrl(updates.url))) {
           return res.status(400).json({ error: "Invalid or unsafe URL" });
@@ -3605,7 +3613,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const { id } = req.params as { id: string };
-        const updates = { ...req.body }; // Partial updates
+        const parsedUpdates = updateDownloaderSchema.safeParse(req.body);
+        if (!parsedUpdates.success) {
+          return respondWithZodError(res, parsedUpdates.error, "Invalid downloader data");
+        }
+        const updates = Object.fromEntries(
+          Object.entries(parsedUpdates.data).filter(([, value]) => value !== undefined)
+        ) as Parameters<typeof storage.updateDownloader>[1];
 
         const currentDownloader = await storage.getDownloader(id);
         if (!currentDownloader) {

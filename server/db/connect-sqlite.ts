@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs";
 import * as schema from "../../shared/schema.js";
 import { logger } from "../logger.js";
+import { config } from "../config.js";
 import type { DatabaseConnection } from "./types.js";
 
 /**
@@ -17,7 +18,10 @@ import type { DatabaseConnection } from "./types.js";
 export function connectSqlite(): DatabaseConnection {
   // In production, the database file should be in a persistent location
   // For development, it's in the project root
-  let dbPath = process.env.SQLITE_DB_PATH || path.join(process.cwd(), "sqlite.db");
+  let dbPath = config.database.url;
+  if (dbPath !== ":memory:" && !path.isAbsolute(dbPath)) {
+    dbPath = path.join(process.cwd(), dbPath);
+  }
 
   // Ensure directory exists
   const dbDir = path.dirname(dbPath);

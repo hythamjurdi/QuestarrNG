@@ -1,42 +1,8 @@
-/**
- * Download status type for torrent and usenet clients
- */
-export type DownloadStatusType =
-  "downloading" | "seeding" | "completed" | "paused" | "error" | "repairing" | "unpacking";
+import type { DownloadStatus, DownloadStatusType, DownloadType } from "@shared/schema";
 
-/**
- * Download type
- */
-export type DownloadType = "torrent" | "usenet";
+export type { DownloadStatusType, DownloadType };
 
-/**
- * Download data interface
- */
-export interface DownloadData {
-  id: string;
-  name: string;
-  downloadType?: DownloadType;
-  status: DownloadStatusType;
-  progress: number;
-  downloadSpeed?: number;
-  uploadSpeed?: number;
-  eta?: number;
-  size?: number;
-  downloaded?: number;
-  // Torrent-specific
-  seeders?: number;
-  leechers?: number;
-  ratio?: number;
-  // Usenet-specific
-  repairStatus?: "good" | "repairing" | "failed";
-  unpackStatus?: "unpacking" | "completed" | "failed";
-  age?: number;
-  grabs?: number;
-  // Common
-  error?: string;
-  downloaderId: string;
-  downloaderName: string;
-}
+export type DownloadData = DownloadStatus;
 
 /**
  * Format bytes to human-readable string

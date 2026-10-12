@@ -8,86 +8,136 @@ const LEGACY_DEFAULT_JWT_SECRET = "questarr-default-secret-change-me";
  * Environment configuration schema with Zod validation.
  * Validates and provides typed access to required environment variables.
  */
-const envSchema = z.object({
-  // Database configuration
-  SQLITE_DB_PATH: z.string().optional(),
+const envSchema = z
+  .object({
+    // Database configuration. A connection URL never selects Postgres on its own:
+    // older SQLite installs may still have a stale DATABASE_URL in their Compose env.
+    SQLITE_DB_PATH: z.string().optional(),
+    DB_DIALECT: z
+      .string()
+      .optional()
+      .transform((dialect) => dialect?.trim().toLowerCase() || "sqlite")
+      .pipe(z.enum(["sqlite", "postgres", "postgresql"])),
+    DATABASE_URL: z.string().optional(),
+    DATABASE_POOL_MAX: z.string().optional(),
 
-  // CORS configuration
-  ALLOWED_ORIGINS: z.string().optional(),
+    // CORS configuration
+    ALLOWED_ORIGINS: z.string().optional(),
 
-  // JWT configuration
-  JWT_SECRET: z
-    .string()
-    .optional()
-    .refine((value) => value !== LEGACY_DEFAULT_JWT_SECRET, {
-      message:
-        "JWT_SECRET is set to an insecure legacy default. Remove it to auto-generate, or set a strong random value.",
-    }),
-
-  // IGDB API configuration (optional, but required for game discovery features)
-  IGDB_CLIENT_ID: z.string().optional(),
-  IGDB_CLIENT_SECRET: z.string().optional(),
-
-  // NexusMods API configuration (optional)
-  NEXUSMODS_API_KEY: z.string().optional(),
-
-  // Steam Web API configuration (optional; required for the achievements
-  // section in the game details Journal tab — player wishlist sync does not need it)
-  STEAM_API_KEY: z.string().optional(),
-
-  // Encryption key for indexer/downloader credentials at rest (optional;
-  // auto-generated and persisted to the DB if unset). Must be a 64-char hex
-  // string (32 bytes) when provided, for use as an AES-256 key.
-  CREDENTIALS_ENCRYPTION_KEY: z
-    .string()
-    .optional()
-    .refine((value) => !value || /^[0-9a-fA-F]{64}$/.test(value), {
-      message:
-        "CREDENTIALS_ENCRYPTION_KEY must be a 64-character hex string (32 bytes) for AES-256.",
-    }),
-
-  // Server configuration
-  PORT: z
-    .string()
-    .default("5000")
-    .refine((val) => !Number.isNaN(Number.parseInt(val, 10)) && Number.parseInt(val, 10) > 0, {
-      message: "PORT must be a valid positive integer",
-    })
-    .transform((val) => Number.parseInt(val, 10)),
-  HOST: z.string().default("0.0.0.0"),
-  NODE_ENV: z.enum(["development", "production", "test"]).default("production"),
-  DISABLE_HSTS: z
-    .string()
-    .transform((val) => val === "true")
-    .optional(),
-  APP_URL: z.string().url().optional(),
-
-  // Reverse proxy trust (see docs/REVERSE_PROXY.md). Off by default: only
-  // when set does Express take the client IP and protocol from
-  // X-Forwarded-For / X-Forwarded-Proto.
-  TRUST_PROXY: z
-    .string()
-    .optional()
-    .refine((value) => parseTrustProxy(value) !== null, {
-      message:
-        'TRUST_PROXY must be "false", "true", a number of proxy hops from 1 to 10, or a comma-separated list of proxy IPs/subnets (e.g. 172.16.0.0/12, loopback).',
-    })
-    .transform((value) => parseTrustProxy(value) ?? false),
-
-  // URL base for reverse-proxy subdirectory deployments (e.g. "/Questarr" for
-  // https://host/Questarr/). Optional; defaults to serving from the root.
-  QUESTARR_BASE_PATH: z
-    .string()
-    .optional()
-    .refine(
-      (value) =>
-        !value || value === "/" || /^\/?[a-zA-Z0-9](?:[a-zA-Z0-9/_-]*[a-zA-Z0-9])?\/?$/.test(value),
-      {
+    // JWT configuration
+    JWT_SECRET: z
+      .string()
+      .optional()
+      .refine((value) => value !== LEGACY_DEFAULT_JWT_SECRET, {
         message:
-          "QUESTARR_BASE_PATH must contain only letters, numbers, hyphens, underscores, and slashes (e.g. /Questarr).",
+          "JWT_SECRET is set to an insecure legacy default. Remove it to auto-generate, or set a strong random value.",
+      }),
+
+    // IGDB API configuration (optional, but required for game discovery features)
+    IGDB_CLIENT_ID: z.string().optional(),
+    IGDB_CLIENT_SECRET: z.string().optional(),
+
+    // NexusMods API configuration (optional)
+    NEXUSMODS_API_KEY: z.string().optional(),
+
+    // Steam Web API configuration (optional; required for the achievements
+    // section in the game details Journal tab — player wishlist sync does not need it)
+    STEAM_API_KEY: z.string().optional(),
+
+    // Encryption key for indexer/downloader credentials at rest (optional;
+    // auto-generated and persisted to the DB if unset). Must be a 64-char hex
+    // string (32 bytes) when provided, for use as an AES-256 key.
+    CREDENTIALS_ENCRYPTION_KEY: z
+      .string()
+      .optional()
+      .refine((value) => !value || /^[0-9a-fA-F]{64}$/.test(value), {
+        message:
+          "CREDENTIALS_ENCRYPTION_KEY must be a 64-character hex string (32 bytes) for AES-256.",
+      }),
+
+    // Server configuration
+    PORT: z
+      .string()
+      .default("5000")
+      .refine((val) => !Number.isNaN(Number.parseInt(val, 10)) && Number.parseInt(val, 10) > 0, {
+        message: "PORT must be a valid positive integer",
+      })
+      .transform((val) => Number.parseInt(val, 10)),
+    HOST: z.string().default("0.0.0.0"),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("production"),
+    DISABLE_HSTS: z
+      .string()
+      .transform((val) => val === "true")
+      .optional(),
+    APP_URL: z.string().url().optional(),
+
+    // Reverse proxy trust (see docs/REVERSE_PROXY.md). Off by default: only
+    // when set does Express take the client IP and protocol from
+    // X-Forwarded-For / X-Forwarded-Proto.
+    TRUST_PROXY: z
+      .string()
+      .optional()
+      .refine((value) => parseTrustProxy(value) !== null, {
+        message:
+          'TRUST_PROXY must be "false", "true", a number of proxy hops from 1 to 10, or a comma-separated list of proxy IPs/subnets (e.g. 172.16.0.0/12, loopback).',
+      })
+      .transform((value) => parseTrustProxy(value) ?? false),
+
+    // URL base for reverse-proxy subdirectory deployments (e.g. "/Questarr" for
+    // https://host/Questarr/). Optional; defaults to serving from the root.
+    QUESTARR_BASE_PATH: z
+      .string()
+      .optional()
+      .refine(
+        (value) =>
+          !value ||
+          value === "/" ||
+          /^\/?[a-zA-Z0-9](?:[a-zA-Z0-9/_-]*[a-zA-Z0-9])?\/?$/.test(value),
+        {
+          message:
+            "QUESTARR_BASE_PATH must contain only letters, numbers, hyphens, underscores, and slashes (e.g. /Questarr).",
+        }
+      ),
+  })
+  .superRefine((env, context) => {
+    if (env.DB_DIALECT !== "postgres" && env.DB_DIALECT !== "postgresql") return;
+
+    if (!env.DATABASE_URL) {
+      context.addIssue({
+        code: "custom",
+        path: ["DATABASE_URL"],
+        message: "DATABASE_URL must be set when DB_DIALECT=postgres.",
+      });
+    } else {
+      try {
+        const databaseUrl = new URL(env.DATABASE_URL);
+        if (databaseUrl.protocol !== "postgres:" && databaseUrl.protocol !== "postgresql:") {
+          context.addIssue({
+            code: "custom",
+            path: ["DATABASE_URL"],
+            message: "DATABASE_URL must use the postgres:// or postgresql:// scheme.",
+          });
+        }
+      } catch {
+        context.addIssue({
+          code: "custom",
+          path: ["DATABASE_URL"],
+          message: "DATABASE_URL must be a valid Postgres connection URL.",
+        });
       }
-    ),
-});
+    }
+
+    if (env.DATABASE_POOL_MAX !== undefined) {
+      const poolMax = Number(env.DATABASE_POOL_MAX);
+      if (!Number.isSafeInteger(poolMax) || poolMax < 2) {
+        context.addIssue({
+          code: "custom",
+          path: ["DATABASE_POOL_MAX"],
+          message: "DATABASE_POOL_MAX must be an integer of at least 2.",
+        });
+      }
+    }
+  });
 
 /**
  * Normalizes a configured base path to a form with a leading slash and no
@@ -134,6 +184,12 @@ const databaseUrl = env.SQLITE_DB_PATH || "sqlite.db";
 export const config = {
   database: {
     url: databaseUrl,
+    dialect: env.DB_DIALECT,
+    connectionString: env.DATABASE_URL,
+    poolMax:
+      env.DB_DIALECT === "postgres" || env.DB_DIALECT === "postgresql"
+        ? Number(env.DATABASE_POOL_MAX ?? 10)
+        : 10,
   },
   auth: {
     jwtSecret: env.JWT_SECRET,

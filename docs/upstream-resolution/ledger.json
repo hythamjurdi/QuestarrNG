@@ -30,10 +30,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork installs a global Express error handler after the routes and returns structured error/details responses, sanitizing production 5xx messages."
+        ],
+        "acceptance": [
+          "Request errors use the shared response handler and production responses do not expose internal messages."
+        ],
+        "evidence": [
+          "server/middleware.ts; server/index.ts; server/__tests__/security_error_handling.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -50,11 +56,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Typed Zod configuration now covers IGDB and the SQLite/Postgres settings, including conditional Postgres URL validation."
+        ],
+        "acceptance": [
+          "Valid Postgres configuration parses, required or malformed Postgres URLs fail clearly, SQLite remains the default when a stale URL is present."
+        ],
+        "evidence": [
+          "server/config.ts; server/__tests__/config.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:8"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -70,11 +84,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The client now uses the shared DownloadStatus contract and no longer maintains duplicate status interfaces."
+        ],
+        "acceptance": [
+          "Shared status/type definitions compile across downloads, utilities, and background notifications."
+        ],
+        "evidence": [
+          "shared/schema.ts; client/src/lib/downloads-utils.ts; client/src/pages/downloads.tsx; client/src/hooks/use-background-notifications.ts; docs/pr-evidence/upstream-download-status.png; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:17"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -90,11 +112,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The add-game payload mapper strips database-generated and future-state fields before POST."
+        ],
+        "acceptance": [
+          "id, createdAt, updatedAt, isReleased, and inCollection do not reach the API payload."
+        ],
+        "evidence": [
+          "client/src/lib/utils.ts; client/__tests__/utils.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "pr:5"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -110,11 +140,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "a85a6a999fe7d85432c01006548b7fd282f24ffc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The merged upstream payload-filtering change is present in the fork through the shared mapper."
+        ],
+        "acceptance": [
+          "Create and collection-add flows use only InsertGame fields."
+        ],
+        "evidence": [
+          "client/src/lib/utils.ts; client/__tests__/utils.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:4",
+          "issue:18"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -130,11 +169,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Repository-specific Copilot instructions now describe the current QuestarrNG stack, code map, security patterns, and validation workflow."
+        ],
+        "acceptance": [
+          "The instructions reflect current versions and warn against duplicating shared types or bypassing safe URL handling."
+        ],
+        "evidence": [
+          ".github/copilot-instructions.md; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "pr:7"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -150,11 +197,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c851b23a939ed5fc4464c4433015b1b4ee178d42",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The repository-specific Copilot instruction file exists and is current for QuestarrNG."
+        ],
+        "acceptance": [
+          "Instructions accurately describe architecture, tools, and contributor checks."
+        ],
+        "evidence": [
+          ".github/copilot-instructions.md; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:6"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -170,11 +225,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Central typed Zod configuration is present and now includes the Postgres dialect, connection URL, and pool size."
+        ],
+        "acceptance": [
+          "Required values are validated for the selected dialect and database modules consume typed settings."
+        ],
+        "evidence": [
+          "server/config.ts; server/db.ts; server/db/connect-postgres.ts; server/__tests__/config.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:2",
+          "issue:14",
+          "issue:16"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -190,10 +255,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The TypeScript project excludes example directories."
+        ],
+        "acceptance": [
+          "tsconfig.json excludes **/examples/** and npm run check passes."
+        ],
+        "evidence": [
+          "tsconfig.json; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -210,10 +281,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The aggregated GET /api/indexers/search route searches all enabled indexers."
+        ],
+        "acceptance": [
+          "The route returns merged results/errors and has dedicated coverage."
+        ],
+        "evidence": [
+          "server/routes.ts; server/search.ts; server/__tests__/indexers-search.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -230,11 +307,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Discovery game cards open the game download flow, which searches configured sources and submits the selected release to a compatible downloader."
+        ],
+        "acceptance": [
+          "A discovery result can be added to the library and downloaded through the configured downloader flow."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx; client/src/components/GameDownloadDialog.tsx; client/__tests__/GameCard.remaining.test.tsx; tests/e2e/discover.spec.ts"
+        ],
+        "dependencies": [
+          "issue:19"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -250,10 +335,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The qBittorrent client supports authentication, adding torrents, listing status, and details."
+        ],
+        "acceptance": [
+          "The client is covered by feature and regression suites."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts; server/__tests__/qbittorrent_features.test.ts; server/__tests__/downloaders_qbittorrent_regression.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -270,10 +361,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer and downloader POST/PATCH bodies are parsed with shared Zod schemas; PATCH drops unknown properties before persistence."
+        ],
+        "acceptance": [
+          "Both PATCH routes pass only schema-approved fields to storage and focused route tests pass."
+        ],
+        "evidence": [
+          "shared/schema.ts; server/routes.ts; server/__tests__/api_routes_extended.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -290,11 +387,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Duplicate environment-validation request; the shared Zod config covers IGDB, explicit Postgres selection, DATABASE_URL, and pool size."
+        ],
+        "acceptance": [
+          "Configuration validates and keeps SQLite as the safe default."
+        ],
+        "evidence": [
+          "server/config.ts; server/__tests__/config.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:2",
+          "issue:8"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -310,11 +416,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Same global error middleware request as issue #1; the handler is installed and tested."
+        ],
+        "acceptance": [
+          "Errors are handled consistently as {error,details}."
+        ],
+        "evidence": [
+          "server/middleware.ts; server/index.ts; server/__tests__/security_error_handling.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:1"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -330,11 +444,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Duplicate environment-validation request; the shared Zod config covers IGDB, explicit Postgres selection, DATABASE_URL, and pool size."
+        ],
+        "acceptance": [
+          "Configuration validates and keeps SQLite as the safe default."
+        ],
+        "evidence": [
+          "server/config.ts; server/__tests__/config.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:2",
+          "issue:8"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -350,11 +473,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Duplicate of issue #3; the shared DownloadStatus contract is consumed by the client."
+        ],
+        "acceptance": [
+          "Client typecheck passes and the page renders after loading."
+        ],
+        "evidence": [
+          "shared/schema.ts; client/src/pages/downloads.tsx; docs/pr-evidence/upstream-download-status.png; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:3"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -370,11 +501,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Duplicate add-game payload filtering request; the shared mapper removes generated and future-state fields."
+        ],
+        "acceptance": [
+          "POST requests contain only valid InsertGame data."
+        ],
+        "evidence": [
+          "client/src/lib/utils.ts; client/__tests__/utils.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:4",
+          "pr:5"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -390,11 +530,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "IGDB discovery cards include a Download action that opens the downloader-selection flow."
+        ],
+        "acceptance": [
+          "Users can start a download from a discovery game result."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx; client/__tests__/GameCard.remaining.test.tsx; tests/e2e/discover.spec.ts"
+        ],
+        "dependencies": [
+          "issue:11"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -410,10 +558,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The download details modal and API expose file and tracker information."
+        ],
+        "acceptance": [
+          "The details view has files and trackers tabs and the route is covered."
+        ],
+        "evidence": [
+          "client/src/components/DownloadDetailsModal.tsx; server/routes.ts; server/__tests__/api_routes.test.ts; client/__tests__/DownloadDetailsModal.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -430,10 +584,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The aggregate downloads endpoint includes each enabled client's reported downloads, including completed/history entries; the page has completed status filters, and Usenet clients query history/archive."
+        ],
+        "acceptance": [
+          "Completed results remain visible and both Usenet clients query their history/archive APIs."
+        ],
+        "evidence": [
+          "server/routes.ts; server/downloaders/sabnzbd.ts; server/downloaders/nzbget.ts; client/src/pages/downloads.tsx; client/__tests__/DownloadsPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -450,10 +610,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer settings include a multi-select for Torznab/Newznab categories."
+        ],
+        "acceptance": [
+          "Users can load and edit saved indexer categories."
+        ],
+        "evidence": [
+          "client/src/pages/indexers.tsx; client/src/components/ui/multi-select.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -470,10 +636,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer rows and the edit/create form expose test-connection actions."
+        ],
+        "acceptance": [
+          "Saved indexers and unsaved configurations can be tested through their corresponding API routes."
+        ],
+        "evidence": [
+          "client/src/pages/indexers.tsx; server/routes.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -490,10 +662,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The discovery carousels use bounded responsive sections and previous/next controls backed by the carousel API."
+        ],
+        "acceptance": [
+          "Carousel sections expose scroll controls and fit within the page viewport."
+        ],
+        "evidence": [
+          "client/src/components/GameCarouselSection.tsx; client/src/components/ui/carousel.tsx; client/__tests__/DiscoverPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -510,10 +688,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Initial account setup, login, logout, password changes, and authenticated JWT cookie sessions are implemented."
+        ],
+        "acceptance": [
+          "The setup/login journey and auth behavior are covered by server and browser tests."
+        ],
+        "evidence": [
+          "server/routes.ts; server/auth.ts; server/__tests__/auth.test.ts; tests/e2e/auth.spec.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1330,11 +1514,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "737c403c3c6b0436e62c0c90083dc68941928e1b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The later Copilot-instructions PR request is met by the maintained QuestarrNG-specific instruction file."
+        ],
+        "acceptance": [
+          "The file reflects current architecture and validation practices."
+        ],
+        "evidence": [
+          ".github/copilot-instructions.md; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
+        "dependencies": [
+          "issue:6",
+          "pr:7"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -4510,10 +4703,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "nanoid is a production dependency and resolves in the built production image."
+        ],
+        "acceptance": [
+          "The production container starts and passes the health route without ERR_MODULE_NOT_FOUND."
+        ],
+        "evidence": [
+          "package.json; Dockerfile; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": true
@@ -4650,10 +4849,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The production image includes both Drizzle migration journals; a fresh container applied migrations and started successfully."
+        ],
+        "acceptance": [
+          "The initial migration journal is packaged with the production target and startup health succeeds."
+        ],
+        "evidence": [
+          "Dockerfile; migrations/meta/_journal.json; migrations-pg/meta/_journal.json; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": true
@@ -4950,10 +5155,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The reported failure was a user Compose hostname/internal-port configuration issue; the reporter confirmed a clean pull fixed it."
+        ],
+        "acceptance": [
+          "No application change is required for the issue as reported."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/260 comments; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": true
@@ -17685,7 +17896,9 @@
         "acceptance": [
           "Record the protocol for future product review; no implementation is required to resolve this issue."
         ],
-        "evidence": ["https://github.com/Doezer/Questarr/issues/906"],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/906"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18026,7 +18239,9 @@
         "findings": [
           "The library and compact game cards show an Update badge when a search result matches a newer update. Background update availability sends an owner-scoped event."
         ],
-        "acceptance": ["Desktop/mobile visual journey plus badge and cron ownership tests pass."],
+        "acceptance": [
+          "Desktop/mobile visual journey plus badge and cron ownership tests pass."
+        ],
         "evidence": [
           "client/__tests__/SearchResultsBadge.test.tsx",
           "server/__tests__/cron_autosearch.test.ts",
@@ -21155,7 +21370,9 @@
           "https://github.com/Doezer/Questarr/pull/1083/files",
           "docs/upstream-resolution/sources.json (PR #1083 and issue #906 records)"
         ],
-        "dependencies": ["issue:906"]
+        "dependencies": [
+          "issue:906"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -21381,7 +21598,9 @@
           "docs/pr-evidence/upstream-release-scoring-search.png",
           "docs/upstream-resolution/evidence/validation-batch-3.txt"
         ],
-        "dependencies": ["pr:1166"]
+        "dependencies": [
+          "pr:1166"
+        ]
       },
       "sourceChangedSinceReview": false
     },

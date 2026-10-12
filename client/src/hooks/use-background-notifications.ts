@@ -1,16 +1,7 @@
 import { useEffect, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-
-interface DownloadStatus {
-  id: string;
-  name: string;
-  status: "downloading" | "seeding" | "completed" | "paused" | "error";
-  progress: number;
-  error?: string;
-  downloaderId: string;
-  downloaderName: string;
-}
+import type { DownloadStatus } from "@shared/schema";
 
 interface DownloadsResponse {
   downloads: DownloadStatus[];
