@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T22:56:22.454Z",
-  "forkHead": "7768f736ca2b0baae0bb65c7726596811fceec24",
+  "capturedAt": "2026-10-12T23:06:26.801Z",
+  "forkHead": "c7daebcb637d30e3f08a713e9bd1825ece9a156e",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -3721,10 +3721,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b1d18b6ca71179f720d5b79848b2091534baa8e5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "React.memo was present, but Discover created fresh query-key arrays on every parent render, so unaffected carousels still rendered again. Query keys are now memoized per carousel dependency, and handlers depend on stable mutation functions.",
+          "A regression test changes the genre and confirms Popular Games keeps the same query key and callback references without rerendering."
+        ],
+        "acceptance": [
+          "Unrelated carousel sections skip renders when another carousel's filter changes.",
+          "Each section still gets a new query key when its own filter changes."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/141",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3741,10 +3751,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "94669db434d2326251cc07fe0bfa2f43ca13281c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
+        "status": "superseded",
+        "findings": [
+          "This change memoized handlers in the upstream Dashboard, which no longer exists in QuestarrNG. The fork uses separate pages and PageToolbar; there is no Dashboard or SearchBar handler set left to port."
+        ],
         "acceptance": [],
-        "evidence": [],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/142",
+          "client/src/components/PageToolbar.tsx",
+          "client/src/pages/discover.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3761,10 +3777,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c708eeae01586d3d8db0a5c7ca93ee296d23ad0d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Background refetches show a centered spinner over dimmed stale results. The section exposes aria-busy and now announces the update with a polite status message."
+        ],
+        "acceptance": [
+          "A visible progress indicator appears while cached carousel results refresh.",
+          "Assistive technology receives a clear update announcement."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/143",
+          "client/src/components/GameCarouselSection.tsx",
+          "client/__tests__/GameCarouselSection.test.tsx",
+          "docs/pr-evidence/upstream-carousel-refresh-accessibility.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3781,10 +3807,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "673d818cd9feb608b64a6af3717552111ddd0ac9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Refreshing results are removed from the accessibility tree and the stale carousel is inert, preventing keyboard focus from entering controls that are temporarily hidden."
+        ],
+        "acceptance": [
+          "Assistive technology does not read stale carousel content during refresh.",
+          "Keyboard navigation cannot focus stale carousel controls during refresh."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/144",
+          "client/src/components/GameCarouselSection.tsx",
+          "client/__tests__/GameCarouselSection.test.tsx",
+          "docs/pr-evidence/upstream-carousel-refresh-accessibility.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3801,10 +3837,13 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d1fdcdae1f7bb525088024b72024aa7c2c80a9cc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": ["GameCard cover images already use the browser's lazy-loading behavior."],
+        "acceptance": ["Cover images below the initial viewport are marked for lazy loading."],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/145",
+          "client/src/components/GameCard.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3821,10 +3860,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The authenticated GET /api/config response omits the database URL and database connection fields. The shared Config contract and Settings page also contain no database URL field."
+        ],
+        "acceptance": [
+          "The public configuration response exposes no database URL or connection string."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/146",
+          "server/routes.ts",
+          "shared/schema.ts",
+          "client/src/pages/settings.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3841,10 +3889,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "6cddc58a5a0970cafeebe58c689b478ee7552a77",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Genre and platform selections feed through 300 ms debounced values in the carousel query keys and fetch functions."
+        ],
+        "acceptance": [
+          "Changing a genre or platform waits 300 ms before triggering its discovery query."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/147",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

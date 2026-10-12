@@ -401,3 +401,30 @@ remained `false`. `npm run test:stack` could not start locally because
 `qbittorrent-nox` is not installed; the updated CI stack workflow installs the
 required download clients. See
 [reconciliation evidence](evidence/validation-upstream-main-reconcile.txt).
+
+## Follow-up: carousel performance and accessibility (#141–147)
+
+Discover now memoizes each carousel's query key by its own filters. Stable
+mutation callbacks keep unrelated sections from rerendering when a genre or
+platform changes. A regression test confirms that changing the genre leaves the
+Popular Games key and callbacks untouched. PR #142's Dashboard handlers are
+superseded by the fork's separate-page layout and PageToolbar.
+
+Carousel refreshes keep their spinner and dimmed stale results, announce
+“Updating [section]…” to assistive technology, and make the stale carousel
+inert while it is hidden. A headless browser drove the running app through a
+delayed refresh; the screenshot shows the live state:
+[carousel refresh](../pr-evidence/upstream-carousel-refresh-accessibility.png).
+GameCard cover images already load lazily, `/api/config` omits database
+connection details, and Discover genre/platform filters already debounce by
+300 ms.
+
+The full suite passed with **4,027 tests and 7 skips**. The focused carousel
+tests also passed after the final accessibility markup change. TypeScript,
+lint, format check, and production build passed; Vite still reports its existing
+large-chunk advisory. Upstream inventory remains at 1,147 records with no
+source changes since review. The ledger now has **152 verified**, **4
+superseded**, **985 unreviewed**, **4 not-applicable**, **1
+implemented-but-unverified**, and **1 needs-implementation** record. Issue #37
+remains the outstanding implementation item. See
+[batch 15 evidence](evidence/validation-batch-15.txt).

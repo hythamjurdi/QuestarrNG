@@ -1,0 +1,43 @@
+Batch 15 upstream review and implementation — 2026-10-12
+
+Scope reviewed
+- PRs #141–147, including their current descriptions, diffs, comments, and
+  submitted review records. No submitted code reviews were present. The only
+  comments on the code PRs were generic automation messages; #146 also had
+  maintainer/Jules rebase discussion.
+- Refreshed `scripts/audit-upstream.mjs` against upstream main at
+  `ad69b8ca44c7456d9183422fbdfdefbb67a771e9`. The inventory remains 1,147
+  items and none changed since review.
+
+Disposition and implementation
+- #141 is verified. Per-carousel query keys are memoized, and handlers use
+  stable mutation functions. A Discover regression test confirms changing the
+  genre does not rerender the unrelated Popular Games section.
+- #142 is superseded: the upstream Dashboard does not exist in QuestarrNG's
+  separate-page architecture. The fork uses PageToolbar and page-specific
+  search/filter handlers.
+- #143 and #144 are verified. Background refreshes show a spinner over dimmed
+  results, announce the update to screen readers, hide stale results from the
+  accessibility tree, and make stale controls inert during the refresh.
+- #145 is verified: GameCard cover images already request lazy loading.
+- #146 is verified: GET `/api/config` returns no database URL or connection
+  details, and the shared Config type and Settings page expose no such field.
+- #147 is verified: genre and platform selections are debounced by 300 ms.
+
+Validation
+- Focused Discover and carousel tests: 7 passed. This focused suite was rerun
+  after moving the status announcement outside the `aria-busy` subtree.
+- Full `npm test`: 4,027 passed, 7 skipped (249 files passed, 1 skipped).
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run build`
+  passed. Vite emitted the existing advisory for chunks larger than 500 kB.
+- Launched `npm run dev:test`, authenticated against its isolated SQLite test
+  database, and drove the Discover page with headless Playwright. IGDB responses
+  were stubbed; the Popular Games refetch was delayed until the screenshot was
+  captured. The screenshot at
+  `docs/pr-evidence/upstream-carousel-refresh-accessibility.png` shows the
+  spinner and dimmed results. The browser also verified that the carousel is
+  `aria-hidden` and `inert`, and that the status message is exposed.
+
+Ledger after this batch: 152 verified, 4 superseded, 985 unreviewed, 4
+not-applicable, 1 implemented-but-unverified, and 1 needs-implementation.
+Issue #37 remains the outstanding implementation item.

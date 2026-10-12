@@ -212,6 +212,37 @@ export default function DiscoverPage() {
     [carouselFilterKey, hiddenRawgIds, ownedRawgIds, wantedRawgIds, hideOwned, hideWanted]
   );
 
+  // Keep each carousel key stable until one of its own filters changes. React.memo
+  // can then skip unaffected carousels when a different filter or page control moves.
+  const igdbCarouselQueryKeys = useMemo(
+    () => ({
+      popular: ["/api/igdb/popular", ...carouselFilterKey],
+      recent: ["/api/igdb/recent", ...carouselFilterKey],
+      upcoming: ["/api/igdb/upcoming", ...carouselFilterKey],
+    }),
+    [carouselFilterKey]
+  );
+  const genreCarouselQueryKey = useMemo(
+    () => ["/api/igdb/genre", debouncedGenre, ...carouselFilterKey],
+    [debouncedGenre, carouselFilterKey]
+  );
+  const platformCarouselQueryKey = useMemo(
+    () => ["/api/igdb/platform", debouncedPlatform, ...carouselFilterKey],
+    [debouncedPlatform, carouselFilterKey]
+  );
+  const rawgCarouselQueryKeys = useMemo(
+    () => ({
+      popular: ["/api/rawg/popular", ...rawgCarouselFilterKey],
+      recent: ["/api/rawg/recent", ...rawgCarouselFilterKey],
+      upcoming: ["/api/rawg/upcoming", ...rawgCarouselFilterKey],
+    }),
+    [rawgCarouselFilterKey]
+  );
+  const rawgSearchCarouselQueryKey = useMemo(
+    () => ["/api/rawg/search", debouncedRawgSearch, ...rawgCarouselFilterKey],
+    [debouncedRawgSearch, rawgCarouselFilterKey]
+  );
+
   const filterGames = useCallback(
     (games: Game[]) => {
       return games.filter((g: Game) => {
@@ -339,7 +370,7 @@ export default function DiscoverPage() {
     setSelectedPlatform(displayPlatforms[0]!.name);
   }, [config, displayPlatforms, selectedPlatform]);
 
-  const trackGameMutation = useMutation({
+  const { mutate: trackGame } = useMutation({
     mutationFn: async (game: Game) => {
       const gameData = mapGameToInsertGame(game);
 
@@ -379,7 +410,7 @@ export default function DiscoverPage() {
 
   // Hide game mutation
 
-  const hideGameMutation = useHiddenMutation<Game>({
+  const { mutate: hideGame } = useHiddenMutation<Game>({
     mutationFn: async (game: Game) => {
       const localId = game.igdbId
         ? igdbToLocalIdMap.get(game.igdbId)
@@ -395,7 +426,7 @@ export default function DiscoverPage() {
 
   // Add game mutation (for status changes on Discovery games)
 
-  const addGameMutation = useMutation({
+  const { mutate: addGame } = useMutation({
     mutationFn: async ({
       game,
 
@@ -481,19 +512,18 @@ export default function DiscoverPage() {
             ? rawgToLocalIdMap.get(game.rawgId)
             : undefined;
 
-        addGameMutation.mutate({ game, status: newStatus, localId });
+        addGame({ game, status: newStatus, localId });
       }
     },
 
-    [queryClient, addGameMutation, igdbToLocalIdMap, rawgToLocalIdMap]
+    [queryClient, addGame, igdbToLocalIdMap, rawgToLocalIdMap]
   );
 
   const handleTrackGame = useCallback(
     (game: Game) => {
-      trackGameMutation.mutate(game);
+      trackGame(game);
     },
-
-    [trackGameMutation]
+    [trackGame]
   );
 
   const handleToggleHidden = useCallback(
@@ -526,12 +556,12 @@ export default function DiscoverPage() {
         const game = findGameInQueries();
 
         if (game) {
-          hideGameMutation.mutate(game);
+          hideGame(game);
         }
       }
     },
 
-    [queryClient, hideGameMutation]
+    [queryClient, hideGame]
   );
 
   // ⚡ Bolt: Memoizing fetch functions with `useCallback` ensures they have stable
@@ -684,7 +714,7 @@ export default function DiscoverPage() {
             {/* Popular Games Section */}
             <GameCarouselSection
               title="Popular Games"
-              queryKey={["/api/igdb/popular", ...carouselFilterKey]}
+              queryKey={igdbCarouselQueryKeys.popular}
               queryFn={fetchPopularGames}
               staleTime={DISCOVERY_STALE_TIME}
               onStatusChange={handleStatusChange}
@@ -696,7 +726,7 @@ export default function DiscoverPage() {
             {/* Recent Releases Section */}
             <GameCarouselSection
               title="Recent Releases"
-              queryKey={["/api/igdb/recent", ...carouselFilterKey]}
+              queryKey={igdbCarouselQueryKeys.recent}
               queryFn={fetchRecentGames}
               staleTime={DISCOVERY_STALE_TIME}
               onStatusChange={handleStatusChange}
@@ -708,7 +738,7 @@ export default function DiscoverPage() {
             {/* Upcoming Releases Section */}
             <GameCarouselSection
               title="Coming Soon"
-              queryKey={["/api/igdb/upcoming", ...carouselFilterKey]}
+              queryKey={igdbCarouselQueryKeys.upcoming}
               queryFn={fetchUpcomingGames}
               staleTime={DISCOVERY_STALE_TIME}
               onStatusChange={handleStatusChange}
@@ -740,7 +770,7 @@ export default function DiscoverPage() {
               </div>
               <GameCarouselSection
                 title={`${selectedGenre} Games`}
-                queryKey={["/api/igdb/genre", debouncedGenre, ...carouselFilterKey]}
+                queryKey={genreCarouselQueryKey}
                 queryFn={fetchGamesByGenre}
                 staleTime={DISCOVERY_STALE_TIME}
                 onStatusChange={handleStatusChange}
@@ -778,7 +808,7 @@ export default function DiscoverPage() {
                 </div>
                 <GameCarouselSection
                   title={`${selectedPlatform} Games`}
-                  queryKey={["/api/igdb/platform", debouncedPlatform, ...carouselFilterKey]}
+                  queryKey={platformCarouselQueryKey}
                   queryFn={fetchGamesByPlatform}
                   staleTime={DISCOVERY_STALE_TIME}
                   onStatusChange={handleStatusChange}
@@ -810,7 +840,7 @@ export default function DiscoverPage() {
               {debouncedRawgSearch.trim() ? (
                 <GameCarouselSection
                   title="RAWG Search Results"
-                  queryKey={["/api/rawg/search", debouncedRawgSearch, ...rawgCarouselFilterKey]}
+                  queryKey={rawgSearchCarouselQueryKey}
                   queryFn={fetchRawgSearch}
                   staleTime={DISCOVERY_STALE_TIME}
                   onStatusChange={handleStatusChange}
@@ -822,7 +852,7 @@ export default function DiscoverPage() {
                 <>
                   <GameCarouselSection
                     title="Popular Games"
-                    queryKey={["/api/rawg/popular", ...rawgCarouselFilterKey]}
+                    queryKey={rawgCarouselQueryKeys.popular}
                     queryFn={fetchRawgPopular}
                     staleTime={DISCOVERY_STALE_TIME}
                     onStatusChange={handleStatusChange}
@@ -832,7 +862,7 @@ export default function DiscoverPage() {
                   />
                   <GameCarouselSection
                     title="Recent Releases"
-                    queryKey={["/api/rawg/recent", ...rawgCarouselFilterKey]}
+                    queryKey={rawgCarouselQueryKeys.recent}
                     queryFn={fetchRawgRecent}
                     staleTime={DISCOVERY_STALE_TIME}
                     onStatusChange={handleStatusChange}
@@ -842,7 +872,7 @@ export default function DiscoverPage() {
                   />
                   <GameCarouselSection
                     title="Upcoming Games"
-                    queryKey={["/api/rawg/upcoming", ...rawgCarouselFilterKey]}
+                    queryKey={rawgCarouselQueryKeys.upcoming}
                     queryFn={fetchRawgUpcoming}
                     staleTime={DISCOVERY_STALE_TIME}
                     onStatusChange={handleStatusChange}
