@@ -1,0 +1,36 @@
+Upstream PRs #162–168 review and validation
+
+PR #162: verified the independent liveness and readiness endpoints. Readiness
+returns a generic 503 when a dependency is unavailable; regression coverage
+checks the public status rather than exposing dependency details.
+
+PR #163: verified the compatible drizzle-zod 0.8 / Zod 4 dependency versions
+and schema-derived insert types.
+
+PR #164: verified the left/right Tailwind rail selectors against the current
+Tailwind 4 setup.
+
+PR #165: added regression coverage proving whitespace-only IGDB query
+differences reuse the same cache entry.
+
+PR #166: added regression coverage for the explicit carousel empty state.
+
+PR #167: added regression coverage that rejects traversal in downloader
+updates and torrent download requests.
+
+PR #168: verified accessible names for the theme and notification controls,
+including the unread notification count.
+
+Validation:
+
+- Focused tests: 84 passed across four files.
+- Full `npm test`: 4,034 passed and 7 skipped across 250 test files (249 passed,
+  one skipped).
+- `npm run check`: passed.
+- `npm run lint`: passed.
+- `npm run format:check`: passed.
+- `npm run build`: passed. Vite reported its existing advisory for chunks over
+  500 kB.
+
+No application files under `client/src/**` changed in this batch; only a client
+regression test was added.

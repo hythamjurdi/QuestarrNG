@@ -86,4 +86,23 @@ describe("GameCarouselSection", () => {
     expect(carousel).toHaveAttribute("aria-hidden", "true");
     expect(carousel).toHaveAttribute("inert");
   });
+
+  it("keeps an empty carousel visible with a clear empty state", () => {
+    mockUseQuery.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: undefined,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <GameCarouselSection title="Adventure Games" queryKey={["adventure"]} queryFn={vi.fn()} />
+    );
+
+    expect(screen.getByTestId("carousel-section-adventure-games-empty")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Adventure Games" })).toBeInTheDocument();
+    expect(screen.getByText("No games found.")).toBeInTheDocument();
+  });
 });

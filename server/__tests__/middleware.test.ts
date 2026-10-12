@@ -470,6 +470,20 @@ describe("Middleware - Input Sanitization", () => {
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
+
+    it("rejects parent-directory traversal in downloader paths", async () => {
+      const req = createMockRequest({ body: { downloadPath: "/downloads/../outside" } });
+      const res = createMockResponse();
+      const next = createMockNext();
+
+      for (const validator of sanitizeDownloaderUpdateData) {
+        await validator(req as Request, res as Response, next);
+      }
+
+      validateRequest(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
   });
 
   describe("sanitizeDownloaderDownloadData", () => {
@@ -527,6 +541,26 @@ describe("Middleware - Input Sanitization", () => {
 
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it("rejects parent-directory traversal in torrent download paths", async () => {
+      const req = createMockRequest({
+        body: {
+          url: "magnet:?xt=urn:btih:abc",
+          title: "Test Download",
+          downloadPath: "/downloads/../outside",
+        },
+      });
+      const res = createMockResponse();
+      const next = createMockNext();
+
+      for (const validator of sanitizeDownloaderDownloadData) {
+        await validator(req as Request, res as Response, next);
+      }
+
+      validateRequest(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
     });
 
     it("should reject download with invalid URL", async () => {

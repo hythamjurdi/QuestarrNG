@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T23:40:35.532Z",
-  "forkHead": "4f57a864340552626d04a9c71be3c010c0d6c136",
+  "capturedAt": "2026-10-12T23:53:34.664Z",
+  "forkHead": "84a99faf6b6ba5d0b0a8110ac19317048db508f8",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -4619,10 +4619,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d3a28428e6acc2d8d874f4e4d6ad0a3737c19147",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork separates the always-200 /api/health liveness response from /api/ready. Readiness checks database and IGDB dependencies but returns only a generic status, with HTTP 503 on failure."
+        ],
+        "acceptance": [
+          "Liveness stays independent of dependencies, and readiness failures do not disclose which dependency failed."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/162",
+          "server/routes.ts",
+          "server/__tests__/auth-boundary.test.ts",
+          "server/__tests__/health.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4639,10 +4648,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d75c251ff3b3c7b67c6a76e9c3a1e40df3d9f3ce",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG uses drizzle-zod 0.8.x with Zod 4, the compatible version family identified by the PR. Runtime insert schemas are generated with createInsertSchema, and InsertUser, InsertGame, InsertIndexer, and InsertDownloader are inferred from those schema outputs."
+        ],
+        "acceptance": [
+          "Validation schemas and insert types share the same definitions without a Zod 3/4 type mismatch."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/163",
+          "package.json",
+          "package-lock.json",
+          "pnpm-lock.yaml",
+          "shared/schema.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4659,10 +4678,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "bd1cbd842099eaa8e726bd3f69a36ce834fc845f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SidebarRail uses standard Tailwind arbitrary variants for left/right side attributes, including expanded and collapsed resize directions. The fork uses Tailwind 4."
+        ],
+        "acceptance": [
+          "The resize cursor follows the rail side and collapsed state using selectors supported by the current Tailwind version."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/164",
+          "client/src/components/ui/sidebar.tsx",
+          "package.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4679,10 +4706,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "6e077695b57b49d042a40f5833094b63938ab284",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "IGDB cache keys normalize query whitespace and trim the result before lookup. Regression coverage confirms formatting-only whitespace differences reuse the cached response without a duplicate API call."
+        ],
+        "acceptance": [
+          "Queries that differ only in whitespace share the same cache entry."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/165",
+          "server/igdb.ts",
+          "server/__tests__/igdb_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4699,10 +4734,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "55fa4ef9609b4b55635aac865a04f14cb8918bca",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCarouselSection keeps its title visible and displays a No games found message when a successful query returns no items. A regression test asserts the empty section and message."
+        ],
+        "acceptance": [
+          "An empty carousel is distinguishable from a missing or loading section."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/166",
+          "client/src/components/GameCarouselSection.tsx",
+          "client/__tests__/GameCarouselSection.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4719,10 +4762,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "4a370787caf979b13e54f45b022c4ece5e3323c4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Downloader settings and torrent download validators reject download paths containing parent-directory traversal. Regression tests cover both update and torrent-request paths."
+        ],
+        "acceptance": [
+          "Traversal paths are rejected with HTTP 400 before reaching downloader or torrent handlers."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/167",
+          "server/middleware.ts",
+          "server/__tests__/middleware.test.ts",
+          "server/__tests__/path_security.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4739,10 +4791,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "8a6c49f2434eef90313243ea3178204c62850b41",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The notifications button has an accessible name that includes the unread count when present; the icon-only theme button is labeled Toggle theme."
+        ],
+        "acceptance": [
+          "Screen readers can identify both icon-only header controls and the notification count."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/168",
+          "client/src/components/Header.tsx",
+          "client/src/components/NotificationCenter.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

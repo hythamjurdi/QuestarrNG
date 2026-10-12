@@ -65,6 +65,23 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("normalizes query whitespace before looking up cached IGDB responses", async () => {
+    fetchMock
+      .mockResolvedValueOnce(authResponse)
+      .mockResolvedValueOnce(gamesResponse([{ id: 7, name: "Whitespace Game" }]));
+
+    const { igdbClient } = await import("../igdb.js");
+    const clientWithRequest = igdbClient as unknown as {
+      makeRequest: (endpoint: string, query: string, ttl: number) => Promise<unknown>;
+    };
+    const makeRequest = clientWithRequest.makeRequest.bind(igdbClient);
+    const compact = await makeRequest("games", "fields id; where id = 7;", 60_000);
+    const padded = await makeRequest("games", "  fields id;\n  where id = 7;  ", 60_000);
+
+    expect(padded).toEqual(compact);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("getGamesByGenres returns [] for an empty genre list without hitting the network", async () => {
     const { igdbClient } = await import("../igdb.js");
     const results = await igdbClient.getGamesByGenres([]);

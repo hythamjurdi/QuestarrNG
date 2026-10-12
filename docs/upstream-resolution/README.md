@@ -467,3 +467,19 @@ advisory. The ledger now records **164 verified**, **6 superseded**, **971
 unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and **1
 needs-implementation** record. Issue #37 remains the outstanding
 implementation item. See [batch 17 evidence](evidence/validation-batch-17.txt).
+
+## Follow-up: upstream PRs #162–168
+
+Health checks now have regression coverage for generic liveness/readiness
+responses and readiness failures. The fork already has the compatible Zod 4
+dependency pair and inferred insert types, Tailwind 4 sidebar rail selectors,
+and accessible labels on the header controls. Added tests also lock in
+whitespace-insensitive IGDB cache hits, the carousel empty state, and traversal
+rejection for downloader and torrent paths.
+
+All 4,034 tests passed, with 7 skipped; typecheck, lint, format check, and the
+production build passed. Vite continues to report its existing large-chunk
+advisory. The refreshed ledger records **171 verified**, **6 superseded**,
+**964 unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and
+**1 needs-implementation** record. Issue #37 remains the outstanding
+implementation item. See [batch 18 evidence](evidence/validation-batch-18.txt).
