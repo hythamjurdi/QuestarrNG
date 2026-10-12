@@ -410,6 +410,10 @@ describe("Cron - checkAutoSearch", () => {
         updates: true,
         packs: true,
       });
+      expect(mockNotifyUser).toHaveBeenCalledWith("gameUpdated", game.id, userId);
+      const notificationEvents = mockNotifyUser.mock.calls.filter(
+        ([event]) => event === "notification"
+      );
       if (shouldNotify) {
         expect(mockAddNotification).toHaveBeenCalledWith(
           expect.objectContaining({ title: "Game Updates Available", userId })
@@ -417,11 +421,11 @@ describe("Cron - checkAutoSearch", () => {
         expect(mockAddNotification).toHaveBeenCalledWith(
           expect.objectContaining({ title: "Game Packs Available", userId })
         );
-        expect(mockNotifyUser).toHaveBeenCalledTimes(2);
+        expect(notificationEvents).toHaveLength(2);
         expect(mockAppriseSend).toHaveBeenCalledTimes(2);
       } else {
         expect(mockAddNotification).not.toHaveBeenCalled();
-        expect(mockNotifyUser).not.toHaveBeenCalled();
+        expect(notificationEvents).toHaveLength(0);
         expect(mockAppriseSend).not.toHaveBeenCalled();
       }
     }

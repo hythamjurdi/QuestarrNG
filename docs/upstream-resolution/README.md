@@ -87,7 +87,7 @@ The reporter subsequently said the upstream fix still did not work on a dev
 image. This adapter fix therefore remains `implemented-unverified` in the ledger
 pending configuration persistence and a real SABnzbd reproduction. Mocked HTTP
 tests demonstrate the outgoing category, not the downstream installation's
-behavior. No item is yet marked fully resolved.
+behavior. This SABnzbd report is not yet marked fully resolved.
 
 ## Refresh and review workflow
 
@@ -115,3 +115,30 @@ and links to the replacement or supporting evidence.
 The campaign starts in the isolated `codex/upstream-resolution` branch and
 `QuestarrNG-upstream-resolution` sibling worktree. The original
 `codex/validation-live-progress` checkout remains available for its existing work.
+
+## Validated integration checkpoint — October 12, 2026
+
+Upstream main through `fb650bab` is merged with fork behavior preserved. This
+includes import/library discovery, backlog roulette, download recovery, archive
+update handling and Prowlarr changes. The unsafe blanket HTTP-consent backfill is
+excluded: revoked consent stays revoked.
+
+The next batch adds thumbnail update badges (#923), Hydra-format JSON catalogs
+(#336), strict torrent-manifest extension filtering (#406), the standalone release
+scoring engine (#1166), and Prowlarr release-preparation fixes/coverage (#1172).
+The scoring source comes from upstream head `9998f5a9`; its Jessomadic/Questarr
+GPL attribution remains in the source. Release-preparation ports come from
+`07d7386b`.
+
+Validation: 3,997 tests passed, seven skipped; statements 84.62%, branches 77.44%,
+functions 82.02%, lines 86.02%. TypeScript, lint, secret scanning and production
+build pass. See [checkpoint evidence](evidence/validation-batch-1.txt).
+Running UI screenshots are in `docs/pr-evidence/upstream-*.png`.
+
+This is a checkpoint, **not completion of all 1,146 items**. Optional RAWG support,
+federation, integrated scoring profiles and most historical per-item reviews
+remain. The ledger distinguishes verified behavior from integration work still
+awaiting real external services. No upstream issue or PR has been closed.
+
+Public source snapshots redact database connection strings found in support
+reports; the collection script applies the same redaction on refresh.

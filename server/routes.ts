@@ -1,3 +1,6 @@
+import { filterReleaseFileTypes } from "./release-file-types.js";
+import { jsonCatalogClient } from "./json-catalog.js";
+import { isSameProwlarrUrl } from "../shared/prowlarr-url.js";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { body, param } from "express-validator";
 import { createServer, type Server } from "http";
@@ -91,7 +94,11 @@ import {
 import { config as appConfig } from "./config.js";
 import { configLoader } from "./config-loader.js";
 import { prowlarrClient } from "./prowlarr.js";
-import { loadProwlarrSyncSettings, saveProwlarrSyncSettings } from "./prowlarr-settings.js";
+import {
+  loadProwlarrSyncSettings,
+  saveProwlarrSyncSettings,
+  revokeProwlarrHttpOptIn,
+} from "./prowlarr-settings.js";
 import { isSafeUrl, safeFetch, resolveSafeAddress, normalizeHostname } from "./ssrf.js";
 import { assertWithinRoots } from "./path-security.js";
 import {
@@ -628,6 +635,15 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
     const offset = (req.query.offset as unknown as number) || 0;
 
     const categories = parseCategories(category || cat);
+    const fileTypes = typeof req.query.fileTypes === "string" ? req.query.fileTypes.split(",") : [];
+    const fileTypeSources = fileTypes.length ? await storage.getEnabledIndexers() : [];
+    if (fileTypeSources.length > 20) {
+      return res.status(400).json({
+        error:
+          "File-type verification supports up to 20 enabled sources. Disable unused sources before using this filter.",
+      });
+    }
+    const fileTypeLimit = Math.max(1, Math.floor(20 / Math.max(1, fileTypeSources.length)));
 
     routesLogger.info(
       { query, categories, limit, offset },
@@ -641,7 +657,7 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
     const { items, total, errors } = await searchAllIndexers({
       query: query.trim(),
       category: categories,
-      limit,
+      limit: fileTypes.length ? fileTypeLimit : limit,
       offset,
     });
 
@@ -683,10 +699,19 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
     }
 
     const blacklistedCount = items.length - filteredItems.length;
+    if (fileTypes.length) {
+      filteredItems = await filterReleaseFileTypes(filteredItems, fileTypes, fileTypeSources);
+    }
     const enrichedItems = await enrichWithAiAnalysis(filteredItems);
 
     return res.json({
       items: enrichedItems,
+      ...(fileTypes.length
+        ? {
+            nextOffset: items.length >= fileTypeLimit ? offset + fileTypeLimit : null,
+            fileTypeFilter: "torrent-manifest-only",
+          }
+        : {}),
       total,
       offset,
       ...(blacklistedCount > 0 ? { blacklistedCount } : {}),
@@ -1663,11 +1688,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // be sent to a different host.
         if (isUnchangedSentinel(apiKey)) {
           const saved = await loadProwlarrSyncSettings();
-          if (!saved?.apiKey || saved.url !== url) {
+          if (!saved?.apiKey || !isSameProwlarrUrl(saved.url, url)) {
             return res.status(400).json({ error: "Enter the Prowlarr API key again for this URL" });
           }
           apiKey = saved.apiKey;
         }
+
+        // Revocation is local: it must also work when DNS validation fails.
+        if (allowInsecureLan === false) await revokeProwlarrHttpOptIn(url);
 
         if (!(await isSafeUrl(url))) {
           return res.status(400).json({ error: "Invalid or unsafe URL" });
@@ -3597,7 +3625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         allowInsecureLan,
       } = req.body;
 
-      if (!url || !apiKey) {
+      if (!url || (!apiKey && protocol !== "json-catalog")) {
         return res.status(400).json({ error: "URL and API key are required" });
       }
 
@@ -3630,7 +3658,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date(),
       };
 
-      const client = isUsenetProtocol(resolvedProtocol) ? newznabClient : torznabClient;
+      const client =
+        resolvedProtocol === "json-catalog"
+          ? jsonCatalogClient
+          : isUsenetProtocol(resolvedProtocol)
+            ? newznabClient
+            : torznabClient;
       const result = await client.testConnection(tempIndexer);
       return res.json(result);
     } catch (error) {
@@ -3651,7 +3684,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Indexer not found" });
       }
 
-      const testClient = isUsenetProtocol(indexer.protocol) ? newznabClient : torznabClient;
+      const testClient =
+        indexer.protocol === "json-catalog"
+          ? jsonCatalogClient
+          : isUsenetProtocol(indexer.protocol)
+            ? newznabClient
+            : torznabClient;
       const result = await testClient.testConnection(indexer);
       return res.json(result);
     } catch (error) {
@@ -3672,6 +3710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Indexer not found" });
       }
 
+      if (indexer.protocol === "json-catalog") return res.json([]);
       const categoriesClient = isUsenetProtocol(indexer.protocol) ? newznabClient : torznabClient;
       const categories = await categoriesClient.getCategories(indexer);
       return res.json(categories);
@@ -3710,7 +3749,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         let results;
-        if (isUsenetProtocol(indexer.protocol)) {
+        if (indexer.protocol === "json-catalog") {
+          results = await jsonCatalogClient.search(indexer, searchParams);
+        } else if (isUsenetProtocol(indexer.protocol)) {
           results = await newznabClient.search(indexer, searchParams);
         } else {
           results = await torznabClient.searchGames(indexer, searchParams);

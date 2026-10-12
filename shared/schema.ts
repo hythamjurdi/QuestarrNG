@@ -685,12 +685,17 @@ export const updateGameScreenshotSchema = z.object({
 export const insertIndexerSchema = createInsertSchema(indexers, {
   name: (schema) => schema.trim().min(1, "Name is required"),
   url: (schema) => schema.trim().min(1, "URL is required"),
-  apiKey: (schema) => schema.trim().min(1, "API key is required"),
-}).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+  apiKey: (schema) => schema.trim(),
+})
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .refine((value) => value.protocol === "json-catalog" || value.apiKey.length > 0, {
+    path: ["apiKey"],
+    message: "API key is required",
+  });
 
 // Trim helper for nullable/optional string fields in Zod schemas.
 const trimIfString = <T>(v: T): T => (typeof v === "string" ? (v.trim() as T) : v);

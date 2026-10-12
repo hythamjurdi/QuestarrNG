@@ -306,7 +306,7 @@ export const sanitizeIndexerData = [
   body("protocol")
     .optional()
     .trim()
-    .isIn(["torznab", "newznab", "g4u"])
+    .isIn(["torznab", "newznab", "g4u", "json-catalog"])
     .withMessage("Invalid protocol"),
   body("enabled").optional().isBoolean().withMessage("Enabled must be a boolean").toBoolean(),
   body("allowInsecureLan")
@@ -345,7 +345,7 @@ export const sanitizeIndexerUpdateData = [
   body("protocol")
     .optional()
     .trim()
-    .isIn(["torznab", "newznab", "g4u"])
+    .isIn(["torznab", "newznab", "g4u", "json-catalog"])
     .withMessage("Invalid protocol"),
   body("enabled").optional().isBoolean().withMessage("Enabled must be a boolean").toBoolean(),
   body("priority")
@@ -591,6 +591,12 @@ export const sanitizeDownloaderDownloadData = [
 
 // Sanitization rules for indexer search queries
 export const sanitizeIndexerSearchQuery = [
+  query("fileTypes")
+    .optional()
+    .isString()
+    .isLength({ max: 120 })
+    .matches(/^\.?[a-zA-Z0-9]{1,10}(,\.?[a-zA-Z0-9]{1,10}){0,9}$/)
+    .withMessage("File types must be a comma-separated list of up to ten extensions"),
   query("query")
     .trim()
     .isLength({ min: 1, max: 200 })

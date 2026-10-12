@@ -72,6 +72,7 @@ interface DownloadItem {
 }
 
 interface SearchResult {
+  nextOffset?: number | null;
   items: DownloadItem[];
   total: number;
   offset: number;
@@ -118,6 +119,8 @@ export default function SearchPage() {
   const [selectedDownload, setSelectedDownload] = useState<DownloadItem | null>(null);
   const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [fileTypes, setFileTypes] = useState("");
+  const debouncedFileTypes = useDebounce(fileTypes.trim().replaceAll(" ", ""), 500);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const lastSearchQueryRef = useRef("");
@@ -131,16 +134,17 @@ export default function SearchPage() {
     isFetchingNextPage,
     fetchNextPage,
   } = useInfiniteQuery<SearchResult, Error, InfiniteData<SearchResult>, string[], number>({
-    queryKey: ["/api/search", debouncedSearchQuery],
+    queryKey: ["/api/search", debouncedSearchQuery, debouncedFileTypes],
     queryFn: async ({ pageParam }): Promise<SearchResult> => {
       const r = await apiRequest(
         "GET",
-        `/api/search?query=${encodeURIComponent(debouncedSearchQuery)}&limit=${PAGE_SIZE}&offset=${pageParam}`
+        `/api/search?query=${encodeURIComponent(debouncedSearchQuery)}&limit=${PAGE_SIZE}&offset=${pageParam}${debouncedFileTypes ? `&fileTypes=${encodeURIComponent(debouncedFileTypes)}` : ""}`
       );
       return r.json();
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if (lastPage.nextOffset !== undefined) return lastPage.nextOffset ?? undefined;
       // Use "received a full page" as the continuation signal rather than comparing
       // against lastPage.total, which equals the current batch size for Torznab
       // indexers and would always terminate pagination after the first page.
@@ -409,6 +413,25 @@ export default function SearchPage() {
         </Button>
       </form>
 
+      {showFilters && (
+        <div className="mb-3 space-y-1">
+          <label htmlFor="verified-file-types" className="text-sm font-medium">
+            Verified file types
+          </label>
+          <Input
+            id="verified-file-types"
+            value={fileTypes}
+            onChange={(event) => setFileTypes(event.target.value)}
+            placeholder="Any type, or e.g. nsp,xci"
+            maxLength={120}
+          />
+          <p className="text-xs text-muted-foreground">
+            Only releases whose torrent file list contains these extensions pass. Magnets, Usenet,
+            archives, and unavailable file lists are excluded. Checks inspect up to 20 releases per
+            page.
+          </p>
+        </div>
+      )}
       {/* Collapsible date filter row */}
       {showFilters && (
         <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-md border bg-muted/30">

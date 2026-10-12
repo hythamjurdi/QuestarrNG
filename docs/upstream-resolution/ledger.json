@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T19:06:39.818Z",
-  "forkHead": "367c2659481b40b6b318650395afd5e6d4752cc2",
+  "capturedAt": "2026-10-12T19:35:11.511Z",
+  "forkHead": "c3734107450653976ce53689ef4e8d28506de36c",
   "upstreamHead": "fb650bab63cb2f7ce3c9004ab9028cfc3b210a01",
   "counts": {
     "issue:CLOSED": 228,
@@ -4506,7 +4506,7 @@
       "url": "https://github.com/Doezer/Questarr/issues/237",
       "upstreamState": "CLOSED",
       "upstreamUpdatedAt": "2026-06-28T14:36:09Z",
-      "sourceDigest": "3287c2406f37f7dc4ee22317a510f0ce4a02d72196c39446b0501ad63bb525d7",
+      "sourceDigest": "cf993ab9d9b945061d93f1ae8cea26ae687b3e92a2d642104282179980e20f1b",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -4516,7 +4516,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "pr:239",
@@ -4646,7 +4646,7 @@
       "url": "https://github.com/Doezer/Questarr/issues/245",
       "upstreamState": "CLOSED",
       "upstreamUpdatedAt": "2026-01-06T08:29:46Z",
-      "sourceDigest": "479d7e8ca05cf6352a80c66c4e8bffee9ea946e1adcdfd564f82f64ea7425c07",
+      "sourceDigest": "c207d5950d747197576b34621283c2089417ed699a1a22c436d59f166a52ed5a",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -4656,7 +4656,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "issue:246",
@@ -4946,7 +4946,7 @@
       "url": "https://github.com/Doezer/Questarr/issues/260",
       "upstreamState": "CLOSED",
       "upstreamUpdatedAt": "2026-06-28T14:37:09Z",
-      "sourceDigest": "638a0f9c86be8a3624cd98170e9a7619128aeecfbae28009a6fe5a66cbb1666d",
+      "sourceDigest": "a43005e789720007fa07364c4be58b10195e31bd4d203e728c05a8584d81d382",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -4956,7 +4956,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "issue:261",
@@ -6470,12 +6470,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "investigating",
+        "status": "implemented-unverified",
         "findings": [
-          "Preliminary assessment in docs/upstream-resolution/README.md; detailed code and complete discussion review remain outstanding."
+          "Added user-configured public HTTPS Hydra-format JSON catalogs as indexers, with optional empty API key, bounded fetching, source attribution and normal aggregate search/acquisition. Catalog origin does not certify payload safety."
         ],
-        "acceptance": [],
-        "evidence": [],
+        "acceptance": [
+          "Schema, URL policy, URI filtering, aggregate dispatch and saved configuration tested. Real external catalog and downloader acquisition remain to verify."
+        ],
+        "evidence": [
+          "server/__tests__/json-catalog.test.ts",
+          "server/__tests__/search.test.ts",
+          "tests/e2e/json-catalog.spec.ts",
+          "docs/JSON_CATALOGS.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7872,12 +7879,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "investigating",
+        "status": "implemented-unverified",
         "findings": [
-          "Preliminary assessment in docs/upstream-resolution/README.md; detailed code and complete discussion review remain outstanding."
+          "Added strict torrent-manifest fileTypes filtering and search UI. Every payload file must have an allowed extension; magnets, Usenet, unavailable manifests and archives fail closed. At most 20 manifests per page; explicit cursor permits continuing past empty filtered pages."
         ],
-        "acceptance": [],
-        "evidence": [],
+        "acceptance": [
+          "Real bencoded manifest and route pagination tests pass. UI query/filter behavior captured. Real tracker integration remains to verify."
+        ],
+        "evidence": [
+          "server/__tests__/release-file-types.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "tests/e2e/file-type-search.spec.ts",
+          "docs/pr-evidence/upstream-file-type-search.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17996,12 +18010,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "investigating",
+        "status": "verified",
         "findings": [
-          "Preliminary assessment in docs/upstream-resolution/README.md; detailed code and complete discussion review remain outstanding."
+          "Library and compact cards display an accessible Update badge from persisted update-search availability. Background changes notify only the owning user, including when ordinary notifications are muted."
         ],
-        "acceptance": [],
-        "evidence": [],
+        "acceptance": ["Desktop/mobile badge appears and clears; owner-scoped cron events."],
+        "evidence": [
+          "client/__tests__/SearchResultsBadge.test.tsx",
+          "server/__tests__/cron_autosearch.test.ts",
+          "tests/e2e/update-availability.spec.ts",
+          "docs/pr-evidence/upstream-update-available.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22437,7 +22456,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-07T03:42:09Z",
       "sourceDigest": "22b1b7da14e3da82b7174964854d5aea8f90d4630dbee853185daf8d79477172",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e3ffc07b27e4cb571ee74a32c4bcb9a54dd5f3be",
       "review": {
         "status": "unreviewed",
@@ -22457,7 +22476,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-07T03:43:49Z",
       "sourceDigest": "a65232e15b8cc3d78443afd086479943fab9eecfe4ab56a5cd95e8143864bc81",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "849c3368595da79b0b0dc43bef13065cc4f2a4d8",
       "review": {
         "status": "unreviewed",
@@ -22477,7 +22496,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-07T05:34:11Z",
       "sourceDigest": "c9f947348d9c52ddc1842fc360e2c47be19b5bfeff3e0f873258b9a75a26a33a",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0ac8637826013a318771440d968815249962d395",
       "review": {
         "status": "unreviewed",
@@ -22497,7 +22516,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-10T19:40:48Z",
       "sourceDigest": "227eec803a438e8f006d0542090e1a75e9a16c7d963d6f5c2e4f68397d77f96e",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "016521323659bf801d0d5a51fbc0f2d167608326",
       "review": {
         "status": "unreviewed",
@@ -22517,7 +22536,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-10T19:35:48Z",
       "sourceDigest": "fe63fbc655cbd5a44e17e56deb4b0a8c94a7c8063136babb942f80fafb89ee21",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d12fd10d041d46e76fcd9539ee9ecbea25182e42",
       "review": {
         "status": "unreviewed",
@@ -22537,7 +22556,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T08:28:07Z",
       "sourceDigest": "3734bdbc7acd6ebc924394dc482b3ff07f2bad837c5677684b8961b1fe1ed3ac",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e48564807300066d0656fe0b3a9ca9635957266b",
       "review": {
         "status": "unreviewed",
@@ -22560,12 +22579,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "investigating",
+        "status": "verified",
         "findings": [
-          "Preliminary assessment in docs/upstream-resolution/README.md; detailed code and complete discussion review remain outstanding."
+          "Ported engine and tests from upstream release-scoring head 9998f5a9, preserving attribution. Exported title utilities and added RE2JS. Upstream explicitly scopes this PR to a pure engine; profiles, persistence and application integration are separate pending work."
         ],
-        "acceptance": [],
-        "evidence": [],
+        "acceptance": ["Scoring/title regression cases and complete combined coverage run pass."],
+        "evidence": [
+          "shared/release-scoring.ts",
+          "shared/__tests__/release-scoring.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-1.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22579,7 +22602,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-10T06:42:14Z",
       "sourceDigest": "c478bbb961b496a811d0ecdb039ac81a94618d1549a1e4ded3d3371032c4c870",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8365981af16463575d673ea356821b8c55923109",
       "review": {
         "status": "unreviewed",
@@ -22599,7 +22622,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-10T06:42:49Z",
       "sourceDigest": "ad59e872f9b81f2e411bd390529f685773521dba72085c190d114b9af8b0e7cf",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a1a40fce2f6061dc31d3eae6d16cabd565b37544",
       "review": {
         "status": "unreviewed",
@@ -22654,7 +22677,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-10T20:14:43Z",
       "sourceDigest": "17db9b5e2cc3afe307f8af6c03656664d5eb738b845d8b7037d7bde29e0790a9",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5a34b17c489bea01d27700d76d64ad388069d680",
       "review": {
         "status": "implemented-unverified",
@@ -22689,7 +22712,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-11T12:06:37Z",
       "sourceDigest": "d22ac0e3150e2327950bf4a8900407a1e3f4f1ac3fd7bc6fa135bc762f33720b",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "77b9906ece85d1ff3bf6052baa250a65aeef6dcc",
       "review": {
         "status": "unreviewed",
@@ -22712,12 +22735,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "investigating",
+        "status": "implemented-unverified",
         "findings": [
-          "Preliminary assessment in docs/upstream-resolution/README.md; detailed code and complete discussion review remain outstanding."
+          "Ported Prowlarr URL normalization, saved-key behavior and consent revocation plus release browser coverage. Upstream main merged through fb650bab. Fork packaging/version retained. Deliberately excluded the HTTP-consent backfill because it restores previously revoked consent. Remaining release documentation comparison pending."
         ],
-        "acceptance": [],
-        "evidence": [],
+        "acceptance": [
+          "Consent revocation persists before failed network sync; equivalent URL retains key; settings, discovery and security guidance browser checks."
+        ],
+        "evidence": [
+          "server/__tests__/prowlarr-credentials.test.ts",
+          "tests/e2e/post-rc1.spec.ts",
+          "tests/e2e/settings-organization.spec.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22731,7 +22760,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-11T12:31:08Z",
       "sourceDigest": "8816ea78a8d5c52689c4e0695b035c8f101becc6a19549403dfc61f6716d0413",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0de608347602591780e8f5d8917f194a6b77b393",
       "review": {
         "status": "unreviewed",
@@ -22751,7 +22780,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-11T15:55:42Z",
       "sourceDigest": "5b7dfda360ae8253a4277e4f1c1e89ed5de67450961e3e1af95c827f0877b614",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "046cecdefd9b6e36abd8348147f22b2b4537d5bc",
       "review": {
         "status": "unreviewed",
@@ -22771,7 +22800,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T13:50:43Z",
       "sourceDigest": "1ba98814f14c5e623189079978bb607d877f71333c696a28f94ce7416db42e28",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e91796bf3c6ee8d13988b27f81c5dedf0448a68e",
       "review": {
         "status": "unreviewed",
@@ -22811,7 +22840,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-11T19:01:09Z",
       "sourceDigest": "b9309ff7b0a853f337de9b3dbce2608e63af0844ac26476880ea8ae535f8d98f",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1f318b7232f4d7824008a5d656ac7ca2a522b43e",
       "review": {
         "status": "unreviewed",
@@ -22831,7 +22860,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-11T18:50:32Z",
       "sourceDigest": "2d43111f0eff73919442378a4680b6235a1b57a53b20c8981e1b7185a636514e",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "61409bff16ebf523b34bc1fa4bc3aded01aeeea4",
       "review": {
         "status": "unreviewed",
@@ -22851,7 +22880,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T13:50:45Z",
       "sourceDigest": "8cb189f9fac437fb9eba1efbe83d1f3428ea36d9617450a8eeb8ae698e8f26d8",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a5f53ab14aa5aa439ec0b3605836e8064811b603",
       "review": {
         "status": "unreviewed",
@@ -22871,7 +22900,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T07:04:01Z",
       "sourceDigest": "d3b6ff4a0dbf55fca5bc1281c39e8c6b33a819bf29c74ed3684e695c1eeac8fd",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "befbe630197c4e57c6fe03ffb9cf8449b3e22c56",
       "review": {
         "status": "unreviewed",
@@ -22891,7 +22920,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T07:18:00Z",
       "sourceDigest": "c74a16417cf1420533878a37e7a4694d1a9f50d4c15d29463b0749f98b9dd861",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "102632f4db877f5da64468124799e7ac4b4ff828",
       "review": {
         "status": "unreviewed",
@@ -22911,7 +22940,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T08:34:20Z",
       "sourceDigest": "35a7d23e6f6216baac0699600a5f7af7035985e86b5796271866bcf8b89a97b2",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3fffce79aa2c56c3da334d1e89ed95d77a1a43a3",
       "review": {
         "status": "unreviewed",
@@ -22931,7 +22960,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T07:18:15Z",
       "sourceDigest": "419b49fe500eb6a7eac160d83c2a6e7e0133b96e4a27a2821ba57a9c14bd3cd9",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5b7e2756727d6fd21765d1168d862ad2b69d260b",
       "review": {
         "status": "unreviewed",
@@ -22951,7 +22980,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T09:53:25Z",
       "sourceDigest": "f3460d7d086a7da3ec9f9c3fe33d5875f4cbd1426054755232ba5dfc07553516",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2e5491285072b28c0b1ebea44a41e72c873f83d3",
       "review": {
         "status": "unreviewed",
@@ -22971,7 +23000,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T15:12:10Z",
       "sourceDigest": "01ae1baf50abd4ca6b85e15e143bef8f9081595e555a35c9dc3ed53f87e49cea",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "fb650bab63cb2f7ce3c9004ab9028cfc3b210a01",
       "review": {
         "status": "unreviewed",

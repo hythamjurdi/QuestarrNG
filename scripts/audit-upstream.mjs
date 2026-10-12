@@ -19,6 +19,21 @@ const fields = {
   pr: "number,title,state,mergedAt,closedAt,createdAt,updatedAt,url,body,headRefOid,baseRefName,mergeCommit",
 };
 const sourceDirectory = process.argv[2];
+// Public issue bodies can contain credentials copied into support reports.
+// Keep the upstream link for review, but never republish connection strings.
+function redactSnapshot(value) {
+  if (typeof value === "string")
+    return value.replace(
+      /\bpostgres(?:ql)?:\/\/[^\s"`<>]+/gi,
+      "[redacted database connection string]"
+    );
+  if (Array.isArray(value)) return value.map(redactSnapshot);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, redactSnapshot(item)])
+    );
+  return value;
+}
 const sources = Object.fromEntries(
   Object.entries(fields).map(([kind, json]) => {
     const filename = kind === "issue" ? "issues" : "prs";
@@ -44,7 +59,7 @@ const sources = Object.fromEntries(
     if (new Set(rows.map((row) => row.number)).size !== rows.length) {
       throw new Error(`Duplicate ${kind} numbers in inventory`);
     }
-    return [kind, rows];
+    return [kind, redactSnapshot(rows)];
   })
 );
 const ancestors = new Set(git("rev-list", "HEAD").split("\n"));

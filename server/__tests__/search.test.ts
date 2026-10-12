@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Indexer } from "@shared/schema";
 import type { SearchItem } from "../search.js";
 
+vi.mock("../json-catalog.js", () => ({ jsonCatalogClient: { search: vi.fn() } }));
+
 // Mock dependencies
 vi.mock("../db.js", () => ({
   dialect: "sqlite",
@@ -40,6 +42,7 @@ const {
   filterByReleaseNameBlacklist,
   enrichWithAiAnalysis,
 } = await import("../search.js");
+const { jsonCatalogClient } = await import("../json-catalog.js");
 const { storage } = await import("../storage.js");
 const { torznabClient } = await import("../torznab.js");
 const { newznabClient } = await import("../newznab.js");
@@ -88,6 +91,42 @@ const makeNewznabResponse = (items: object[], errors: string[] = []) => ({
 });
 
 describe("Search Module - searchAllIndexers", () => {
+  it("routes catalogs through the aggregated search without sending them to Torznab", async () => {
+    const indexer = makeTorznabIndexer({ protocol: "json-catalog" });
+    vi.mocked(storage.getEnabledIndexers).mockResolvedValue([indexer]);
+    const item = {
+      title: "Game",
+      link: "magnet:?xt=urn:btih:" + "a".repeat(40),
+      pubDate: "2026-01-01",
+      guid: "catalog-game",
+      category: [],
+      indexerId: indexer.id,
+      indexerName: indexer.name,
+      downloadType: "torrent" as const,
+    };
+    vi.mocked(jsonCatalogClient.search).mockResolvedValue({ items: [item], total: 1, offset: 0 });
+    expect(await searchAllIndexers({ query: "Game" })).toMatchObject({
+      items: [item],
+      total: 1,
+      errors: [],
+    });
+    expect(torznabClient.searchMultipleIndexers).not.toHaveBeenCalled();
+    expect(newznabClient.searchMultipleIndexers).not.toHaveBeenCalled();
+  });
+
+  it("isolates a catalog failure without disclosing its URL", async () => {
+    vi.mocked(storage.getEnabledIndexers).mockResolvedValue([
+      makeTorznabIndexer({ protocol: "json-catalog" }),
+    ]);
+    vi.mocked(jsonCatalogClient.search).mockRejectedValue(
+      new Error("https://private.example?token=secret")
+    );
+    const result = await searchAllIndexers({ query: "Game" });
+    expect(result.items).toEqual([]);
+    expect(result.errors[0]).toContain("JSON catalog search failed");
+    expect(result.errors[0]).not.toContain("secret");
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

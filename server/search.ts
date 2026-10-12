@@ -1,3 +1,4 @@
+import { jsonCatalogClient } from "./json-catalog.js";
 import { storage } from "./storage.js";
 import { torznabClient } from "./torznab.js";
 import { newznabClient } from "./newznab.js";
@@ -62,7 +63,7 @@ export async function searchAllIndexers(
   }
 
   const torznabIndexers = enabledIndexers.filter(
-    (i) => i.protocol !== "newznab" && i.protocol !== "g4u"
+    (i) => i.protocol !== "newznab" && i.protocol !== "g4u" && i.protocol !== "json-catalog"
   );
   const newznabIndexers = enabledIndexers.filter((i) => i.protocol === "newznab");
   // g4u.to uses the Newznab protocol but requires Scene-style dot-separated queries
@@ -126,6 +127,18 @@ export async function searchAllIndexers(
     promises.push(makeNewznabPromise(g4uIndexers, g4uSearchParams, "g4u"));
   }
 
+  for (const indexer of enabledIndexers.filter((item) => item.protocol === "json-catalog")) {
+    promises.push(
+      jsonCatalogClient
+        .search(indexer, searchParams)
+        .then((results) => ({ type: "catalog" as const, results, errors: [] as string[] }))
+        .catch(() => ({
+          type: "catalog" as const,
+          results: { items: [] as SearchItem[], total: 0, offset: 0 },
+          errors: [`${indexer.name}: JSON catalog search failed; use Test Connection for details`],
+        }))
+    );
+  }
   const results = await Promise.all(promises);
 
   const combinedItems: SearchItem[] = [];
@@ -133,7 +146,11 @@ export async function searchAllIndexers(
   let totalCount = 0;
 
   for (const result of results) {
-    if (result.type === "torznab") {
+    if (result.type === "catalog") {
+      combinedItems.push(...result.results.items);
+      totalCount += result.results.total;
+      combinedErrors.push(...result.errors);
+    } else if (result.type === "torznab") {
       const items = result.results.items.map((item) => {
         // Construct comments URL if not provided by the indexer.
         // This is a best-effort fallback based on common torrent indexer URL patterns.

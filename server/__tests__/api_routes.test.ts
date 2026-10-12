@@ -73,6 +73,7 @@ vi.mock("../prowlarr.js", () => ({ prowlarrClient: createProwlarrMock() }));
 vi.mock("../prowlarr-settings.js", () => ({
   loadProwlarrSyncSettings: vi.fn().mockResolvedValue(null),
   saveProwlarrSyncSettings: vi.fn().mockResolvedValue(undefined),
+  revokeProwlarrHttpOptIn: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("../xrel.js", () => createXrelMock());
 vi.mock("../apprise.js", async () => createAppriseMock());
@@ -3142,6 +3143,40 @@ describe("API Routes - Extended Coverage", () => {
 
   // ─── Search with blacklist filtering ───
   describe("GET /api/search - blacklist filtering", () => {
+    it("filters by real torrent metadata and advances source pagination even with no matching files", async () => {
+      vi.mocked(storage.getEnabledIndexers).mockResolvedValue([
+        { id: "source", url: "https://example.com" },
+        { id: "other", url: "https://other.example" },
+      ] as any);
+      const items = Array.from({ length: 10 }, (_, index) => ({
+        title: `Game ${index}`,
+        link: `https://example.com/${index}.torrent`,
+        indexerId: "source",
+        downloadType: "torrent" as const,
+      }));
+      vi.mocked(searchAllIndexers).mockResolvedValue({
+        items,
+        total: 10,
+        offset: 0,
+        errors: [],
+      } as any);
+      vi.spyOn(ssrfModule, "safeFetch").mockImplementation(
+        async () =>
+          new Response(
+            Buffer.from(
+              `d4:infod6:lengthi1e4:name8:game.exe12:piece lengthi16384e6:pieces20:${"a".repeat(20)}ee`
+            )
+          )
+      );
+      const response = await request(app).get("/api/search?query=Game&fileTypes=nsp");
+      expect(response.status).toBe(200);
+      expect(response.body.items).toEqual([]);
+      expect(response.body.nextOffset).toBe(10);
+      expect(searchAllIndexers).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 10, offset: 0 })
+      );
+    });
+
     it("should filter blacklisted releases when gameId belongs to user", async () => {
       const mockGame = { id: "game-1", userId: "user-1", title: "Test Game" };
       vi.mocked(storage.getGame).mockResolvedValue(mockGame as any);

@@ -1877,6 +1877,9 @@ export async function checkAutoSearch(
             );
             if (!searchResult) {
               await storage.updateGameSearchResultsAvailable(game.id, false);
+              if (game.searchResultsAvailable || game.updateSearchResultsAvailable) {
+                notifyUser("gameUpdated", game.id, game.userId ?? undefined);
+              }
               continue;
             }
 
@@ -1926,6 +1929,13 @@ export async function checkAutoSearch(
               updates: updateItems.length > 0,
               packs: packsItems.length > 0,
             });
+
+            if (
+              wasUpdateAvailable !== updateItems.length > 0 ||
+              wasPacksAvailable !== packsItems.length > 0
+            ) {
+              notifyUser("gameUpdated", game.id, game.userId ?? undefined);
+            }
 
             // Keep availability badges current even when this status is muted.
             if (

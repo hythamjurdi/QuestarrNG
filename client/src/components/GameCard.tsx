@@ -195,7 +195,10 @@ const GameCard = ({
             </Tooltip>
           </div>
         )}
-        <SearchResultsBadge visible={game.searchResultsAvailable ?? false} />
+        <SearchResultsBadge
+          visible={game.searchResultsAvailable ?? false}
+          updatesAvailable={!isDiscovery && game.updateSearchResultsAvailable}
+        />
         {!isMobile && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-t-md bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
             {isDiscovery && (
