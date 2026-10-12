@@ -1021,7 +1021,7 @@ describe("API Routes - Extended Coverage", () => {
         "v1.2.3"
       );
       const { notifyUser } = await import("../socket.js");
-      expect(vi.mocked(notifyUser)).toHaveBeenCalledWith("gameUpdated", gameId);
+      expect(vi.mocked(notifyUser)).toHaveBeenCalledWith("gameUpdated", gameId, "user-1");
     });
 
     it("should clear the version with a blank value", async () => {

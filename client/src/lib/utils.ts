@@ -38,7 +38,7 @@ export function asZodType<T>(schema: unknown): z.ZodType<T, T> {
  */
 export function isDiscoveryId(id: string | number | null | undefined): boolean {
   if (typeof id !== "string") return false;
-  return id.startsWith("igdb-");
+  return id.startsWith("igdb-") || id.startsWith("rawg-");
 }
 
 /**
@@ -57,6 +57,8 @@ export function mapGameToInsertGame(game: Game): InsertGame {
   // Pick only the fields that are part of InsertGame schema
   return {
     igdbId: game.igdbId,
+    rawgId: game.rawgId,
+    rawgSlug: game.rawgSlug,
     title: game.title,
     summary: game.summary,
     coverUrl: game.coverUrl,

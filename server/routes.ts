@@ -10,6 +10,7 @@ import { normalizeDownloadHash, normalizeTrackedKey } from "./download-hash.js";
 import { withGameOperationLock } from "./cron.js";
 import { igdbClient } from "./igdb.js";
 import type { IGDBGame } from "./igdb.js";
+import { rawgClient } from "./rawg.js";
 import { pingDatabase } from "./db.js";
 import {
   insertGameSchema,
@@ -117,7 +118,7 @@ import {
   TYPESAFE_KEY_CONFIG_KEY,
   TYPESAFE_MODEL_CONFIG_KEY,
 } from "./typesafe.js";
-import { encryptCredential } from "./credential-crypto.js";
+import { decryptCredential, encryptCredential } from "./credential-crypto.js";
 import {
   appriseClient,
   isAppriseConfigured,
@@ -1594,10 +1595,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         process.env.XREL_API_BASE ||
         DEFAULT_XREL_BASE;
 
+      const rawgApiKey = await storage.getSystemConfig("rawg.apiKey");
       const config: Config = {
         igdb: {
           configured: isConfigured,
           source,
+        },
+        rawg: {
+          configured: Boolean(rawgApiKey),
+          source: rawgApiKey ? "database" : undefined,
         },
         xrel: { apiBase: xrelApiBase },
       };
@@ -1878,7 +1884,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const existingGame = userGames.find((g) =>
           gameData.igdbId != null
             ? g.igdbId === gameData.igdbId
-            : g.title.toLowerCase() === gameData.title.toLowerCase()
+            : gameData.rawgId != null
+              ? g.rawgId === gameData.rawgId
+              : g.title.toLowerCase() === gameData.title.toLowerCase()
         );
 
         if (existingGame) {
@@ -1990,7 +1998,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       async (id, userId, { installedVersion }) => {
         const game = await storage.updateGameInstalledVersion(id, userId, installedVersion);
         // Lets the user's other tabs refresh their games query, which is otherwise never stale.
-        if (game) (await import("./socket.js")).notifyUser("gameUpdated", game.id);
+        if (game) (await import("./socket.js")).notifyUser("gameUpdated", game.id, userId);
         return game;
       },
       {
@@ -3100,6 +3108,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
+
+  const fetchRawgKey = async () => {
+    const encrypted = await storage.getSystemConfig("rawg.apiKey");
+    return encrypted ? await decryptCredential(encrypted) : "";
+  };
+  const registerRawgListRoute = (
+    path: string,
+    getGames: (apiKey: string, limit: number) => Promise<Record<string, unknown>[]>
+  ) => {
+    app.get(path, igdbRateLimiter, async (req, res) => {
+      try {
+        const apiKey = await fetchRawgKey();
+        if (!apiKey) return res.status(503).json({ error: "Configure RAWG in Settings first" });
+        const parsed =
+          typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : 20;
+        const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 40) : 20;
+        const flags = await getContentFilterFlags(req.user!.id);
+        const games = await getGames(apiKey, limit);
+        res.set("Cache-Control", "private, no-store");
+        return res.json(excludeFilteredContent(games, flags));
+      } catch (error) {
+        routesLogger.warn({ error }, "RAWG discovery request failed");
+        return res.status(502).json({
+          error: error instanceof Error ? error.message : "RAWG request failed",
+        });
+      }
+    });
+  };
+
+  app.get("/api/rawg/search", igdbRateLimiter, async (req, res) => {
+    try {
+      const query = typeof req.query.q === "string" ? req.query.q.trim() : "";
+      if (!query || query.length > 120) {
+        return res.status(400).json({ error: "Search query must be 1 to 120 characters" });
+      }
+      const apiKey = await fetchRawgKey();
+      if (!apiKey) return res.status(503).json({ error: "Configure RAWG in Settings first" });
+      const parsed =
+        typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : 20;
+      const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 40) : 20;
+      const flags = await getContentFilterFlags(req.user!.id);
+      const games = await rawgClient.search(apiKey, query, limit);
+      res.set("Cache-Control", "private, no-store");
+      return res.json(excludeFilteredContent(games, flags));
+    } catch (error) {
+      routesLogger.warn({ error }, "RAWG search failed");
+      return res.status(502).json({
+        error: error instanceof Error ? error.message : "RAWG search failed",
+      });
+    }
+  });
+  registerRawgListRoute("/api/rawg/popular", (key, limit) => rawgClient.popular(key, limit));
+  registerRawgListRoute("/api/rawg/recent", (key, limit) => rawgClient.recent(key, limit));
+  registerRawgListRoute("/api/rawg/upcoming", (key, limit) => rawgClient.upcoming(key, limit));
 
   // New discover endpoint for personalized recommendations
   app.get("/api/games/discover", igdbRateLimiter, async (req, res) => {
@@ -4408,7 +4470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     (await import("./socket.js")).notifyUser("importTaskUpdate", {
       taskId: task.id,
       status: "in_progress",
-    });
+    }, userId);
 
     const trackedKeys = new Set(
       Array.from(await storage.getTrackedDownloadKeys()).map(normalizeTrackedKey)
@@ -4576,7 +4638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     (await import("./socket.js")).notifyUser("importTaskUpdate", {
       taskId: task.id,
       status: finalStatus,
-    });
+    }, userId);
 
     return res.json({ success: true, taskId: task.id, addedCount, failedCount, skippedCount });
   });
@@ -5051,6 +5113,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       routesLogger.error({ error }, "Failed to test IGDB credentials");
       return res.status(500).json({ success: false, error: "Failed to test IGDB credentials" });
+    }
+  });
+
+  // RAWG is an optional, additive metadata provider. Its API key is stored
+  // encrypted and is never returned to the browser.
+  app.get("/api/settings/rawg", sensitiveEndpointLimiter, async (_req, res) => {
+    try {
+      res.set("Cache-Control", "no-store");
+      const stored = await storage.getSystemConfig("rawg.apiKey");
+      return res.json({ configured: Boolean(stored), apiKey: stored ? "********" : "" });
+    } catch (error) {
+      routesLogger.error({ error }, "Failed to read RAWG settings");
+      return res.status(500).json({ error: "Failed to read RAWG settings" });
+    }
+  });
+
+  app.post("/api/settings/rawg", sensitiveEndpointLimiter, async (req, res) => {
+    try {
+      const apiKey = req.body?.apiKey;
+      if (typeof apiKey !== "string" || apiKey.trim().length > 512) {
+        return res.status(400).json({ error: "A valid RAWG API key is required" });
+      }
+      const stored = await storage.getSystemConfig("rawg.apiKey");
+      const value = apiKey.trim();
+      if (!value || isUnchangedSentinel(value)) {
+        if (!stored) return res.status(400).json({ error: "RAWG API key is required" });
+        return res.json({ success: true, configured: true });
+      }
+      await storage.setSystemConfig("rawg.apiKey", await encryptCredential(value));
+      rawgClient.clearCache();
+      return res.json({ success: true, configured: true });
+    } catch (error) {
+      routesLogger.error({ error }, "Failed to save RAWG settings");
+      return res.status(500).json({ error: "Failed to save RAWG settings" });
+    }
+  });
+
+  app.delete("/api/settings/rawg", sensitiveEndpointLimiter, async (_req, res) => {
+    try {
+      await storage.deleteSystemConfig("rawg.apiKey");
+      rawgClient.clearCache();
+      return res.status(204).send();
+    } catch (error) {
+      routesLogger.error({ error }, "Failed to remove RAWG settings");
+      return res.status(500).json({ error: "Failed to remove RAWG settings" });
+    }
+  });
+
+  app.post("/api/settings/rawg/test", sensitiveEndpointLimiter, async (req, res) => {
+    try {
+      const submitted = req.body?.apiKey;
+      if (submitted !== undefined && typeof submitted !== "string") {
+        return res.status(400).json({ success: false, error: "API key must be a string" });
+      }
+      const stored = await storage.getSystemConfig("rawg.apiKey");
+      const apiKey =
+        typeof submitted === "string" && submitted.trim() && !isUnchangedSentinel(submitted.trim())
+          ? submitted.trim()
+          : await decryptCredential(stored ?? "");
+      if (!apiKey) {
+        return res.status(400).json({ success: false, error: "RAWG API key is required" });
+      }
+      const result = await rawgClient.testCredentials(apiKey);
+      return res.status(result.success ? 200 : 400).json(result);
+    } catch (error) {
+      routesLogger.error({ error }, "Failed to test RAWG settings");
+      return res.status(500).json({ success: false, error: "Failed to test RAWG API key" });
     }
   });
 

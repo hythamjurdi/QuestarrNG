@@ -230,6 +230,8 @@ export const games = sqliteTable("games", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   igdbId: integer("igdb_id"),
+  rawgId: integer("rawg_id"),
+  rawgSlug: text("rawg_slug"),
   steamAppId: integer("steam_appid"),
   title: text("title").notNull(),
   summary: text("summary"),
@@ -525,6 +527,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export const insertGameSchema = createInsertSchema(games, {
+  rawgId: (schema) => schema.int().positive().nullable().optional(),
   targetPlatformId: (schema) => schema.int().positive().nullable().optional(),
   targetPlatformName: (schema) => schema.trim().min(1).max(100).nullable().optional(),
   status: (schema) =>
@@ -1026,6 +1029,10 @@ export interface Config {
     configured: boolean;
     source?: "env" | "database" | undefined;
     clientId?: string;
+  };
+  rawg?: {
+    configured: boolean;
+    source?: "database" | undefined;
   };
   xrel?: {
     apiBase: string;

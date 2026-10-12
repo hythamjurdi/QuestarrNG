@@ -135,10 +135,34 @@ functions 82.02%, lines 86.02%. TypeScript, lint, secret scanning and production
 build pass. See [checkpoint evidence](evidence/validation-batch-1.txt).
 Running UI screenshots are in `docs/pr-evidence/upstream-*.png`.
 
-This is a checkpoint, **not completion of all 1,146 items**. Optional RAWG support,
-federation, integrated scoring profiles and most historical per-item reviews
-remain. The ledger distinguishes verified behavior from integration work still
-awaiting real external services. No upstream issue or PR has been closed.
+This is a checkpoint, **not completion of all 1,146 items**. Optional RAWG support
+and issue #1081's per-user Socket.IO delivery are now implemented; federation,
+integrated scoring profiles, real-service checks and most historical per-item
+reviews remain. The ledger distinguishes verified behavior from integration work
+still awaiting real external services. No upstream issue or PR has been closed.
+
+## Follow-up: optional RAWG provider
+
+RAWG is now available as an optional, additive metadata and discovery provider
+from **Settings → Integrations**. It stores a separate provider ID, encrypts the
+API key, keeps IGDB active for SeerrNG, applies per-user content filters and
+provides attribution only when RAWG is configured. See [RAWG setup and terms](../RAWG.md).
+
+Issue #906 is recorded as `not-applicable`: its author explicitly states the
+federation specification is an offer, not a feature request. Profiles and
+automatic-search integration for the standalone scoring engine remain open;
+closed PR #1103 remains `needs-implementation` because the engine is not yet
+connected to aggregated or automatic search. PR #1083 is `not-applicable` because
+it only records the same protocol offer in contributor documentation. The ledger
+still has 1,134 unreviewed records.
+
+## Follow-up: per-user Socket.IO events
+
+Issue [#1081](https://github.com/Doezer/Questarr/issues/1081) is verified. Every
+private `notifyUser` event is routed to the authenticated owner's socket room,
+including download status, library scan progress, game refreshes and import task
+updates. Events without a known owner are dropped. Socket tests cover delivery
+between two users and unknown-owner suppression; the full unit suite passes.
 
 Public source snapshots redact database connection strings found in support
 reports; the collection script applies the same redaction on refresh.

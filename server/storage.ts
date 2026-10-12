@@ -211,6 +211,7 @@ export interface IStorage {
   // System Config methods
   getSystemConfig(key: string): Promise<string | undefined>;
   setSystemConfig(key: string, value: string): Promise<void>;
+  deleteSystemConfig(key: string): Promise<void>;
   /** Writes several system_config entries atomically -- use for related keys (e.g. a URL + its API key) that must never be observed half-updated. */
   setSystemConfigBatch(entries: { key: string; value: string }[]): Promise<void>;
 
@@ -577,6 +578,10 @@ export class MemStorage implements IStorage {
     this.systemConfig.set(key, value);
   }
 
+  async deleteSystemConfig(key: string): Promise<void> {
+    this.systemConfig.delete(key);
+  }
+
   async setSystemConfigBatch(entries: { key: string; value: string }[]): Promise<void> {
     for (const { key, value } of entries) {
       this.systemConfig.set(key, value);
@@ -725,6 +730,8 @@ export class MemStorage implements IStorage {
       developers: insertGame.developers || null,
       screenshots: insertGame.screenshots || null,
       igdbId: insertGame.igdbId || null,
+      rawgId: insertGame.rawgId ?? null,
+      rawgSlug: insertGame.rawgSlug ?? null,
       steamAppId: insertGame.steamAppId || null,
       source: insertGame.source ?? null,
       igdbWebsites: insertGame.igdbWebsites || null,
@@ -2251,6 +2258,10 @@ export class DatabaseStorage implements IStorage {
       });
   }
 
+  async deleteSystemConfig(key: string): Promise<void> {
+    await db.delete(systemConfig).where(eq(systemConfig.key, key));
+  }
+
   async setSystemConfigBatch(entries: { key: string; value: string }[]): Promise<void> {
     return transactionalOps.setSystemConfigBatch(entries);
   }
@@ -2501,6 +2512,8 @@ export class DatabaseStorage implements IStorage {
       userId: insertGame.userId ?? null,
       title: insertGame.title,
       igdbId: insertGame.igdbId ?? null,
+      rawgId: insertGame.rawgId ?? null,
+      rawgSlug: insertGame.rawgSlug ?? null,
       summary: insertGame.summary ?? null,
       coverUrl: insertGame.coverUrl ?? null,
       releaseDate: insertGame.releaseDate ?? null,

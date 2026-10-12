@@ -142,6 +142,8 @@ export const games = pgTable("games", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   igdbId: integer("igdb_id"),
+  rawgId: integer("rawg_id"),
+  rawgSlug: text("rawg_slug"),
   steamAppId: integer("steam_appid"),
   title: text("title").notNull(),
   summary: text("summary"),

@@ -268,6 +268,10 @@ export default function SettingsPage() {
     queryKey: ["/api/settings/igdb"],
     queryFn: () => apiRequest("GET", "/api/settings/igdb").then((res) => res.json()),
   });
+  const { data: rawgSettings } = useQuery<{ configured: boolean; apiKey: string }>({
+    queryKey: ["/api/settings/rawg"],
+    queryFn: () => apiRequest("GET", "/api/settings/rawg").then((res) => res.json()),
+  });
 
   const {
     data: userSettings,
@@ -363,6 +367,7 @@ export default function SettingsPage() {
   // Local state for forms
   const [igdbClientId, setIgdbClientId] = useState("");
   const [igdbClientSecret, setIgdbClientSecret] = useState("");
+  const [rawgApiKey, setRawgApiKey] = useState("");
   const [showClientSecret, setShowClientSecret] = useState(false);
   const [downloadRules, setDownloadRules] = useState<DownloadRules | null>(null);
   const [preferredReleaseGroups, setPreferredReleaseGroups] = useState<string[]>([]);
@@ -905,6 +910,57 @@ export default function SettingsPage() {
       });
     },
   });
+
+  const saveRawg = async () => {
+    try {
+      await apiRequest("POST", "/api/settings/rawg", {
+        apiKey: rawgApiKey || (rawgSettings?.configured ? "********" : ""),
+      });
+      setRawgApiKey("");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/settings/rawg"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/config"] }),
+      ]);
+      toast({ title: "RAWG settings saved" });
+    } catch (error) {
+      toast({
+        title: "Could not save RAWG settings",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    }
+  };
+  const testRawg = async () => {
+    try {
+      const response = await apiRequest("POST", "/api/settings/rawg/test", {
+        apiKey: rawgApiKey || (rawgSettings?.configured ? "********" : ""),
+      });
+      const result = await response.json();
+      toast({ title: result.message ?? "RAWG API key is valid" });
+    } catch (error) {
+      toast({
+        title: "RAWG connection failed",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    }
+  };
+  const removeRawg = async () => {
+    try {
+      await apiRequest("DELETE", "/api/settings/rawg");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/settings/rawg"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/config"] }),
+      ]);
+      toast({ title: "RAWG provider removed" });
+    } catch (error) {
+      toast({
+        title: "Could not remove RAWG settings",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    }
+  };
 
   const refreshMetadataMutation = useMutation({
     mutationFn: async () => {
@@ -2107,6 +2163,73 @@ export default function SettingsPage() {
                         Save API Key
                       </>
                     )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card id="rawg-config">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Key className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle className="text-lg">RAWG Game Database</CardTitle>
+                </div>
+                <CardDescription>
+                  Optional game search and discovery provider. IGDB and its SeerrNG identity remain
+                  available alongside RAWG.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Status</span>
+                  <Badge variant={rawgSettings?.configured ? "default" : "secondary"}>
+                    {rawgSettings?.configured ? "Configured" : "Not configured"}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rawg-api-key">RAWG API key</Label>
+                  <Input
+                    id="rawg-api-key"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder={
+                      rawgSettings?.configured
+                        ? "Enter a new key to replace the saved key"
+                        : "Enter your RAWG API key"
+                    }
+                    value={rawgApiKey}
+                    onChange={(event) => setRawgApiKey(event.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    <a
+                      className="underline"
+                      href="https://rawg.io/apidocs"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Get a RAWG API key
+                    </a>
+                    . The key is encrypted at rest. RAWG attribution appears in the app sidebar.
+                  </p>
+                </div>
+                <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                  {rawgSettings?.configured && (
+                    <Button variant="outline" onClick={removeRawg}>
+                      Remove RAWG
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={testRawg}
+                    disabled={!rawgApiKey.trim() && !rawgSettings?.configured}
+                  >
+                    Test connection
+                  </Button>
+                  <Button
+                    onClick={saveRawg}
+                    disabled={!rawgApiKey.trim() && !rawgSettings?.configured}
+                  >
+                    Save RAWG key
                   </Button>
                 </div>
               </CardContent>

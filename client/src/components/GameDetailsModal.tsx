@@ -709,8 +709,9 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
   });
   const libraryGame = useMemo(() => {
     if (!isDiscoveryGame) return game ?? undefined;
-    if (!game?.igdbId) return undefined;
-    return libraryGames?.find((g) => g.igdbId === game.igdbId);
+    if (game?.igdbId) return libraryGames?.find((g) => g.igdbId === game.igdbId);
+    if (game?.rawgId) return libraryGames?.find((g) => g.rawgId === game.rawgId);
+    return undefined;
   }, [isDiscoveryGame, game, libraryGames]);
 
   const removeGameMutation = useMutation({

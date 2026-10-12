@@ -129,7 +129,7 @@ describe("socket.ts", () => {
       clientSocket?.once("customEvent", (payload: { message: string }) => resolve(payload));
     });
 
-    notifyUser("customEvent", { message: "hi" });
+    notifyUser("customEvent", { message: "hi" }, "user-1");
 
     const payload = await received;
     expect(payload.message).toBe("hi");

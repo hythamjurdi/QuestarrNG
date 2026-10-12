@@ -18,7 +18,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { type Game, type DownloadStatus } from "@shared/schema";
+import { type Game, type DownloadStatus, type Config } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
 import { GitHubVersionLink } from "@/components/GitHubVersionLink";
 import {
@@ -41,6 +41,7 @@ const EMPTY_GAMES: Game[] = [];
 
 export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<AppSidebarProps>) {
   const { logout, user } = useAuth();
+  const { data: appConfig } = useQuery<Config>({ queryKey: ["/api/config"] });
 
   const handleNavigation = (url: string) => {
     onNavigate?.(url);
@@ -288,6 +289,14 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
       </SidebarContent>
 
       <SidebarFooter>
+        {appConfig?.rawg?.configured && (
+          <div className="px-3 pb-2 text-center text-xs text-muted-foreground">
+            Game metadata by{" "}
+            <a className="underline" href="https://rawg.io" target="_blank" rel="noreferrer">
+              RAWG
+            </a>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

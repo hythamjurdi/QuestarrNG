@@ -318,7 +318,7 @@ describe("scanRootFolderById full scan", () => {
 
     // Clients refresh their games list once the scan has added games.
     const { notifyUser } = await import("../socket.js");
-    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "rf-1");
+    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "rf-1", "user-1");
   });
 
   it("still refreshes clients when the scan fails after adding games", async () => {
@@ -329,7 +329,7 @@ describe("scanRootFolderById full scan", () => {
 
     expect(getScanProgress("rf-1")?.status).toBe("failed");
     const { notifyUser } = await import("../socket.js");
-    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "rf-1");
+    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "rf-1", "user-1");
   });
 
   it("refreshes clients when a game was added but setting its path failed", async () => {
@@ -341,7 +341,7 @@ describe("scanRootFolderById full scan", () => {
     expect(storage.addGame).toHaveBeenCalled();
     expect(getScanProgress("rf-1")?.matched).toBe(0);
     const { notifyUser } = await import("../socket.js");
-    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "rf-1");
+    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "rf-1", "user-1");
   });
 
   it("refreshes clients when a game was written but its files failed", async () => {
@@ -352,7 +352,7 @@ describe("scanRootFolderById full scan", () => {
 
     expect(getScanProgress("rf-1")?.matched).toBe(0);
     const { notifyUser } = await import("../socket.js");
-    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "rf-1");
+    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "rf-1", "user-1");
   });
 
   it("scanAllEnabledRootFolders scans every enabled folder", async () => {

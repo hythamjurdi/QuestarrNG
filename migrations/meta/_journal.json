@@ -337,6 +337,20 @@
       "when": 1791816458221,
       "tag": "0047_magical_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1791833803856,
+      "tag": "0048_optional_rawg",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1791834001539,
+      "tag": "0049_optional_rawg",
+      "breakpoints": true
     }
   ]
 }

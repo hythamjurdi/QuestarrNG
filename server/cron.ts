@@ -917,7 +917,8 @@ async function runDownloadStatusCheck() {
                 "failed",
                 "The download client never registered this download."
               );
-              notifyUser("downloadUpdate", download.gameId);
+              const failedGame = await storage.getGame(download.gameId);
+              notifyUser("downloadUpdate", download.gameId, failedGame?.userId);
               // Mirror the normal error path: reset the game to "wanted"
               // only when no sibling download for the same game is still
               // actively downloading.
@@ -926,7 +927,6 @@ async function runDownloadStatusCheck() {
                 (s) => s.id !== download.id && ACTIVE_DOWNLOAD_STATUSES.has(s.status)
               );
               if (!hasActiveSibling) {
-                const failedGame = await storage.getGame(download.gameId);
                 if (
                   failedGame &&
                   failedGame.status !== "wanted" &&
@@ -1139,8 +1139,7 @@ async function runDownloadStatusCheck() {
             }
 
             // Notify frontend to refresh downloads for this game.
-            // TODO: scope this to a per-user socket room once multi-user socket auth is wired up.
-            notifyUser("downloadUpdate", download.gameId);
+            notifyUser("downloadUpdate", download.gameId, game?.userId);
 
             // Send notification
             const message = `Download finished for ${gameTitle}`;
@@ -1228,8 +1227,8 @@ async function runDownloadStatusCheck() {
                 "Updated download status"
               );
               // Notify frontend to refresh downloads for this game.
-              // TODO: scope this to a per-user socket room once multi-user socket auth is wired up.
-              notifyUser("downloadUpdate", download.gameId);
+              const updatedGame = await storage.getGame(download.gameId);
+              notifyUser("downloadUpdate", download.gameId, updatedGame?.userId);
             }
 
             if (isDefinitiveError && shouldPersistDownloadUpdate) {
@@ -1394,7 +1393,7 @@ async function runDownloadStatusCheck() {
               "to import it manually.";
 
           await storage.updateGameDownloadStatus(download.id, "failed", missedErrorMessage);
-          notifyUser("downloadUpdate", download.gameId);
+          notifyUser("downloadUpdate", download.gameId, game?.userId);
 
           if (willResetGame) {
             await storage.updateGameStatus(
@@ -1452,9 +1451,8 @@ async function recoverInterruptedImport(download: GameDownload): Promise<void> {
     "The import was interrupted before it finished (Questarr was probably restarted). " +
       "Review it to run the import again."
   );
-  notifyUser("downloadUpdate", download.gameId);
-
   const game = await storage.getGame(download.gameId);
+  notifyUser("downloadUpdate", download.gameId, game?.userId);
   try {
     const notification = await storage.addNotification({
       type: "warning",
@@ -1506,7 +1504,7 @@ async function handleProbablyFinishedDisappearance(
         { preserveCurated: true }
       );
     }
-    notifyUser("downloadUpdate", download.gameId);
+    notifyUser("downloadUpdate", download.gameId, game?.userId);
     return;
   }
 
@@ -1516,7 +1514,7 @@ async function handleProbablyFinishedDisappearance(
     "The download client removed this download once it finished, so its files could not " +
       "be located automatically. Review it and point the import at the downloaded files."
   );
-  notifyUser("downloadUpdate", download.gameId);
+  notifyUser("downloadUpdate", download.gameId, game?.userId);
   try {
     const notification = await storage.addNotification({
       type: "warning",
@@ -2271,7 +2269,7 @@ export async function syncUserSteamWishlist(
     });
     taskId = task.id;
     await storage.startImportTask(taskId);
-    notifyUser("importTaskUpdate", { taskId, status: "in_progress" });
+    notifyUser("importTaskUpdate", { taskId, status: "in_progress" }, userId);
 
     igdbLogger.info({ userId, steamId: user.steamId64 }, "Syncing Steam Wishlist");
 
@@ -2351,7 +2349,7 @@ export async function syncUserSteamWishlist(
       skippedItems: skippedCount,
       failedItems: failedSteamAppIds.length,
     });
-    notifyUser("importTaskUpdate", { taskId, status: finalStatus });
+    notifyUser("importTaskUpdate", { taskId, status: finalStatus }, userId);
 
     const steamPrefs = resolvePrefs(settings);
     if (addedGames.length > 0 && steamPrefs.steamSync.inApp) {
@@ -2380,7 +2378,7 @@ export async function syncUserSteamWishlist(
           errorMessage: errMessage,
         })
         .catch(() => undefined);
-      notifyUser("importTaskUpdate", { taskId, status: "failed" });
+      notifyUser("importTaskUpdate", { taskId, status: "failed" }, userId);
     }
 
     return { success: false, message: errMessage };

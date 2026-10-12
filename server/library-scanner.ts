@@ -99,7 +99,7 @@ const progressBeforeQueued = new Map<string, ScanProgress | undefined>();
  * Show a folder as waiting for its scan, so scan status never looks idle
  * between two folders of a batch or before a requested rescan starts.
  */
-function markQueued(rootFolderId: string, rootFolderPath: string): void {
+function markQueued(rootFolderId: string, rootFolderPath: string, userId: string): void {
   const previous = progressByFolder.get(rootFolderId);
   if (previous?.status !== "queued") progressBeforeQueued.set(rootFolderId, previous);
   const queued: ScanProgress = {
@@ -114,7 +114,7 @@ function markQueued(rootFolderId: string, rootFolderPath: string): void {
     errors: 0,
   };
   progressByFolder.set(rootFolderId, queued);
-  emitProgress(queued);
+  emitProgress(queued, userId);
 }
 
 /** Put back what a "queued" entry replaced when its scan did not run. */
@@ -157,8 +157,8 @@ function getUnmatchedEntry(rootFolderId: string, folderName: string): UnmatchedE
   return unmatchedByFolder.get(rootFolderId)?.find((e) => e.folderName === folderName);
 }
 
-function emitProgress(p: ScanProgress) {
-  notifyUser("library-scan-progress", p);
+function emitProgress(p: ScanProgress, userId: string) {
+  notifyUser("library-scan-progress", p, userId);
 }
 
 // ---------- Folder listing ----------
@@ -466,7 +466,7 @@ export async function scanRootFolderById(rootFolderId: string, userId: string): 
     progressByFolder.set(rootFolderId, progress);
     progressBeforeQueued.delete(rootFolderId);
     unmatchedByFolder.set(rootFolderId, []);
-    emitProgress(progress);
+    emitProgress(progress, userId);
 
     await runScan(rootFolder, progress, userId);
   } finally {
@@ -477,7 +477,7 @@ export async function scanRootFolderById(rootFolderId: string, userId: string): 
     if (rescanUserId !== undefined) {
       rescanRequested.delete(rootFolderId);
       const finished = progressByFolder.get(rootFolderId);
-      if (finished) markQueued(rootFolderId, finished.rootFolderPath);
+      if (finished) markQueued(rootFolderId, finished.rootFolderPath, rescanUserId);
       // Never let the follow-up scan's failure replace this scan's own error.
       try {
         await scanRootFolderById(rootFolderId, rescanUserId);
@@ -612,11 +612,11 @@ async function runScan(
   try {
     const candidates = await listCandidates(rootFolder.path);
     progress.totalCandidates = candidates.length;
-    emitProgress(progress);
+    emitProgress(progress, userId);
 
     for (const cand of candidates) {
       progress.currentCandidate = cand.folderName;
-      emitProgress(progress);
+      emitProgress(progress, userId);
       try {
         await processCandidate(rootFolder, cand, userId, progress);
       } catch (err) {
@@ -624,7 +624,7 @@ async function runScan(
         routesLogger.error({ err, folder: cand.folderName }, "scan: error processing folder");
       }
       progress.processedCandidates += 1;
-      emitProgress(progress);
+      emitProgress(progress, userId);
     }
 
     // Record the scan time first: the next folder of a batch is already
@@ -633,18 +633,18 @@ async function runScan(
     progress.status = "completed";
     progress.finishedAt = new Date().toISOString();
     progress.currentCandidate = undefined;
-    emitProgress(progress);
+    emitProgress(progress, userId);
   } catch (err) {
     progress.status = "failed";
     progress.finishedAt = new Date().toISOString();
     progress.errorMessage = err instanceof Error ? err.message : String(err);
-    emitProgress(progress);
+    emitProgress(progress, userId);
     routesLogger.error({ err, rootFolderId }, "library scan failed");
   }
   // Auto-matched games were added or updated, even if the scan failed later.
   // Tell every open client to refresh its games list, since only the Discover
   // tab watches scan progress.
-  if (gamesChangedByScan.has(progress)) notifyUser("gameUpdated", rootFolderId);
+  if (gamesChangedByScan.has(progress)) notifyUser("gameUpdated", rootFolderId, userId);
 }
 
 /**
@@ -655,7 +655,7 @@ async function runScan(
 export async function rescanAllEnabledRootFolders(userId: string): Promise<void> {
   const folders = await storage.getEnabledRootFolders();
   for (const folder of folders) {
-    if (!activeScans.has(folder.id)) markQueued(folder.id, folder.path);
+    if (!activeScans.has(folder.id)) markQueued(folder.id, folder.path, userId);
   }
   for (const folder of folders) {
     // One folder failing (e.g. deleted mid-batch) must not stop the rest.
@@ -670,7 +670,7 @@ export async function rescanAllEnabledRootFolders(userId: string): Promise<void>
 export async function scanAllEnabledRootFolders(userId: string): Promise<void> {
   const folders = await storage.getEnabledRootFolders();
   for (const folder of folders) {
-    if (!activeScans.has(folder.id)) markQueued(folder.id, folder.path);
+    if (!activeScans.has(folder.id)) markQueued(folder.id, folder.path, userId);
   }
   for (const folder of folders) {
     // One folder failing (e.g. deleted mid-batch) must not stop the rest.

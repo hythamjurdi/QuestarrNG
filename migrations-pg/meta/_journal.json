@@ -64,6 +64,20 @@
       "when": 1791816462733,
       "tag": "0009_lively_shape",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791833804252,
+      "tag": "0010_optional_rawg",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791834002124,
+      "tag": "0011_optional_rawg",
+      "breakpoints": true
     }
   ]
 }

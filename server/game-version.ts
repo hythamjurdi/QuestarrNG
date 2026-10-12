@@ -55,7 +55,7 @@ export async function recordVersionFromCompletedDownload(
       "Recorded game version from completed download"
     );
     // Lets an open game details modal refresh the games query, which is otherwise never stale.
-    notifyUser("gameUpdated", game.id);
+    notifyUser("gameUpdated", game.id, game.userId);
     return detected;
   } catch (error) {
     logger.warn(

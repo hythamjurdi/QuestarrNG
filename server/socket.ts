@@ -147,16 +147,9 @@ export function getIO() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function notifyUser(type: string, payload: any, userId?: string | null) {
-  if (!io) {
+  if (!io || !userId) {
     return;
   }
-
-  if (userId) {
-    // Owner known: reach only that user's sockets.
-    io.to(`${USER_ROOM_PREFIX}${userId}`).emit(type, payload);
-    return;
-  }
-
-  // No owner (app-wide event): broadcast, as before.
-  io.emit(type, payload);
+  // Never broadcast owner-scoped application data when its owner is unknown.
+  io.to(`${USER_ROOM_PREFIX}${userId}`).emit(type, payload);
 }

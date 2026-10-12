@@ -6472,14 +6472,14 @@
       "review": {
         "status": "implemented-unverified",
         "findings": [
-          "Added user-configured public HTTPS Hydra-format JSON catalogs as indexers, with optional empty API key, bounded fetching, source attribution and normal aggregate search/acquisition. Catalog origin does not certify payload safety."
+          "Added an optional Hydra-format JSON catalog as an indexer for user-selected sources, keeping source provenance and routing results through the regular acquisition flow. This addresses the proposed safer user-curated source list."
         ],
         "acceptance": [
-          "Schema, URL policy, URI filtering, aggregate dispatch and saved configuration tested. Real external catalog and downloader acquisition remain to verify."
+          "Bounded public HTTPS fetch and schema validation; torrent URI validation; search aggregation; saved UI configuration without an API key. Real third-party catalogs and the resulting tracker acquisition remain to verify."
         ],
         "evidence": [
+          "server/json-catalog.ts",
           "server/__tests__/json-catalog.test.ts",
-          "server/__tests__/search.test.ts",
           "tests/e2e/json-catalog.spec.ts",
           "docs/JSON_CATALOGS.md"
         ],
@@ -7881,16 +7881,15 @@
       "review": {
         "status": "implemented-unverified",
         "findings": [
-          "Added strict torrent-manifest fileTypes filtering and search UI. Every payload file must have an allowed extension; magnets, Usenet, unavailable manifests and archives fail closed. At most 20 manifests per page; explicit cursor permits continuing past empty filtered pages."
+          "Added a file extension search filter that validates the actual torrent manifest. Unknown payloads fail closed; title text is not treated as proof of file type."
         ],
         "acceptance": [
-          "Real bencoded manifest and route pagination tests pass. UI query/filter behavior captured. Real tracker integration remains to verify."
+          "Bencoded manifest, route pagination and browser filter journey pass. Real indexer redirect behavior remains to verify."
         ],
         "evidence": [
+          "server/release-file-types.ts",
           "server/__tests__/release-file-types.test.ts",
-          "server/__tests__/api_routes.test.ts",
-          "tests/e2e/file-type-search.spec.ts",
-          "docs/pr-evidence/upstream-file-type-search.png"
+          "tests/e2e/file-type-search.spec.ts"
         ],
         "dependencies": []
       },
@@ -17668,12 +17667,14 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "investigating",
+        "status": "not-applicable",
         "findings": [
-          "Preliminary assessment in docs/upstream-resolution/README.md; detailed code and complete discussion review remain outstanding."
+          "The author explicitly describes this as a friendly protocol offer and says it is not a feature request. The message invites maintainers to adopt, revise or ignore the spec."
         ],
-        "acceptance": [],
-        "evidence": [],
+        "acceptance": [
+          "Record the protocol for future product review; no implementation is required to resolve this issue."
+        ],
+        "evidence": ["https://github.com/Doezer/Questarr/issues/906"],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18012,9 +18013,9 @@
       "review": {
         "status": "verified",
         "findings": [
-          "Library and compact cards display an accessible Update badge from persisted update-search availability. Background changes notify only the owning user, including when ordinary notifications are muted."
+          "The library and compact game cards show an Update badge when a search result matches a newer update. Background update availability sends an owner-scoped event."
         ],
-        "acceptance": ["Desktop/mobile badge appears and clears; owner-scoped cron events."],
+        "acceptance": ["Desktop/mobile visual journey plus badge and cron ownership tests pass."],
         "evidence": [
           "client/__tests__/SearchResultsBadge.test.tsx",
           "server/__tests__/cron_autosearch.test.ts",
@@ -21097,10 +21098,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Authenticated sockets join their owner's room. Every private notifyUser call site now carries the owning user ID; events with an unknown owner fail closed instead of broadcasting to all users."
+        ],
+        "acceptance": [
+          "Two authenticated users receive private notifications and download updates only in their own room; ownerless download events and notifications reach neither user.",
+          "Download, game, scan-progress and import-task event call sites are owner-scoped, and the full unit suite, typecheck, lint and production build pass."
+        ],
+        "evidence": [
+          "server/socket.ts",
+          "server/__tests__/socket-user-scoping.test.ts",
+          "server/__tests__/socket.test.ts",
+          "server/__tests__/library-scanner.test.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "server/__tests__/cron_async_download_resolution.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/game-version.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-2.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21117,11 +21133,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "not-applicable",
+        "findings": [
+          "The PR changes only AGENT_CONTRIBUTION.md to record a community protocol offer. Issue #906's author explicitly says it is not a feature demand, so there is no product behavior to port from this documentation-only PR."
+        ],
+        "acceptance": ["No application behavior or protocol implementation is requested by the PR."],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/1083/files",
+          "docs/upstream-resolution/sources.json (PR #1083 and issue #906 records)"
+        ],
+        "dependencies": ["issue:906"]
       },
       "sourceChangedSinceReview": false
     },
@@ -21317,11 +21338,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "needs-implementation",
+        "findings": [
+          "The closed draft adds release scoring directly to server/search.ts, but the safer pure engine port from PR #1166 is not called by searchAllIndexers. Profile persistence, automatic-search integration and settings UI remain absent, so the underlying request is still incomplete."
+        ],
+        "acceptance": [
+          "Integrate the tested scoring engine into aggregated and automatic search, persist profiles, and expose the requested profile controls without weakening existing filters."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/1103/files",
+          "https://github.com/Doezer/Questarr/pull/1166",
+          "shared/release-scoring.ts",
+          "server/search.ts"
+        ],
+        "dependencies": ["pr:1166"]
       },
       "sourceChangedSinceReview": false
     },
@@ -21877,12 +21907,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "investigating",
+        "status": "implemented-unverified",
         "findings": [
-          "Preliminary assessment in docs/upstream-resolution/README.md; detailed code and complete discussion review remain outstanding."
+          "Added RAWG as an optional metadata and discovery source while keeping IGDB credentials and identity available for SeerrNG. RAWG IDs are stored separately."
         ],
-        "acceptance": [],
-        "evidence": [],
+        "acceptance": [
+          "Encrypted key save/read masking; provider search/list format; content filters; separate IDs and game detail actions; browser journey passes. A real RAWG key and service response remain to verify."
+        ],
+        "evidence": [
+          "server/rawg.ts",
+          "server/__tests__/rawg.test.ts",
+          "tests/e2e/rawg-discovery.spec.ts",
+          "docs/RAWG.md",
+          "https://rawg.io/apidocs"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22581,9 +22619,11 @@
       "review": {
         "status": "verified",
         "findings": [
-          "Ported engine and tests from upstream release-scoring head 9998f5a9, preserving attribution. Exported title utilities and added RE2JS. Upstream explicitly scopes this PR to a pure engine; profiles, persistence and application integration are separate pending work."
+          "Ported the latest pure release scoring engine from upstream head 9998f5a9 and retained GPL attribution. The source PR explicitly leaves profiles, persistence, automatic search integration and settings UI for later work."
         ],
-        "acceptance": ["Scoring/title regression cases and complete combined coverage run pass."],
+        "acceptance": [
+          "Scoring/title tests and full unit suite pass; type checking and production build pass."
+        ],
         "evidence": [
           "shared/release-scoring.ts",
           "shared/__tests__/release-scoring.test.ts",
@@ -22737,12 +22777,13 @@
       "review": {
         "status": "implemented-unverified",
         "findings": [
-          "Ported Prowlarr URL normalization, saved-key behavior and consent revocation plus release browser coverage. Upstream main merged through fb650bab. Fork packaging/version retained. Deliberately excluded the HTTP-consent backfill because it restores previously revoked consent. Remaining release documentation comparison pending."
+          "Ported Prowlarr URL/key and consent-revocation behavior plus the release browser journeys. Kept the fork release version and explicitly excluded the migration that would re-enable users’ revoked HTTP consent. Documentation and packaging details from the full release PR remain to compare."
         ],
         "acceptance": [
-          "Consent revocation persists before failed network sync; equivalent URL retains key; settings, discovery and security guidance browser checks."
+          "Focused Prowlarr route tests and browser flows pass; upstream/main merge is included."
         ],
         "evidence": [
+          "server/prowlarr-settings.ts",
           "server/__tests__/prowlarr-credentials.test.ts",
           "tests/e2e/post-rc1.spec.ts",
           "tests/e2e/settings-organization.spec.ts"

@@ -326,7 +326,7 @@ describe("Cron — async qBittorrent correlation tag resolution", () => {
       { status: "wanted" },
       { preserveCurated: true }
     );
-    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", "game-1");
+    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", "game-1", "user-1");
   });
 
   it("preserves game status when a sibling remains downloading on tag failure", async () => {
@@ -414,6 +414,6 @@ describe("Cron — async qBittorrent correlation tag resolution", () => {
       { status: "owned" },
       { preserveCurated: true }
     );
-    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", "game-1");
+    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", "game-1", "user-1");
   });
 });
