@@ -16,7 +16,7 @@ how data flows between existing actors.
 QuestarrNG is a three-layer TypeScript application in a single `package.json`
 (not a monorepo):
 
-- **`/client`** — a React 18 single-page app (Wouter routing, TanStack Query
+- **`/client`** — a React 19 single-page app (Wouter routing, TanStack Query
   for server state).
 - **`/server`** — an Express REST API plus a Socket.io WebSocket channel.
 - **`/shared`** — the Drizzle ORM schema and Zod validation schemas used by
@@ -25,6 +25,10 @@ QuestarrNG is a three-layer TypeScript application in a single `package.json`
 The client never talks to the database, external services, or download
 clients directly — every action is mediated by the server, which is the
 system's central trust boundary (§8).
+
+SQLite is the default database. PostgreSQL is an opt-in dialect selected with
+`DB_DIALECT=postgres` and `DATABASE_URL`; see [DATABASE.md](DATABASE.md) for setup
+and migration. The storage facade keeps the same API for both implementations.
 
 ## 2. System actors
 
@@ -282,13 +286,26 @@ client versions for logging) and a daily import-task cleanup (deletes
 `import_tasks` rows older than 30 days), neither of which reads/writes
 domain data covered by this table:
 
-| Job                   | Interval                                                                                  | Upstream read                                                                           | Downstream write                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `checkGameUpdates`    | 24 hours                                                                                  | IGDB (batch fetch by ID)                                                                | `games` table (release date/status), `notifications` table, Socket.io `notification`                             |
-| `checkDownloadStatus` | 1 minute                                                                                  | Configured download clients (via `DownloaderManager`)                                   | `game_downloads`/`games` status, `notifications`, Socket.io `downloadUpdate`/`notification`                      |
-| `checkAutoSearch`     | 1 hour (per user, gated by their configured search interval)                              | Torznab/Newznab indexers (via `search.ts`), download clients (if auto-download enabled) | `games` search-results flag, `game_downloads`, `notifications`, Socket.io `notification`                         |
-| `checkXrelReleases`   | 6 hours                                                                                   | xREL.to latest releases                                                                 | `xrel_notified_releases`, `notifications`, Socket.io `notification`                                              |
-| `checkSteamWishlist`  | 1 hour (per user, gated by their configured sync interval, opt-in via `steamSyncEnabled`) | Steam Web API wishlist, IGDB (Steam App ID lookup)                                      | `games` table (new/linked entries), `import_tasks`, `notifications`, Socket.io `importTaskUpdate`/`notification` |
+| Job                       | Interval                                                                                  | Upstream read                                                                           | Downstream write                                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `checkGameUpdates`        | 24 hours                                                                                  | IGDB (batch fetch by ID)                                                                | `games` table (release date/status), `notifications` table, Socket.io `notification`                             |
+| `checkDownloadStatus`     | 1 minute                                                                                  | Configured download clients (via `DownloaderManager`)                                   | `game_downloads`/`games` status, `notifications`, Socket.io `downloadUpdate`/`notification`                      |
+| `checkAutoSearch`         | 1 hour (per user, gated by their configured search interval)                              | Torznab/Newznab indexers (via `search.ts`), download clients (if auto-download enabled) | `games` search-results flag, `game_downloads`, `notifications`, Socket.io `notification`                         |
+| `checkXrelReleases`       | 6 hours                                                                                   | xREL.to latest releases                                                                 | `xrel_notified_releases`, `notifications`, Socket.io `notification`                                              |
+| `checkSteamWishlist`      | 1 hour (per user, gated by their configured sync interval, opt-in via `steamSyncEnabled`) | Steam Web API wishlist, IGDB (Steam App ID lookup)                                      | `games` table (new/linked entries), `import_tasks`, `notifications`, Socket.io `importTaskUpdate`/`notification` |
+| `rssService.refreshFeeds` | 1 hour (also 10 seconds after startup)                                                    | Enabled RSS feeds via SSRF-safe fetch, IGDB matching                                    | `rss_feeds` check status and `rss_feed_items`                                                                    |
+
+RSS scheduled and manual full refreshes share an in-flight promise. Full and
+single-feed refreshes use one queue to prevent overlapping writes and duplicate
+items. New-feed refreshes join that queue rather than racing the hourly check.
+
+Root-folder discovery lives in **Library → Library Import**. Add/enable/path
+changes and enabling post-processing trigger scans; changes during a running
+scan queue a follow-up. `library-scan-progress` carries scan timestamps and
+counts. Clients invalidate games after new matches or a scan finishes (including
+failure after partial writes), and refresh review candidates when progress changes.
+Unmatched-folder IGDB name searches update candidates without importing; explicit
+confirmation writes the game and file records. See [LIBRARY_IMPORT.md](LIBRARY_IMPORT.md).
 
 Steam wishlist sync (`syncUserSteamWishlist` in `server/cron.ts`) also runs
 on-demand when a user explicitly triggers it via

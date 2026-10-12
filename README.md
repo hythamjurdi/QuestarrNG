@@ -102,7 +102,7 @@ Can't decide what to play? Click **Pick a game** in your Library for
 
 ### Supported Indexers/Downloaders
 
-- Prowlarr synchronization is supported to add all your indexers at once.
+- Sync indexers from [Prowlarr](docs/INDEXERS.md).
 - G4u.to: the site offers an API to VIP members, which can be used in Questarr.
 
 | Indexers                   | Downloaders                                                                             |
@@ -135,8 +135,9 @@ unsupported. See the [compatibility guide](docs/SEERRNG-INTEGRATION.md#current-c
 Post-processing can move, copy, hardlink, or symlink completed downloads into
 your PC library, unpack supported archives, or route matched ROM imports into
 RomM folders. Optional VirusTotal hash checks and ClamAV scans run before
-unpacking or import. The [import guide](docs/IMPORTS.md) explains setup,
-platform-folder mappings, scanner behavior, and Pending Imports review.
+unpacking or import. The [import guide](docs/IMPORTS.md) explains RomM routing
+and scanner setup; [Library Import](docs/LIBRARY_IMPORT.md) covers folder
+discovery, import history, and recovery.
 
 ## Installation
 
@@ -405,13 +406,13 @@ Manage your wanted games and when they release.
 
 ### Discover Games
 
-Browse and find new games to add to your collection.
+Browse and find new games to add to your collection. Download from a game’s details to add it as Wanted and send a release to your downloader.
 
 <a href="images/Screenshots/discover.png"><img src="images/Screenshots/discover.png" /></a>
 
 #### RSS & xRel.to feeds
 
-Custom RSS feeds and xRel.to flux matched to IGDB games directly into the app. Default RSS is set to fitgirl site.
+Discover releases through [RSS feeds](docs/RSS.md) and xREL.to, with IGDB matching.
 
 <p float="left">
   <a href="images/Screenshots/rss.png"><img src="images/Screenshots/rss.png" width="49%" /></a>

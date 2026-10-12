@@ -1,4 +1,4 @@
-# GitHub Documentation Map (Canonical)
+# Documentation Map
 
 This file is the entry point for user, operator, contributor, and security
 documentation in this repository.

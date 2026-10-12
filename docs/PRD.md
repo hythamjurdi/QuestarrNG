@@ -46,13 +46,22 @@ A user who wants to automate ROM downloads for retro gaming, feeding tools like 
 
 ---
 
-## 4. What Exists Today
+## 4. Shipped in 1.5.0
 
 QuestarrNG is a maintained fork of Questarr. The following capabilities are
 available in the current release; the fork's release-by-release additions are
 summarized in [FORK_CHANGES.md](FORK_CHANGES.md).
 
-### Library Management
+- IGDB discovery and metadata, Steam wishlist import and scheduled sync, RSS
+  feeds refreshed at startup and hourly, and xREL release monitoring.
+- Wanted, Owned, Playing, Completed, and Shelved statuses, ratings, notes,
+  platform/content filters, sorting, and Backlog roulette.
+- Playing journal, milestones, screenshots, and Steam achievements; game details
+  include DLC/expansions, crack status, Time to Beat, PCGamingWiki, and NexusMods.
+- Root-folder discovery with scan progress, automatic rescans, and IGDB review
+  for unmatched folders. Existing files stay in place.
+- Installed-version tracking, populated from completed downloads or edited in
+  game details. Older update releases do not produce newer-version alerts.
 
 - Add games manually, through IGDB discovery, from a Steam wishlist, or from a
   scan of configured local platform roots
@@ -62,13 +71,26 @@ summarized in [FORK_CHANGES.md](FORK_CHANGES.md).
   achievements; view game DLC and expansions
 - Scope discovery, library views, downloads, and import eligibility by platform
 
-### Discovery
+- Torznab, Newznab, and G4U indexers, plus Prowlarr synchronization with saved
+  connection, category, and priority defaults.
+- Manual and scheduled searches, auto-download, release blacklisting, preferred
+  release groups, source-page links, and per-game target platforms.
+- qBittorrent, Transmission, rTorrent, Deluge, Synology Download Station,
+  SABnzbd, and NZBGet integrations with live download progress.
+- Optional experimental AI release analysis using TypeSafe/Jev through
+  OpenRouter with the user's API key.
 
 - IGDB discovery and metadata enrichment, including exact platform release
   dates, Steam App ID matching, PCGamingWiki links, and NexusMods trends
 - RSS and xREL release feeds, with platform, genre, year, and content filters
 
-### Search & Indexers
+- Configurable library root, rename pattern, copy/move/hardlink transfer,
+  hardlink fallback, archive extraction, path mappings, and add-on organization.
+- Manual review for failed or ambiguous imports, archive passwords, and orphaned
+  downloads; import history records task results.
+- Optional VirusTotal and ClamAV checks quarantine detected files before import;
+  incomplete ClamAV scans wait for informed manual review.
+- Playing, Shelved, and Completed statuses survive download and import updates.
 
 - Torznab and Newznab search, direct configuration or Prowlarr synchronization
 - Per-indexer feed diagnostics and manual per-release download actions
@@ -122,7 +144,7 @@ This section adapts the upstream roadmap to the current QuestarrNG codebase.
 Items marked shipped are maintained capabilities; the remaining ideas are
 proposals without a promised release date.
 
----
+### Smart backlog
 
 ### P0 — Post-processing pipeline _(shipped)_
 
@@ -134,11 +156,11 @@ VirusTotal or ClamAV checks can quarantine flagged files before import.
 See the [import and security details](IMPORTS.md) and the
 [fork history](FORK_CHANGES.md#acquisition-import-and-safety).
 
----
+### External integrations
 
 ### P1 — Smart game backlog (version-aware updates) _(planned)_
 
-**Problem:** Once a game is downloaded, Questarr forgets about it. Users have no way to know when a newer version (patch, repack, upgrade) becomes available on indexers.
+### Ongoing quality
 
 **Feature:**
 
@@ -275,9 +297,9 @@ Community growth targets are not currently maintained in this product brief.
 
 ## 8. Technical Constraints & Principles
 
-- **Docker-first**: All features must work in a standard Docker container without host-level dependencies (except mapped volumes).
+- **Supported deployments**: Features must work in Docker and the native Windows distribution; filesystem access must respect configured paths.
 - **SQLite by default**: New features must not require PostgreSQL to function. Postgres is additive.
-- **Single-user**: No multi-tenant data isolation required. JWT auth is sufficient for current scope.
+- **Single-user**: Single-user is the supported configuration. Preserve cookie authentication, CSRF protection, and authenticated real-time connections.
 - **TypeScript strict**: No `any`, no untyped escape hatches introduced by new features.
 - **SSRF protection**: All outbound HTTP calls (new integrations, debrid APIs) must go through `ssrf.ts` validation.
 - **Backward compatibility**: Settings, config, and the database schema must migrate cleanly. No silent breaking changes.

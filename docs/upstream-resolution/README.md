@@ -122,21 +122,21 @@ The campaign starts in the isolated `codex/upstream-resolution` branch and
 `QuestarrNG-upstream-resolution` sibling worktree. The original
 `codex/validation-live-progress` checkout remains available for its existing work.
 
-## Validated integration checkpoint — October 12, 2026
+## Initial integration checkpoint — October 12, 2026
 
 Upstream main through `fb650bab` is merged with fork behavior preserved. This
 includes import/library discovery, backlog roulette, download recovery, archive
 update handling and Prowlarr changes. The unsafe blanket HTTP-consent backfill is
 excluded: revoked consent stays revoked.
 
-The next batch adds thumbnail update badges (#923), Hydra-format JSON catalogs
-(#336), strict torrent-manifest extension filtering (#406), the standalone release
-scoring engine (#1166), and Prowlarr release-preparation fixes/coverage (#1172).
+Later batches delivered thumbnail update badges (#923), Hydra-format JSON
+catalogs (#336), strict torrent-manifest extension filtering (#406), the standalone
+release scoring engine (#1166), and Prowlarr release-preparation fixes/coverage (#1172).
 The scoring source comes from upstream head `9998f5a9`; its Jessomadic/Questarr
 GPL attribution remains in the source. Release-preparation ports come from
 `07d7386b`.
 
-Validation: 3,997 tests passed, seven skipped; statements 84.62%, branches 77.44%,
+Initial validation: 3,997 tests passed, seven skipped; statements 84.62%, branches 77.44%,
 functions 82.02%, lines 86.02%. TypeScript, lint, secret scanning and production
 build pass. See [checkpoint evidence](evidence/validation-batch-1.txt).
 Running UI screenshots are in `docs/pr-evidence/upstream-*.png`.
@@ -378,3 +378,26 @@ ledger now has **146 verified**, **3 superseded**, **992
 unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and **1
 needs-implementation** record. Issue #37 remains the outstanding
 implementation item. See [batch 14 evidence](evidence/validation-batch-14.txt).
+
+## Upstream main reconciliation — October 12, 2026
+
+Upstream main through `ad69b8ca` is reconciled into the resolution branch. The
+integration retains QuestarrNG's 1.10.0 version, image and repository identity,
+security hardening, and SeerrNG/Real-Debrid behavior. Upstream's release guide,
+browser evidence, and real-stack coverage were incorporated; the library-import
+guide is now in the fork's documentation navigation.
+
+The upstream migration `0044_backfill_insecure_lan` was excluded. QuestarrNG
+already uses migration number 0044 for game and library fields, and backfilling
+every existing HTTP connection to enabled would regrant permission even when a
+user had explicitly revoked it. The real-stack upgrade fixture now begins after
+the HTTP opt-in fields are introduced and verifies that both HTTP and HTTPS
+permissions stay disabled through the remaining fork migrations.
+
+Validation: 4,025 tests passed and seven skipped; typecheck, lint, formatting,
+and production build passed. The real migration runner applied migrations 0035
+through 0050 to the persisted fixture, and all four seeded permission values
+remained `false`. `npm run test:stack` could not start locally because
+`qbittorrent-nox` is not installed; the updated CI stack workflow installs the
+required download clients. See
+[reconciliation evidence](evidence/validation-upstream-main-reconcile.txt).

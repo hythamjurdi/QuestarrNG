@@ -1,0 +1,34 @@
+Upstream main reconciliation — 2026-10-12
+
+Upstream source
+- Reconciled upstream/main through ad69b8ca44c7456d9183422fbdfdefbb67a771e9.
+- This includes the upstream merges of #1186 and #1172. QuestarrNG keeps its
+  1.10.0 release identity, repository/image coordinates, fork integrations,
+  database migrations, and security defaults.
+- Documentation, release screenshots, and real-stack test coverage from the
+  upstream release preparation were reviewed and incorporated where applicable.
+
+HTTP consent migration decision
+- Upstream added migrations/0044_backfill_insecure_lan.sql, which sets every
+  existing HTTP indexer and downloader to allow_insecure_lan = 1.
+- QuestarrNG already uses migration 0044 for game and library fields. The
+  backfill would also regrant HTTP permission after an operator explicitly
+  revoked it, so it is not included in this fork.
+- The real-stack upgrade fixture now builds a persisted database through
+  0034_downloader_allow_insecure_lan, inserts HTTP and HTTPS connections with
+  opt-in disabled, and lets the production migration runner apply the remaining
+  QuestarrNG migrations.
+
+Validation
+- `npm test`: 4,025 passed, 7 skipped; 248 test files passed, 1 skipped.
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run build`
+  passed. Vite printed its existing advisory for chunks larger than 500 kB.
+- The persisted fixture was created with
+  `node --import tsx tests/stack/prepare-upgrade.ts`; the real
+  `server/run-migrations.ts` runner applied migrations 0035 through 0050.
+  SQLite queries confirmed both seeded indexers and downloaders retained
+  `allow_insecure_lan = 0` for HTTP and HTTPS rows.
+- `npm run test:stack` stopped before browser tests because the local environment
+  does not have `qbittorrent-nox` (`spawn qbittorrent-nox ENOENT`). The updated
+  `.github/workflows/stack.yml` installs qBittorrent, Transmission, SABnzbd, and
+  p7zip for the stack job.

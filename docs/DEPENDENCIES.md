@@ -44,7 +44,7 @@ Dependencies are added deliberately as part of normal development, via `npm inst
 
 Every published Docker image ships with a generated Software Bill of Materials listing the exact versions of every dependency included in that release. See [docs/SBOM.md](SBOM.md) for how to inspect it.
 
-## Currently blocked updates
+## Previously blocked updates
 
 Tracked here so a blocked Dependabot PR doesn't get silently re-proposed and re-investigated from scratch. Remove an entry once its update is unblocked and merged.
 
