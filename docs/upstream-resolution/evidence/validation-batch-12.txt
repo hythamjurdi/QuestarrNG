@@ -1,0 +1,55 @@
+Batch 12 source review and implementation — 2026-10-12
+
+Scope reviewed
+- PRs #96–108, issue #109, PRs #110–111.
+- Upstream main was fetched before refreshing the inventory. PR bodies, files,
+  comments, reviews, and available review threads were checked live. Issue #109
+  is closed with an empty body and no comments. PR #111 has no review threads.
+- Rechecked the three records flagged by source digest: issues #237, #245, and
+  #260. #237's last comment uses `localhost` for PostgreSQL from inside the app
+  container; that is a container hostname configuration problem, also explained
+  in #260. The original nanoid and first-start migration problems are fixed.
+  #245's reporters confirm the clean production image starts successfully.
+
+Disposition and verification
+- PR #96 is superseded: it reverted drizzle-zod 0.8.3 after a Zod v4 typing
+  incompatibility, and the maintainer explicitly requested migration rather
+  than a revert. Merged PR #110 performs the migration; current 0.8.3 types
+  compile.
+- PR #97: `/api/config` is behind the API authentication boundary. It returns
+  configured/source metadata and omits the IGDB client ID. The shared `Config`
+  type is used by the client.
+- PR #98: `mapGameToInsertGame` strips client-only fields before POST requests
+  from discovery, cards, and the Add Game dialog.
+- PR #99: `tsconfig.json` excludes examples directories; typechecking passes.
+- PR #100: `/api/health` provides liveness, `/api/ready` checks readiness, and
+  route tests cover both behaviors.
+- PR #101: Vite sets `css.postcss.from` to `undefined`; the production build
+  succeeds without the historical PostCSS warning.
+- PR #102: category discovery, selection, and persistence are present. Review
+  found remove buttons nested inside the trigger button. Removable badges now
+  render outside the trigger; a focused unit test checks removal and confirms
+  the trigger remains closed. Running UI evidence is in
+  `docs/pr-evidence/upstream-torznab-multiselect.png`.
+- PR #103: `/api/downloads` returns downloader errors with download records;
+  the page and background notification hook surface errors and prevent stale
+  duplicate notifications.
+- PRs #104–107: current locked versions exceed the requested versions for
+  react-hook-form, Vitest, express-validator, and fast-xml-parser.
+- PR #108: CI uses SHA-pinned actions/checkout v6 and v7 revisions.
+- Issue #109 and PR #111: Replit artifacts are removed. Development mode ran
+  through `npm run dev:test`. ESM production compilation and startup succeeded;
+  `/api/health`, `/login`, and `/activity/imports` each returned HTTP 200.
+- PR #110: drizzle-zod 0.8.3 migration and generated types pass TypeScript
+  checking.
+
+Validation
+- `npm run test:run -- --maxWorkers=4`: 4,020 passed, 7 skipped.
+- `npm run check`, `npm run lint`, and `npm run format:check` passed.
+- `npm run build` passed. Vite emitted the existing advisory that some chunks
+  exceed 500 kB after minification.
+- Development UI screenshot captured with Playwright at
+  `docs/pr-evidence/upstream-torznab-multiselect.png`; category responses were
+  stubbed, and no external indexer was contacted.
+- `/tmp` had no free space, so Playwright and the full test suite used the
+  task-specific `TMPDIR` at `/home/keith/questarr-upstream-temp/verification-batch-12-20261012`.

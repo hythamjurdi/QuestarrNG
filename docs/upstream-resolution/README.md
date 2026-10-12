@@ -167,7 +167,7 @@ are excluded with the limitation shown in the running UI. Issue #336 is verified
 operators can configure Hydra-format public HTTPS catalogs, and their torrent
 links join normal aggregated search with source attribution. Catalog origin does
 not certify release safety; the existing scanning controls remain applicable.
-The ledger currently has 1,037 unreviewed records. Each of the four open issues
+At that checkpoint, the ledger had 1,037 unreviewed records. Each of the four open issues
 and four open PRs has a preliminary disposition; review status is tracked
 separately from GitHub state. Issue #37 still needs the remaining mutation
 routes moved to shared Zod validation.
@@ -269,3 +269,41 @@ implementation. See
 
 Public source snapshots redact database connection strings found in support
 reports; the collection script applies the same redaction on refresh.
+
+## Follow-up: settings, multi-select, runtime, and dependency requests (#96–111)
+
+PR #96 asked to restore `drizzle-zod` 0.7 after the 0.8.3 type migration failed;
+the maintainer then requested a migration instead of a revert. Merged PR #110
+now supplies that migration, so #96 is recorded as superseded. The read-only
+settings API is protected by the default-deny authentication boundary and omits
+the IGDB client ID. Client-only game fields are filtered before API submission,
+example directories are excluded from typechecking, and health/readiness probes
+remain available. Dependency PRs #104–108 are satisfied by newer locked package
+versions and pinned checkout actions.
+
+The Torznab category multi-select request (#102) was already implemented, but
+reviewing its accessibility behavior exposed nested buttons: each category's
+remove button lived inside the popover trigger button. The trigger now reports
+the selection count and removable category badges sit outside it. A component
+test verifies removal does not open the trigger, and the running indexer dialog
+was checked in a browser. The [multi-select screenshot](../pr-evidence/upstream-torznab-multiselect.png)
+is ready to attach to the eventual upstream PR description.
+
+Issue #109 and PR #111 cover Replit cleanup and working development/production
+builds. No Replit runtime artifacts remain. Development mode was exercised via
+`npm run dev:test`; the production build and server start passed, and the
+`/api/health`, `/login`, and nested `/activity/imports` routes returned HTTP 200. PR #103's downloader error response and notifications were verified in the
+current route and client consumers. PR #101's PostCSS fix and PR #110's
+`drizzle-zod` migration also pass the current build and typecheck.
+The three records flagged by source digest (#237, #245, and #260) were also
+rechecked. #237's last comment uses `localhost` for PostgreSQL inside the app
+container, a hostname configuration issue also explained in #260; its original
+nanoid and first-start migration problems are fixed.
+
+Batch 12 passed the full suite (**4,020 passed, 7 skipped**), typecheck, lint,
+format check, and production build. The browser test used a stubbed category
+response; it did not contact a live indexer. The ledger now has **120 verified**,
+**1 superseded**, **1,021 unreviewed**, **3 not-applicable**, **1
+implemented-but-unverified**, and **1 needs-implementation** record. Issue #37
+still needs shared Zod validation across every POST/PATCH route. See
+[batch 12 evidence](evidence/validation-batch-12.txt).

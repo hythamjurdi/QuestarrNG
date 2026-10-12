@@ -67,24 +67,9 @@ export function MultiSelect({
           className={cn("w-full justify-between", className)}
           disabled={disabled}
         >
-          <div className="flex gap-1 flex-wrap">
-            {selectedOptions.length > 0 ? (
-              selectedOptions.map((option) => (
-                <Badge variant="secondary" key={option.value} className="flex items-center">
-                  {option.label}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove(option.value);
-                    }}
-                    aria-label={`Remove ${option.label}`}
-                    className="ml-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <X className="h-3 w-3 cursor-pointer" />
-                  </button>
-                </Badge>
-              ))
+          <div className="flex flex-wrap gap-1 text-left">
+            {selected.length > 0 ? (
+              <span>{selected.length} selected</span>
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
@@ -92,6 +77,24 @@ export function MultiSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
+      {selectedOptions.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label="Selected items">
+          {selectedOptions.map((option) => (
+            <Badge variant="secondary" key={option.value} className="flex items-center">
+              {option.label}
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => handleRemove(option.value)}
+                aria-label={`Remove ${option.label}`}
+                className="ml-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <X className="h-3 w-3 cursor-pointer" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
           <CommandInput placeholder="Search..." />
