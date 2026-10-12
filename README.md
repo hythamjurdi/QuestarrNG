@@ -53,8 +53,15 @@ A video game management application inspired by the -Arr apps (Sonarr, Radarr, P
 
 ## What this fork adds
 
-QuestarrNG continues to share its foundation with upstream Questarr. Its
-Snapetech-maintained work has expanded the product in several areas:
+QuestarrNG continues to share its foundation with upstream Questarr. We
+maintain a separate fork because the current
+[upstream `main` snapshot](https://github.com/Doezer/Questarr/commit/fb650bab63cb2f7ce3c9004ab9028cfc3b210a01)
+does not expose the SeerrNG provider contract. QuestarrNG adds that versioned,
+request-scoped integration while developing standalone library, acquisition,
+and deployment capabilities. Its maintained work has expanded in several
+areas. The [fork guide](docs/FORK_CHANGES.md) records
+the comparison date, the differences, and the upstream capabilities that
+would let SeerrNG stop depending on this fork.
 
 - **A richer game library:** platform-scoped discovery and filters, local
   library scanning, a Playing page with journal entries, milestones, screenshots

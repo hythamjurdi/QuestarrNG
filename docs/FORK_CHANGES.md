@@ -6,6 +6,41 @@ the main product and maintenance additions made for the fork. The
 [changelog](CHANGELOG.md) remains the complete versioned record, including
 individual fixes and security updates.
 
+## Why maintain QuestarrNG
+
+The fork keeps a SeerrNG-compatible provider and a separately released game
+manager under active development. On 2026-10-12, the inspected
+[Doezer/Questarr `main` commit](https://github.com/Doezer/Questarr/commit/fb650bab63cb2f7ce3c9004ab9028cfc3b210a01)
+did not expose a SeerrNG provider API. QuestarrNG supplies a versioned
+capability handshake, a stable IGDB catalog, and request-contract v2: it keeps
+SeerrNG's request ID and selected PC operating system/architecture attached
+through acquisition, reports lifecycle state, supports retry/cancel, and
+streams imported files through authenticated request-scoped routes. These
+boundaries let SeerrNG retain approval, quotas, ownership, and requester access
+while QuestarrNG owns game acquisition and file delivery. See the
+[integration guide](SEERRNG-INTEGRATION.md), the current
+[request-contract v2 OpenAPI contract](contracts/seerrng-v2.openapi.yaml), and
+the [provider v1 contract](contracts/seerrng-v1.openapi.yaml).
+
+QuestarrNG also develops the standalone features below, including platform-
+scoped library workflows, play tracking, RomM and Playnite connections,
+acquisition safety, optional PostgreSQL, and fork-owned multi-platform
+releases. Upstream and this fork can converge or diverge with later changes;
+this snapshot is a dated comparison, not a permanent claim about Questarr.
+
+### When the fork would no longer be required
+
+SeerrNG could depend on upstream Questarr directly after upstream provides the
+current provider handshake and request contract (including stable external
+request identity, selected PC variant, lifecycle actions/status, and
+authenticated request-scoped file delivery), and SeerrNG supports that
+upstream contract or an adapter. Any standalone QuestarrNG capability still
+required by operators would also need to be available upstream or no longer be
+a maintained requirement. We can then compare release cadence, migration
+behavior, security support, and deployment targets before moving the default
+dependency. Recheck this guide against upstream and the SeerrNG consumer when
+the contract changes.
+
 The Snapetech fork was created in September 2026. The v1.5.0 release was not
 published; its completed work shipped in v1.6.0. Fork releases from v1.6.0
 through [v1.10.0](https://github.com/snapetech/QuestarrNG/releases/tag/v1.10.0)
