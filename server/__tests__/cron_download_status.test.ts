@@ -251,11 +251,7 @@ describe("Cron - checkDownloadStatus", () => {
       { preserveCurated: true }
     );
     expect(statusWritesFor(baseDownload.gameId)).not.toContainEqual({ status: "owned" });
-    expect(mockNotifyUser).toHaveBeenCalledWith(
-      "downloadUpdate",
-      baseDownload.gameId,
-      "user-1"
-    );
+    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", baseDownload.gameId, "user-1");
   });
 
   it("should skip a cycle without counting a miss when the individual status lookup throws", async () => {
@@ -308,11 +304,7 @@ describe("Cron - checkDownloadStatus", () => {
     );
     expect(statusWritesFor(baseDownload.gameId)).not.toContainEqual({ status: "owned" });
     expect(statusWritesFor(baseDownload.gameId)).not.toContainEqual({ status: "wanted" });
-    expect(mockNotifyUser).toHaveBeenCalledWith(
-      "downloadUpdate",
-      baseDownload.gameId,
-      "user-1"
-    );
+    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", baseDownload.gameId, "user-1");
   });
 
   it("should not reset the game to wanted when a sibling download is still unpacking", async () => {

@@ -4489,10 +4489,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       triggeredBy: "manual",
     });
     await storage.startImportTask(task.id);
-    (await import("./socket.js")).notifyUser("importTaskUpdate", {
-      taskId: task.id,
-      status: "in_progress",
-    }, userId);
+    (await import("./socket.js")).notifyUser(
+      "importTaskUpdate",
+      {
+        taskId: task.id,
+        status: "in_progress",
+      },
+      userId
+    );
 
     const trackedKeys = new Set(
       Array.from(await storage.getTrackedDownloadKeys()).map(normalizeTrackedKey)
@@ -4657,10 +4661,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       skippedItems: skippedCount,
       failedItems: failedCount,
     });
-    (await import("./socket.js")).notifyUser("importTaskUpdate", {
-      taskId: task.id,
-      status: finalStatus,
-    }, userId);
+    (await import("./socket.js")).notifyUser(
+      "importTaskUpdate",
+      {
+        taskId: task.id,
+        status: finalStatus,
+      },
+      userId
+    );
 
     return res.json({ success: true, taskId: task.id, addedCount, failedCount, skippedCount });
   });

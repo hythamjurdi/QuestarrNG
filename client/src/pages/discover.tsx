@@ -201,13 +201,7 @@ export default function DiscoverPage() {
       hideOwned ? signature(ownedIgdbIds) : "owned-shown",
       hideWanted ? signature(wantedIgdbIds) : "",
     ];
-  }, [
-    hiddenIgdbIds,
-    ownedIgdbIds,
-    wantedIgdbIds,
-    hideOwned,
-    hideWanted,
-  ]);
+  }, [hiddenIgdbIds, ownedIgdbIds, wantedIgdbIds, hideOwned, hideWanted]);
   const rawgCarouselFilterKey = useMemo(
     () => [
       ...carouselFilterKey,
@@ -215,14 +209,7 @@ export default function DiscoverPage() {
       hideOwned ? [...ownedRawgIds].sort((a, b) => a - b).join(",") : "owned-shown",
       hideWanted ? [...wantedRawgIds].sort((a, b) => a - b).join(",") : "",
     ],
-    [
-      carouselFilterKey,
-      hiddenRawgIds,
-      ownedRawgIds,
-      wantedRawgIds,
-      hideOwned,
-      hideWanted,
-    ]
+    [carouselFilterKey, hiddenRawgIds, ownedRawgIds, wantedRawgIds, hideOwned, hideWanted]
   );
 
   const filterGames = useCallback(
