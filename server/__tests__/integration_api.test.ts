@@ -124,6 +124,7 @@ describe("integration API", () => {
       (storage.getIntegrationRequest as Mock).mockResolvedValue({ gameId: "game-1" });
       (storage.getGame as Mock).mockResolvedValue({
         id: "game-1",
+        title: "Test Game",
         userId: USER.id,
         seerrExternalRequestId: "seerrng:request:bundle",
       });
@@ -155,7 +156,8 @@ describe("integration API", () => {
       expect(assets.status).toBe(200);
       expect(assets.body).toMatchObject({
         bundleSupported: true,
-        bundleName: "questarr-assets.tar.gz",
+        bundleName: "Test Game.tar.gz",
+        bundleUrl: "/api/integration/seerrng/v1/requests/seerrng%3Arequest%3Abundle/assets/bundle",
       });
 
       const bundle = await withKey(
@@ -171,7 +173,7 @@ describe("integration API", () => {
         });
       expect(bundle.status).toBe(200);
       expect(bundle.headers["content-type"]).toContain("application/gzip");
-      expect(bundle.headers["content-disposition"]).toContain("questarr-assets.tar.gz");
+      expect(bundle.headers["content-disposition"]).toContain("Test%20Game.tar.gz");
       expect(bundle.headers["cache-control"]).toBe("no-store");
       const tar = gunzipSync(bundle.body as Buffer);
       expect(tar.includes(Buffer.from("first.bin"))).toBe(true);
@@ -353,7 +355,7 @@ describe("integration API", () => {
         request(app).get("/api/integration/seerrng/v1/library/lookup").query({ igdbIds: "42,43" })
       );
       expect(response.status).toBe(200);
-      expect(response.body.games).toEqual([{ igdbId: 42, status: "owned" }]);
+      expect(response.body.games).toEqual([{ igdbId: 42, status: "owned", deliverable: false }]);
       expect(storage.getUserGamesByIgdbIds).toHaveBeenCalledWith(USER.id, [42, 43]);
     });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "integration_requests" ADD COLUMN "igdb_id" integer;

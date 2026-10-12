@@ -189,18 +189,19 @@ configured library root:
     }
   ],
   "bundleSupported": true,
-  "bundleName": "questarr-assets.tar.gz"
+  "bundleName": "Example Game.tar.gz",
+  "bundleUrl": "/api/integration/seerrng/v1/requests/seerrng%3Arequest%3A123/assets/bundle"
 }
 ```
 
 The asset route rechecks request ownership, file registration, and library-root
 containment, then streams a single file with a safe attachment filename,
-`Cache-Control: no-store`, and single-range byte support. The bundle route is
-available only when at least two deliverable files remain after the same
-ownership and containment checks. It streams a gzip-compressed tar archive,
-uses safe unique entry names, and does not buffer the files in memory. Asset
-IDs are request-scoped by lookup: an ID from another game or request is not
-accepted.
+`Cache-Control: no-store`, and single-range byte support. Asset IDs are
+request-scoped by lookup: an ID from another game or request is not accepted.
+When at least two registered files remain inside the configured library root,
+the bundle route streams a gzip-compressed TAR archive from those same files.
+Archive entries use safe basenames, duplicate names receive numeric suffixes,
+and the response does not buffer the files in memory.
 
 SeerrNG must authorize its own request before using this API, then proxy the
 stream through its requester-scoped download route. The browser receives only
