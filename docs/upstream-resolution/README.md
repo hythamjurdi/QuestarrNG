@@ -63,7 +63,7 @@ changes cover SQLite and PostgreSQL. UI PRs require screenshots/recordings of
 | [#923: update notification](https://github.com/Doezer/Questarr/issues/923)      | Maintainer comments say bell/Apprise notifications already exist and update management is in progress. Verify the actual fork behavior and thumbnail indication without duplicating notification machinery.                                                            |
 | [#906: cross-server libraries](https://github.com/Doezer/Questarr/issues/906)   | This is a protocol proposal, not a completed specification for Questarr. Inspect the referenced protocol and closed PR #1083. Define identity, peer revocation, separate browse/download grants, local file boundaries and compatibility tests before implementation.  |
 | [#406: file-type search](https://github.com/Doezer/Questarr/issues/406)         | Verified torrent-manifest extension filtering with safe redirect handling; magnets, Usenet and unknown payloads fail closed rather than relying on release-title text.                                                                                                 |
-| [#336: alternative game sources](https://github.com/Doezer/Questarr/issues/336) | Evaluate user-configured JSON catalogs and uploader filters through the existing acquisition pipeline. Validate schemas, provenance, refresh bounds and outbound URL handling. Catalog origin is not proof of malware safety.                                          |
+| [#336: alternative game sources](https://github.com/Doezer/Questarr/issues/336) | Verified optional Hydra-format public HTTPS catalogs, bounded schema and torrent-link checks, source attribution, and integration with aggregated search; curated catalog origin is not proof of malware safety.                                                          |
 | [#1172: v1.5 release preparation](https://github.com/Doezer/Questarr/pull/1172) | Port missing behavior, tests and useful docs after comparing with upstream/main. Keep QuestarrNG's release version and packaging identity. Review the actual diff, not just its release-oriented title.                                                                |
 | [#1166: release scoring engine](https://github.com/Doezer/Questarr/pull/1166)   | Engine-only PR with substantial review follow-ups. Review latest head, title utility prerequisites and regex dependency. Link closed #1103 and issue #1090; full release-scoring feature may require persistence, search integration and UI beyond this PR.            |
 | [#1131: RAWG metadata](https://github.com/Doezer/Questarr/pull/1131)            | Proposed PR removes IGDB. The fork's SeerrNG provider uses exact IGDB identity. Prefer additive RAWG provider support with explicit identity mapping and compatibility tests; do not erase IGDB credentials, mappings or contracts merely to apply the upstream patch. |
@@ -155,8 +155,11 @@ results, and opt-in automatic search admits only accepted releases. PR #1083 is
 `not-applicable` because it only records the same protocol offer in contributor
 documentation. Issue #406 is also verified: search checks the actual torrent
 manifest and follows SSRF-checked redirects; unknown, magnet and Usenet results
-are excluded with the limitation shown in the running UI. The ledger still has
-1,134 unreviewed records.
+are excluded with the limitation shown in the running UI. Issue #336 is verified:
+operators can configure Hydra-format public HTTPS catalogs, and their torrent
+links join normal aggregated search with source attribution. Catalog origin does
+not certify release safety; the existing scanning controls remain applicable.
+The ledger still has 1,134 unreviewed records.
 
 ## Follow-up: per-user Socket.IO events
 

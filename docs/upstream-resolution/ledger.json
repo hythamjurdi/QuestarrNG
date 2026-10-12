@@ -6470,18 +6470,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "implemented-unverified",
+        "status": "verified",
         "findings": [
-          "Added an optional Hydra-format JSON catalog as an indexer for user-selected sources, keeping source provenance and routing results through the regular acquisition flow. This addresses the proposed safer user-curated source list."
+          "An optional Hydra-format JSON catalog can be configured as a user-selected indexer without an API key. Bounded public-HTTPS reads validate the catalog schema and accepted torrent URIs; results keep catalog provenance and join normal aggregated search. Documentation makes clear that a curated list does not certify a release as safe. The configuration/search behavior is tested, while no live third-party torrent was acquired."
         ],
         "acceptance": [
-          "Bounded public HTTPS fetch and schema validation; torrent URI validation; search aggregation; saved UI configuration without an API key. Real third-party catalogs and the resulting tracker acquisition remain to verify."
+          "Public HTTPS, DNS-pinned fetches enforce response, entry, timeout, and cache bounds; malformed catalogs, unsafe URIs, and unsupported download links are rejected.",
+          "Search results preserve catalog name and ID and are included by the existing aggregated search path.",
+          "Playwright verifies that catalog settings save and reload without an API key; documentation states the trust and malware-scanning limits."
         ],
         "evidence": [
           "server/json-catalog.ts",
           "server/__tests__/json-catalog.test.ts",
+          "server/__tests__/search.test.ts",
           "tests/e2e/json-catalog.spec.ts",
-          "docs/JSON_CATALOGS.md"
+          "docs/JSON_CATALOGS.md",
+          "docs/pr-evidence/upstream-json-catalog.png",
+          "docs/upstream-resolution/evidence/validation-batch-5.txt"
         ],
         "dependencies": []
       },
