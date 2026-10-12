@@ -42,6 +42,7 @@ export const validation = {
       command: ['node', '--test', 'scripts/validation-engine/engine.contract.mjs'],
       casePattern: '(?:ℹ|#)\\s*pass\\s+(\\d+)',
       minimumCases: 1,
+      env: { GITHUB_ACTIONS: 'false' },
       timeoutSeconds: 180,
     },
     {
