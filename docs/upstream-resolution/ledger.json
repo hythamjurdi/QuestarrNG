@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T22:45:41.492Z",
-  "forkHead": "1baeddd8f64def42ec5542d8efd842f5cfeac582",
+  "capturedAt": "2026-10-12T22:56:22.454Z",
+  "forkHead": "7768f736ca2b0baae0bb65c7726596811fceec24",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -23753,7 +23753,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T22:44:50Z",
       "sourceDigest": "87e19857c4009b826342f945c016e867209190cb1405348d31d066ed615ea406",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
       "review": {
         "status": "verified",
@@ -24062,7 +24062,7 @@
       "upstreamState": "MERGED",
       "upstreamUpdatedAt": "2026-10-12T22:33:10Z",
       "sourceDigest": "4fd0e386bdd55bd46f8966d982d9e6d2ceac7d8ebdfb4c32bb7f59f44e711418",
-      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "bbe836162a702f2790d1246c89646c4510eb3a19",
       "review": {
         "status": "verified",

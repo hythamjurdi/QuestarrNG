@@ -24,9 +24,9 @@ they are not instructions to blindly replay every historical patch.
 Latest inventory (October 12, 2026): **232 issues** (4 open, 228 closed) and
 **915 PRs** (2 open, 705 merged, 208 closed unmerged), for **1,147 items**.
 
-Of the 705 merged PRs, 485 merge commits are ancestors of the fork snapshot,
-2 are ancestors of upstream/main but not the fork, and 218 are absent from both
-main histories. The remaining 210 PRs are open or closed unmerged. Release
+Of the 705 merged PRs, 487 merge commits are ancestors of the fork snapshot,
+none are ancestors of upstream/main without also being in the fork, and 218 are
+absent from both main histories. The remaining 210 PRs are open or closed unmerged. Release
 branches, squash/rebase merges, equivalent patches and reverts require further
 inspection. None of these counts proves functionality.
 
@@ -39,7 +39,7 @@ engine work and the fork's SeerrNG, Real-Debrid, deployment and security behavio
 
 1. Establish a clean validation baseline and reconcile upstream/main in a dedicated
    branch. Group conflicts by subsystem and retain fork-specific behavior.
-2. Review the seven open items and all 208 closed unmerged PRs, including comments,
+2. Review the six open items and all 208 closed unmerged PRs, including comments,
    review threads and diffs. Link duplicates and later replacements.
 3. Review all 228 closed issues and 705 merged PRs against the resulting code.
    Convert each outstanding requirement into a reproducible acceptance check.
