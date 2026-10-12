@@ -311,6 +311,7 @@ jobs:
         run: >-
           node scripts/validation-engine/reconcile-ci.mjs
           --receipts "${{ runner.temp }}/quest-validation-receipts"
+          --expected-node-majors "${{ github.event_name == 'pull_request' && '22' || '22,26' }}"
 
   docker-build:
     runs-on: ubuntu-latest

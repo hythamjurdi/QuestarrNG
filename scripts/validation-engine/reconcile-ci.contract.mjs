@@ -120,6 +120,16 @@ test('reconciles the full test job and both Node build nodes from one workflow a
   assert.equal(result.runId, identity.runId);
 });
 
+test('reconciles only the minimum Node build lane for pull request workflows', () => {
+  const result = reconcileCiReceipts({
+    receipts: [testReceipt(), buildReceipt(22)],
+    ...identity,
+    expectedNodeMajors: [22],
+  });
+  assert.equal(result.status, 'passed');
+  assert.deepEqual(result.buildNodes.map((node) => node.major), [22]);
+});
+
 test('rejects missing, duplicate, or unexpected CI receipt selections', () => {
   assert.throws(() => reconcileCiReceipts({ receipts: allReceipts().slice(1), ...identity }), /Expected one full-suite receipt/);
   const duplicate = allReceipts();
@@ -192,6 +202,7 @@ test('CLI reads and validates the exact receipt set downloaded for the current w
       '--run-id', identity.runId,
       '--run-attempt', identity.runAttempt,
       '--sha', identity.sha,
+      '--expected-node-majors', '22,26',
     ]), 0);
     writeFileSync(path.join(directory, 'unexpected.json'), JSON.stringify(testReceipt()));
     assert.throws(() => reconcileMain([
@@ -199,6 +210,7 @@ test('CLI reads and validates the exact receipt set downloaded for the current w
       '--run-id', identity.runId,
       '--run-attempt', identity.runAttempt,
       '--sha', identity.sha,
+      '--expected-node-majors', '22,26',
     ]), /Expected one full-suite receipt/);
   } finally {
     rmSync(directory, { recursive: true, force: true });

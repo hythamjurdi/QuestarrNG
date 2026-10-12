@@ -275,6 +275,14 @@ function parseArgs(argv) {
 export function main(argv = process.argv.slice(2)) {
   const options = parseArgs(argv);
   if (!options.receipts) fail('Pass --receipts <directory>.');
+  const expectedNodeMajors = options['expected-node-majors']
+    ?.split(',')
+    .map((major) => Number(major));
+  if (expectedNodeMajors && (expectedNodeMajors.length === 0 ||
+    expectedNodeMajors.some((major) => ![22, 26].includes(major)) ||
+    new Set(expectedNodeMajors).size !== expectedNodeMajors.length)) {
+    fail('Expected Node majors must be unique supported values: 22,26.');
+  }
   const directory = path.resolve(options.receipts);
   const receipts = readdirSync(directory)
     .filter((name) => name.endsWith('.json'))
@@ -284,6 +292,7 @@ export function main(argv = process.argv.slice(2)) {
     runId: options['run-id'] ?? process.env.GITHUB_RUN_ID,
     runAttempt: options['run-attempt'] ?? process.env.GITHUB_RUN_ATTEMPT,
     sha: options.sha ?? process.env.GITHUB_SHA,
+    ...(expectedNodeMajors ? { expectedNodeMajors } : {}),
   });
   process.stdout.write(JSON.stringify(summary, null, 2) + '\n');
   return 0;
