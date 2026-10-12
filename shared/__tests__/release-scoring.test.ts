@@ -8,6 +8,8 @@ import {
   evaluateRelease,
   evaluateReleases,
   MAX_FORMAT_REGEX_LENGTH,
+  parseSavedReleaseScoringConfig,
+  validateSavedReleaseScoringConfig,
   validateFormatSpec,
   type CustomFormat,
   type ReleaseInput,
@@ -713,5 +715,57 @@ describe("evaluateReleases", () => {
       gameTitle: "Dishonored",
     });
     expect(sorted.map((r) => r.item.title)).toEqual(["Dishonored-CODEX", "Dishonored-RUNE"]);
+  });
+});
+
+describe("saved release scoring config", () => {
+  const validConfig = JSON.stringify({ profile: DEFAULT_RELEASE_PROFILE, formats: [] });
+
+  it("parses bounded profiles and rejects malformed JSON", () => {
+    expect(parseSavedReleaseScoringConfig(validConfig)?.profile).toEqual(DEFAULT_RELEASE_PROFILE);
+    expect(parseSavedReleaseScoringConfig("not-json")).toBeNull();
+    expect(parseSavedReleaseScoringConfig("x".repeat(64_001))).toBeNull();
+  });
+
+  it("rejects custom regexes that RE2 cannot safely compile", () => {
+    const config = {
+      profile: DEFAULT_RELEASE_PROFILE,
+      formats: [
+        {
+          id: "unsafe",
+          name: "Unsafe lookahead",
+          specs: [{ field: "title", mode: "regex", value: "(?=game)" }],
+          score: 10,
+          hardReject: false,
+          enabled: false,
+        },
+      ],
+    };
+    expect(validateSavedReleaseScoringConfig(JSON.stringify(config))).toBe(false);
+    expect(parseSavedReleaseScoringConfig(JSON.stringify(config))).toBeNull();
+  });
+
+  it("rejects duplicate custom format ids and out-of-range scores", () => {
+    const format = {
+      id: "same",
+      name: "Sample",
+      specs: [{ field: "title", mode: "contains", value: "game" }],
+      score: 10,
+      hardReject: false,
+      enabled: true,
+    };
+    expect(
+      validateSavedReleaseScoringConfig(
+        JSON.stringify({ profile: DEFAULT_RELEASE_PROFILE, formats: [format, format] })
+      )
+    ).toBe(false);
+    expect(
+      validateSavedReleaseScoringConfig(
+        JSON.stringify({
+          profile: DEFAULT_RELEASE_PROFILE,
+          formats: [{ ...format, score: 5000 }],
+        })
+      )
+    ).toBe(false);
   });
 });

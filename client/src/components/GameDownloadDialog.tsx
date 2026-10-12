@@ -91,6 +91,7 @@ import {
 } from "@shared/title-utils";
 import { canonicalPlatformsForIgdbIds, matchesSelectedIgdbPlatform } from "@shared/platforms";
 import { isTorrentDownloaderType, isUsenetDownloaderType } from "@shared/downloader-types";
+import type { ReleaseEvaluation } from "@shared/release-scoring";
 
 interface DownloadItem {
   title: string;
@@ -116,6 +117,7 @@ interface DownloadItem {
   group?: string;
   aiReleaseType?: ReleaseType;
   aiReleaseTypeConfidence?: number;
+  releaseEvaluation?: ReleaseEvaluation;
 }
 
 interface SearchResult {
@@ -133,6 +135,35 @@ interface GameDownloadDialogProps {
 }
 
 type ReleaseMetadata = ReturnType<typeof parseReleaseMetadata>;
+
+function ReleaseScoreBadge({
+  evaluation,
+}: Readonly<{ evaluation?: ReleaseEvaluation | undefined }>) {
+  if (!evaluation) return null;
+  const scoreLines = evaluation.lines.map(
+    (line) => `${line.label}: ${line.points >= 0 ? "+" : ""}${line.points}`
+  );
+  const rejectionLines = evaluation.rejections.map((rejection) =>
+    rejection.detail
+      ? `${rejection.code.replaceAll("_", " ")}: ${rejection.detail}`
+      : rejection.code.replaceAll("_", " ")
+  );
+  const title = [...scoreLines, ...rejectionLines].join(" · ") || "No scoring rules matched";
+  return (
+    <Badge
+      variant={evaluation.accepted ? "secondary" : "destructive"}
+      title={title}
+      aria-label={
+        evaluation.accepted
+          ? `Release score ${evaluation.score}`
+          : `Rejected, score ${evaluation.score}`
+      }
+      className="h-5 shrink-0 px-1.5 text-[10px]"
+    >
+      {evaluation.accepted ? `Score ${evaluation.score}` : `Rejected · ${evaluation.score}`}
+    </Badge>
+  );
+}
 
 function formatDate(dateString: string): string {
   try {
@@ -301,7 +332,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     [minSeeders]
   );
   const [selectedIndexer, setSelectedIndexer] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"seeders" | "date" | "size" | "priority">("seeders");
+  const [sortBy, setSortBy] = useState<"seeders" | "date" | "size" | "priority" | "score">(
+    "seeders"
+  );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showFilters, setShowFilters] = useState(false);
   const [visibleCategories, setVisibleCategories] = useState<Set<DownloadCategory>>(
@@ -416,6 +449,19 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     queryKey: [searchQueryKey],
     enabled: open && debouncedSearchQuery.trim().length > 0,
   });
+
+  const scoreSortInitializedRef = useRef(false);
+  const hasScoredResults =
+    searchResults?.items.some((item) => item.releaseEvaluation !== undefined) ?? false;
+  useEffect(() => {
+    if (hasScoredResults && !scoreSortInitializedRef.current) {
+      setSortBy("score");
+      setSortOrder("desc");
+      scoreSortInitializedRef.current = true;
+    } else if (!hasScoredResults) {
+      scoreSortInitializedRef.current = false;
+    }
+  }, [hasScoredResults]);
 
   // When a canonical search returns results, refresh the games list so the "Has results" badge
   // reflects the updated searchResultsAvailable flag. Only invalidate once per dialog session.
@@ -554,6 +600,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
             const aHealth = isUsenetItem(a) ? (a.grabs ?? 0) : (a.seeders ?? 0);
             const bHealth = isUsenetItem(b) ? (b.grabs ?? 0) : (b.seeders ?? 0);
             comparison = bHealth - aHealth;
+          } else if (sortBy === "score") {
+            comparison =
+              (b.releaseEvaluation?.score ?? -Infinity) - (a.releaseEvaluation?.score ?? -Infinity);
+            if (!Number.isFinite(comparison)) comparison = 0;
           } else if (sortBy === "date") {
             const keyA = a.guid || a.link;
             const keyB = b.guid || b.link;
@@ -829,7 +879,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     });
   };
 
-  const toggleSort = (field: "seeders" | "date" | "size" | "priority") => {
+  const toggleSort = (field: "seeders" | "date" | "size" | "priority" | "score") => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -843,7 +893,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     label,
     className = "",
   }: {
-    field: "seeders" | "date" | "size" | "priority";
+    field: "seeders" | "date" | "size" | "priority" | "score";
     label: string;
     className?: string;
   }) => (
@@ -1104,6 +1154,13 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                             </span>
                           </div>
                           <div className="flex items-center gap-6 md:gap-10">
+                            {hasScoredResults && (
+                              <SortHeader
+                                field="score"
+                                label="Score"
+                                className="min-w-[70px] justify-end"
+                              />
+                            )}
                             {resultIndexerNames.length > 1 && (
                               <SortHeader
                                 field="priority"
@@ -1282,6 +1339,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                             NEW
                                           </Badge>
                                         )}
+                                        <ReleaseScoreBadge
+                                          evaluation={download.releaseEvaluation}
+                                        />
                                       </div>
                                     </div>
                                     <div className="flex items-center flex-shrink-0 self-start">
@@ -1399,6 +1459,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                       NEW
                                     </Badge>
                                   )}
+                                  <ReleaseScoreBadge evaluation={download.releaseEvaluation} />
                                 </div>
 
                                 <ReleaseMetadataBadges

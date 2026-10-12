@@ -52,6 +52,7 @@ import { decryptCredential } from "../credential-crypto.js";
 import * as ssrfModule from "../ssrf.js";
 import fsExtra from "fs-extra";
 import { normalizeTitle } from "../../shared/title-utils.js";
+import { DEFAULT_RELEASE_PROFILE } from "../../shared/release-scoring.js";
 
 const safeFetchMock = vi.hoisted(() => vi.fn());
 vi.mock("../ssrf.js", async () => {
@@ -3204,6 +3205,58 @@ describe("API Routes - Extended Coverage", () => {
       expect(response.body.items).toHaveLength(1);
       expect(response.body.items[0].title).toBe("Test Game-CODEX");
       expect(storage.getReleaseBlacklistSet).toHaveBeenCalledWith("game-1");
+    });
+
+    it("scores owned-game search results and keeps rejected releases explainable", async () => {
+      vi.mocked(storage.getUserSettings).mockResolvedValue({
+        releaseScoringEnabled: true,
+        releaseScoringProfile: JSON.stringify({ profile: DEFAULT_RELEASE_PROFILE, formats: [] }),
+      } as any);
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: "game-1",
+        userId: "user-1",
+        title: "Test Game",
+      } as any);
+      vi.mocked(storage.getReleaseBlacklistSet).mockResolvedValue(new Set());
+      vi.mocked(searchAllIndexers).mockResolvedValue({
+        items: [
+          {
+            title: "Other Game-CODEX",
+            link: "https://example.com/other",
+            pubDate: "2026-01-01T00:00:00.000Z",
+            indexerId: "idx",
+            indexerName: "Indexer",
+            category: ["4050"],
+            guid: "other",
+            downloadType: "torrent" as const,
+          },
+          {
+            title: "Test Game-CODEX",
+            link: "https://example.com/test",
+            pubDate: "2026-01-01T00:00:00.000Z",
+            indexerId: "idx",
+            indexerName: "Indexer",
+            category: ["4050"],
+            guid: "test",
+            downloadType: "torrent" as const,
+          },
+        ],
+        total: 2,
+        offset: 0,
+        errors: [],
+      });
+
+      const response = await request(app).get("/api/search?query=Test+Game&gameId=game-1");
+
+      expect(response.status).toBe(200);
+      expect(response.body.items.map((item: { title: string }) => item.title)).toEqual([
+        "Test Game-CODEX",
+        "Other Game-CODEX",
+      ]);
+      expect(response.body.items[0].releaseEvaluation.accepted).toBe(true);
+      expect(response.body.items[1].releaseEvaluation.rejections).toContainEqual(
+        expect.objectContaining({ code: "title_mismatch" })
+      );
     });
 
     it("should include blacklistedCount in response when items are blacklisted", async () => {

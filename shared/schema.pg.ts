@@ -109,6 +109,8 @@ export const userSettings = pgTable("user_settings", {
   preferredReleaseGroups: text("preferred_release_groups"),
   filterByPreferredGroups: boolean("filter_by_preferred_groups").notNull().default(false),
   releaseNameBlacklist: text("release_name_blacklist"),
+  releaseScoringEnabled: boolean("release_scoring_enabled").notNull().default(false),
+  releaseScoringProfile: text("release_scoring_profile"),
   preferredPlatform: text("preferred_platform"),
   hideAdultContent: boolean("hide_adult_content").notNull().default(true),
   hideAgeRestrictedContent: boolean("hide_age_restricted_content").notNull().default(true),

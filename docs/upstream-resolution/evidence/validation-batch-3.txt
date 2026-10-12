@@ -1,0 +1,27 @@
+QuestarrNG upstream-resolution checkpoint — 2026-10-12
+
+Release-scoring profiles, manual search explanations, and accepted-only automatic
+search were implemented for the underlying request in upstream PR #1103, building
+on the pure engine from PR #1166.
+
+Full unit suite:
+  TMPDIR=/home/keith/questarr-upstream-temp npm run test:run -- --maxWorkers=4
+  246 files passed, 1 skipped; 4,008 tests passed, 7 skipped.
+
+Focused Playwright journey:
+  TMPDIR=/home/keith/questarr-upstream-temp npm run test:e2e -- tests/e2e/release-scoring.spec.ts
+  3 tests passed, including persisted settings and rejection explanations in the
+  manual search dialog.
+
+Additional checks:
+  npm run check             passed
+  npm run lint              passed
+  npm run build             passed (Vite reports the existing large-chunk advisory)
+  npm run db:check:pg        passed
+  git diff --check          passed
+
+Visual evidence was captured from the running `npm run dev:test` application and
+visually inspected:
+  docs/pr-evidence/upstream-release-scoring-settings.png
+  docs/pr-evidence/upstream-release-scoring-formats.png
+  docs/pr-evidence/upstream-release-scoring-search.png

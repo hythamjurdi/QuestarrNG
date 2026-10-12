@@ -84,8 +84,10 @@ vi.mock("../apprise.js", () => ({
 
 // Mock search
 const mockSearchAllIndexers = vi.fn();
+const mockScoreSearchItems = vi.fn();
 vi.mock("../search.js", () => ({
   searchAllIndexers: mockSearchAllIndexers,
+  scoreSearchItems: mockScoreSearchItems,
   filterBlacklistedReleases: (items: { title: string }[], blacklisted: Set<string>) =>
     blacklisted.size > 0 ? items.filter((item) => !blacklisted.has(item.title)) : items,
   filterByReleaseNameBlacklist: (items: { title: string }[], terms: string[]) => {
@@ -176,6 +178,8 @@ describe("Cron - checkAutoSearch", () => {
     xrelSceneReleases: true,
     xrelP2pReleases: false,
     autoSearchUnreleased: false, // Default: false
+    releaseScoringEnabled: false,
+    releaseScoringProfile: null,
     preferredReleaseGroups: null,
     filterByPreferredGroups: false,
     preferredPlatform: null,
@@ -196,6 +200,7 @@ describe("Cron - checkAutoSearch", () => {
     mockGetGame.mockResolvedValue(baseGame);
     mockGetUserSettings.mockResolvedValue(baseSettings);
     mockSearchAllIndexers.mockResolvedValue({ items: [], errors: [], total: 0 });
+    mockScoreSearchItems.mockReset();
     mockGetEnabledDownloaders.mockResolvedValue([]);
     mockAddNotification.mockResolvedValue({ id: "notif-1" });
     mockGetReleaseBlacklistSet.mockResolvedValue(new Set());
@@ -231,6 +236,70 @@ describe("Cron - checkAutoSearch", () => {
         query: game.title,
       })
     );
+  });
+
+  it("scores automatic candidates and passes only accepted releases to categorization", async () => {
+    const accepted = {
+      title: "Test Game-CODEX",
+      link: "https://example.com/accepted",
+      pubDate: FIXED_PUB_DATE,
+      seeders: 50,
+      size: 1024,
+      downloadType: "torrent" as const,
+      indexerId: "indexer-1",
+      indexerName: "Test Indexer",
+    };
+    const rejected = {
+      ...accepted,
+      title: "Test Game.2-CODEX",
+      link: "https://example.com/rejected",
+    };
+    mockGetUserSettings.mockResolvedValue({
+      ...baseSettings,
+      releaseScoringEnabled: true,
+      releaseScoringProfile: JSON.stringify({
+        profile: {
+          minScore: 0,
+          protocolPreference: "either",
+          requiredTerms: [],
+          ignoredTerms: [],
+          minSeeders: 0,
+          maxSizeBytes: null,
+          builtInOverrides: {},
+          formatScores: {},
+        },
+        formats: [],
+      }),
+    });
+    mockSearchAllIndexers.mockResolvedValue({ items: [rejected, accepted], errors: [], total: 2 });
+    mockScoreSearchItems.mockImplementation(
+      (
+        items: Array<typeof accepted>,
+        _context: unknown,
+        _profile: unknown,
+        _formats: unknown,
+        acceptedOnly: boolean
+      ) =>
+        acceptedOnly
+          ? items
+              .filter((item) => item.title === accepted.title)
+              .map((item) => ({
+                ...item,
+                releaseEvaluation: { accepted: true, score: 100 } as never,
+              }))
+          : items
+    );
+
+    await checkAutoSearch();
+
+    expect(mockScoreSearchItems).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ title: accepted.title })]),
+      expect.objectContaining({ gameTitle: "Test Game" }),
+      expect.any(Object),
+      [],
+      true
+    );
+    expect(mockUpdateGameSearchResultsAvailable).toHaveBeenCalledWith(baseGame.id, true);
   });
 
   it("should NOT search for unreleased games when autoSearchUnreleased is false", async () => {

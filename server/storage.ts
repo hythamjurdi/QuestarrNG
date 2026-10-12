@@ -1714,6 +1714,8 @@ export class MemStorage implements IStorage {
       preferredReleaseGroups: insertSettings.preferredReleaseGroups ?? null,
       filterByPreferredGroups: insertSettings.filterByPreferredGroups ?? false,
       releaseNameBlacklist: insertSettings.releaseNameBlacklist ?? null,
+      releaseScoringEnabled: insertSettings.releaseScoringEnabled ?? false,
+      releaseScoringProfile: insertSettings.releaseScoringProfile ?? null,
       preferredPlatform: insertSettings.preferredPlatform ?? null,
       hideAdultContent: insertSettings.hideAdultContent ?? true,
       hideAgeRestrictedContent: insertSettings.hideAgeRestrictedContent ?? true,

@@ -21338,18 +21338,35 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "needs-implementation",
+        "status": "verified",
         "findings": [
-          "The closed draft adds release scoring directly to server/search.ts, but the safer pure engine port from PR #1166 is not called by searchAllIndexers. Profile persistence, automatic-search integration and settings UI remain absent, so the underlying request is still incomplete."
+          "The opt-in release-scoring profile is persisted per user and validated before use. Authenticated searches for a user's own game score and sort results while preserving rejected releases with explanations; automatic search admits only accepted releases. Existing blacklist, platform and seed-count filters remain in force, and malformed enabled profiles fail closed for auto-search."
         ],
         "acceptance": [
-          "Integrate the tested scoring engine into aggregated and automatic search, persist profiles, and expose the requested profile controls without weakening existing filters."
+          "Release profiles persist and reload through Settings, including built-in rule overrides and custom formats.",
+          "Aggregated game search applies scores and exposes rejection reasons without hiding manual-search alternatives.",
+          "Automatic search selects only accepted scored results and preserves the existing safety filters.",
+          "SQLite and PostgreSQL migrations, server tests, UI end-to-end tests, and running-UI screenshots validate the feature."
         ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/1103/files",
           "https://github.com/Doezer/Questarr/pull/1166",
           "shared/release-scoring.ts",
-          "server/search.ts"
+          "shared/schema.ts",
+          "migrations/0050_round_krista_starr.sql",
+          "migrations-pg/0012_shocking_aqueduct.sql",
+          "server/search.ts",
+          "server/routes.ts",
+          "server/cron.ts",
+          "client/src/components/ReleaseScoringSettings.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "tests/e2e/release-scoring.spec.ts",
+          "docs/pr-evidence/upstream-release-scoring-settings.png",
+          "docs/pr-evidence/upstream-release-scoring-formats.png",
+          "docs/pr-evidence/upstream-release-scoring-search.png",
+          "docs/upstream-resolution/evidence/validation-batch-3.txt"
         ],
         "dependencies": ["pr:1166"]
       },

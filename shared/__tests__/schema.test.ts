@@ -8,6 +8,7 @@ import {
   updateGameTargetPlatformSchema,
   updateUserSettingsSchema,
 } from "@shared/schema";
+import { DEFAULT_RELEASE_PROFILE } from "@shared/release-scoring";
 
 describe("insertGameSchema", () => {
   it("accepts a complete target platform pair", () => {
@@ -137,6 +138,38 @@ describe("updateUserSettingsSchema releaseNameBlacklist", () => {
   it("accepts null to clear the blacklist", () => {
     const result = updateUserSettingsSchema.safeParse({ releaseNameBlacklist: null });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("updateUserSettingsSchema release scoring", () => {
+  it("accepts a bounded scoring profile and rejects malformed or unsafe rules", () => {
+    const valid = JSON.stringify({ profile: DEFAULT_RELEASE_PROFILE, formats: [] });
+    expect(
+      updateUserSettingsSchema.safeParse({
+        releaseScoringEnabled: true,
+        releaseScoringProfile: valid,
+      }).success
+    ).toBe(true);
+
+    const unsafe = JSON.stringify({
+      profile: DEFAULT_RELEASE_PROFILE,
+      formats: [
+        {
+          id: "bad-regex",
+          name: "Bad regex",
+          specs: [{ field: "title", mode: "regex", value: "(?=x)" }],
+          score: 10,
+          hardReject: false,
+          enabled: true,
+        },
+      ],
+    });
+    expect(updateUserSettingsSchema.safeParse({ releaseScoringProfile: unsafe }).success).toBe(
+      false
+    );
+    expect(updateUserSettingsSchema.safeParse({ releaseScoringProfile: "not-json" }).success).toBe(
+      false
+    );
   });
 });
 

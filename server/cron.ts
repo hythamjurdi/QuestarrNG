@@ -12,8 +12,13 @@ import {
   searchAllIndexers,
   filterBlacklistedReleases,
   filterByReleaseNameBlacklist,
+  scoreSearchItems,
   type SearchItem,
 } from "./search.js";
+import {
+  parseSavedReleaseScoringConfig,
+  type SavedReleaseScoringConfig,
+} from "../shared/release-scoring.js";
 import { typesafeClient, type ReleaseType } from "./typesafe.js";
 import { xrelClient, DEFAULT_XREL_BASE } from "./xrel.js";
 import { steamService } from "./steam.js";
@@ -246,7 +251,8 @@ function releaseHealth(item: SearchItem): number {
 export function categorizeSearchItems(
   items: SearchItem[],
   rules: AutoSearchRules,
-  indexerPriorityMap?: Map<string, number>
+  indexerPriorityMap?: Map<string, number>,
+  preferReleaseScore = false
 ): AutoSearchCategorizedItems {
   const sortedItems = items
     // Usenet releases have no seeders, so the seeder floor only applies to
@@ -254,6 +260,11 @@ export function categorizeSearchItems(
     // for sorting is the grab count instead.
     .filter((item) => item.downloadType === "usenet" || (item.seeders ?? 0) >= rules.minSeeders)
     .sort((a, b) => {
+      if (preferReleaseScore) {
+        const scoreDifference =
+          (b.releaseEvaluation?.score ?? -Infinity) - (a.releaseEvaluation?.score ?? -Infinity);
+        if (scoreDifference !== 0) return scoreDifference;
+      }
       if (rules.sortBy === "seeders") {
         return releaseHealth(b) - releaseHealth(a);
       }
@@ -423,10 +434,21 @@ async function searchAndCategorizeItemsForGame(
   game: Pick<Game, "id" | "title">,
   downloadRules: string | null,
   indexerPriorityMap?: Map<string, number>,
-  blacklistTerms: string[] = []
+  blacklistTerms: string[] = [],
+  releaseScoring?: SavedReleaseScoringConfig | null,
+  preferredPlatform?: string | null
 ): Promise<AutoSearchCategorizedItems | null> {
+  if (releaseScoring === null) {
+    igdbLogger.warn(
+      { gameTitle: game.title },
+      "Skipping auto-search because the saved release scoring profile is invalid"
+    );
+    return null;
+  }
+
   let matchedItems: SearchItem[] = [];
-  let globallyFiltered: SearchItem[] = [];
+  let eligibleItems: SearchItem[] = [];
+  const blacklisted = await storage.getReleaseBlacklistSet(game.id);
 
   for (let page = 0; page < AUTO_SEARCH_MAX_PAGES; page++) {
     const { items, errors } = await searchAllIndexers({
@@ -454,22 +476,30 @@ async function searchAndCategorizeItemsForGame(
       return null;
     }
 
-    // Filter out releases matching the user's global release-name blacklist before anything
-    // else touches them (including the AI auto-download check further down the pipeline).
-    globallyFiltered = filterByReleaseNameBlacklist(matchedItems, blacklistTerms);
+    // Apply both blacklists before scoring or any AI auto-download check.
+    const globallyFiltered = filterByReleaseNameBlacklist(matchedItems, blacklistTerms);
+    eligibleItems = filterBlacklistedReleases(globallyFiltered, blacklisted);
+    if (releaseScoring) {
+      eligibleItems = scoreSearchItems(
+        eligibleItems,
+        { gameTitle: game.title, platform: preferredPlatform ?? null },
+        releaseScoring.profile,
+        releaseScoring.formats,
+        true
+      );
+    }
 
-    // Only page further when the blacklist hid this whole page and more results may exist.
-    if (globallyFiltered.length > 0 || items.length < AUTO_SEARCH_PAGE_SIZE) break;
+    // A profile can reject every release on this page. Continue so a stronger result later in
+    // the indexer response can still be considered, subject to the same bounded page limit.
+    if (eligibleItems.length > 0 || items.length < AUTO_SEARCH_PAGE_SIZE) break;
   }
 
-  // Filter out per-game blacklisted releases
-  const blacklisted = await storage.getReleaseBlacklistSet(game.id);
-  const nonBlacklisted = filterBlacklistedReleases(globallyFiltered, blacklisted);
-
-  if (nonBlacklisted.length === 0) {
+  if (eligibleItems.length === 0) {
     igdbLogger.debug(
       { gameTitle: game.title, matchedCount: matchedItems.length },
-      "All matched items were blacklisted"
+      releaseScoring
+        ? "No release passed blacklists and scoring"
+        : "All matched items were blacklisted"
     );
     return null;
   }
@@ -482,7 +512,7 @@ async function searchAndCategorizeItemsForGame(
     rules = getAutoSearchRules(null);
   }
 
-  return categorizeSearchItems(nonBlacklisted, rules, indexerPriorityMap);
+  return categorizeSearchItems(eligibleItems, rules, indexerPriorityMap, Boolean(releaseScoring));
 }
 
 export function startCronJobs() {
@@ -1617,6 +1647,9 @@ export async function checkAutoSearch(
         const preferredGroups = parseJsonStringArray(settings.preferredReleaseGroups);
         const preferredPlatform = settings.preferredPlatform ?? null;
         const blacklistTerms = parseJsonStringArray(settings.releaseNameBlacklist);
+        const releaseScoring = settings.releaseScoringEnabled
+          ? (parseSavedReleaseScoringConfig(settings.releaseScoringProfile) ?? null)
+          : undefined;
 
         for (const game of wantedGames) {
           try {
@@ -1633,7 +1666,9 @@ export async function checkAutoSearch(
               game,
               settings.downloadRules,
               indexerPriorityMap,
-              blacklistTerms
+              blacklistTerms,
+              releaseScoring,
+              resolveGamePlatformPreference(game, preferredPlatform)
             );
             if (!searchResult) {
               // No results at all (zero results or all blacklisted) — clear the badge
@@ -1871,7 +1906,9 @@ export async function checkAutoSearch(
               game,
               settings.downloadRules,
               indexerPriorityMap,
-              blacklistTerms
+              blacklistTerms,
+              releaseScoring,
+              resolveGamePlatformPreference(game, preferredPlatform)
             );
             if (!searchResult) {
               await storage.updateGameSearchResultsAvailable(game.id, false);

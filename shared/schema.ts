@@ -3,6 +3,7 @@ import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-or
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { resolveTargetPlatform } from "./title-utils.js";
+import { validateSavedReleaseScoringConfig } from "./release-scoring.js";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -59,6 +60,10 @@ export const userSettings = sqliteTable("user_settings", {
   // flow -- manual search, auto-search, and AI (Jev) enrichment/auto-download analysis --
   // so a matching release never reaches the user or the AI in the first place.
   releaseNameBlacklist: text("release_name_blacklist"),
+  releaseScoringEnabled: integer("release_scoring_enabled", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  releaseScoringProfile: text("release_scoring_profile"),
   preferredPlatform: text("preferred_platform"),
   hideAdultContent: integer("hide_adult_content", { mode: "boolean" }).notNull().default(true),
   hideAgeRestrictedContent: integer("hide_age_restricted_content", { mode: "boolean" })
@@ -847,6 +852,19 @@ function validateUserSettingsEnums(
         message: `${key} must be a JSON-encoded array of strings`,
       });
     }
+  }
+
+  const scoringConfig = value.releaseScoringProfile;
+  if (
+    scoringConfig !== undefined &&
+    scoringConfig !== null &&
+    !validateSavedReleaseScoringConfig(scoringConfig)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["releaseScoringProfile"],
+      message: "releaseScoringProfile must be a valid release scoring configuration",
+    });
   }
 }
 

@@ -2,6 +2,13 @@ import { vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 import { DEFAULT_ROMM_CONFIG, type User } from "../../../shared/schema.js";
 import type { TimeToBeat } from "../../igdb.js";
+import {
+  evaluateReleases,
+  type CustomFormat,
+  type ReleaseContext,
+  type ReleaseInput,
+  type ReleaseProfile,
+} from "../../../shared/release-scoring.js";
 
 /**
  * Shared mock factories for tests that boot the full app via `registerRoutes()`
@@ -360,6 +367,18 @@ export function createSearchMock() {
     },
     // No-op by default: TypeSafe AI enrichment is unconfigured/off in tests.
     enrichWithAiAnalysis: vi.fn().mockImplementation((items: unknown[]) => Promise.resolve(items)),
+    scoreSearchItems: vi.fn(
+      (
+        items: ReleaseInput[],
+        context: ReleaseContext,
+        profile: ReleaseProfile,
+        formats: CustomFormat[] = [],
+        acceptedOnly = false
+      ) =>
+        evaluateReleases(items, context, profile, formats)
+          .filter(({ evaluation }) => !acceptedOnly || evaluation.accepted)
+          .map(({ item, evaluation }) => ({ ...item, releaseEvaluation: evaluation }))
+    ),
   };
 }
 

@@ -149,12 +149,11 @@ API key, keeps IGDB active for SeerrNG, applies per-user content filters and
 provides attribution only when RAWG is configured. See [RAWG setup and terms](../RAWG.md).
 
 Issue #906 is recorded as `not-applicable`: its author explicitly states the
-federation specification is an offer, not a feature request. Profiles and
-automatic-search integration for the standalone scoring engine remain open;
-closed PR #1103 remains `needs-implementation` because the engine is not yet
-connected to aggregated or automatic search. PR #1083 is `not-applicable` because
-it only records the same protocol offer in contributor documentation. The ledger
-still has 1,134 unreviewed records.
+federation specification is an offer, not a feature request. Closed PR #1103 is
+now verified: release profiles persist, manual searches explain and sort scored
+results, and opt-in automatic search admits only accepted releases. PR #1083 is
+`not-applicable` because it only records the same protocol offer in contributor
+documentation. The ledger still has 1,134 unreviewed records.
 
 ## Follow-up: per-user Socket.IO events
 

@@ -5,6 +5,13 @@ import { newznabClient } from "./newznab.js";
 import { searchLogger } from "./logger.js";
 import { parseReleaseMetadata } from "../shared/title-utils.js";
 import { typesafeClient, type ReleaseType } from "./typesafe.js";
+import {
+  evaluateReleases,
+  type CustomFormat,
+  type ReleaseContext,
+  type ReleaseEvaluation,
+  type ReleaseProfile,
+} from "../shared/release-scoring.js";
 
 // Cap how many top results get AI-enriched per search so an optional, user-supplied
 // TypeSafe key never turns a single search into dozens of outbound API calls.
@@ -31,6 +38,9 @@ export interface SearchItem {
   files?: number;
   poster?: string;
   group?: string;
+  /** Lower is a higher-priority indexer, matching the user's indexer settings. */
+  indexerPriority?: number;
+  releaseEvaluation?: ReleaseEvaluation;
   comments?: string;
   // Optional AI-assisted enrichment via TypeSafe's Jev model (BYOK, best-effort).
   // Absent entirely when TypeSafe isn't configured or the call failed/timed out.
@@ -222,19 +232,43 @@ export async function searchAllIndexers(
     }
   }
 
+  const priorityByIndexerId = new Map(
+    enabledIndexers.map((indexer) => [indexer.id, indexer.priority])
+  );
+  const prioritizedItems: SearchItem[] = combinedItems.map((item) => {
+    const indexerPriority = priorityByIndexerId.get(item.indexerId);
+    return {
+      ...item,
+      ...(indexerPriority === undefined ? {} : { indexerPriority }),
+    };
+  });
+
   // Default sort: Date (newest first)
-  combinedItems.sort((a, b) => {
+  prioritizedItems.sort((a, b) => {
     const dateA = new Date(a.pubDate).getTime();
     const dateB = new Date(b.pubDate).getTime();
     return dateB - dateA;
   });
 
   return {
-    items: combinedItems,
+    items: prioritizedItems,
     total: totalCount,
     offset: options.offset || 0,
     errors: combinedErrors,
   };
+}
+
+/** Scores one search batch and retains rejected items so manual search can explain the result. */
+export function scoreSearchItems(
+  items: SearchItem[],
+  context: ReleaseContext,
+  profile: ReleaseProfile,
+  formats: readonly CustomFormat[] = [],
+  acceptedOnly = false
+): SearchItem[] {
+  return evaluateReleases(items, context, profile, formats)
+    .filter(({ evaluation }) => !acceptedOnly || evaluation.accepted)
+    .map(({ item, evaluation }) => ({ ...item, releaseEvaluation: evaluation }));
 }
 
 /**

@@ -49,6 +49,7 @@ import { ApiKeysCard } from "@/components/ApiKeysCard";
 import AutoDownloadRulesSettings from "@/components/AutoDownloadRulesSettings";
 import PreferredReleaseGroupsSettings from "@/components/PreferredReleaseGroupsSettings";
 import ReleaseNameBlacklistSettings from "@/components/ReleaseNameBlacklistSettings";
+import ReleaseScoringSettings from "@/components/ReleaseScoringSettings";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
 import {
@@ -1546,6 +1547,7 @@ export default function SettingsPage() {
               blacklistTerms={releaseNameBlacklist}
               onTermsChange={setReleaseNameBlacklist}
             />
+            <ReleaseScoringSettings settings={userSettings} />
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">

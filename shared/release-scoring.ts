@@ -12,6 +12,7 @@
  */
 
 import { RE2JS } from "re2js";
+import { z } from "zod";
 
 import { categorizeDownload, type DownloadCategory } from "./download-categorizer.js";
 import {
@@ -140,6 +141,132 @@ export const DEFAULT_RELEASE_PROFILE: ReleaseProfile = {
   builtInOverrides: {},
   formatScores: {},
 };
+
+export interface SavedReleaseScoringConfig {
+  profile: ReleaseProfile;
+  formats: CustomFormat[];
+}
+
+const releaseProfileConfigSchema = z
+  .object({
+    minScore: z.number().int().min(-5000).max(5000).default(DEFAULT_RELEASE_PROFILE.minScore),
+    protocolPreference: z
+      .enum(["torrent", "usenet", "either"])
+      .default(DEFAULT_RELEASE_PROFILE.protocolPreference),
+    requiredTerms: z.array(z.string().trim().min(1).max(100)).max(50).default([]),
+    ignoredTerms: z.array(z.string().trim().min(1).max(100)).max(50).default([]),
+    minSeeders: z.number().int().min(0).max(1_000_000).default(0),
+    maxSizeBytes: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).nullable().default(null),
+    builtInOverrides: z
+      .partialRecord(
+        z.enum([
+          "title_exact",
+          "title_contains",
+          "title_spinoff",
+          "title_sequel",
+          "title_mismatch",
+          "category_game",
+          "category_non_game",
+          "non_game_media",
+          "platform_match",
+          "platform_mismatch",
+          "scene_release",
+          "repack",
+          "storefront_source",
+          "size_mismatch",
+          "risky_file",
+        ]),
+        z
+          .object({
+            points: z.number().int().min(-1000).max(1000).optional(),
+            enabled: z.boolean().optional(),
+          })
+          .strict()
+      )
+      .default({}),
+    formatScores: z
+      .record(z.string().min(1).max(80), z.number().int().min(-1000).max(1000))
+      .default({}),
+  })
+  .strict();
+
+const formatSpecConfigSchema = z
+  .object({
+    field: z.enum(["title", "group", "uploader", "category", "protocol", "indexer"]),
+    mode: z.enum(["contains", "exact", "regex"]),
+    value: z.string().trim().min(1).max(500),
+    negate: z.boolean().optional(),
+    required: z.boolean().optional(),
+  })
+  .strict();
+
+const customFormatConfigSchema = z
+  .object({
+    id: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
+    name: z.string().trim().min(1).max(100),
+    specs: z.array(formatSpecConfigSchema).min(1).max(20),
+    score: z.number().int().min(-1000).max(1000),
+    hardReject: z.boolean(),
+    enabled: z.boolean(),
+  })
+  .strict();
+
+const savedReleaseScoringConfigSchema = z
+  .object({
+    profile: releaseProfileConfigSchema,
+    formats: z.array(customFormatConfigSchema).max(50),
+  })
+  .strict()
+  .superRefine((config, ctx) => {
+    const ids = new Set<string>();
+    config.formats.forEach((format, formatIndex) => {
+      if (ids.has(format.id)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["formats", formatIndex, "id"],
+          message: "Custom format ids must be unique",
+        });
+      }
+      ids.add(format.id);
+      format.specs.forEach((spec, specIndex) => {
+        const message = validateFormatSpec(spec as FormatSpec);
+        if (message) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["formats", formatIndex, "specs", specIndex],
+            message,
+          });
+        }
+      });
+    });
+  });
+
+/**
+ * Parses a stored scoring configuration and rejects malformed or unsafe user rules. The JSON
+ * limit keeps settings writes and every subsequent search bounded even if a database row is
+ * edited outside the API.
+ */
+export function parseSavedReleaseScoringConfig(
+  raw: string | null | undefined
+): SavedReleaseScoringConfig | null {
+  if (raw == null || raw.length > 64_000) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    const result = savedReleaseScoringConfigSchema.safeParse(parsed);
+    if (!result.success) return null;
+    const config = result.data as unknown as SavedReleaseScoringConfig;
+    const compiled = compileCustomFormats(config.formats);
+    if (compiled.errors.length > 0) return null;
+    return config as SavedReleaseScoringConfig;
+  } catch {
+    return null;
+  }
+}
+
+export function validateSavedReleaseScoringConfig(raw: unknown): boolean {
+  if (typeof raw !== "string" || raw.length > 64_000) return false;
+  return parseSavedReleaseScoringConfig(raw) !== null;
+}
 
 /** What the evaluation knows about the wanted game. */
 export interface ReleaseContext {

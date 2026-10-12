@@ -246,7 +246,9 @@ import {
   filterBlacklistedReleases,
   filterByReleaseNameBlacklist,
   enrichWithAiAnalysis,
+  scoreSearchItems,
 } from "./search.js";
+import { parseSavedReleaseScoringConfig } from "../shared/release-scoring.js";
 import { xrelClient, DEFAULT_XREL_BASE, ALLOWED_XREL_DOMAINS } from "./xrel.js";
 import {
   normalizeTitle,
@@ -667,6 +669,8 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
     const gameId = req.query.gameId as string | undefined;
     let filteredItems = items;
     let userSettings: Awaited<ReturnType<typeof storage.getUserSettings>> | undefined;
+    let scoringGame: Awaited<ReturnType<typeof storage.getGame>> | undefined;
+    let isCanonicalGameSearch = false;
     if (req.user) {
       userSettings = await storage.getUserSettings(req.user.id);
       const blacklistTerms = parseJsonStringArray(userSettings?.releaseNameBlacklist);
@@ -677,25 +681,14 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
     if (gameId && req.user) {
       const game = await storage.getGame(gameId);
       if (game && game.userId === req.user.id) {
+        scoringGame = game;
         const blacklisted = await storage.getReleaseBlacklistSet(gameId);
         filteredItems = filterBlacklistedReleases(filteredItems, blacklisted);
 
         // Update the "has results" flag only for canonical game-title searches so that
         // partial/custom user-typed queries in the download dialog don't flip the badge
         // based on a transient, narrow result set. Runs async to avoid blocking the response.
-        const isCanonicalSearch = normalizeTitle(query.trim()) === normalizeTitle(game.title);
-        if (isCanonicalSearch) {
-          const preferredPlatform = userSettings?.preferredPlatform ?? null;
-          const platformFiltered = preferredPlatform
-            ? filteredItems.filter((item) => {
-                const { platform } = parseReleaseMetadata(item.title);
-                return matchesPlatformFilter(platform, preferredPlatform);
-              })
-            : filteredItems;
-          storage
-            .updateGameSearchResultsAvailable(game.id, platformFiltered.length > 0)
-            .catch((err) => routesLogger.warn({ err }, "Failed to update searchResultsAvailable"));
-        }
+        isCanonicalGameSearch = normalizeTitle(query.trim()) === normalizeTitle(game.title);
       }
     }
 
@@ -704,9 +697,38 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
       filteredItems = await filterReleaseFileTypes(filteredItems, fileTypes, fileTypeSources);
     }
     const enrichedItems = await enrichWithAiAnalysis(filteredItems);
+    const scoringConfig =
+      scoringGame && userSettings?.releaseScoringEnabled
+        ? parseSavedReleaseScoringConfig(userSettings.releaseScoringProfile)
+        : null;
+    const returnedItems = scoringConfig
+      ? scoreSearchItems(
+          enrichedItems,
+          { gameTitle: scoringGame!.title, platform: userSettings?.preferredPlatform ?? null },
+          scoringConfig.profile,
+          scoringConfig.formats
+        )
+      : enrichedItems;
+
+    if (scoringGame && isCanonicalGameSearch) {
+      const preferredPlatform = userSettings?.preferredPlatform ?? null;
+      const availabilityCandidates = scoringConfig ? returnedItems : filteredItems;
+      const platformFiltered = preferredPlatform
+        ? availabilityCandidates.filter((item) => {
+            const { platform } = parseReleaseMetadata(item.title);
+            return matchesPlatformFilter(platform, preferredPlatform);
+          })
+        : availabilityCandidates;
+      const hasAvailableResult = scoringConfig
+        ? platformFiltered.some((item) => item.releaseEvaluation?.accepted)
+        : platformFiltered.length > 0;
+      storage
+        .updateGameSearchResultsAvailable(scoringGame.id, hasAvailableResult)
+        .catch((err) => routesLogger.warn({ err }, "Failed to update searchResultsAvailable"));
+    }
 
     return res.json({
-      items: enrichedItems,
+      items: returnedItems,
       ...(fileTypes.length
         ? {
             nextOffset: items.length >= fileTypeLimit ? offset + fileTypeLimit : null,
