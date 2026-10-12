@@ -173,6 +173,7 @@ describe("GameCard remaining coverage", () => {
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["/api/games"] });
     });
     expect(await screen.findByText("Download dialog for Library Game")).toBeInTheDocument();
+    expect(onViewDetails).not.toHaveBeenCalled();
 
     apiRequestMock.mockRejectedValueOnce(
       new (await import("@/lib/queryClient")).ApiError(409, "duplicate", {
@@ -256,6 +257,18 @@ describe("GameCard remaining coverage", () => {
 
     expect(screen.getAllByTestId("icon-loader").length).toBeGreaterThan(0);
     expect(screen.getByText("Tracking...")).toBeInTheDocument();
+  });
+
+  it("provides an accessible View Details button for keyboard users", async () => {
+    const onViewDetails = vi.fn();
+    render(<GameCard game={baseGame} onViewDetails={onViewDetails} />);
+
+    const detailsButton = screen.getByRole("button", { name: "View details for Questarr Game" });
+    fireEvent.click(detailsButton);
+
+    expect(onViewDetails).toHaveBeenCalledTimes(1);
+    expect(onViewDetails).toHaveBeenCalledWith("1");
+    expect(await screen.findByText("Details for Questarr Game")).toBeInTheDocument();
   });
 
   it("covers status changes for library games", async () => {

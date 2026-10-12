@@ -98,6 +98,13 @@ const GameCard = ({
     onViewDetails?.(game.id);
   };
 
+  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element) || !cardRef.current?.contains(target)) return;
+    if (target.closest("button, a, input, textarea, select, [role='button']")) return;
+    handleDetailsClick();
+  };
+
   const handleDownloadClick = async () => {
     console.warn(`Download triggered for game: ${resolvedGame.title}`);
 
@@ -130,10 +137,9 @@ const GameCard = ({
   return (
     <Card
       ref={cardRef}
-      onClick={handleDetailsClick}
+      onClick={handleCardClick}
       className={`group hover-elevate transition-all duration-200 mx-auto min-w-0 w-full max-w-full cursor-pointer flex flex-col h-full overflow-hidden sm:max-w-[225px] ${game.hidden ? "opacity-60 grayscale" : ""}`}
       data-testid={`card-game-${game.id}`}
-      aria-label={`View details for ${game.title}`}
     >
       <div className="relative">
         {/* ⚡ Bolt: Lazy loading images prevents fetching all game covers upfront,
@@ -235,7 +241,18 @@ const GameCard = ({
           className="mb-1.5 line-clamp-2 text-xs font-semibold leading-4 sm:mb-2 sm:text-sm sm:leading-5"
           data-testid={`text-title-${game.id}`}
         >
-          {game.title}
+          <button
+            type="button"
+            className="w-full rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleDetailsClick();
+            }}
+            aria-label={`View details for ${game.title}`}
+            data-testid={`button-details-${game.id}`}
+          >
+            {game.title}
+          </button>
         </h3>
         <div className="mb-2 flex min-w-0 items-center gap-1 text-[10px] text-muted-foreground sm:gap-2 sm:text-xs">
           <Tooltip>

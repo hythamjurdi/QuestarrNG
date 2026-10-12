@@ -1050,6 +1050,11 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
 
   const resultsBody = (
     <div className="space-y-4">
+      {downloadingGuid !== null && (
+        <span className="sr-only" role="status">
+          Downloading selected release...
+        </span>
+      )}
       {isSearching && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -1192,6 +1197,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
 
                       {downloadsInCategory.map((download: DownloadItem) => {
                         const isUsenet = isUsenetItem(download);
+                        const downloadId = download.guid || download.link;
+                        const isCurrentDownload = downloadingGuid === downloadId;
                         const metadata =
                           itemsMetadata.get(download.title) ?? parseReleaseMetadata(download.title);
 
@@ -1347,16 +1354,27 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                     <div className="flex items-center flex-shrink-0 self-start">
                                       <Button
                                         variant="ghost"
-                                        size="icon"
+                                        size={isCurrentDownload ? "sm" : "icon"}
                                         onClick={() => handleDownload(download)}
-                                        disabled={
-                                          downloadingGuid === (download.guid || download.link)
+                                        disabled={downloadingGuid !== null}
+                                        className={cn(
+                                          "h-9 hover:bg-primary hover:text-primary-foreground transition-all",
+                                          isCurrentDownload
+                                            ? "min-w-[120px] gap-1.5 px-2"
+                                            : "w-9 px-0"
+                                        )}
+                                        aria-label={
+                                          isCurrentDownload
+                                            ? `Downloading... ${download.title.replace(/[._]/g, " ")}`
+                                            : `Download ${download.title.replace(/[._]/g, " ")}`
                                         }
-                                        className="h-9 w-9 hover:bg-primary hover:text-primary-foreground transition-all"
-                                        aria-label={`Download ${download.title.replace(/[._]/g, " ")}`}
+                                        aria-busy={isCurrentDownload}
                                       >
-                                        {downloadingGuid === (download.guid || download.link) ? (
-                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        {isCurrentDownload ? (
+                                          <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <span>Downloading...</span>
+                                          </>
                                         ) : (
                                           <Download className="h-4 w-4" />
                                         )}
@@ -1531,17 +1549,33 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                   )}
                                 </div>
 
-                                <div className="w-[80px] flex items-center justify-end gap-1">
+                                <div
+                                  className={cn(
+                                    "flex items-center justify-end gap-1",
+                                    isCurrentDownload ? "w-[160px]" : "w-[80px]"
+                                  )}
+                                >
                                   <Button
                                     variant="ghost"
-                                    size="icon"
+                                    size={isCurrentDownload ? "sm" : "icon"}
                                     onClick={() => handleDownload(download)}
-                                    disabled={downloadingGuid === (download.guid || download.link)}
-                                    className="h-9 w-9 hover:bg-primary hover:text-primary-foreground transition-all"
-                                    aria-label={`Download ${download.title.replace(/[._]/g, " ")}`}
+                                    disabled={downloadingGuid !== null}
+                                    className={cn(
+                                      "h-9 hover:bg-primary hover:text-primary-foreground transition-all",
+                                      isCurrentDownload ? "min-w-[120px] gap-1.5 px-2" : "w-9 px-0"
+                                    )}
+                                    aria-label={
+                                      isCurrentDownload
+                                        ? `Downloading... ${download.title.replace(/[._]/g, " ")}`
+                                        : `Download ${download.title.replace(/[._]/g, " ")}`
+                                    }
+                                    aria-busy={isCurrentDownload}
                                   >
-                                    {downloadingGuid === (download.guid || download.link) ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    {isCurrentDownload ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span>Downloading...</span>
+                                      </>
                                     ) : (
                                       <Download className="h-4 w-4" />
                                     )}

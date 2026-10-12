@@ -549,6 +549,52 @@ describe("GameDownloadDialog", () => {
     expect(mockOnOpenChange).not.toHaveBeenCalledWith(false);
   });
 
+  it.each([
+    { mode: "desktop", isMobile: false },
+    { mode: "mobile", isMobile: true },
+  ])(
+    "shows the active download and disables other buttons in $mode results",
+    async ({ isMobile }) => {
+      mockIsMobile = isMobile;
+      const baseFetch = createFetchMock();
+      let resolveDownload: ((response: Response) => void) | undefined;
+      globalThis.fetch = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+        if (getRequestUrl(url).includes("/api/downloads") && init?.method === "POST") {
+          return await new Promise<Response>((resolve) => {
+            resolveDownload = resolve;
+          });
+        }
+        return baseFetch(url, init);
+      }) as typeof fetch;
+
+      renderComponent();
+
+      const firstDownload = await screen.findByRole("button", { name: "Download Test Torrent 1" });
+      const secondDownload = screen.getByRole("button", { name: "Download Test Torrent 2" });
+      fireEvent.click(firstDownload);
+
+      await waitFor(() => {
+        expect(firstDownload).toBeDisabled();
+        expect(firstDownload).toHaveAccessibleName("Downloading... Test Torrent 1");
+        expect(firstDownload).toHaveTextContent("Downloading...");
+        expect(firstDownload).toHaveAttribute("aria-busy", "true");
+        expect(secondDownload).toBeDisabled();
+        expect(screen.getByRole("status")).toHaveTextContent("Downloading selected release...");
+      });
+
+      if (!resolveDownload) throw new Error("Download request did not start");
+      resolveDownload({
+        ok: true,
+        json: async () => ({ success: true, downloaderName: "TestDownloader" }),
+      } as Response);
+
+      await waitFor(() => {
+        expect(firstDownload).toBeEnabled();
+        expect(secondDownload).toBeEnabled();
+      });
+    }
+  );
+
   it("adds a Discover game to the library before downloading it", async () => {
     const libraryId = "0f8fad5b-d9cb-469f-a165-70867728950e";
     const baseFetch = createFetchMock();

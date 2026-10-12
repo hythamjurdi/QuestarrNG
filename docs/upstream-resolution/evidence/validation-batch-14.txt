@@ -1,0 +1,56 @@
+Batch 14 upstream review and implementation — 2026-10-12
+
+Scope reviewed
+- PRs #126–128, issue #129, and PRs #130–140 (15 items).
+- Checked current upstream PR descriptions, changed files, general discussion,
+  and review records. No code reviews were submitted. Jules automation greetings
+  were the only comments on its code PRs; #137 and #138 also contain failed
+  automated rebase attempts. Dependabot says #128 was already current and #134
+  and #139 were updatable another way.
+- Issue #129 has an empty body and one one-word comment, with no actionable
+  product behavior described.
+
+Disposition and implementation
+- PRs #126–128 and grouped dependency PRs #134/#139 are satisfied by versions
+  in the current manifest and lockfile; all requested versions are matched or
+  exceeded. PR #128 closed after Dependabot noted tw-animate-css was already
+  current.
+- PRs #130, #132, #135, and #137 request memoization already present in the
+  current GameCard, library callback, DiscoverPage callbacks, and carousel
+  component. #137 has no changed files in its current upstream diff; its
+  discussion only asks for a rebase after fetch timeouts.
+- PR #131 targeted the historical SearchBar component. The fork now uses
+  PageToolbar and the library filter row, and their search, clear, toggle, and
+  remove-filter controls have accessible names.
+- PR #133 was incomplete: only the active button was disabled and the progress
+  state had no visible text. The selected release now shows a spinner and
+  “Downloading...”; the other direct-download buttons are disabled and the
+  current state is announced to assistive technology. Tests cover desktop and
+  mobile result layouts and re-enabling after the request settles.
+- PR #136 requested an accessible View Details action. The game title is now a
+  keyboard-focusable button with a descriptive accessible name. The card
+  ignores clicks from nested controls and React portals so dialog interactions
+  do not reopen or cover the details dialog.
+- PR #138 is superseded by merged PR #140, which adds a tooltip and accessible
+  name to the search-results download button. The current page has both.
+- Issue #129 is not applicable: its empty request does not justify hardcoding
+  one game title into product code.
+
+Validation
+- Focused GameCard and GameDownloadDialog tests: 45 passed, 1 skipped.
+- Full `npm test`: 4,025 passed, 7 skipped (248 test files passed, 1 skipped).
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run build`
+  passed. Vite emitted the existing advisory for chunks larger than 500 kB.
+- Launched `npm run dev:test` and drove the running app with headless Playwright.
+  The screenshots at `docs/pr-evidence/upstream-download-pending-feedback.png`
+  and `docs/pr-evidence/upstream-view-details-accessible.png` show the pending
+  download and keyboard-focused details action. Game, catalog, search, indexer,
+  and downloader responses were stubbed; no real indexer or downloader was
+  contacted. The download POST was held pending until the screenshot was saved.
+- The download dialog was visually inspected with the progress text and spinner
+  visible, all other direct-download controls disabled, and no overlapping
+  details dialog.
+
+Ledger after this batch: 146 verified, 3 superseded, 992 unreviewed, 4
+not-applicable, 1 implemented-but-unverified, and 1 needs-implementation.
+Issue #37 remains the outstanding implementation item.

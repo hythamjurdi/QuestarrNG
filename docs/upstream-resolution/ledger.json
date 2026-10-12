@@ -1,14 +1,14 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T22:23:31.181Z",
-  "forkHead": "db4a58c8d0f9826b5ecbf5bf00d7032c8e768eb1",
-  "upstreamHead": "fb650bab63cb2f7ce3c9004ab9028cfc3b210a01",
+  "capturedAt": "2026-10-12T22:45:41.492Z",
+  "forkHead": "1baeddd8f64def42ec5542d8efd842f5cfeac582",
+  "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
-    "pr:MERGED": 703,
+    "pr:MERGED": 705,
     "pr:CLOSED": 208,
     "issue:OPEN": 4,
-    "pr:OPEN": 4
+    "pr:OPEN": 2
   },
   "limitations": [
     "Ancestry is not behavioral verification: changes can be reverted, superseded or ported with different hashes.",
@@ -3311,10 +3311,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "2e1c3ac93ee8381b6824cb1a5b5589a3e05efe4d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested wouter 3.8.1 upgrade is superseded by wouter 3.12.0 in package.json and package-lock.json; the PR has no comments or reviews."
+        ],
+        "acceptance": ["The manifest and lockfile resolve wouter to 3.8.1 or newer."],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/126",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3331,10 +3337,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ec8f42f1ecb09f87ba399ba15d686c40155ae5f5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "zod-validation-error is resolved at 5.0.0, which supports the fork current Zod 4 dependency; this exceeds the requested 3.5.4 and the PR has no comments or reviews."
+        ],
+        "acceptance": [
+          "The locked zod-validation-error version is at least 3.5.4 and declares compatibility with the installed Zod major."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/127",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3351,10 +3365,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "tw-animate-css resolves to 1.4.0, the requested target. Dependabot commented that the package was already up to date and the update was no longer needed."
+        ],
+        "acceptance": ["The manifest and lockfile use tw-animate-css 1.4.0 or newer."],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/128",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3371,10 +3391,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The issue has an empty body and its only comment is the word Samson. Its title names Star Wars: Fate of the Old Republic but gives no reproducible product behavior or implementation request; game metadata remains user-searchable through the configured providers."
+        ],
+        "acceptance": [
+          "No product code change is justified without a described behavior or catalog-data requirement."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/129",
+          "docs/upstream-resolution/sources.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3391,10 +3418,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "74a984863533b401d494dd94a3e34e54ee38e901",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCard is exported through React.memo, matching the requested re-render optimization."
+        ],
+        "acceptance": ["GameCard is memoized and still passes its current card behavior tests."],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/130",
+          "client/src/components/GameCard.tsx",
+          "client/__tests__/GameCard.remaining.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3411,10 +3444,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "637404a87328e110e79fdb10d164354cb05a3998",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The historical SearchBar component has been replaced by PageToolbar and the library filter row. Search inputs, clear-search, filter-toggle, and remove-filter controls have accessible names; the PR discussion contains only the Jules automation greeting."
+        ],
+        "acceptance": [
+          "Current search and filter icon controls expose descriptive accessible names."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/131",
+          "client/src/components/PageToolbar.tsx",
+          "client/src/components/Library.tsx",
+          "client/__tests__/PageToolbar.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3431,10 +3473,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "f81efbd17f5c999c85cf088f74c4b1beb381603a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The current library uses a stable useCallback for handleStatusChange when passing it into the game grid. The historical Dashboard component no longer exists."
+        ],
+        "acceptance": ["The callback passed into GameGrid remains stable across parent renders."],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/132",
+          "client/src/components/Library.tsx",
+          "client/src/components/GameGrid.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3451,10 +3499,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "1ac955c015a1c42845b4b42187d9802c0f92bad9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The download dialog now shows a spinner and visible Downloading... label on the selected release, announces progress to assistive technology, and disables every other direct-download button until success or failure settles. The real running UI also exposed a React portal click bubbling into the card; the card now ignores portal and nested-control clicks so the details dialog does not cover download feedback."
+        ],
+        "acceptance": [
+          "While a download request is pending, the selected action shows its loading state, all other release actions are disabled, and all actions re-enable when the request settles."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/133",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/components/GameCard.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "client/__tests__/GameCard.remaining.test.tsx",
+          "docs/pr-evidence/upstream-download-pending-feedback.png",
+          "docs/upstream-resolution/evidence/validation-batch-14.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3471,10 +3531,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Dependabot closed this grouped update as updatable in another way. Every requested package still present in this fork is at or above the target: Tailwind Vite 4.3.3, express-session types 1.19.0, Node types 26.6.4, Vitest UI 5.0.2, drizzle-kit 0.31.11, esbuild 0.28.2, ESLint 10.11.0, tsx 4.23.15, and typescript-eslint 8.71.0."
+        ],
+        "acceptance": [
+          "The current manifest and lockfile meet or exceed the package targets from the closed group."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/134",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3491,10 +3559,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "33781b4bd30814d565b75acf712bf38f4a207d1d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "DiscoverPage memoizes handleStatusChange and handleTrackGame; the fetch handlers are also stable callbacks for memoized carousel sections."
+        ],
+        "acceptance": [
+          "Callbacks passed from DiscoverPage to memoized cards and carousel sections remain stable."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/135",
+          "client/src/pages/discover.tsx",
+          "client/src/components/GameCarouselSection.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3511,10 +3587,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "64196a78b5299498c3cea4b99c49b8b152dad74d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCard now exposes a real, keyboard-focusable View details button with a descriptive game-specific accessible name. The card click handler ignores interactive descendants and clicks from React portals."
+        ],
+        "acceptance": [
+          "Keyboard users can focus and activate View details, and clicking a download dialog control does not open or reopen the details dialog."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/136",
+          "client/src/components/GameCard.tsx",
+          "client/__tests__/GameCard.remaining.test.tsx",
+          "docs/pr-evidence/upstream-view-details-accessible.png",
+          "docs/pr-evidence/upstream-download-pending-feedback.png",
+          "docs/upstream-resolution/evidence/validation-batch-14.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3531,10 +3618,15 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "bdd8ef57df51fba7eece7e92eb9a76d8e88c1470",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCarouselSection is exported through React.memo. The PR has no current file diff in GitHub; its discussion only asks Jules to rebase after fetch timeouts, and no review was submitted."
+        ],
+        "acceptance": ["The active GameCarouselSection component is memoized."],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/137",
+          "client/src/components/GameCarouselSection.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3551,11 +3643,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The closed PR requested a tooltip for the search-page download action. Merged PR #140 adds the same tooltip plus an accessible name; the remaining discussion concerns failed automated rebases."
+        ],
+        "acceptance": ["Retain the tooltip and accessible download label from PR #140."],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/138",
+          "https://github.com/Doezer/Questarr/pull/140",
+          "client/src/pages/search.tsx"
+        ],
+        "dependencies": ["pr:140"]
       },
       "sourceChangedSinceReview": false
     },
@@ -3571,10 +3669,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Dependabot closed this grouped update as updatable in another way. Current requested packages exceed their targets, including autoprefixer 10.6.1, Tailwind Vite 4.3.3, express-session types 1.19.0, Node types 26.6.4, Vitest UI 5.0.2, drizzle-kit 0.31.11, esbuild 0.28.2, ESLint 10.11.0, tsx 4.23.15, and typescript-eslint 8.71.0."
+        ],
+        "acceptance": [
+          "The current manifest and lockfile meet or exceed the package targets from the closed group."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/139",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3591,10 +3697,14 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ed61459dbe9ae60e17589faff78c41b9101120a1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The search results download action has both a descriptive aria-label and a tooltip; PR #138 is a narrower closed duplicate."
+        ],
+        "acceptance": [
+          "The icon-only search result action has an accessible name and a visible tooltip."
+        ],
+        "evidence": ["https://github.com/Doezer/Questarr/pull/140", "client/src/pages/search.tsx"],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23640,17 +23750,18 @@
       "kind": "pr",
       "title": "Prepare v1.5.0 release coverage, changelog and documentation",
       "url": "https://github.com/Doezer/Questarr/pull/1172",
-      "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-12T19:47:11Z",
-      "sourceDigest": "ef1aacb4919ffdd0c60fcbdfaaaa7d32bbebdddf0b58c03b071702173ab839ad",
-      "historyEvidence": "no-merge-commit",
-      "mergeCommit": null,
+      "upstreamState": "MERGED",
+      "upstreamUpdatedAt": "2026-10-12T22:44:50Z",
+      "sourceDigest": "87e19857c4009b826342f945c016e867209190cb1405348d31d066ed615ea406",
+      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "mergeCommit": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
       "review": {
         "status": "verified",
         "findings": [
           "Reviewed upstream PR #1172 at head 9a4fd4d8 (open, updated October 12). QuestarrNG's 1.10.0 branch now has the applicable user guides and a 33-page Mintlify navigation map; its existing Import guide already covers archive updates, Wii U imports, recovery, ClamAV review, ISO handling, and Sort Extras.",
           "The release-preparation browser journeys pass in QuestarrNG, including Prowlarr defaults and consent revocation, Apprise login, RSS refresh, calendar timezone/year view, Discover actions, import recovery, and backlog roulette. QuestarrNG keeps its own version metadata and defaults HTTP integrations to opted out, including existing connections.",
-          "Only Doezer's 1.5.0 tag, merge, and publication remain upstream release operations. Those actions are outside this fork's 1.10.0 release identity."
+          "Only Doezer's 1.5.0 tag, merge, and publication remain upstream release operations. Those actions are outside this fork's 1.10.0 release identity.",
+          "Final source review: PR #1172 merged upstream as ad69b8ca44c7456d9183422fbdfdefbb67a771e9. Its final head advanced from 9a4fd4d8 to a7a849fa by incorporating PR #1186 dependency, CVE documentation and lockfile changes; those security changes are independently verified in this fork."
         ],
         "acceptance": [
           "Applicable release user guides and navigation accurately describe QuestarrNG, while the fork's current release identity is preserved.",
@@ -23948,15 +24059,16 @@
       "kind": "pr",
       "title": "Fix the open Dependabot vulnerabilities in dev and CI tooling",
       "url": "https://github.com/Doezer/Questarr/pull/1186",
-      "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-12T20:36:50Z",
-      "sourceDigest": "934895b816176d687cedbd24935eb3bd755cbfa613625714d6ad2c502671a721",
-      "historyEvidence": "no-merge-commit",
-      "mergeCommit": null,
+      "upstreamState": "MERGED",
+      "upstreamUpdatedAt": "2026-10-12T22:33:10Z",
+      "sourceDigest": "4fd0e386bdd55bd46f8966d982d9e6d2ceac7d8ebdfb4c32bb7f59f44e711418",
+      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "mergeCommit": "bbe836162a702f2790d1246c89646c4510eb3a19",
       "review": {
         "status": "verified",
         "findings": [
-          "The fork already pins PyJWT 2.15.1, forces fast-copy to ^4.1.0 (lock resolves 4.1.2), has no @tailwindcss/typography, @npmcli/query, or postcss-selector-parser in its dependency graph, and has only one engine.io override. Updated the hash-pinned CI Semgrep scanner from 1.179.0 to 1.180.0 and documented the fork v1.10.0 record."
+          "The fork already pins PyJWT 2.15.1, forces fast-copy to ^4.1.0 (lock resolves 4.1.2), has no @tailwindcss/typography, @npmcli/query, or postcss-selector-parser in its dependency graph, and has only one engine.io override. Updated the hash-pinned CI Semgrep scanner from 1.179.0 to 1.180.0 and documented the fork v1.10.0 record.",
+          "Final source review: PR #1186 merged upstream as bbe836162a702f2790d1246c89646c4510eb3a19; its reviewed dependency and CI security fixes remain present in the fork."
         ],
         "acceptance": [
           "The Semgrep input and generated universal hash lock resolve Semgrep 1.180.0 while retaining PyJWT 2.15.1.",

@@ -22,12 +22,13 @@ they are not instructions to blindly replay every historical patch.
   PR reviews/diffs and complete issue timelines still require detailed collection.
 
 Latest inventory (October 12, 2026): **232 issues** (4 open, 228 closed) and
-**915 PRs** (4 open, 703 merged, 208 closed unmerged), for **1,147 items**.
+**915 PRs** (2 open, 705 merged, 208 closed unmerged), for **1,147 items**.
 
-Of the 703 merged PRs, 463 merge commits are ancestors of the fork snapshot,
-22 are ancestors of upstream/main but not the fork, and 218 are absent from both
-main histories. Release branches, squash/rebase merges, equivalent patches and
-reverts require further inspection. None of these counts proves functionality.
+Of the 705 merged PRs, 485 merge commits are ancestors of the fork snapshot,
+2 are ancestors of upstream/main but not the fork, and 218 are absent from both
+main histories. The remaining 210 PRs are open or closed unmerged. Release
+branches, squash/rebase merges, equivalent patches and reverts require further
+inspection. None of these counts proves functionality.
 
 The fork and fetched upstream/main diverge by 175 fork-only and 130 upstream-only
 commits at the initial snapshot. Reconcile those changes before independently
@@ -40,7 +41,7 @@ engine work and the fork's SeerrNG, Real-Debrid, deployment and security behavio
    branch. Group conflicts by subsystem and retain fork-specific behavior.
 2. Review the seven open items and all 208 closed unmerged PRs, including comments,
    review threads and diffs. Link duplicates and later replacements.
-3. Review all 228 closed issues and 703 merged PRs against the resulting code.
+3. Review all 228 closed issues and 705 merged PRs against the resulting code.
    Convert each outstanding requirement into a reproducible acceptance check.
 4. Implement dependency-ordered batches: correctness/security and data integrity;
    search and release selection; update management; metadata providers; federation;
@@ -336,3 +337,44 @@ repeatable screenshot data. The refreshed upstream snapshot still contains
 unreviewed**, **3 not-applicable**, **1 implemented-but-unverified**, and **1
 needs-implementation** record. Issue #37 remains the outstanding implementation
 item. See [batch 13 evidence](evidence/validation-batch-13.txt).
+
+## Follow-up: dependencies, accessibility, and download feedback (#126–140)
+
+All fifteen items in this range were reviewed against their PR descriptions,
+changed files, discussion, and review records. The PRs have no submitted code
+reviews. PR #128 says its dependency was already current; Dependabot closed
+#134 and #139 because those grouped packages were updatable another way. Their
+requested versions are now met or exceeded in the manifest and lockfile. Issue
+#129 has no description and only a one-word comment, so it does not specify a
+product change. Closed PR #138 asked for the same search tooltip later merged
+with an accessible label in PR #140.
+
+The memoization requests (#130, #132, #135, and #137) are present in the current
+GameCard, library callback, DiscoverPage callbacks, and carousel section. The
+historical SearchBar from #131 has since been replaced by PageToolbar and the
+library filters, whose search, clear, filter-toggle, and remove-filter controls
+have accessible names.
+
+Two gaps needed code changes. PR #133's download dialog only disabled the
+selected release button and showed no visible progress text. It now shows a
+spinner and “Downloading...” on the active result, announces the state, and
+disables all other direct-download buttons until the request settles. PR #136's
+label had been attached to a generic clickable card. The game title is now a
+real keyboard-focusable details button. Browser verification also exposed
+portal clicks reopening the details dialog over the download dialog; the card
+now ignores clicks from nested controls and its React portals. The screenshots
+of both running states are ready for the eventual upstream PR description:
+[download progress](../pr-evidence/upstream-download-pending-feedback.png) and
+[keyboard-accessible details](../pr-evidence/upstream-view-details-accessible.png).
+
+Batch 14 passed the full suite (**4,025 passed, 7 skipped**), typecheck, lint,
+format check, and production build. `npm run dev:test` was exercised with
+stubbed catalog, search, indexer, downloader, and in-flight download responses;
+no real indexer or downloader was contacted. The refreshed inventory still has
+1,147 items (705 merged PRs, 208 closed unmerged PRs, and 2 open PRs). PRs #1172
+and #1186 merged during the refresh; their final source states were rechecked
+and remain satisfied by the fork's release behavior and security fixes. The
+ledger now has **146 verified**, **3 superseded**, **992
+unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and **1
+needs-implementation** record. Issue #37 remains the outstanding
+implementation item. See [batch 14 evidence](evidence/validation-batch-14.txt).
