@@ -4212,10 +4212,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b136c47dc5fab9504345dd860a029d3a965f216c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCarouselSection combines transition-opacity with opacity-50 during background refetches, so stale results dim smoothly while the refresh indicator is shown."
+        ],
+        "acceptance": [
+          "Carousel opacity changes smoothly while the current results refresh."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/148",
+          "client/src/components/GameCarouselSection.tsx",
+          "docs/pr-evidence/upstream-carousel-refresh-accessibility.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4232,10 +4240,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "bd6a9684d613e7e14e417d572c8239cf12c051e4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The authenticated /api/config response contains no database URL, database host/type/user, or partial API key. It returns provider configured/source flags and a non-secret XREL API base."
+        ],
+        "acceptance": [
+          "Configuration reads do not disclose database connection details or partial credentials."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/149",
+          "server/routes.ts",
+          "shared/schema.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4252,10 +4268,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c55295a3c8de15448f9d85a368fd90f60bd2fdc8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCard lazy-loads both modal modules and mounts each modal subtree only while its corresponding open state is true."
+        ],
+        "acceptance": [
+          "Closed GameDetailsModal and GameDownloadDialog instances are not mounted in every card."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/150",
+          "client/src/components/GameCard.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4272,10 +4295,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "458a0c8794223fb1a3d49e14766da4aab1f05997",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Discover now uses the same debounced genre/platform value for each carousel heading, query key, and fetch function. A regression test confirms the old label remains during debounce and the new label appears with its loading state and matching query."
+        ],
+        "acceptance": [
+          "A filter change never relabels results from the previous genre or platform.",
+          "The new heading and corresponding query key change together after debounce."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/151",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "docs/pr-evidence/upstream-discover-filter-title-sync.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4292,10 +4325,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ed1e29b211cf8e293bcbe1a70e50006e1c393a4f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The authenticated /api/config response omits the server object and environment details. The shared Config contract has no server field."
+        ],
+        "acceptance": [
+          "Configuration reads do not disclose host, port, or runtime environment details."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/152",
+          "server/routes.ts",
+          "shared/schema.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4312,10 +4353,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c08fee2265a1dbff805654b7bbe185059494388c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The old SearchBar has been replaced by PageToolbar, which provides a labeled controlled search input and a conditional, labeled Clear search button across the Library, Playing, Calendar, and Wishlist pages."
+        ],
+        "acceptance": [
+          "Search has a descriptive accessible name and a clear action appears only when the field is non-empty."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/153",
+          "client/src/components/PageToolbar.tsx",
+          "client/src/components/Library.tsx",
+          "client/src/pages/playing.tsx",
+          "client/src/pages/calendar.tsx",
+          "client/src/pages/wishlist.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4332,10 +4384,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b20ffc16dd051088b46962b3dc8343a7b32f6b8b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The shared generic useDebounce hook is used for genre, platform, and RAWG search values, replacing duplicated timer effects."
+        ],
+        "acceptance": [
+          "Discover filter values debounce before requests and share one reusable hook implementation."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/154",
+          "client/src/hooks/use-debounce.ts",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

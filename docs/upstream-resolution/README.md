@@ -428,3 +428,20 @@ superseded**, **985 unreviewed**, **4 not-applicable**, **1
 implemented-but-unverified**, and **1 needs-implementation** record. Issue #37
 remains the outstanding implementation item. See
 [batch 15 evidence](evidence/validation-batch-15.txt).
+
+## Follow-up: Discover title sync and upstream PRs #148–154
+
+Genre and platform carousel headings now follow the same debounced values as
+their query keys. During the debounce the old title stays with the old results;
+once the new query begins, its heading appears with the matching cache or
+loading skeleton. A headless browser captured the running transition:
+[filter title sync](../pr-evidence/upstream-discover-filter-title-sync.png).
+
+The rest of this PR group is covered by the existing opacity transition,
+conditional lazy modal mounting in GameCard, the hardened `/api/config`
+response, PageToolbar's labeled search and clear action, and the shared
+`useDebounce` hook. The refreshed ledger now records **159 verified**, **4
+superseded**, **978 unreviewed**, **4 not-applicable**, **1
+implemented-but-unverified**, and **1 needs-implementation** record. Issue #37
+remains the outstanding implementation item. See
+[batch 16 evidence](evidence/validation-batch-16.txt).

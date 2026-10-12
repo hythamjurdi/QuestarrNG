@@ -281,10 +281,12 @@ describe("DiscoverPage", () => {
 
     fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "Action" } });
 
+    expect(screen.getByText("Adventure Games")).toBeInTheDocument();
+    expect(screen.queryByText("Action Games")).not.toBeInTheDocument();
     expect(await screen.findByText("Action Games")).toBeInTheDocument();
     const actionQueryKey = () =>
       carouselRenderLog.filter(({ title }) => title === "Action Games").at(-1)?.queryKey;
-    expect(actionQueryKey()).toBe(initialGenreKey);
+    expect(actionQueryKey()).not.toBe(initialGenreKey);
     const latestPopular = carouselRenderLog
       .filter(({ title }) => title === "Popular Games")
       .at(-1)!;
@@ -310,7 +312,6 @@ describe("DiscoverPage", () => {
       carouselRenderLog.filter(({ title }) => title === "Popular Games").at(-1)?.queryKey
     ).toBe(initialPopularKey);
 
-    await waitFor(() => expect(actionQueryKey()).not.toBe(initialGenreKey));
     expect(actionQueryKey()?.[1]).toBe("Action");
     expect(carouselRenderLog.filter(({ title }) => title === "Popular Games")).toHaveLength(
       initialPopularRenders.length

@@ -768,8 +768,9 @@ export default function DiscoverPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {/* Keep the label in sync with its debounced query while the filter settles. */}
               <GameCarouselSection
-                title={`${selectedGenre} Games`}
+                title={`${debouncedGenre} Games`}
                 queryKey={genreCarouselQueryKey}
                 queryFn={fetchGamesByGenre}
                 staleTime={DISCOVERY_STALE_TIME}
@@ -806,8 +807,9 @@ export default function DiscoverPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {/* Match the label to the same debounced platform used by its query. */}
                 <GameCarouselSection
-                  title={`${selectedPlatform} Games`}
+                  title={`${debouncedPlatform} Games`}
                   queryKey={platformCarouselQueryKey}
                   queryFn={fetchGamesByPlatform}
                   staleTime={DISCOVERY_STALE_TIME}
