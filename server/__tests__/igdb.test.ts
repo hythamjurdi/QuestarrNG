@@ -339,6 +339,99 @@ describe("IGDBClient - Fallback Mechanism", { timeout: 20000 }, () => {
     expect(results).toHaveLength(0);
   });
 
+  it("retries transient 429 and 5xx responses with bounded backoff", async () => {
+    vi.useFakeTimers();
+    const delaySpy = vi.spyOn(globalThis, "setTimeout");
+
+    try {
+      const authResponse = {
+        ok: true,
+        json: async () => ({
+          access_token: "test-token",
+          expires_in: 3600,
+          token_type: "bearer",
+        }),
+      } as Response;
+      const transientResponse = (status: number, retryAfter?: string) =>
+        ({
+          ok: false,
+          status,
+          headers: new Headers(retryAfter ? { "Retry-After": retryAfter } : undefined),
+        }) as Response;
+      const successResponse = {
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: async () => [{ id: 123, name: "Retry Game" }],
+      } as Response;
+
+      fetchMock
+        .mockResolvedValueOnce(authResponse)
+        .mockResolvedValueOnce(transientResponse(429, "0"))
+        .mockResolvedValueOnce(transientResponse(503))
+        .mockResolvedValueOnce(transientResponse(500))
+        .mockResolvedValueOnce(successResponse);
+
+      const { igdbClient } = await import("../igdb.js");
+      const searchPromise = igdbClient.searchGames("retry game", 5);
+      await vi.runAllTimersAsync();
+      const results = await searchPromise;
+
+      const searchCalls = fetchMock.mock.calls.filter(
+        (call) => typeof call[0] === "string" && call[0].includes("api.igdb.com/v4/games")
+      );
+      const requestBodies = searchCalls.map((call) => (call[1] as RequestInit | undefined)?.body);
+
+      expect(results.map((game) => game.id)).toEqual([123]);
+      expect(searchCalls).toHaveLength(4);
+      expect(requestBodies[0]).toBe(requestBodies[1]);
+      expect(requestBodies[1]).toBe(requestBodies[2]);
+      expect(requestBodies[3]).not.toBe(requestBodies[2]);
+      expect(delaySpy.mock.calls.map((call) => call[1])).toEqual([0, 2000]);
+    } finally {
+      delaySpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it("caps a server-provided Retry-After delay", async () => {
+    vi.useFakeTimers();
+    const delaySpy = vi.spyOn(globalThis, "setTimeout");
+
+    try {
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            access_token: "test-token",
+            expires_in: 3600,
+            token_type: "bearer",
+          }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 429,
+          headers: new Headers({ "Retry-After": "99999" }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => [{ id: 124, name: "Capped Retry Game" }],
+        } as Response);
+
+      const { igdbClient } = await import("../igdb.js");
+      const searchPromise = igdbClient.searchGames("capped retry game", 5);
+      await vi.runAllTimersAsync();
+      await expect(searchPromise).resolves.toMatchObject([{ id: 124 }]);
+
+      expect(delaySpy.mock.calls.map((call) => call[1])).toEqual([30_000]);
+    } finally {
+      delaySpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it("should return null for getGameById when not found", async () => {
     // Mock environment
     process.env.IGDB_CLIENT_ID = "test-client-id";

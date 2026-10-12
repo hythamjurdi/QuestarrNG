@@ -167,9 +167,10 @@ are excluded with the limitation shown in the running UI. Issue #336 is verified
 operators can configure Hydra-format public HTTPS catalogs, and their torrent
 links join normal aggregated search with source attribution. Catalog origin does
 not certify release safety; the existing scanning controls remain applicable.
-The ledger currently has 1,105 unreviewed records. Each of the four open issues
+The ledger currently has 1,062 unreviewed records. Each of the four open issues
 and four open PRs has a preliminary disposition; review status is tracked
-separately from GitHub state.
+separately from GitHub state. Issue #37 still needs the remaining mutation
+routes moved to shared Zod validation.
 
 ## Follow-up: v1.5.0 release-preparation coverage (#1172)
 
@@ -220,13 +221,33 @@ the health and protected SeerrNG routes returned their expected responses. Issue
 #260 is `not-applicable`: the report showed a Compose hostname/internal-port
 mismatch, and the reporter confirmed that a clean pull fixed it.
 
-The ledger now has 1,105 unreviewed items, 38 verified, 3 `not-applicable`, and
-one implemented-but-unverified integration. The full suite passed with 4,016
-tests and 7 skips; typecheck, lint, format, production build, and PostgreSQL
-schema checks also passed. The downloads-page screenshot was captured after its
-loading state settled and is included in the review evidence:
+At that checkpoint, the ledger had 1,105 unreviewed items, 38 verified, 3
+`not-applicable`, and one implemented-but-unverified integration. The full suite
+passed with 4,016 tests and 7 skips; typecheck, lint, format, production build,
+and PostgreSQL schema checks also passed. The downloads-page screenshot was
+captured after its loading state settled and is included in the review evidence:
 
 ![Downloads page after loading](../pr-evidence/upstream-download-status.png)
+
+## Follow-up: early search and product requests (#26–60, PRs #61–69)
+
+Multi-indexer search, background notifications, library statistics, settings,
+health/readiness probes, downloader fallback and rTorrent support, indexer
+controls, download details/errors, authentication, and structured error handling
+are present in the fork and documented per item in the ledger. The health
+request uses separate liveness and readiness routes so public probes do not
+reveal component-specific details.
+
+IGDB search now retries transient 429 and 5xx responses for at most three
+requests, honors bounded `Retry-After` delays, and reduces routine search logs to
+debug level. The PostCSS `from` setting from PR #101 is restored in Vite; the
+production build has no PostCSS warning. Issue #37 remains open in the ledger:
+validation is not yet uniformly Zod-based across every POST/PATCH body.
+
+This batch passed the full suite with 4,019 tests and 7 skips, plus typecheck,
+lint, and production build. See [batch 10 evidence](evidence/validation-batch-10.txt).
+The ledger now has 1,062 unreviewed items, 80 verified, 3 `not-applicable`, one
+implemented-but-unverified integration, and one item still needing implementation.
 
 Public source snapshots redact database connection strings found in support
 reports; the collection script applies the same redaction on refresh.

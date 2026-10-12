@@ -798,6 +798,23 @@ describe("API Routes - Extended Coverage", () => {
       expect(response.body).toEqual(savedGame);
     });
 
+    it("defaults a null discovery status before storing the game", async () => {
+      const newGame = { title: "Untracked Game", igdbId: 12350, status: null };
+
+      vi.mocked(storage.getUserGames).mockResolvedValue([]);
+      vi.mocked(storage.addGame).mockResolvedValue({
+        ...newGame,
+        id: "game-default-status",
+        userId: "user-1",
+        status: "wanted",
+      } as unknown as Game);
+
+      const response = await request(app).post("/api/games").send(newGame);
+
+      expect(response.status).toBe(201);
+      expect(storage.addGame).toHaveBeenCalledWith(expect.objectContaining({ status: "wanted" }));
+    });
+
     it("marks an already-released game as released when adding it", async () => {
       const newGame = {
         title: "Previously Released Game",

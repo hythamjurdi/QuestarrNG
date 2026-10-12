@@ -246,9 +246,27 @@ function sanitizeIgdbInput(input: string): string {
     .slice(0, 100); // Limit length to prevent abuse
 }
 
-// Retry configuration for rate-limited requests
-const MAX_RETRY_ATTEMPTS = 3;
+// Retry transient IGDB responses at most twice (three requests total).
+const MAX_REQUEST_ATTEMPTS = 3;
 const BASE_RETRY_DELAY_MS = 1000;
+const MAX_RETRY_DELAY_MS = 30_000;
+
+function getRetryDelayMs(retryAfter: string | null, retryIndex: number): number {
+  const value = retryAfter?.trim();
+  if (value) {
+    const retryAfterSeconds = Number(value);
+    if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+      return Math.min(MAX_RETRY_DELAY_MS, retryAfterSeconds * 1000);
+    }
+
+    const retryAt = Date.parse(value);
+    if (Number.isFinite(retryAt)) {
+      return Math.min(MAX_RETRY_DELAY_MS, Math.max(0, retryAt - Date.now()));
+    }
+  }
+
+  return Math.min(MAX_RETRY_DELAY_MS, BASE_RETRY_DELAY_MS * 2 ** retryIndex);
+}
 
 // Constants for query thresholds
 const MIN_RATING_THRESHOLD = 60;
@@ -652,7 +670,7 @@ class IGDBClient {
 
     this.lastRequestTime = Date.now();
 
-    let attempt = 0;
+    let retryIndex = 0;
     while (true) {
       const response = await safeFetch(`https://api.igdb.com/v4/${endpoint}`, {
         method: "POST",
@@ -664,17 +682,22 @@ class IGDBClient {
         body: query,
       });
 
-      if (response.status === 429 && attempt < MAX_RETRY_ATTEMPTS) {
-        const retryAfterHeader = response.headers.get("Retry-After");
-        const delay = retryAfterHeader
-          ? parseInt(retryAfterHeader, 10) * 1000
-          : BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
+      const isTransientResponse =
+        response.status === 429 || (response.status >= 500 && response.status <= 599);
+      if (isTransientResponse && retryIndex + 1 < MAX_REQUEST_ATTEMPTS) {
+        const delay = getRetryDelayMs(response.headers.get("Retry-After"), retryIndex);
         igdbLogger.warn(
-          { endpoint, attempt: attempt + 1, delayMs: delay },
-          "IGDB rate limited (429), retrying after delay"
+          {
+            endpoint,
+            status: response.status,
+            attempt: retryIndex + 1,
+            maxAttempts: MAX_REQUEST_ATTEMPTS,
+            delayMs: delay,
+          },
+          "IGDB returned a transient response; retrying after delay"
         );
         await new Promise((r) => setTimeout(r, delay));
-        attempt++;
+        retryIndex++;
         continue;
       }
 
@@ -806,7 +829,7 @@ class IGDBClient {
         // Cache search results for 15 minutes to reduce redundant API calls
         const results = await this.makeRequest<IGDBGame[]>("games", approach, 15 * 60 * 1000);
         if (results.length > 0) {
-          igdbLogger.info(
+          igdbLogger.debug(
             { approach: i + 1, query: sanitizedQuery, resultCount: results.length },
             `search approach ${i + 1} found ${results.length} results`
           );
@@ -824,16 +847,16 @@ class IGDBClient {
           }
         }
       } catch {
-        igdbLogger.warn(
+        igdbLogger.debug(
           { approach: i + 1, query: sanitizedQuery },
-          `search approach ${i + 1} failed`
+          `search approach ${i + 1} failed; trying the next approach`
         );
       }
     }
 
     // Check if we've reached the max attempts before trying word search
     if (attemptCount >= MAX_SEARCH_ATTEMPTS) {
-      igdbLogger.info(
+      igdbLogger.debug(
         { query: sanitizedQuery, maxAttempts: MAX_SEARCH_ATTEMPTS },
         `search reached max attempts`
       );
@@ -864,7 +887,7 @@ class IGDBClient {
           // Cache word search results for 15 minutes
           return await this.makeRequest<IGDBGame[]>("games", wordQuery, 15 * 60 * 1000);
         } catch (error) {
-          igdbLogger.warn({ word, error }, `word search failed`);
+          igdbLogger.debug({ word, error }, `word search failed`);
           return [];
         }
       });
@@ -875,7 +898,7 @@ class IGDBClient {
       const wordResults = allWordResults.flat();
 
       if (wordResults.length > 0) {
-        igdbLogger.info(
+        igdbLogger.debug(
           { wordCount: wordsToSearch.length, resultCount: wordResults.length },
           `parallel word search found results`
         );
@@ -910,7 +933,7 @@ class IGDBClient {
       }
     }
 
-    igdbLogger.info({ query: sanitizedQuery }, `search found no results`);
+    igdbLogger.debug({ query: sanitizedQuery }, `search found no results`);
     return [];
   }
 

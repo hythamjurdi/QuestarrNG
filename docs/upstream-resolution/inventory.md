@@ -31,50 +31,50 @@ Snapshot: 2026-10-12T21:06:33.750Z. 1147 items. All ancestry observations requir
 | [issue #23](https://github.com/Doezer/Questarr/issues/23) | Test connexion indexer (UI) | CLOSED | no-merge-commit | verified |
 | [issue #24](https://github.com/Doezer/Questarr/issues/24) | fix game carousel UI | CLOSED | no-merge-commit | verified |
 | [issue #25](https://github.com/Doezer/Questarr/issues/25) | Comptes utilisateurs / sessions | CLOSED | no-merge-commit | verified |
-| [issue #26](https://github.com/Doezer/Questarr/issues/26) | Recherche multi-indexer aggregee | CLOSED | no-merge-commit | unreviewed |
-| [issue #27](https://github.com/Doezer/Questarr/issues/27) | Toasts pour operations background | CLOSED | no-merge-commit | unreviewed |
-| [issue #28](https://github.com/Doezer/Questarr/issues/28) | Dashboard stats globales | CLOSED | no-merge-commit | unreviewed |
-| [issue #29](https://github.com/Doezer/Questarr/issues/29) | Page de configuration (Settings) | CLOSED | no-merge-commit | unreviewed |
-| [issue #30](https://github.com/Doezer/Questarr/issues/30) | Endpoint /api/health | CLOSED | no-merge-commit | unreviewed |
-| [issue #31](https://github.com/Doezer/Questarr/issues/31) | Strategie de selection du downloader | CLOSED | no-merge-commit | unreviewed |
-| [issue #32](https://github.com/Doezer/Questarr/issues/32) | Rate limiting / sanitisation | CLOSED | no-merge-commit | unreviewed |
-| [issue #33](https://github.com/Doezer/Questarr/issues/33) | Transmission uniquement implemente | CLOSED | no-merge-commit | unreviewed |
-| [issue #34](https://github.com/Doezer/Questarr/issues/34) | Examples components cassent tsc (types) | CLOSED | no-merge-commit | unreviewed |
-| [issue #35](https://github.com/Doezer/Questarr/issues/35) | status: null dans formatGameData => transform manuel serveur | CLOSED | no-merge-commit | unreviewed |
-| [issue #36](https://github.com/Doezer/Questarr/issues/36) | Recherche IGDB heuristique agressive | CLOSED | no-merge-commit | unreviewed |
-| [issue #37](https://github.com/Doezer/Questarr/issues/37) | Centraliser la validation Zod pour toutes les routes | CLOSED | no-merge-commit | unreviewed |
-| [issue #38](https://github.com/Doezer/Questarr/issues/38) | Configuration centralisee des variables d'environnement | CLOSED | no-merge-commit | unreviewed |
-| [issue #39](https://github.com/Doezer/Questarr/issues/39) | Nettoyage dependances Neon/ws | CLOSED | no-merge-commit | unreviewed |
-| [issue #40](https://github.com/Doezer/Questarr/issues/40) | Resilience et verbosite de la recherche IGDB | CLOSED | no-merge-commit | unreviewed |
-| [issue #41](https://github.com/Doezer/Questarr/issues/41) | Endpoint de recherche agregÃ©e multi-indexers | CLOSED | no-merge-commit | unreviewed |
-| [issue #42](https://github.com/Doezer/Questarr/issues/42) | Bouton Download sur les cartes de decouverte | CLOSED | no-merge-commit | unreviewed |
-| [issue #43](https://github.com/Doezer/Questarr/issues/43) | Client rtorrent/rutorrent (implementation minimale) | CLOSED | no-merge-commit | unreviewed |
-| [issue #44](https://github.com/Doezer/Questarr/issues/44) | Completed downloads — filtres et statuts enrichis (badges vitesse / ETA / ratio) | CLOSED | no-merge-commit | unreviewed |
-| [issue #45](https://github.com/Doezer/Questarr/issues/45) | Exposer erreurs par downloader dans /api/downloads | CLOSED | no-merge-commit | unreviewed |
-| [issue #46](https://github.com/Doezer/Questarr/issues/46) | Edition des categories Torznab (UI) | CLOSED | no-merge-commit | unreviewed |
-| [issue #47](https://github.com/Doezer/Questarr/issues/47) | Bouton Test connection pour chaque indexer (UI) | CLOSED | no-merge-commit | unreviewed |
-| [issue #48](https://github.com/Doezer/Questarr/issues/48) | Corriger l'avertissement PostCSS from option | CLOSED | no-merge-commit | unreviewed |
-| [issue #49](https://github.com/Doezer/Questarr/issues/49) | Logger structure (pino) + niveaux | CLOSED | no-merge-commit | unreviewed |
-| [issue #50](https://github.com/Doezer/Questarr/issues/50) | Endpoint /api/health | CLOSED | no-merge-commit | unreviewed |
-| [issue #51](https://github.com/Doezer/Questarr/issues/51) | Rate limiting et sanitation | CLOSED | no-merge-commit | unreviewed |
-| [issue #52](https://github.com/Doezer/Questarr/issues/52) | Authentification basique (MVP) | CLOSED | no-merge-commit | unreviewed |
-| [issue #53](https://github.com/Doezer/Questarr/issues/53) | Corriger/Isoler les composants d'exemples qui cassent tsc | CLOSED | no-merge-commit | unreviewed |
-| [issue #54](https://github.com/Doezer/Questarr/issues/54) | Ne pas envoyer de champs superflus au POST /api/games | CLOSED | no-merge-commit | unreviewed |
-| [issue #55](https://github.com/Doezer/Questarr/issues/55) | Selection dynamique du downloader (priorite/fallback) | CLOSED | no-merge-commit | unreviewed |
-| [issue #56](https://github.com/Doezer/Questarr/issues/56) | Tests unitaires de base (API et IGDB) | CLOSED | no-merge-commit | unreviewed |
-| [issue #57](https://github.com/Doezer/Questarr/issues/57) | Dashboard Stats (integrer StatsCard) | CLOSED | no-merge-commit | unreviewed |
-| [issue #58](https://github.com/Doezer/Questarr/issues/58) | Decouverte: recommandations visuelles | CLOSED | no-merge-commit | unreviewed |
-| [issue #59](https://github.com/Doezer/Questarr/issues/59) | Page Settings (config UI) | CLOSED | no-merge-commit | unreviewed |
-| [issue #60](https://github.com/Doezer/Questarr/issues/60) | Middleware d'erreur global | CLOSED | no-merge-commit | unreviewed |
-| [pr #61](https://github.com/Doezer/Questarr/pull/61) | [WIP] Add health check endpoint with status and test | CLOSED | no-merge-commit | unreviewed |
-| [pr #62](https://github.com/Doezer/Questarr/pull/62) | Add UI for testing indexer connections | CLOSED | no-merge-commit | unreviewed |
-| [pr #63](https://github.com/Doezer/Questarr/pull/63) | [WIP] Add download button to IGDB/Torznab search results | CLOSED | no-merge-commit | unreviewed |
-| [pr #64](https://github.com/Doezer/Questarr/pull/64) | [WIP] Add background toast notifications for operations | CLOSED | no-merge-commit | unreviewed |
-| [pr #65](https://github.com/Doezer/Questarr/pull/65) | Filter client-only fields before POST in AddGameModal | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [issue #26](https://github.com/Doezer/Questarr/issues/26) | Recherche multi-indexer aggregee | CLOSED | no-merge-commit | verified |
+| [issue #27](https://github.com/Doezer/Questarr/issues/27) | Toasts pour operations background | CLOSED | no-merge-commit | verified |
+| [issue #28](https://github.com/Doezer/Questarr/issues/28) | Dashboard stats globales | CLOSED | no-merge-commit | verified |
+| [issue #29](https://github.com/Doezer/Questarr/issues/29) | Page de configuration (Settings) | CLOSED | no-merge-commit | verified |
+| [issue #30](https://github.com/Doezer/Questarr/issues/30) | Endpoint /api/health | CLOSED | no-merge-commit | verified |
+| [issue #31](https://github.com/Doezer/Questarr/issues/31) | Strategie de selection du downloader | CLOSED | no-merge-commit | verified |
+| [issue #32](https://github.com/Doezer/Questarr/issues/32) | Rate limiting / sanitisation | CLOSED | no-merge-commit | verified |
+| [issue #33](https://github.com/Doezer/Questarr/issues/33) | Transmission uniquement implemente | CLOSED | no-merge-commit | verified |
+| [issue #34](https://github.com/Doezer/Questarr/issues/34) | Examples components cassent tsc (types) | CLOSED | no-merge-commit | verified |
+| [issue #35](https://github.com/Doezer/Questarr/issues/35) | status: null dans formatGameData => transform manuel serveur | CLOSED | no-merge-commit | verified |
+| [issue #36](https://github.com/Doezer/Questarr/issues/36) | Recherche IGDB heuristique agressive | CLOSED | no-merge-commit | verified |
+| [issue #37](https://github.com/Doezer/Questarr/issues/37) | Centraliser la validation Zod pour toutes les routes | CLOSED | no-merge-commit | needs-implementation |
+| [issue #38](https://github.com/Doezer/Questarr/issues/38) | Configuration centralisee des variables d'environnement | CLOSED | no-merge-commit | verified |
+| [issue #39](https://github.com/Doezer/Questarr/issues/39) | Nettoyage dependances Neon/ws | CLOSED | no-merge-commit | verified |
+| [issue #40](https://github.com/Doezer/Questarr/issues/40) | Resilience et verbosite de la recherche IGDB | CLOSED | no-merge-commit | verified |
+| [issue #41](https://github.com/Doezer/Questarr/issues/41) | Endpoint de recherche agregÃ©e multi-indexers | CLOSED | no-merge-commit | verified |
+| [issue #42](https://github.com/Doezer/Questarr/issues/42) | Bouton Download sur les cartes de decouverte | CLOSED | no-merge-commit | verified |
+| [issue #43](https://github.com/Doezer/Questarr/issues/43) | Client rtorrent/rutorrent (implementation minimale) | CLOSED | no-merge-commit | verified |
+| [issue #44](https://github.com/Doezer/Questarr/issues/44) | Completed downloads — filtres et statuts enrichis (badges vitesse / ETA / ratio) | CLOSED | no-merge-commit | verified |
+| [issue #45](https://github.com/Doezer/Questarr/issues/45) | Exposer erreurs par downloader dans /api/downloads | CLOSED | no-merge-commit | verified |
+| [issue #46](https://github.com/Doezer/Questarr/issues/46) | Edition des categories Torznab (UI) | CLOSED | no-merge-commit | verified |
+| [issue #47](https://github.com/Doezer/Questarr/issues/47) | Bouton Test connection pour chaque indexer (UI) | CLOSED | no-merge-commit | verified |
+| [issue #48](https://github.com/Doezer/Questarr/issues/48) | Corriger l'avertissement PostCSS from option | CLOSED | no-merge-commit | verified |
+| [issue #49](https://github.com/Doezer/Questarr/issues/49) | Logger structure (pino) + niveaux | CLOSED | no-merge-commit | verified |
+| [issue #50](https://github.com/Doezer/Questarr/issues/50) | Endpoint /api/health | CLOSED | no-merge-commit | verified |
+| [issue #51](https://github.com/Doezer/Questarr/issues/51) | Rate limiting et sanitation | CLOSED | no-merge-commit | verified |
+| [issue #52](https://github.com/Doezer/Questarr/issues/52) | Authentification basique (MVP) | CLOSED | no-merge-commit | verified |
+| [issue #53](https://github.com/Doezer/Questarr/issues/53) | Corriger/Isoler les composants d'exemples qui cassent tsc | CLOSED | no-merge-commit | verified |
+| [issue #54](https://github.com/Doezer/Questarr/issues/54) | Ne pas envoyer de champs superflus au POST /api/games | CLOSED | no-merge-commit | verified |
+| [issue #55](https://github.com/Doezer/Questarr/issues/55) | Selection dynamique du downloader (priorite/fallback) | CLOSED | no-merge-commit | verified |
+| [issue #56](https://github.com/Doezer/Questarr/issues/56) | Tests unitaires de base (API et IGDB) | CLOSED | no-merge-commit | verified |
+| [issue #57](https://github.com/Doezer/Questarr/issues/57) | Dashboard Stats (integrer StatsCard) | CLOSED | no-merge-commit | verified |
+| [issue #58](https://github.com/Doezer/Questarr/issues/58) | Decouverte: recommandations visuelles | CLOSED | no-merge-commit | verified |
+| [issue #59](https://github.com/Doezer/Questarr/issues/59) | Page Settings (config UI) | CLOSED | no-merge-commit | verified |
+| [issue #60](https://github.com/Doezer/Questarr/issues/60) | Middleware d'erreur global | CLOSED | no-merge-commit | verified |
+| [pr #61](https://github.com/Doezer/Questarr/pull/61) | [WIP] Add health check endpoint with status and test | CLOSED | no-merge-commit | verified |
+| [pr #62](https://github.com/Doezer/Questarr/pull/62) | Add UI for testing indexer connections | CLOSED | no-merge-commit | verified |
+| [pr #63](https://github.com/Doezer/Questarr/pull/63) | [WIP] Add download button to IGDB/Torznab search results | CLOSED | no-merge-commit | verified |
+| [pr #64](https://github.com/Doezer/Questarr/pull/64) | [WIP] Add background toast notifications for operations | CLOSED | no-merge-commit | verified |
+| [pr #65](https://github.com/Doezer/Questarr/pull/65) | Filter client-only fields before POST in AddGameModal | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #66](https://github.com/Doezer/Questarr/pull/66) | Add Copilot instructions for repository | MERGED | merge-commit-not-in-either-main-history | verified |
-| [pr #67](https://github.com/Doezer/Questarr/pull/67) | Standardize error responses to { error, details } format | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #68](https://github.com/Doezer/Questarr/pull/68) | Add unit tests for IGDB fallback, insertGame status default, and Transmission 409 retry | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #69](https://github.com/Doezer/Questarr/pull/69) | Remove unused Neon and ws dependencies | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #67](https://github.com/Doezer/Questarr/pull/67) | Standardize error responses to { error, details } format | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #68](https://github.com/Doezer/Questarr/pull/68) | Add unit tests for IGDB fallback, insertGame status default, and Transmission 409 retry | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #69](https://github.com/Doezer/Questarr/pull/69) | Remove unused Neon and ws dependencies | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #70](https://github.com/Doezer/Questarr/issues/70) | Clean replit related files & code | CLOSED | no-merge-commit | unreviewed |
 | [pr #71](https://github.com/Doezer/Questarr/pull/71) | Add toast notifications for background operations | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #72](https://github.com/Doezer/Questarr/pull/72) | Bump docker/build-push-action from 5 to 6 | MERGED | merge-commit-not-in-either-main-history | unreviewed |

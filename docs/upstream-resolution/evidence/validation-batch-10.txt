@@ -1,0 +1,58 @@
+Batch 10 source review and implementation — 2026-10-12
+
+Scope reviewed
+- Issues #26–60. The current GitHub issue comment query returned no comments
+  on these 35 issues, matching the source snapshot.
+- PRs #61–69, except #66 which was reviewed in the previous batch. The current
+  GitHub query returned no PR comments, reviews, or inline review threads.
+- Closed WIP PRs #62–64 have no changed files. Their requests are implemented
+  by later merged PRs #85, #87, and #71 respectively, and are present in the
+  current fork.
+
+Implemented or verified requests
+- Multi-indexer search (#26, #41) aggregates enabled indexers and returns
+  per-indexer failures; covered by server/__tests__/indexers-search.test.ts.
+- Background download notifications (#27, PR #64) use the shared download
+  contract and are covered by client/__tests__/use-background-notifications.test.ts.
+- Library statistics (#28, #57) appear in the library summary and dedicated
+  stats page, including status, genre, and platform summaries. The shared
+  calculations have client/__tests__/stats.test.ts coverage.
+- Settings, liveness/readiness, downloader priority/fallback, rate limiting,
+  authentication, structured error handling, discovery, indexer tests, and
+  download status/details are present in the routes, pages, and tests cited in
+  the ledger.
+- The older health-check request (#30, #50, PR #61) is covered by public
+  liveness `/api/health` and readiness `/api/ready` probes. The readiness probe
+  checks database and IGDB connectivity and returns a status-only body; later
+  upstream hardening split these probes to avoid exposing component details.
+- Discovery formatting still uses a null status to mean “not in the library,”
+  but the POST `/api/games` server schema transforms a missing or null status
+  to `wanted` before storage. This resolves the persistence concern in #35
+  without marking untracked discovery results as wanted. The API regression
+  test in server/__tests__/api_routes.test.ts verifies the null-status request.
+- IGDB searches already cap phrase/word-search attempts at five. They now retry
+  transient 429 and 5xx responses for at most three requests total, honor a
+  bounded Retry-After value, and use capped exponential backoff otherwise.
+  Routine fallback/result logs now use debug level. A regression test covers
+  429, 5xx, Retry-After, backoff, and the three-request cap.
+- The PostCSS/Vite warning fix from issue #48 and PR #101 is present as an
+  explicit `css.postcss.from: undefined` setting in `vite.config.ts`.
+- PR #65’s AddGame field filtering, PR #67’s `{ error, details? }` handling,
+  PR #68’s tests, and PR #69’s removal of direct Neon/`ws` dependencies are
+  present in current source and manifests.
+
+Unresolved request
+- Issue #37 asks for Zod schemas on every POST/PATCH body. The server still
+  mixes schema-backed parsing, direct Zod parsing, express-validator, and
+  route-specific checks. The recently added shared schemas cover the indexer
+  and downloader PATCH bodies, but the universal migration is not complete;
+  this issue remains `needs-implementation` in the ledger.
+
+Validation
+- Focused server/__tests__/igdb.test.ts run passed: 49 tests.
+- Focused API/IGDB regression run passed: 419 tests across both files.
+- `npm run check`, `npm run lint`, and `npm run build` passed after the IGDB and
+  Vite changes. The build emitted only the existing large-chunk warning; the
+  PostCSS `from` warning did not recur.
+- `npm run test:run -- --maxWorkers=4` passed: 247 files passed, 1 skipped;
+  4,019 tests passed, 7 skipped.
