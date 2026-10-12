@@ -14,7 +14,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-      - "automated"
     versioning-strategy: increase
     ignore:
       # typescript-eslint 8.71.0 and the current parser ecosystem support TypeScript <6.1.
@@ -61,7 +60,6 @@ updates:
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
-      - "automated"
 
   # Keep the Windows service host's NuGet packages and lock file current.
   - package-ecosystem: "nuget"
@@ -75,7 +73,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "automated"
     groups:
       security-updates:
         applies-to: security-updates
@@ -94,7 +91,6 @@ updates:
       default-days: 7
     labels:
       - "dependencies"
-      - "automated"
     open-pull-requests-limit: 5
     ignore:
       # Semgrep's bundled MCP integration still uses the v1 API. Revisit after
@@ -122,7 +118,6 @@ updates:
       default-days: 7
     open-pull-requests-limit: 5
     labels:
-      - "github-actions"
       - "dependencies"
     groups:
       # Group all GitHub Actions updates into a single PR

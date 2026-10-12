@@ -167,7 +167,7 @@ are excluded with the limitation shown in the running UI. Issue #336 is verified
 operators can configure Hydra-format public HTTPS catalogs, and their torrent
 links join normal aggregated search with source attribution. Catalog origin does
 not certify release safety; the existing scanning controls remain applicable.
-The ledger currently has 1,062 unreviewed records. Each of the four open issues
+The ledger currently has 1,037 unreviewed records. Each of the four open issues
 and four open PRs has a preliminary disposition; review status is tracked
 separately from GitHub state. Issue #37 still needs the remaining mutation
 routes moved to shared Zod validation.
@@ -248,6 +248,24 @@ This batch passed the full suite with 4,019 tests and 7 skips, plus typecheck,
 lint, and production build. See [batch 10 evidence](evidence/validation-batch-10.txt).
 The ledger now has 1,062 unreviewed items, 80 verified, 3 `not-applicable`, one
 implemented-but-unverified integration, and one item still needing implementation.
+
+## Follow-up: cleanup, dependency, and deployment requests (#70–95)
+
+The next slice covers Replit cleanup, dependency upgrades, the indexer sidebar,
+downloader fallback and rTorrent support, rate limiting, indexer test UI,
+discovery downloads, and on-demand image publishing. Current package and action
+versions supersede the historical dependency PRs. Dependabot now requests only
+labels available in this fork, and the README documents the manual image
+workflow and where runtime credentials belong. Review feedback was checked
+against current source, including replies on several threads that remain marked
+unresolved upstream.
+
+This batch passed formatting and YAML parsing checks. No application code changed;
+the latest full run remains 4,019 tests passed and 7 skipped. The ledger now has
+1,037 unreviewed items, 105 verified, 3 `not-applicable`, one
+implemented-but-unverified integration, and one item still needing
+implementation. See
+[batch 11 evidence](evidence/validation-batch-11.txt).
 
 Public source snapshots redact database connection strings found in support
 reports; the collection script applies the same redaction on refresh.

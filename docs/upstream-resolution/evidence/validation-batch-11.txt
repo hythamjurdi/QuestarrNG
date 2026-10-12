@@ -1,0 +1,58 @@
+Batch 11 source review and implementation — 2026-10-12
+
+Scope reviewed
+- Issues #70, #81, and #94; PRs #71–80, #82–85, #87–93, and #95.
+- GitHub state, changed-file lists, issue comments, PR comments, reviews, and
+  review threads were checked live. Issues #70, #81, and #94 have empty bodies
+  and no comments. Number #86 has no current issue or pull-request resource.
+- Dependency PRs #72–79 and #89–93 are superseded by current manifest/lockfile
+  versions or newer pinned workflow actions.
+
+Implemented or verified requests
+- Replit cleanup (#70, PR #80): no Replit-specific files or source references
+  remain; package and Vite configuration have no Replit plugins or dependencies.
+- Background notifications (PR #71) are mounted globally and report download
+  completion/errors and search results/failures.
+- Dependency updates (#72–79, #89–93) are met by newer locked versions. Current
+  workflows use pinned checkout/setup-node actions beyond the requested major
+  versions and a pinned step-security build-push action. Historical Dependabot
+  comments reported missing labels. The current fork lacks `automated` and
+  `github-actions`, so `.github/dependabot.yml` now keeps only the available
+  `dependencies` label. Of PR #77’s 12 packages, the 10 retained tools resolve
+  beyond their targets; Replit Cartographer and unused Tailwind Typography are
+  absent (the client contains no `prose` utility usage).
+- Sidebar navigation (#81, PR #82) uses one shared sidebar with Indexers and
+  Downloaders. Owner cleanup feedback was applied and the current route prop is
+  named `navigate`.
+- Downloader fallback (PR #83) tries compatible clients in priority order,
+  records attempted clients, and returns HTTP 500 when all clients fail.
+- Rate limiting and sanitation (PR #84) are present, including update schemas
+  for indexers/downloaders. Review fixes remove HTML escaping from stored/search
+  text. One optional-search thread remains marked unresolved upstream, but the
+  agent response says it was fixed and the current validator trims and bounds
+  that parameter. Issue #37 remains separate and still needs universal Zod
+  validation across every POST/PATCH route.
+- Indexer connection testing (PR #85) reads API error details and tracks the
+  pending indexer individually; the upstream review replies include running-UI
+  screenshots.
+- Discovery downloads (PR #87) include robust non-JSON error handling, dialog
+  reset, query-client hook use, stable torrent keys, and accessible controls.
+  The remaining key nitpick concerns a deterministic error list; the reviewer
+  explicitly accepted index keys while the list remains stable.
+- rTorrent support (PR #88) uses `fast-xml-parser`; tests cover XML-RPC errors,
+  entity handling, parameter escaping, `load.start` results, and removal behavior.
+  The old hand-written-parser performance concern is superseded by this parser.
+- `drizzle-zod` migration (PR #90) is present at 0.8.3. The current generated
+  types compile, including the follow-up changes requested in comments.
+- On-demand publishing (issue #94, PR #95) is implemented in the Deploy Web App
+  workflow. Its inputs, multi-architecture options, dependency/license gate,
+  GHCR tags, and run summary are present. The old root `DEPLOYMENT.md` was
+  removed in a later documentation consolidation; README now explains manual
+  dispatch and runtime credentials, while `docs/SECRETS.md` documents `HOST`.
+
+Validation
+- `npm run test:run -- --maxWorkers=4` last passed with 4,019 tests passed and
+  7 skipped. This batch changed docs and Dependabot labels only.
+- The batch README, Dependabot YAML, and ledger formatting/parsing checks passed.
+- Current ledger totals: 1,037 unreviewed, 105 verified, 3 `not-applicable`,
+  one implemented-but-unverified integration, and one `needs-implementation`.

@@ -75,31 +75,31 @@ Snapshot: 2026-10-12T21:06:33.750Z. 1147 items. All ancestry observations requir
 | [pr #67](https://github.com/Doezer/Questarr/pull/67) | Standardize error responses to { error, details } format | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #68](https://github.com/Doezer/Questarr/pull/68) | Add unit tests for IGDB fallback, insertGame status default, and Transmission 409 retry | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #69](https://github.com/Doezer/Questarr/pull/69) | Remove unused Neon and ws dependencies | MERGED | merge-commit-not-in-either-main-history | verified |
-| [issue #70](https://github.com/Doezer/Questarr/issues/70) | Clean replit related files & code | CLOSED | no-merge-commit | unreviewed |
-| [pr #71](https://github.com/Doezer/Questarr/pull/71) | Add toast notifications for background operations | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #72](https://github.com/Doezer/Questarr/pull/72) | Bump docker/build-push-action from 5 to 6 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #73](https://github.com/Doezer/Questarr/pull/73) | Bump actions/checkout from 4 to 5 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #74](https://github.com/Doezer/Questarr/pull/74) | Bump actions/setup-node from 4 to 6 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #75](https://github.com/Doezer/Questarr/pull/75) | Bump the react group with 3 updates | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #76](https://github.com/Doezer/Questarr/pull/76) | Bump the radix-ui group with 27 updates | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #77](https://github.com/Doezer/Questarr/pull/77) | Bump the dev-dependencies group with 12 updates | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #78](https://github.com/Doezer/Questarr/pull/78) | Bump drizzle-orm from 0.39.1 to 0.44.7 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #79](https://github.com/Doezer/Questarr/pull/79) | Bump @tanstack/react-query from 5.60.5 to 5.90.7 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #80](https://github.com/Doezer/Questarr/pull/80) | Remove Replit platform dependencies | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #81](https://github.com/Doezer/Questarr/issues/81) | Fix Indexerd page not showing up in sidebar  | CLOSED | no-merge-commit | unreviewed |
-| [pr #82](https://github.com/Doezer/Questarr/pull/82) | Fix Indexers page not showing up in sidebar and consolidate sidebar components | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #83](https://github.com/Doezer/Questarr/pull/83) | Add priority-based downloader fallback on addTorrent failure | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #84](https://github.com/Doezer/Questarr/pull/84) | Add rate limiting and input sanitization to API endpoints | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #85](https://github.com/Doezer/Questarr/pull/85) | Add test connection button to indexers UI | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #87](https://github.com/Doezer/Questarr/pull/87) | Add download button to discovery cards with torrent search dialog | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #88](https://github.com/Doezer/Questarr/pull/88) | Add rTorrent/ruTorrent client implementation | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #89](https://github.com/Doezer/Questarr/pull/89) | Bump the dev-dependencies group with 5 updates | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #90](https://github.com/Doezer/Questarr/pull/90) | Bump drizzle-zod from 0.7.0 to 0.8.3 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #91](https://github.com/Doezer/Questarr/pull/91) | Bump wouter from 3.3.5 to 3.7.1 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #92](https://github.com/Doezer/Questarr/pull/92) | Bump lucide-react from 0.453.0 to 0.554.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #93](https://github.com/Doezer/Questarr/pull/93) | Bump framer-motion from 11.13.1 to 11.18.2 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #94](https://github.com/Doezer/Questarr/issues/94) | Add a github action to deploy the web app on demand | CLOSED | no-merge-commit | unreviewed |
-| [pr #95](https://github.com/Doezer/Questarr/pull/95) | Add on-demand deployment workflow for Docker image publishing | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [issue #70](https://github.com/Doezer/Questarr/issues/70) | Clean replit related files & code | CLOSED | no-merge-commit | verified |
+| [pr #71](https://github.com/Doezer/Questarr/pull/71) | Add toast notifications for background operations | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #72](https://github.com/Doezer/Questarr/pull/72) | Bump docker/build-push-action from 5 to 6 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #73](https://github.com/Doezer/Questarr/pull/73) | Bump actions/checkout from 4 to 5 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #74](https://github.com/Doezer/Questarr/pull/74) | Bump actions/setup-node from 4 to 6 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #75](https://github.com/Doezer/Questarr/pull/75) | Bump the react group with 3 updates | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #76](https://github.com/Doezer/Questarr/pull/76) | Bump the radix-ui group with 27 updates | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #77](https://github.com/Doezer/Questarr/pull/77) | Bump the dev-dependencies group with 12 updates | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #78](https://github.com/Doezer/Questarr/pull/78) | Bump drizzle-orm from 0.39.1 to 0.44.7 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #79](https://github.com/Doezer/Questarr/pull/79) | Bump @tanstack/react-query from 5.60.5 to 5.90.7 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #80](https://github.com/Doezer/Questarr/pull/80) | Remove Replit platform dependencies | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #81](https://github.com/Doezer/Questarr/issues/81) | Fix Indexerd page not showing up in sidebar  | CLOSED | no-merge-commit | verified |
+| [pr #82](https://github.com/Doezer/Questarr/pull/82) | Fix Indexers page not showing up in sidebar and consolidate sidebar components | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #83](https://github.com/Doezer/Questarr/pull/83) | Add priority-based downloader fallback on addTorrent failure | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #84](https://github.com/Doezer/Questarr/pull/84) | Add rate limiting and input sanitization to API endpoints | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #85](https://github.com/Doezer/Questarr/pull/85) | Add test connection button to indexers UI | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #87](https://github.com/Doezer/Questarr/pull/87) | Add download button to discovery cards with torrent search dialog | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #88](https://github.com/Doezer/Questarr/pull/88) | Add rTorrent/ruTorrent client implementation | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #89](https://github.com/Doezer/Questarr/pull/89) | Bump the dev-dependencies group with 5 updates | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #90](https://github.com/Doezer/Questarr/pull/90) | Bump drizzle-zod from 0.7.0 to 0.8.3 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #91](https://github.com/Doezer/Questarr/pull/91) | Bump wouter from 3.3.5 to 3.7.1 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #92](https://github.com/Doezer/Questarr/pull/92) | Bump lucide-react from 0.453.0 to 0.554.0 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #93](https://github.com/Doezer/Questarr/pull/93) | Bump framer-motion from 11.13.1 to 11.18.2 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #94](https://github.com/Doezer/Questarr/issues/94) | Add a github action to deploy the web app on demand | CLOSED | no-merge-commit | verified |
+| [pr #95](https://github.com/Doezer/Questarr/pull/95) | Add on-demand deployment workflow for Docker image publishing | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #96](https://github.com/Doezer/Questarr/pull/96) | Revert drizzle-zod to 0.7.0 due to Zod v4 type incompatibility | CLOSED | no-merge-commit | unreviewed |
 | [pr #97](https://github.com/Doezer/Questarr/pull/97) | Add read-only Settings page with /api/config endpoint | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #98](https://github.com/Doezer/Questarr/pull/98) | Filter client-only fields before POST /api/games | MERGED | merge-commit-not-in-either-main-history | unreviewed |

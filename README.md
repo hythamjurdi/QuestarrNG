@@ -213,6 +213,22 @@ the app as the configured `PUID:PGID` directly, so prepare the bind-mounted
    run `scripts/sqlite-to-pg.ts` to bring your library across. See
    [docs/DATABASE.md](docs/DATABASE.md).
 
+### Publish a Docker image on demand
+
+Maintainers can publish a fresh image without waiting for the scheduled build:
+open **Actions → [Deploy Web App](.github/workflows/deploy.yml) → Run workflow**
+and choose `production`, `dev`, or `test`. A custom image tag is optional; the
+workflow summary lists the tags it created and prints a matching `docker pull`
+command. Production builds include ARM64; for other environments, ARM64 and the
+Windows installer are optional builds. The workflow runs its dependency and
+license checks before publishing.
+
+GitHub Actions supplies the `GITHUB_TOKEN` used to publish to GHCR. Application
+credentials belong in the runtime environment where the container is deployed,
+not in repository workflow secrets; see [Environment variables](docs/SECRETS.md).
+`HOST` defaults to `0.0.0.0` for container networking. For a bare-metal install
+with a reverse proxy on the same host, set `HOST=127.0.0.1` to restrict access.
+
 ### Windows (installer)
 
 <details>

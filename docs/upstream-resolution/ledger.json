@@ -1755,11 +1755,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The issue has no body or comments. Merged PR #80 removed the Replit-only artifacts; no Replit-specific source references or tracked config remain."
+        ],
+        "acceptance": ["Replit plugins, dependencies, and platform files are removed."],
+        "evidence": [
+          "package.json",
+          "vite.config.ts",
+          "client/index.html",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["pr:80"]
       },
       "sourceChangedSinceReview": false
     },
@@ -1775,11 +1782,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "701d41de7daf36f3d62163ba5ea28dd05bc1677e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The app mounts the background-download notification hook, and search completion, empty results, failures, and partial indexer errors produce toasts."
+        ],
+        "acceptance": [
+          "Download completion/error transitions and search results are reported to the user."
+        ],
+        "evidence": [
+          "client/src/App.tsx",
+          "client/src/hooks/use-background-notifications.ts",
+          "client/src/pages/search.tsx",
+          "client/__tests__/use-background-notifications.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:27"]
       },
       "sourceChangedSinceReview": false
     },
@@ -1795,10 +1812,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "1259d166743e209a38398e0fece315aab595dd68",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The historical build-push action bump is superseded by the current pinned step-security build-push action. The missing-label warning is addressed by removing unavailable Dependabot labels from this fork."
+        ],
+        "acceptance": [
+          "Docker publishing uses a supported action beyond v6 and Dependabot does not request missing labels."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          ".github/dependabot.yml",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1815,10 +1840,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e944226f1bce4d729fa4487d05b3955d7ecd5869",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All current workflows use pinned checkout action commits at v6.2.0 or v7.0.1, beyond the requested v5 update. The historical invalid-label warning is addressed in the Dependabot config."
+        ],
+        "acceptance": [
+          "Workflow checkout actions are at least v5 and labels are valid for this fork."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          ".github/dependabot.yml",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1835,10 +1869,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "de6d9c8a69e8c663e7ad41b7adbbfd97a7f107cd",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The current setup-node actions are pinned at v7.0.0, beyond the requested v6 update. The historical invalid-label warning is addressed in the Dependabot config."
+        ],
+        "acceptance": [
+          "Workflow setup-node action is at least v6 and labels are valid for this fork."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          ".github/dependabot.yml",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1855,10 +1898,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "5bd5cac95ca14073aa3a648649159abb0f5c3b3d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The three React-group packages resolve to versions newer than the requested releases in the current manifest and lockfile. The invalid automated label was removed from Dependabot config."
+        ],
+        "acceptance": [
+          "react-hook-form, react-icons, and react-resizable-panels are updated beyond the requested versions."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/dependabot.yml",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1875,10 +1927,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "25cc713f5ee70d620bf7852b127a440fa972d6f7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Radix UI package set in the lockfile resolves beyond the versions requested by this grouped update."
+        ],
+        "acceptance": ["All grouped Radix UI packages resolve to the requested release or newer."],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1895,11 +1953,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "bed732b7dfa32b270632cb73cb76a71ee1e79396",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Every retained development dependency resolves beyond its requested version. The obsolete Replit and Tailwind Typography plugins are removed; the app has no Replit references or prose-class use. The unavailable automated label was removed from Dependabot config."
+        ],
+        "acceptance": [
+          "Retained development tooling is at least as current as requested, and obsolete plugins are absent when no longer used."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/dependabot.yml",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["pr:80"]
       },
       "sourceChangedSinceReview": false
     },
@@ -1915,10 +1982,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "312cdca53b5844c04b72d7de917d4a7260d2aa26",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "drizzle-orm is at 0.45.3 in the manifest and lockfile, beyond the requested 0.44.7 release."
+        ],
+        "acceptance": ["drizzle-orm is updated to 0.44.7 or newer."],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1935,10 +2008,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "0a576f6cd67cedf11397e792b171ce5c23c945d3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "@tanstack/react-query is at 5.104.0 or newer in the manifest and lockfile, beyond the requested 5.90.7 release."
+        ],
+        "acceptance": ["React Query is updated to 5.90.7 or newer."],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1955,11 +2034,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "bf9b9f5bd03fe0a2400d9fa0f87ed19c4ae44e3f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Replit Vite plugins, project files, and packages are absent; later cleanup also removed Replit references from tracked application code."
+        ],
+        "acceptance": ["The app and build configuration run without Replit platform dependencies."],
+        "evidence": [
+          "package.json",
+          "vite.config.ts",
+          "client/index.html",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:70"]
       },
       "sourceChangedSinceReview": false
     },
@@ -1975,11 +2061,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The closed issue has no body or comments. The merged sidebar fix adds the Indexers and Downloaders navigation entries."
+        ],
+        "acceptance": ["The Indexers page is reachable from the application navigation."],
+        "evidence": [
+          "client/src/App.tsx",
+          "client/src/components/AppSidebar.tsx",
+          "client/src/components/navigation-items.ts",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["pr:82"]
       },
       "sourceChangedSinceReview": false
     },
@@ -1995,11 +2088,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ea1048453dcaa3002a58fed23f7b6c2f6b46705b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The app uses one AppSidebar component with Indexers and Downloaders navigation. The duplicate sidebar was removed, the owner-requested cleanup and active-route feedback were applied, and the current navigation prop is named navigate."
+        ],
+        "acceptance": [
+          "Indexers navigation appears in the single shared sidebar and duplicate components are removed."
+        ],
+        "evidence": [
+          "client/src/App.tsx",
+          "client/src/components/AppSidebar.tsx",
+          "client/src/components/navigation-items.ts",
+          "client/__tests__/AppSidebar.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/82",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:81"]
       },
       "sourceChangedSinceReview": false
     },
@@ -2015,11 +2119,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "52a7acd19eb0518409d848e60a21a6273a0a2c11",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Downloader fallback tries compatible enabled clients in priority order, returns the attempted clients, and the API sends HTTP 500 if all attempts fail. The result message is optional on success."
+        ],
+        "acceptance": [
+          "A failed add falls through to the next downloader and all-failed results use a failure status."
+        ],
+        "evidence": [
+          "server/downloaders/manager.ts",
+          "server/routes.ts",
+          "server/__tests__/downloaders.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:31", "issue:55"]
       },
       "sourceChangedSinceReview": false
     },
@@ -2035,11 +2148,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "91a42899c5cc9033313723cfcf5630558a55a27e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Rate limits and input validation are applied to API paths, including indexer/downloader PATCH routes. Review fixes removed HTML escaping from stored/search input and corrected the valid status set. One optional-search review thread remains marked unresolved upstream, but its follow-up states the escape was removed and the current validator trims and bounds it."
+        ],
+        "acceptance": [
+          "Rate limits and input validation protect the requested API endpoints without corrupting stored text."
+        ],
+        "evidence": [
+          "server/index.ts",
+          "server/middleware.ts",
+          "server/routes.ts",
+          "server/__tests__/middleware.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:32", "issue:51"]
       },
       "sourceChangedSinceReview": false
     },
@@ -2055,11 +2178,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d41e7d588ba49a39118dd167d7bf2130bd3adb64",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Each indexer has a test-connection action with response-body error messages and per-indexer pending state. The review fixes are present in the current page."
+        ],
+        "acceptance": [
+          "Users can test a configured indexer and see actionable success or failure feedback."
+        ],
+        "evidence": [
+          "client/src/pages/indexers.tsx",
+          "server/routes.ts",
+          "https://github.com/Doezer/Questarr/pull/85",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:23"]
       },
       "sourceChangedSinceReview": false
     },
@@ -2075,11 +2207,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "eca28e911a355bb90a4a04b14d33efac46681ab6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Discovery cards open the torrent search/download dialog; review fixes cover dialog reset, non-JSON failures, query-client usage, stable torrent keys, and accessible download labels. The remaining array-index key nitpick concerns a deterministic error list, which the reviewer explicitly accepted when stable."
+        ],
+        "acceptance": [
+          "A discovery result can be searched and sent to a configured downloader with accessible controls and robust errors."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/87",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:42", "pr:63"]
       },
       "sourceChangedSinceReview": false
     },
@@ -2095,11 +2237,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "5b33aff7118c7c6cc57ccdd7e14bc25bfdfe375f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The current rTorrent client uses fast-xml-parser and covers XML-RPC faults/entities, escaped parameters, deletion semantics, missing URLs, nonnegative peer counts, load.start return codes, and downloader status. The remaining parser-performance comment was superseded by the parser implementation."
+        ],
+        "acceptance": [
+          "The rTorrent client supports authenticated torrent operations and maps results safely."
+        ],
+        "evidence": [
+          "server/downloaders/rtorrent.ts",
+          "server/__tests__/rtorrent_features.test.ts",
+          "server/__tests__/downloaders_rtorrent_remaining.test.ts",
+          "https://github.com/Doezer/Questarr/pull/88",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:43"]
       },
       "sourceChangedSinceReview": false
     },
@@ -2115,10 +2267,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c65782b5c4546233e2eb9db0a0c72829fab9cb3a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The grouped development packages resolve beyond all five requested versions in the current manifest and lockfile."
+        ],
+        "acceptance": [
+          "The requested development dependency updates are present or superseded by newer versions."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -2135,11 +2295,23 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "911e49471d0bdcee39e11fcd0a856732ca1e33a6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "drizzle-zod is at 0.8.3 and the schema/storage/client changes compile with the current generated types. The follow-up type fixes requested in review are represented in the current code."
+        ],
+        "acceptance": [
+          "The dependency update and its schema-type migration pass the project typecheck."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "shared/schema.ts",
+          "server/storage.ts",
+          "client/src/pages/downloaders.tsx",
+          "client/src/pages/indexers.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["pr:96", "pr:110"]
       },
       "sourceChangedSinceReview": false
     },
@@ -2155,10 +2327,14 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "fc4809444a49c028de640fc0658e1774db446695",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": ["wouter resolves to 3.12.0, beyond the requested 3.7.1 release."],
+        "acceptance": ["wouter is updated to 3.7.1 or newer."],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -2175,10 +2351,14 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "08610e606a7bba81a864766046389312f331760b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": ["lucide-react resolves to 1.48.0, beyond the requested 0.554.0 release."],
+        "acceptance": ["lucide-react is updated to 0.554.0 or newer."],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -2195,10 +2375,14 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "0a211b02632e73662fe85c04f9923e6c6b8ebece",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": ["framer-motion resolves to 13.5.1, beyond the requested 11.18.2 release."],
+        "acceptance": ["framer-motion is updated to 11.18.2 or newer."],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -2215,11 +2399,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The closed issue has no body or comments. The current Deploy Web App workflow supports manual dispatch and publishes images to GHCR."
+        ],
+        "acceptance": ["Maintainers can publish a Docker image on demand."],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          "README.md",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["pr:95"]
       },
       "sourceChangedSinceReview": false
     },
@@ -2235,11 +2425,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b7b78c03006008fbbbf887454aeb3d8d944b43f8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The manual image-publishing workflow supports environment/tag inputs, production ARM64, optional ARM64/Windows builds, a dependency/license gate, and a generated run summary. Deployment instructions now live in README, runtime secrets in docs/SECRETS.md, and the workflow prints pull/run commands; the obsolete DEPLOYMENT.md was removed during later docs consolidation."
+        ],
+        "acceptance": [
+          "Users can trigger publishing, find the resulting tags, and configure runtime credentials separately from the publishing token."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          "README.md",
+          "docs/SECRETS.md",
+          "docs/SBOM.md",
+          "https://github.com/Doezer/Questarr/pull/95",
+          "docs/upstream-resolution/evidence/validation-batch-11.txt"
+        ],
+        "dependencies": ["issue:94"]
       },
       "sourceChangedSinceReview": false
     },
