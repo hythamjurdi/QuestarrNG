@@ -167,7 +167,7 @@ are excluded with the limitation shown in the running UI. Issue #336 is verified
 operators can configure Hydra-format public HTTPS catalogs, and their torrent
 links join normal aggregated search with source attribution. Catalog origin does
 not certify release safety; the existing scanning controls remain applicable.
-The ledger still has 1,134 unreviewed records.
+The ledger currently has 1,135 unreviewed records, including newly opened PR #1186.
 
 ## Follow-up: v1.5.0 release-preparation coverage (#1172)
 
