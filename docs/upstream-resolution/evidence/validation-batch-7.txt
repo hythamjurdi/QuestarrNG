@@ -1,0 +1,23 @@
+Upstream PR #1131 and #1172 follow-up — 2026-10-12
+
+Upstream review
+- Refreshed the complete GitHub inventory with `node scripts/audit-upstream.mjs`: 1,147 issues and PRs, including newly opened PR #1186. Current open PR count is four.
+- PR #1131 remains open. Doezer's maintainer asked that RAWG be offered as an optional alternative to IGDB. QuestarrNG retains IGDB and SeerrNG identity while storing RAWG IDs separately.
+- PR #1172 remains open at head `9a4fd4d8c79ec4a82a7fd6dee957eea07653daf1`, updated October 12. Its release metadata targets Doezer's 1.5.0 release; QuestarrNG remains on 1.10.0.
+
+Documentation and navigation
+- Added QuestarrNG quick-start, indexer/Prowlarr, notification, and RSS guides. The existing Import guide already covers the expanded release-prep topics: archive update preservation, Wii U, download recovery, incomplete ClamAV scans, ISO handling, and Sort Extras.
+- Updated the canonical docs map and Mintlify navigation, including a fork-specific name and GitHub link. All 33 navigation pages resolve to local Markdown files.
+- Prettier checks for the new guides, docs map, docs JSON, and release-note fragment passed. `git diff --check` passed.
+
+Tests
+- `npm run test:e2e -- tests/e2e/backlog-roulette.spec.ts tests/e2e/discover.spec.ts tests/e2e/settings-organization.spec.ts tests/e2e/post-rc1.spec.ts --workers=4`: 26 passed.
+- `npm run test:e2e -- tests/e2e/rawg-discovery.spec.ts --workers=1`: 2 passed, including setup and the RAWG settings/discovery journey.
+- `vitest run server/__tests__/prowlarr-credentials.test.ts server/__tests__/prowlarr-settings.test.ts server/__tests__/prowlarr.test.ts server/__tests__/ssrf_routes.test.ts`: 4 files passed, 60 tests passed.
+- The full unit suite previously passed at the same source baseline: 247 files passed, 1 skipped; 4,009 tests passed, 7 skipped.
+- Recaptured `docs/pr-evidence/upstream-rawg-discovery.png` from the running `npm run dev:test` app and visually inspected it. The PR description includes this and the existing running UI evidence for the other client changes.
+
+Disposition and limits
+- QuestarrNG keeps its own 1.10.0 release metadata and explicit per-connection HTTP opt-in policy; existing connections remain opted out after migration. Version tags, merging and publishing Doezer's 1.5.0 release remain upstream maintainer operations.
+- RAWG discovery tests use stubbed responses. No RAWG API key was configured, so a live provider request remains unverified.
+- Stopped the dev server and removed its generated SQLite database/sidecars and Playwright run marker.

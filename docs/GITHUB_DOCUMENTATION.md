@@ -6,6 +6,7 @@ documentation in this repository.
 ## Product and releases
 
 - Product overview and installation: [`README.md`](../README.md)
+- First install and initial setup: [`docs/QUICKSTART.md`](./QUICKSTART.md)
 - Why QuestarrNG is maintained, how it differs from upstream, and replacement
   criteria:
   [`docs/FORK_CHANGES.md`](./FORK_CHANGES.md)
@@ -31,6 +32,10 @@ documentation in this repository.
   [`docs/HOME_SERVER_APPS.md`](./HOME_SERVER_APPS.md)
 - Supported indexers and downloader behavior:
   [`docs/DOWNLOADERS_COMPATIBILITY.md`](./DOWNLOADERS_COMPATIBILITY.md)
+- Indexer setup, Prowlarr sync, and release blacklists:
+  [`docs/INDEXERS.md`](./INDEXERS.md)
+- RSS release discovery: [`docs/RSS.md`](./RSS.md)
+- In-app and Apprise notifications: [`docs/NOTIFICATIONS.md`](./NOTIFICATIONS.md)
 
 ## Integrate and develop
 

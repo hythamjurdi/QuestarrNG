@@ -1,14 +1,14 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T19:35:11.511Z",
-  "forkHead": "c3734107450653976ce53689ef4e8d28506de36c",
+  "capturedAt": "2026-10-12T20:55:17.935Z",
+  "forkHead": "bbd3b27053543fede47d90272da9a3416643961b",
   "upstreamHead": "fb650bab63cb2f7ce3c9004ab9028cfc3b210a01",
   "counts": {
     "issue:CLOSED": 228,
     "pr:MERGED": 703,
     "pr:CLOSED": 208,
     "issue:OPEN": 4,
-    "pr:OPEN": 3
+    "pr:OPEN": 4
   },
   "limitations": [
     "Ancestry is not behavioral verification: changes can be reverted, superseded or ported with different hashes.",
@@ -21148,7 +21148,9 @@
         "findings": [
           "The PR changes only AGENT_CONTRIBUTION.md to record a community protocol offer. Issue #906's author explicitly says it is not a feature demand, so there is no product behavior to port from this documentation-only PR."
         ],
-        "acceptance": ["No application behavior or protocol implementation is requested by the PR."],
+        "acceptance": [
+          "No application behavior or protocol implementation is requested by the PR."
+        ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/1083/files",
           "docs/upstream-resolution/sources.json (PR #1083 and issue #906 records)"
@@ -21937,16 +21939,22 @@
       "review": {
         "status": "implemented-unverified",
         "findings": [
-          "Added RAWG as an optional metadata and discovery source while keeping IGDB credentials and identity available for SeerrNG. RAWG IDs are stored separately."
+          "Upstream PR #1131 remains open. Its maintainer asked for RAWG as an optional alternative to IGDB rather than a replacement; QuestarrNG implements that additive direction, keeps IGDB and its SeerrNG identity contract, and stores RAWG IDs separately.",
+          "The RAWG settings and discovery browser journey passes with stubbed provider responses, and its running UI screenshot is retained. The test environment has no RAWG API key, so a live service response remains unverified."
         ],
         "acceptance": [
-          "Encrypted key save/read masking; provider search/list format; content filters; separate IDs and game detail actions; browser journey passes. A real RAWG key and service response remain to verify."
+          "RAWG is an optional provider alongside IGDB; existing IGDB credentials, game identity, and SeerrNG integration remain available.",
+          "RAWG key save/read masking, search/list response handling, content filters, separate IDs, attribution, and the browser journey pass.",
+          "Verify one live RAWG response when a valid operator API key is available."
         ],
         "evidence": [
           "server/rawg.ts",
           "server/__tests__/rawg.test.ts",
           "tests/e2e/rawg-discovery.spec.ts",
+          "docs/pr-evidence/upstream-rawg-discovery.png",
           "docs/RAWG.md",
+          "docs/upstream-resolution/evidence/validation-batch-7.txt",
+          "https://github.com/Doezer/Questarr/pull/1131",
           "https://rawg.io/apidocs"
         ],
         "dependencies": []
@@ -22804,23 +22812,42 @@
       "title": "Prepare v1.5.0 release coverage, changelog and documentation",
       "url": "https://github.com/Doezer/Questarr/pull/1172",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-12T18:53:12Z",
-      "sourceDigest": "541cd07e32113fab6bcb07c8c4fa2e622d079fcb4bd3b1aa6c34337a3388c597",
+      "upstreamUpdatedAt": "2026-10-12T19:47:11Z",
+      "sourceDigest": "ef1aacb4919ffdd0c60fcbdfaaaa7d32bbebdddf0b58c03b071702173ab839ad",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "implemented-unverified",
+        "status": "verified",
         "findings": [
-          "Ported Prowlarr URL/key and consent-revocation behavior plus the release browser journeys. Kept the fork release version and explicitly excluded the migration that would re-enable users’ revoked HTTP consent. Documentation and packaging details from the full release PR remain to compare."
+          "Reviewed upstream PR #1172 at head 9a4fd4d8 (open, updated October 12). QuestarrNG's 1.10.0 branch now has the applicable user guides and a 33-page Mintlify navigation map; its existing Import guide already covers archive updates, Wii U imports, recovery, ClamAV review, ISO handling, and Sort Extras.",
+          "The release-preparation browser journeys pass in QuestarrNG, including Prowlarr defaults and consent revocation, Apprise login, RSS refresh, calendar timezone/year view, Discover actions, import recovery, and backlog roulette. QuestarrNG keeps its own version metadata and defaults HTTP integrations to opted out, including existing connections.",
+          "Only Doezer's 1.5.0 tag, merge, and publication remain upstream release operations. Those actions are outside this fork's 1.10.0 release identity."
         ],
         "acceptance": [
-          "Focused Prowlarr route tests and browser flows pass; upstream/main merge is included."
+          "Applicable release user guides and navigation accurately describe QuestarrNG, while the fork's current release identity is preserved.",
+          "The post-RC1 browser coverage and focused Prowlarr/SSRF tests pass.",
+          "Existing plain-HTTP integrations remain opted out unless each connection explicitly enables the permission."
         ],
         "evidence": [
           "server/prowlarr-settings.ts",
           "server/__tests__/prowlarr-credentials.test.ts",
+          "server/__tests__/prowlarr-settings.test.ts",
+          "server/__tests__/prowlarr.test.ts",
+          "server/__tests__/ssrf_routes.test.ts",
           "tests/e2e/post-rc1.spec.ts",
-          "tests/e2e/settings-organization.spec.ts"
+          "tests/e2e/settings-organization.spec.ts",
+          "tests/e2e/backlog-roulette.spec.ts",
+          "tests/e2e/discover.spec.ts",
+          "docs/QUICKSTART.md",
+          "docs/INDEXERS.md",
+          "docs/IMPORTS.md",
+          "docs/NOTIFICATIONS.md",
+          "docs/RSS.md",
+          "docs/GITHUB_DOCUMENTATION.md",
+          "docs/docs.json",
+          "docs/SECRETS.md",
+          "docs/upstream-resolution/evidence/validation-batch-7.txt",
+          "QuestarrNG package version 1.10.0"
         ],
         "dependencies": []
       },
@@ -23077,6 +23104,26 @@
       "sourceDigest": "01ae1baf50abd4ca6b85e15e143bef8f9081595e555a35c9dc3ed53f87e49cea",
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "fb650bab63cb2f7ce3c9004ab9028cfc3b210a01",
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1186",
+      "number": 1186,
+      "kind": "pr",
+      "title": "Fix the open Dependabot vulnerabilities in dev and CI tooling",
+      "url": "https://github.com/Doezer/Questarr/pull/1186",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-12T20:36:50Z",
+      "sourceDigest": "934895b816176d687cedbd24935eb3bd755cbfa613625714d6ad2c502671a721",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
       "review": {
         "status": "unreviewed",
         "findings": [],

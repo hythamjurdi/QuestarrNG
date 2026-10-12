@@ -1,8 +1,8 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Questarr",
-  "description": "Self-hosted video game manager inspired by the *Arr ecosystem.",
+  "name": "QuestarrNG",
+  "description": "Snapetech's maintained fork of Questarr, a self-hosted video game manager.",
   "colors": {
     "primary": "#3B82F6",
     "light": "#60A5FA",
@@ -13,6 +13,18 @@
   },
   "navigation": {
     "groups": [
+      {
+        "group": "Using QuestarrNG",
+        "pages": [
+          "QUICKSTART",
+          "INDEXERS",
+          "IMPORTS",
+          "NOTIFICATIONS",
+          "RSS",
+          "BACKLOG_ROULETTE",
+          "RAWG"
+        ]
+      },
       {
         "group": "Deployment",
         "pages": ["HOME_SERVER_APPS", "PROXMOX", "REVERSE_PROXY", "DATABASE", "MIGRATION"]
@@ -61,12 +73,12 @@
     ],
     "primary": {
       "type": "github",
-      "href": "https://github.com/Doezer/Questarr"
+      "href": "https://github.com/snapetech/QuestarrNG"
     }
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/Doezer/Questarr",
+      "github": "https://github.com/snapetech/QuestarrNG",
       "discord": "https://discord.gg/STkp86wP9F"
     }
   }

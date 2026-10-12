@@ -21,8 +21,8 @@ they are not instructions to blindly replay every historical patch.
 - [Source snapshot](sources.json): exported issue bodies/discussion and PR bodies.
   PR reviews/diffs and complete issue timelines still require detailed collection.
 
-Initial inventory: **232 issues** (4 open, 228 closed) and **914 PRs** (3 open,
-703 merged, 208 closed unmerged), for **1,146 items**.
+Latest inventory (October 12, 2026): **232 issues** (4 open, 228 closed) and
+**915 PRs** (4 open, 703 merged, 208 closed unmerged), for **1,147 items**.
 
 Of the 703 merged PRs, 463 merge commits are ancestors of the fork snapshot,
 22 are ancestors of upstream/main but not the fork, and 218 are absent from both
@@ -58,15 +58,15 @@ changes cover SQLite and PostgreSQL. UI PRs require screenshots/recordings of
 
 ## Initial open-item findings
 
-| Item                                                                            | Required investigation / proposed treatment                                                                                                                                                                                                                            |
-| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [#923: update notification](https://github.com/Doezer/Questarr/issues/923)      | Maintainer comments say bell/Apprise notifications already exist and update management is in progress. Verify the actual fork behavior and thumbnail indication without duplicating notification machinery.                                                            |
-| [#906: cross-server libraries](https://github.com/Doezer/Questarr/issues/906)   | This is a protocol proposal, not a completed specification for Questarr. Inspect the referenced protocol and closed PR #1083. Define identity, peer revocation, separate browse/download grants, local file boundaries and compatibility tests before implementation.  |
-| [#406: file-type search](https://github.com/Doezer/Questarr/issues/406)         | Verified torrent-manifest extension filtering with safe redirect handling; magnets, Usenet and unknown payloads fail closed rather than relying on release-title text.                                                                                                 |
-| [#336: alternative game sources](https://github.com/Doezer/Questarr/issues/336) | Verified optional Hydra-format public HTTPS catalogs, bounded schema and torrent-link checks, source attribution, and integration with aggregated search; curated catalog origin is not proof of malware safety.                                                          |
-| [#1172: v1.5 release preparation](https://github.com/Doezer/Questarr/pull/1172) | Port missing behavior, tests and useful docs after comparing with upstream/main. Keep QuestarrNG's release version and packaging identity. Review the actual diff, not just its release-oriented title.                                                                |
-| [#1166: release scoring engine](https://github.com/Doezer/Questarr/pull/1166)   | Engine-only PR with substantial review follow-ups. Review latest head, title utility prerequisites and regex dependency. Link closed #1103 and issue #1090; full release-scoring feature may require persistence, search integration and UI beyond this PR.            |
-| [#1131: RAWG metadata](https://github.com/Doezer/Questarr/pull/1131)            | Proposed PR removes IGDB. The fork's SeerrNG provider uses exact IGDB identity. Prefer additive RAWG provider support with explicit identity mapping and compatibility tests; do not erase IGDB credentials, mappings or contracts merely to apply the upstream patch. |
+| Item                                                                            | Required investigation / proposed treatment                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#923: update notification](https://github.com/Doezer/Questarr/issues/923)      | Maintainer comments say bell/Apprise notifications already exist and update management is in progress. Verify the actual fork behavior and thumbnail indication without duplicating notification machinery.                                                           |
+| [#906: cross-server libraries](https://github.com/Doezer/Questarr/issues/906)   | This is a protocol proposal, not a completed specification for Questarr. Inspect the referenced protocol and closed PR #1083. Define identity, peer revocation, separate browse/download grants, local file boundaries and compatibility tests before implementation. |
+| [#406: file-type search](https://github.com/Doezer/Questarr/issues/406)         | Verified torrent-manifest extension filtering with safe redirect handling; magnets, Usenet and unknown payloads fail closed rather than relying on release-title text.                                                                                                |
+| [#336: alternative game sources](https://github.com/Doezer/Questarr/issues/336) | Verified optional Hydra-format public HTTPS catalogs, bounded schema and torrent-link checks, source attribution, and integration with aggregated search; curated catalog origin is not proof of malware safety.                                                      |
+| [#1172: v1.5 release preparation](https://github.com/Doezer/Questarr/pull/1172) | Verified the applicable docs and browser coverage in QuestarrNG; preserve its 1.10.0 release identity and secure HTTP opt-in defaults. Upstream tagging and publication remain Doezer release operations.                                                             |
+| [#1166: release scoring engine](https://github.com/Doezer/Questarr/pull/1166)   | Engine-only PR with substantial review follow-ups. Review latest head, title utility prerequisites and regex dependency. Link closed #1103 and issue #1090; full release-scoring feature may require persistence, search integration and UI beyond this PR.           |
+| [#1131: RAWG metadata](https://github.com/Doezer/Questarr/pull/1131)            | The maintainer requested RAWG as an optional alternative, not an IGDB replacement. QuestarrNG implements that direction with separate IDs and passing stubbed-provider tests; a live RAWG API response still needs an operator key.                                   |
 
 These findings were preliminary; the follow-up sections record completed implementation and final dispositions.
 
@@ -140,7 +140,7 @@ functions 82.02%, lines 86.02%. TypeScript, lint, secret scanning and production
 build pass. See [checkpoint evidence](evidence/validation-batch-1.txt).
 Running UI screenshots are in `docs/pr-evidence/upstream-*.png`.
 
-This is a checkpoint, **not completion of all 1,146 items**. Optional RAWG support
+This is a checkpoint, **not completion of all 1,147 items**. Optional RAWG support
 and issue #1081's per-user Socket.IO delivery are now implemented; federation,
 integrated scoring profiles, real-service checks and most historical per-item
 reviews remain. The ledger distinguishes verified behavior from integration work
@@ -152,6 +152,9 @@ RAWG is now available as an optional, additive metadata and discovery provider
 from **Settings → Integrations**. It stores a separate provider ID, encrypts the
 API key, keeps IGDB active for SeerrNG, applies per-user content filters and
 provides attribution only when RAWG is configured. See [RAWG setup and terms](../RAWG.md).
+Upstream PR #1131 remains open; its maintainer explicitly asked for this optional
+provider behavior. The browser journey passes with stubbed RAWG results, but a
+live response remains unverified until a valid API key is available.
 
 Issue #906 is recorded as `not-applicable`: its author explicitly states the
 federation specification is an offer, not a feature request. Closed PR #1103 is
@@ -165,6 +168,18 @@ operators can configure Hydra-format public HTTPS catalogs, and their torrent
 links join normal aggregated search with source attribution. Catalog origin does
 not certify release safety; the existing scanning controls remain applicable.
 The ledger still has 1,134 unreviewed records.
+
+## Follow-up: v1.5.0 release-preparation coverage (#1172)
+
+The latest PR head is 9a4fd4d8. QuestarrNG now has quick-start, indexer/Prowlarr,
+notification and RSS guides, a 33-page Mintlify navigation map, and a more
+detailed Import guide covering archive updates, Wii U, recovery, ClamAV review,
+disc images and Sort Extras. Twenty-six browser journeys for roulette, Discover,
+settings organization and post-RC1 behavior pass, along with 60 focused
+Prowlarr/SSRF unit tests. Version-specific 1.5.0 metadata is not copied over the
+fork's current 1.10.0 identity. Existing HTTP integrations remain opted out
+unless an operator explicitly grants that permission. Doezer retains control of
+the upstream merge, tag and release publication.
 
 ## Follow-up: per-user Socket.IO events
 
