@@ -1481,7 +1481,7 @@ class IGDBClient {
       // ⚡ Bolt: Cache genre search results for 1 hour.
       return await this.makeRequest<IGDBGame[]>("games", igdbQuery, HOUR_IN_SECONDS * 1000);
     } catch (error) {
-      console.warn(`IGDB genre search failed for genre: ${genre}`, error);
+      igdbLogger.warn({ error, genre }, "IGDB genre search failed");
       return [];
     }
   }
@@ -1513,7 +1513,7 @@ class IGDBClient {
       // ⚡ Bolt: Cache platform search results for 1 hour.
       return await this.makeRequest<IGDBGame[]>("games", igdbQuery, HOUR_IN_SECONDS * 1000);
     } catch (error) {
-      console.warn(`IGDB platform search failed for platform: ${platform}`, error);
+      igdbLogger.warn({ error, platform }, "IGDB platform search failed");
       return [];
     }
   }
@@ -1535,7 +1535,7 @@ class IGDBClient {
         24 * 60 * 60 * 1000
       );
     } catch (error) {
-      console.warn("IGDB genres fetch failed:", error);
+      igdbLogger.warn({ error }, "IGDB genres fetch failed");
       return [];
     }
   }
@@ -1595,7 +1595,7 @@ class IGDBClient {
 
       return FALLBACK_PLATFORMS;
     } catch (error) {
-      console.warn("IGDB platforms fetch failed, using fallback list:", error);
+      igdbLogger.warn({ error }, "IGDB platforms fetch failed; using fallback list");
       return FALLBACK_PLATFORMS;
     }
   }

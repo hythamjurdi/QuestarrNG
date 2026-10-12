@@ -307,3 +307,32 @@ response; it did not contact a live indexer. The ledger now has **120 verified**
 implemented-but-unverified**, and **1 needs-implementation** record. Issue #37
 still needs shared Zod validation across every POST/PATCH route. See
 [batch 12 evidence](evidence/validation-batch-12.txt).
+
+## Follow-up: discovery, logging, downloads, and downloader requests (#112–125)
+
+All fourteen PRs in this range were reviewed against their descriptions and
+available discussion/review feedback. The nominal workflow and discovery
+carousel requests are already supported; aggregated indexer search, typed Zod
+configuration, bounded IGDB search, qBittorrent/rTorrent support, downloader
+priority explanations, and download detail views are present. The abandoned
+minimal qBittorrent PR #123 is superseded by #119. Dependency PRs #124–125 are
+satisfied by newer locked versions.
+
+Review found two implementation gaps. Several logging paths covered by PR #114
+still used `console`, and unsafe bundle URLs were written into the warning; all
+now use structured Pino logging without echoing the URL. PR #121's requested
+unique genre, platform, and wishlist counts were missing from the current Stats
+page; those cards are now present and tested. PR #122's rTorrent tracker query
+requested five fields but interpreted ten, which made tracker state/error
+reporting inaccurate. The matching XML-RPC fields are now requested and mapped,
+with a fallback for older servers. The [running Stats page screenshot](../pr-evidence/upstream-global-library-stats.png)
+is ready to include in the eventual upstream PR description.
+
+Batch 13 passed the full suite (**4,022 passed, 7 skipped**), typecheck, lint,
+format check, and production build. The Stats page was opened through
+`npm run dev:test` in a headless browser; game/config responses were stubbed for
+repeatable screenshot data. The refreshed upstream snapshot still contains
+1,147 items. The ledger now has **133 verified**, **2 superseded**, **1,007
+unreviewed**, **3 not-applicable**, **1 implemented-but-unverified**, and **1
+needs-implementation** record. Issue #37 remains the outstanding implementation
+item. See [batch 13 evidence](evidence/validation-batch-13.txt).

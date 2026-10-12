@@ -295,10 +295,10 @@ describe("rtorrent remaining regression coverage", () => {
         ["high.bin", 30, 15, 15, 2],
       ])
       .mockResolvedValueOnce([
-        ["udp://inactive", 0, 0, -1, -1],
-        ["udp://updating", 1, 1, 5, 6, 0, 9, ""],
-        ["udp://working", 2, 1, 7, 8, 9, 10, ""],
-        ["udp://error", 3, 1, 1, 2, 9, 10, "boom"],
+        ["udp://inactive", 0, 0, -1, -1, 0, 0, 0, 0, 0],
+        ["udp://updating", 1, 1, 5, 6, 0, 1704070800, 0, 0, 1],
+        ["udp://working", 2, 1, 7, 8, 1704067200, 1704070800, 0, 3, 0],
+        ["udp://error", 3, 1, 1, 2, 1704067200, 1704067500, 2, 1, 0],
       ]);
 
     await expect(client.getDownloadDetails("hash-1")).resolves.toMatchObject({
@@ -315,11 +315,25 @@ describe("rtorrent remaining regression coverage", () => {
       ],
       trackers: [
         expect.objectContaining({ status: "inactive", seeders: undefined }),
-        expect.objectContaining({ status: "updating" }),
-        expect.objectContaining({ status: "working" }),
-        expect.objectContaining({ status: "error", error: "boom" }),
+        expect.objectContaining({ status: "updating", nextAnnounce: "2024-01-01T01:00:00.000Z" }),
+        expect.objectContaining({ status: "working", lastAnnounce: "2024-01-01T00:00:00.000Z" }),
+        expect.objectContaining({ status: "error", error: "2 tracker request(s) failed" }),
       ],
     });
+    expect(rpcSpy).toHaveBeenLastCalledWith("t.multicall", [
+      "hash-1",
+      "",
+      "t.url=",
+      "t.group=",
+      "t.is_enabled=",
+      "t.scrape_complete=",
+      "t.scrape_incomplete=",
+      "t.activity_time_last=",
+      "t.activity_time_next=",
+      "t.failed_counter=",
+      "t.success_counter=",
+      "t.is_busy=",
+    ]);
 
     // A multi-file torrent holding a single file: d.is_multi_file, not the file count,
     // decides that d.directory is the content folder.
@@ -506,6 +520,56 @@ describe("rtorrent remaining regression coverage", () => {
     expect(
       privateClient.mapRTorrentStatus(["hash-zero", "Zero", 0, 0, 0, 0, 0, 0, 0, 0, 0, "", ""])
     ).toEqual(expect.objectContaining({ progress: 0, status: "paused" }));
+  });
+
+  it("falls back to a useful tracker state on older rTorrent versions", async () => {
+    const client = new RTorrentClient(createDownloader());
+    const privateClient = client as unknown as {
+      makeXMLRPCRequest(method: string, params: unknown[]): Promise<unknown>;
+    };
+    const rpcSpy = vi.spyOn(privateClient, "makeXMLRPCRequest");
+    const basicDetails = new Map<string, unknown>([
+      ["d.hash", "hash-old"],
+      ["d.name", "Old rTorrent"],
+      ["d.state", 1],
+      ["d.complete", 0],
+      ["d.size_bytes", 100],
+      ["d.completed_bytes", 0],
+      ["d.down.rate", 0],
+      ["d.up.rate", 0],
+      ["d.ratio", 0],
+      ["d.peers_connected", 0],
+      ["d.peers_complete", 0],
+      ["d.message", ""],
+      ["d.directory", "/downloads"],
+      ["d.creation_date", 0],
+      ["d.is_multi_file", 0],
+    ]);
+    let trackerCall = 0;
+    rpcSpy.mockImplementation(async (method) => {
+      if (method === "f.multicall") return [];
+      if (method === "t.multicall") {
+        trackerCall += 1;
+        if (trackerCall === 1) throw new Error("unsupported tracker health field");
+        return [["udp://tracker.example", 0, 1, 0, 0]];
+      }
+      return basicDetails.get(method);
+    });
+
+    const details = await client.getDownloadDetails("hash-old");
+
+    expect(details?.trackers).toEqual([
+      expect.objectContaining({ url: "udp://tracker.example", status: "updating" }),
+    ]);
+    expect(rpcSpy).toHaveBeenLastCalledWith("t.multicall", [
+      "hash-old",
+      "",
+      "t.url=",
+      "t.group=",
+      "t.is_enabled=",
+      "t.scrape_complete=",
+      "t.scrape_incomplete=",
+    ]);
   });
 
   it("covers XML-RPC helpers and parsing edge cases", () => {

@@ -743,7 +743,7 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("Error searching indexers:", error);
+    routesLogger.error({ error }, "Error searching indexers");
     return res.status(500).json({ error: "Failed to search indexers" });
   }
 }
@@ -3255,7 +3255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.set("Cache-Control", CC_IGDB_METADATA);
       res.json(genres);
     } catch (error) {
-      console.error("Error fetching genres:", error);
+      routesLogger.error({ error }, "Error fetching genres");
       res.status(500).json({ error: "Failed to fetch genres" });
     }
   });
@@ -3267,7 +3267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.set("Cache-Control", CC_IGDB_METADATA);
       res.json(platforms);
     } catch (error) {
-      console.error("Error fetching platforms:", error);
+      routesLogger.error({ error }, "Error fetching platforms");
       res.status(500).json({ error: "Failed to fetch platforms" });
     }
   });
@@ -4099,7 +4099,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       return res.json(details);
     } catch (error) {
-      console.error("Error getting download details:", error);
+      routesLogger.error({ error }, "Error getting download details");
       return res.status(500).json({ error: "Failed to get download details" });
     }
   });
@@ -4878,7 +4878,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           chunk.map(async (download: { link: string; title: string; downloadType?: string }) => {
             try {
               if (!(await isSafeUrl(download.link))) {
-                return console.warn(`Skipping unsafe URL in bundle: ${download.link}`);
+                routesLogger.warn("Skipping unsafe URL in bundle");
+                return;
               }
 
               const response = await safeFetch(download.link);
@@ -4907,7 +4908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       return;
     } catch (error) {
-      console.error("Error creating bundle:", error);
+      routesLogger.error({ error }, "Error creating bundle");
       return res.status(500).json({ error: "Failed to create bundle" });
     }
   });
