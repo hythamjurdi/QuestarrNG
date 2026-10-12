@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T20:55:17.935Z",
-  "forkHead": "bbd3b27053543fede47d90272da9a3416643961b",
+  "capturedAt": "2026-10-12T21:06:33.750Z",
+  "forkHead": "67371b591d0dfd1026a45844492229cb595edd27",
   "upstreamHead": "fb650bab63cb2f7ce3c9004ab9028cfc3b210a01",
   "counts": {
     "issue:CLOSED": 228,
@@ -23125,10 +23125,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork already pins PyJWT 2.15.1, forces fast-copy to ^4.1.0 (lock resolves 4.1.2), has no @tailwindcss/typography, @npmcli/query, or postcss-selector-parser in its dependency graph, and has only one engine.io override. Updated the hash-pinned CI Semgrep scanner from 1.179.0 to 1.180.0 and documented the fork v1.10.0 record."
+        ],
+        "acceptance": [
+          "The Semgrep input and generated universal hash lock resolve Semgrep 1.180.0 while retaining PyJWT 2.15.1.",
+          "A clean Python 3.12 environment installs the wheel-only lock with hash verification; Semgrep reports 1.180.0 and uv pip check succeeds.",
+          "The configured SAST rules scan all 928 tracked files; the workflow ERROR-severity gate reports zero findings. The one WARNING points at path resolution with lexical and realpath containment checks.",
+          "npm audit reports zero vulnerabilities; already-satisfied fast-copy and unused selector-parser changes are not duplicated in this fork."
+        ],
+        "evidence": [
+          ".github/requirements/semgrep.in",
+          ".github/requirements/semgrep.txt",
+          "docs/DEPENDENCIES.md",
+          "docs/CVE_FIXES_BY_RELEASE.md",
+          "server/routes.ts",
+          "docs/upstream-resolution/evidence/validation-batch-8.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

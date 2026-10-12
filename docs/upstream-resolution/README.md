@@ -167,7 +167,7 @@ are excluded with the limitation shown in the running UI. Issue #336 is verified
 operators can configure Hydra-format public HTTPS catalogs, and their torrent
 links join normal aggregated search with source attribution. Catalog origin does
 not certify release safety; the existing scanning controls remain applicable.
-The ledger currently has 1,135 unreviewed records, including newly opened PR #1186.
+The ledger currently has 1,134 unreviewed records, including newly opened PR #1186.
 
 ## Follow-up: v1.5.0 release-preparation coverage (#1172)
 
@@ -180,6 +180,18 @@ Prowlarr/SSRF unit tests. Version-specific 1.5.0 metadata is not copied over the
 fork's current 1.10.0 identity. Existing HTTP integrations remain opted out
 unless an operator explicitly grants that permission. Doezer retains control of
 the upstream merge, tag and release publication.
+
+## Follow-up: dependency and CI security fixes (#1186)
+
+The fork already had PyJWT 2.15.1, a `fast-copy` 4.1.0+ override, no Tailwind
+Typography or selector-parser dependency, and a single `engine.io` override.
+QuestarrNG now pins Semgrep 1.180.0 in its hash-locked CI toolchain and records
+that fork-specific update under v1.10.0. A clean hash-checked install passed,
+`uv pip check` passed, the npm audit reported zero vulnerabilities, and the
+configured SAST scan covered 928 tracked files with zero ERROR-severity
+findings. The scan produced one WARNING on a route that checks both lexical and
+real-path containment. This disposition resolves the applicable request while
+leaving Doezer's PR open for its maintainer.
 
 ## Follow-up: per-user Socket.IO events
 
