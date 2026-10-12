@@ -10,17 +10,21 @@ on:
         description: Announce an already-published release without rebuilding the image
         required: false
         type: string
+      finalize_release_tag:
+        description: Complete a tag release after its image and smoke jobs passed but release-note assembly failed
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: fork-image-${{ inputs.announce_release_tag || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' || inputs.announce_release_tag == '' }}
+  group: fork-image-${{ inputs.finalize_release_tag || inputs.announce_release_tag || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' || (inputs.announce_release_tag == '' && inputs.finalize_release_tag == '') }}
 
 jobs:
   publish:
-    if: github.repository == 'snapetech/QuestarrNG' && (github.event_name != 'workflow_dispatch' || (github.ref == 'refs/heads/main' && inputs.announce_release_tag == ''))
+    if: github.repository == 'snapetech/QuestarrNG' && (github.event_name != 'workflow_dispatch' || (github.ref == 'refs/heads/main' && inputs.announce_release_tag == '' && inputs.finalize_release_tag == ''))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -119,7 +123,7 @@ jobs:
             -p 127.0.0.1:15000:5000 \
             -v questarrng-smoke-data:/app/data \
             "$IMAGE"
-          for attempt in $(seq 1 45); do
+          for _ in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:15000/api/health >/dev/null; then
               break
             fi
@@ -147,7 +151,7 @@ jobs:
             -p 127.0.0.1:15001:5000 \
             -v questarrng-rootless-smoke-data:/app/data \
             "$IMAGE"
-          for attempt in $(seq 1 45); do
+          for _ in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:15001/api/health >/dev/null; then
               break
             fi
@@ -241,11 +245,13 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
+          RELEASE_DATE="$(git show -s --format=%cs "$GITHUB_SHA")"
           previous_tag="$(scripts/latest-published-release-tag.sh "$TAG")"
           node scripts/assemble-release-notes.mjs \
             --previous-tag "$previous_tag" \
             --head "$GITHUB_SHA" \
             --version "$VERSION" \
+            --date "$RELEASE_DATE" \
             --changelog docs/CHANGELOG.md \
             --output docs/CHANGELOG.md
           node scripts/extract-changelog.mjs "$VERSION" > changelog-section.md
@@ -309,12 +315,14 @@ jobs:
           branch="release/changelog-${TAG}"
           previous_tag="$(scripts/latest-published-release-tag.sh "$TAG")"
           release_sha="$(git rev-parse "${TAG}^{commit}")"
+          release_date="$(git show -s --format=%cs "$release_sha")"
           git fetch origin main:refs/remotes/origin/main
           git checkout -B "$branch" origin/main
           node scripts/assemble-release-notes.mjs \
             --previous-tag "$previous_tag" \
             --head "$release_sha" \
             --version "$VERSION" \
+            --date "$release_date" \
             --changelog docs/CHANGELOG.md \
             --output docs/CHANGELOG.md
           git add docs/CHANGELOG.md
@@ -341,17 +349,268 @@ jobs:
             echo "Updated existing changelog pull request: ${pr_url}"
           fi
 
+  finalize-release:
+    if: github.repository == 'snapetech/QuestarrNG' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.finalize_release_tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+      packages: read
+    outputs:
+      release_sha: ${{ steps.validate.outputs.release_sha }}
+      previous_tag: ${{ steps.validate.outputs.previous_tag }}
+      release_date: ${{ steps.validate.outputs.release_date }}
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout current release tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.x
+
+      - name: Validate the existing tag build and smoke evidence
+        id: validate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.finalize_release_tag }}
+          ANNOUNCE_TAG: ${{ inputs.announce_release_tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Release tag must use vMAJOR.MINOR.PATCH.' >&2
+            exit 1
+          fi
+          if [[ -n "$ANNOUNCE_TAG" && "$ANNOUNCE_TAG" != "$TAG" ]]; then
+            echo 'The finalize and announce inputs must identify the same release tag.' >&2
+            exit 1
+          fi
+
+          git fetch origin '+refs/heads/main:refs/remotes/origin/main' --tags
+          release_sha="$(git rev-parse "${TAG}^{commit}")"
+          git merge-base --is-ancestor "$release_sha" origin/main || {
+            echo "Release tag $TAG is not on main."
+            exit 1
+          }
+          git show "${release_sha}:package.json" > /tmp/release-package.json
+          version="$(node -p "require('/tmp/release-package.json').version")"
+          if [[ "$TAG" != "v$version" ]]; then
+            echo "Release tag $TAG does not match package version $version."
+            exit 1
+          fi
+          release_date="$(git show -s --format=%cs "$release_sha")"
+
+          if ! git diff --quiet "$release_sha" origin/main -- release-notes; then
+            echo 'Release-note fragments changed after the tagged source; refusing to assemble notes from a different source.' >&2
+            exit 1
+          fi
+          if release_status="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" 2>&1)"; then
+            echo "A GitHub release already exists for $TAG; refusing to replace it." >&2
+            exit 1
+          elif ! grep -Fq 'HTTP 404' <<< "$release_status"; then
+            echo "$release_status" >&2
+            exit 1
+          fi
+
+          previous_tag="$(scripts/latest-published-release-tag.sh "$TAG")"
+          runs_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${release_sha}&per_page=100")"
+          run_id="$(jq -r --arg tag "$TAG" \
+            '[.workflow_runs[] | select(.name == "Publish QuestarrNG image" and .event == "push" and .head_branch == $tag)] | sort_by(.run_number) | last | .id // empty' \
+            <<< "$runs_json")"
+          if [[ -z "$run_id" ]]; then
+            echo "No prior tag workflow run found for $TAG at $release_sha." >&2
+            exit 1
+          fi
+          jobs_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100")"
+          jq -e '
+            any(.jobs[]; .name == "publish" and .conclusion == "success") and
+            any(.jobs[]; .name == "addon-smoke" and .conclusion == "success") and
+            any(.jobs[]; .name == "release" and .conclusion == "failure" and
+              any(.steps[]; .name == "Add curated release-note fragments" and .conclusion == "failure"))
+          ' <<< "$jobs_json" > /dev/null
+          release_job_id="$(jq -r '[.jobs[] | select(.name == "release" and .conclusion == "failure") | .id][0] // empty' <<< "$jobs_json")"
+          if [[ -z "$release_job_id" ]]; then
+            echo "The previous $TAG run did not fail at the release-note step." >&2
+            exit 1
+          fi
+          gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --job "$release_job_id" --log-failed > release-failure.log
+          grep -Fq "Changelog is missing the section for version ${version}." release-failure.log || {
+            echo "The previous $TAG release-note failure does not match the known missing-section error." >&2
+            exit 1
+          }
+
+          {
+            echo "release_sha=$release_sha"
+            echo "previous_tag=$previous_tag"
+            echo "release_date=$release_date"
+            echo "version=$version"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: step-security/docker-login-action@8c7b695d8738c5699a679ff5254baf0f19f20a94 # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: step-security/setup-buildx-action@a4709e2865773e1792246433e8eb922f9743a875 # v4.2.0
+
+      - name: Verify the published release image
+        shell: bash
+        env:
+          VERSION: ${{ steps.validate.outputs.version }}
+          RELEASE_SHA: ${{ steps.validate.outputs.release_sha }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          docker buildx imagetools inspect --raw "${image}:${VERSION}" > version-image.json
+          docker buildx imagetools inspect --raw "${image}:sha-${RELEASE_SHA}" > source-image.json
+          for manifest in version-image.json source-image.json; do
+            jq -e '
+              [.manifests[] | select(.platform.os != null and .platform.os != "unknown") |
+                "\(.platform.os)/\(.platform.architecture)"] | sort == ["linux/amd64", "linux/arm64"]
+            ' "$manifest" > /dev/null
+          done
+          diff -u \
+            <(jq -Sc . version-image.json) \
+            <(jq -Sc . source-image.json)
+
+      - name: Assemble release body
+        shell: bash
+        env:
+          TAG: ${{ inputs.finalize_release_tag }}
+          VERSION: ${{ steps.validate.outputs.version }}
+          RELEASE_SHA: ${{ steps.validate.outputs.release_sha }}
+          PREVIOUS_TAG: ${{ steps.validate.outputs.previous_tag }}
+          RELEASE_DATE: ${{ steps.validate.outputs.release_date }}
+        run: |
+          set -euo pipefail
+          node scripts/assemble-release-notes.mjs \
+            --previous-tag "$PREVIOUS_TAG" \
+            --head "$RELEASE_SHA" \
+            --version "$VERSION" \
+            --date "$RELEASE_DATE" \
+            --changelog docs/CHANGELOG.md \
+            --output docs/CHANGELOG.md
+          node scripts/extract-changelog.mjs "$VERSION" > release-body.md
+          if ! grep -Eq '^[[:space:]]*-[[:space:]]+' release-body.md; then
+            echo 'Generated release notes contain no changelog entries.' >&2
+            exit 1
+          fi
+          {
+            echo ""
+            echo "**Container image**: \`ghcr.io/${GITHUB_REPOSITORY,,}:${VERSION}\`"
+            echo "- [GitHub Container Registry](https://github.com/${GITHUB_REPOSITORY}/pkgs/container/questarrng)"
+            echo ""
+            echo "Pull with: \`docker pull ghcr.io/${GITHUB_REPOSITORY,,}:${VERSION}\`."
+          } >> release-body.md
+
+      - name: Publish recovered GitHub release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ inputs.finalize_release_tag }}
+          name: QuestarrNG ${{ inputs.finalize_release_tag }}
+          body_path: release-body.md
+          draft: false
+
+      - name: Verify recovered release publication
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.finalize_release_tag }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isDraft,isPrerelease,body > release.json
+          jq -e --arg tag "$TAG" \
+            '.tagName == $tag and .isDraft == false and .isPrerelease == false and (.body | type == "string" and length > 0)' \
+            release.json > /dev/null
+
+  update-finalized-changelog:
+    if: github.repository == 'snapetech/QuestarrNG' && github.event_name == 'workflow_dispatch' && inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success'
+    needs: [finalize-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ inputs.finalize_release_tag }}
+      RELEASE_SHA: ${{ needs['finalize-release'].outputs.release_sha }}
+      PREVIOUS_TAG: ${{ needs['finalize-release'].outputs.previous_tag }}
+      RELEASE_DATE: ${{ needs['finalize-release'].outputs.release_date }}
+      VERSION: ${{ needs['finalize-release'].outputs.version }}
+    steps:
+      - name: Checkout current release history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 22.x
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.x
+
+      - name: Open changelog update pull request
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="release/changelog-${TAG}"
+          git fetch origin '+refs/heads/main:refs/remotes/origin/main' --tags
+          if ! git diff --quiet "$RELEASE_SHA" origin/main -- release-notes; then
+            echo 'Release-note fragments changed after the tagged source; refusing to assemble a mismatched changelog.' >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --heads origin "refs/heads/${branch}" >/dev/null; then
+            echo "Changelog branch ${branch} already exists; inspect it before updating the release history." >&2
+            exit 1
+          fi
+          git checkout -b "$branch" origin/main
+          node scripts/assemble-release-notes.mjs \
+            --previous-tag "$PREVIOUS_TAG" \
+            --head "$RELEASE_SHA" \
+            --version "$VERSION" \
+            --date "$RELEASE_DATE" \
+            --changelog docs/CHANGELOG.md \
+            --output docs/CHANGELOG.md
+          git add docs/CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo 'The checked-in changelog already contains these release notes.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit \
+            -m "docs(changelog): include curated notes for ${TAG}" \
+            -m 'release-note: none'
+          git push origin "HEAD:refs/heads/${branch}"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "docs(changelog): include curated notes for ${TAG}" \
+            --body "Automated changelog update for the published ${TAG} release. The release notes are already published; merge this pull request to sync docs/CHANGELOG.md."
+
   announce-release:
     name: Announce release to Discord
-    needs: [release]
-    if: ${{ always() && ((startsWith(github.ref, 'refs/tags/v') && needs.release.result == 'success') || (github.event_name == 'workflow_dispatch' && inputs.announce_release_tag != '')) }}
+    needs: [release, finalize-release]
+    if: ${{ always() && ((startsWith(github.ref, 'refs/tags/v') && needs.release.result == 'success') || (github.event_name == 'workflow_dispatch' && inputs.finalize_release_tag == '' && inputs.announce_release_tag != '') || (github.event_name == 'workflow_dispatch' && inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
-      TAG: ${{ inputs.announce_release_tag || github.ref_name }}
+      TAG: ${{ inputs.finalize_release_tag || inputs.announce_release_tag || github.ref_name }}
     steps:
       - name: Checkout release tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -20,6 +20,29 @@ describe("injectCuratedNotes", () => {
     expect(injectCuratedNotes(firstPass, notes, "1.8.0")).toBe(firstPass);
   });
 
+  it("creates a dated version section when release notes have no prepared heading", () => {
+    const changelog =
+      "# Changelog\n\nAll notable changes are documented here.\n\n" +
+      "## [1.9.2] - 2026-10-06\n\n- Previous release.\n";
+    const notes = "### User-facing changes\n\n#### Added\n\n- New behavior.";
+
+    const result = injectCuratedNotes(changelog, notes, "1.9.3", "2026-10-12");
+
+    expect(result).toBe(
+      "# Changelog\n\nAll notable changes are documented here.\n\n" +
+        "## [1.9.3] - 2026-10-12\n\n" +
+        `${notes}\n\n` +
+        "## [1.9.2] - 2026-10-06\n\n- Previous release.\n"
+    );
+    expect(injectCuratedNotes(result, notes, "1.9.3", "2026-10-12")).toBe(result);
+  });
+
+  it("rejects invalid release dates", () => {
+    expect(() => injectCuratedNotes("# Changelog\n", "Notes.", "1.9.3", "2026-02-30")).toThrow(
+      "Invalid changelog date: 2026-02-30."
+    );
+  });
+
   it("rejects a changelog version outside the numeric semver format", () => {
     expect(() => injectCuratedNotes("## [1.7.3]", "Notes.", "1.7.3-questarr")).toThrow(
       "Invalid changelog version: 1.7.3-questarr."
