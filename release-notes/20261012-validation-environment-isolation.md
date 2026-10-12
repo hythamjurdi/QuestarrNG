@@ -6,4 +6,4 @@ action: none
 breaking: false
 ---
 
-Validation task and runtime-probe processes now use restricted environment variables and private temporary settings, reducing exposure of unrelated credentials and configuration during validation. Playwright browser installation and tests share a package-local browser cache so isolated tasks can find the installed browser. Task temporary directories are removed after execution, while CI shares its runner-local npm cache with the dependency installer so locked packages can be reused without retaining cache data in validation evidence.
+Validation tasks and runtime probes now use restricted environments and private temporary settings, reducing exposure of unrelated credentials. Browser tests use a package-local Playwright cache, task scratch is removed after each run, and CI reuses its runner-local npm cache for locked dependencies.
