@@ -1,9 +1,13 @@
 import { Router } from "express";
 import { storage } from "../storage.js";
 import { importManager, platformMappingService } from "../services/index.js";
-import { ARCHIVE_PASSWORD_REQUIRED_PREFIX } from "../services/ImportManager.js";
+import {
+  ARCHIVE_PASSWORD_REQUIRED_PREFIX,
+  IncompleteScanError,
+} from "../services/ImportManager.js";
 import { ArchivePasswordRequiredError } from "../services/ArchiveService.js";
 import { routesLogger as logger } from "../logger.js";
+import { rescanAllEnabledRootFolders } from "../library-scanner.js";
 
 import z from "zod";
 import {
@@ -352,6 +356,15 @@ importRouter.patch("/config", async (req, res) => {
     } else {
       await storage.createUserSettings({ userId, ...settingsPatch });
     }
+
+    // Turning post-processing on is when people start relying on the library,
+    // so pick up games already sitting in the root folders right away.
+    // Fire-and-forget; progress is available via GET /api/library/scan/status.
+    if (newConfig.enablePostProcessing && !current.enablePostProcessing) {
+      rescanAllEnabledRootFolders(userId).catch((err) =>
+        logger.error({ err }, "rescanAllEnabledRootFolders crashed")
+      );
+    }
     return res.json(newConfig);
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
@@ -676,6 +689,9 @@ importRouter.post("/:id/confirm", async (req, res) => {
     }
     if (error instanceof ArchivePasswordRequiredError) {
       return res.status(400).json({ error: error.message, passwordRequired: true });
+    }
+    if (error instanceof IncompleteScanError) {
+      return res.status(409).json({ error: error.message });
     }
     if (error instanceof Error) {
       if (

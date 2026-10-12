@@ -97,6 +97,9 @@ links to setup, integration, API, database, and security guides.
 | **Integrations**            | Connect Playnite, RomM, and SeerrNG using the documented integration paths.                                                                                                                                                                                                                                                           |
 | **Design**                  | Clean, minimalist, dark-first UI built with mobile usage in mind.                                                                                                                                                                                                                                                                     |
 
+Can't decide what to play? Click **Pick a game** in your Library for
+[Backlog roulette](docs/BACKLOG_ROULETTE.md): draw a game, roll again, or mark it as Playing.
+
 ### Supported Indexers/Downloaders
 
 - Prowlarr synchronization is supported to add all your indexers at once.
@@ -537,6 +540,9 @@ instead of its own subdomain? Set `QUESTARR_BASE_PATH=/Questarr` on the
 container (or in `.env` for npm installs) and point your reverse proxy at it
 — no rebuild required. See [docs/REVERSE_PROXY.md](docs/REVERSE_PROXY.md) for
 full setup instructions (nginx, Traefik, Caddy).
+
+Behind any reverse proxy, also set `TRUST_PROXY=1` so rate limits see real
+client IPs (see the same doc).
 
 </details>
 

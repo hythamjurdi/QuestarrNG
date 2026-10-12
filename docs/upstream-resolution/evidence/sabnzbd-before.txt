@@ -1,0 +1,37 @@
+
+> questarrng@1.10.0 test
+> vitest run server/__tests__/downloaders_sabnzbd_remaining.test.ts server/__tests__/downloaders_sabnzbd_tls.test.ts
+
+
+ RUN  v5.0.2 /home/keith/Documents/code/QuestarrNG-upstream-resolution
+
+ ❯ server/__tests__/downloaders_sabnzbd_remaining.test.ts (17 tests | 2 failed) 21ms
+   ❯ sabnzbd remaining regression coverage (17)
+     × sends SABnzbd category my-games for request=undefined and configured=my-games 8ms
+     × sends SABnzbd category my-games for request= and configured=my-games 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/downloaders_sabnzbd_remaining.test.ts > sabnzbd remaining regression coverage > sends SABnzbd category my-games for request=undefined and configured=my-games
+ FAIL  server/__tests__/downloaders_sabnzbd_remaining.test.ts > sabnzbd remaining regression coverage > sends SABnzbd category my-games for request= and configured=my-games
+AssertionError: expected 'games' to be 'my-games' // Object.is equality
+
+Expected: "my-games"
+Received: "games"
+
+ ❯ server/__tests__/downloaders_sabnzbd_remaining.test.ts:195:33
+    193|       const params = new URL(url).searchParams;
+    194|       expect(params.get("mode")).toBe("addfile");
+    195|       expect(params.get("cat")).toBe(expectedCategory);
+       |                                 ^
+    196|       expect(options.method).toBe("POST");
+    197|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 17 passed (19)
+   Start at  13:05:38
+   Duration  525ms (environment 68%, transform 15%, setup 8%, import 4%, tests 3%, worker 1%)
+

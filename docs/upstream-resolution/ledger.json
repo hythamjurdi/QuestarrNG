@@ -22636,8 +22636,8 @@
         "evidence": [
           "server/downloaders/sabnzbd.ts",
           "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
-          "docs/upstream-resolution/evidence/sabnzbd-before.log",
-          "docs/upstream-resolution/evidence/sabnzbd-after.log",
+          "docs/upstream-resolution/evidence/sabnzbd-before.txt",
+          "docs/upstream-resolution/evidence/sabnzbd-after.txt",
           "npm run check: passed",
           "https://github.com/Doezer/Questarr/issues/1169#issuecomment-6111128970"
         ],
@@ -22671,8 +22671,8 @@
         "evidence": [
           "server/downloaders/sabnzbd.ts",
           "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
-          "docs/upstream-resolution/evidence/sabnzbd-before.log",
-          "docs/upstream-resolution/evidence/sabnzbd-after.log",
+          "docs/upstream-resolution/evidence/sabnzbd-before.txt",
+          "docs/upstream-resolution/evidence/sabnzbd-after.txt",
           "npm run check: passed",
           "https://github.com/Doezer/Questarr/issues/1169#issuecomment-6111128970"
         ],

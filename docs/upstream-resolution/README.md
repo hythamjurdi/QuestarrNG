@@ -80,8 +80,8 @@ category, then the saved downloader category, then `games`.
 
 The two configured-category cases failed before the fix; all 19 tests in the
 two SABnzbd suites pass afterward. TypeScript checking and changed-production-file
-lint pass. [Before](evidence/sabnzbd-before.log) and
-[after](evidence/sabnzbd-after.log) results are retained.
+lint pass. [Before](evidence/sabnzbd-before.txt) and
+[after](evidence/sabnzbd-after.txt) results are retained.
 
 The reporter subsequently said the upstream fix still did not work on a dev
 image. This adapter fix therefore remains `implemented-unverified` in the ledger

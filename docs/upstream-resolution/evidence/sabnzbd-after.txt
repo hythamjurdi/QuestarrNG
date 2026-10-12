@@ -1,0 +1,13 @@
+
+> questarrng@1.10.0 test
+> vitest run server/__tests__/downloaders_sabnzbd_remaining.test.ts server/__tests__/downloaders_sabnzbd_tls.test.ts
+
+
+ RUN  v5.0.2 /home/keith/Documents/code/QuestarrNG-upstream-resolution
+
+
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+   Start at  13:05:47
+   Duration  499ms (environment 74%, transform 12%, setup 8%, import 3%, tests 2%, worker 1%)
+

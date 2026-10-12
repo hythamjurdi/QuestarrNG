@@ -44,8 +44,13 @@ vi.mock("../services/index.js", () => ({
   platformMappingService: mockPlatformMappingService,
 }));
 vi.mock("fs-extra", () => ({ default: fsMock }));
+vi.mock("../library-scanner.js", () => ({
+  rescanAllEnabledRootFolders: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { importRouter } from "../routes/import.js";
+import { IncompleteScanError } from "../services/ImportManager.js";
+import { rescanAllEnabledRootFolders } from "../library-scanner.js";
 import {
   makeImportConfig,
   makeRomMConfig,
@@ -494,6 +499,22 @@ describe("POST /api/imports/:id/confirm — Source path error", () => {
     expect(res.body.error).toMatch(/not found/i);
   });
 
+  it("returns the incomplete-scan reason so the user can see it before confirming again", async () => {
+    mockImportManager.confirmImport.mockRejectedValue(
+      new IncompleteScanError(
+        "ClamAV did not scan this download. Confirm again to import it anyway."
+      )
+    );
+
+    const res = await request(createApp()).post("/api/imports/dl-1/confirm").send({
+      strategy: "pc",
+      proposedPath: "/data/PC/game",
+    });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/ClamAV did not scan/);
+  });
+
   it("returns 500 on unexpected confirm error", async () => {
     mockImportManager.confirmImport.mockRejectedValue(new Error("Something exploded"));
 
@@ -503,5 +524,41 @@ describe("POST /api/imports/:id/confirm — Source path error", () => {
     });
 
     expect(res.status).toBe(500);
+  });
+});
+
+describe("PATCH /api/imports/config — root folder scan on enabling post-processing", () => {
+  beforeEach(() => {
+    mockStorage.getUserSettings.mockResolvedValue({ userId: "user-1" });
+    mockStorage.updateUserSettings.mockResolvedValue(undefined);
+  });
+
+  it("scans every enabled root folder when post-processing is switched on", async () => {
+    mockStorage.getImportConfig.mockResolvedValue(
+      makeImportConfig({ enablePostProcessing: false })
+    );
+
+    const res = await request(createApp())
+      .patch("/api/imports/config")
+      .send({ enablePostProcessing: true });
+
+    expect(res.status).toBe(200);
+    expect(rescanAllEnabledRootFolders).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not scan when post-processing was already on", async () => {
+    mockStorage.getImportConfig.mockResolvedValue(makeImportConfig({ enablePostProcessing: true }));
+
+    await request(createApp()).patch("/api/imports/config").send({ autoUnpack: true });
+
+    expect(rescanAllEnabledRootFolders).not.toHaveBeenCalled();
+  });
+
+  it("does not scan when post-processing is switched off", async () => {
+    mockStorage.getImportConfig.mockResolvedValue(makeImportConfig({ enablePostProcessing: true }));
+
+    await request(createApp()).patch("/api/imports/config").send({ enablePostProcessing: false });
+
+    expect(rescanAllEnabledRootFolders).not.toHaveBeenCalled();
   });
 });
