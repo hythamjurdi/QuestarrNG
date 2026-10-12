@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch, queryClient } from "@/lib/queryClient";
 import { asZodType, cn, compareEnabledPriorityName } from "@/lib/utils";
-import { Plus, Edit, Trash2, Check, X, Activity } from "lucide-react";
+import { Plus, Edit, Trash2, Check, X, Activity, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,7 @@ const downloaderTypes = [
   { value: "qbittorrent", label: "qBittorrent", protocol: "torrent" },
   { value: "synology", label: "Synology Download Station", protocol: "torrent" },
   { value: "deluge", label: "Deluge", protocol: "torrent" },
+  { value: "realdebrid", label: "Real-Debrid", protocol: "torrent" },
   { value: "sabnzbd", label: "SABnzbd", protocol: "usenet" },
   { value: "nzbget", label: "NZBGet", protocol: "usenet" },
 ] as const;
@@ -243,6 +244,14 @@ export default function DownloadersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDownloader, setEditingDownloader] = useState<Downloader | null>(null);
   const [testingDownloaderId, setTestingDownloaderId] = useState<string | null>(null);
+  const [realDebridAuth, setRealDebridAuth] = useState<{
+    downloaderId: string;
+    handle: string;
+    userCode: string;
+    verificationUrl: string;
+    intervalSeconds: number;
+  } | null>(null);
+  const [connectedRealDebridId, setConnectedRealDebridId] = useState<string | null>(null);
 
   const { data: downloaders = [], isLoading } = useQuery<Downloader[]>({
     queryKey: ["/api/downloaders"],
@@ -396,6 +405,77 @@ export default function DownloadersPage() {
     },
   });
 
+  const startRealDebridAuthMutation = useMutation({
+    mutationFn: async (downloaderId: string) => {
+      const response = await apiFetch(`/api/downloaders/${downloaderId}/realdebrid/auth/start`, {
+        method: "POST",
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Could not start account linking.");
+      return { downloaderId, ...body } as {
+        downloaderId: string;
+        handle: string;
+        userCode: string;
+        verificationUrl: string;
+        intervalSeconds: number;
+      };
+    },
+    onSuccess: setRealDebridAuth,
+    onError: (error) => {
+      toast({
+        title: "Could not link Real-Debrid",
+        description: error instanceof Error ? error.message : "Try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!realDebridAuth) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const poll = async () => {
+      try {
+        const response = await apiFetch(
+          `/api/downloaders/${realDebridAuth.downloaderId}/realdebrid/auth/poll`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ handle: realDebridAuth.handle }),
+          }
+        );
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Account linking failed.");
+        if (cancelled) return;
+        if (body.status === "connected") {
+          setConnectedRealDebridId(realDebridAuth.downloaderId);
+          setRealDebridAuth(null);
+          queryClient.invalidateQueries({ queryKey: ["/api/downloaders"] });
+          toast({
+            title: "Real-Debrid connected",
+            description: "The account is ready for downloads.",
+          });
+          return;
+        }
+        const waitSeconds = Math.max(realDebridAuth.intervalSeconds, Number(body.waitSeconds) || 0);
+        timer = setTimeout(poll, waitSeconds * 1000);
+      } catch (error) {
+        if (cancelled) return;
+        setRealDebridAuth(null);
+        toast({
+          title: "Real-Debrid account linking stopped",
+          description: error instanceof Error ? error.message : "Start the connection again.",
+          variant: "destructive",
+        });
+      }
+    };
+    timer = setTimeout(poll, realDebridAuth.intervalSeconds * 1000);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [realDebridAuth, toast]);
+
   const form = useForm<InsertDownloader>({
     resolver: zodResolver(asZodType<InsertDownloader>(insertDownloaderSchema)),
     defaultValues: {
@@ -419,6 +499,13 @@ export default function DownloadersPage() {
       allowInsecureLan: false,
     },
   });
+  const isRealDebrid = form.watch("type") === "realdebrid";
+  const isRealDebridConnected = Boolean(
+    (editingDownloader?.type === "realdebrid" && editingDownloader.password) ||
+    (editingDownloader && connectedRealDebridId === editingDownloader.id)
+  );
+  const activeRealDebridAuth =
+    realDebridAuth && realDebridAuth.downloaderId === editingDownloader?.id ? realDebridAuth : null;
 
   const onSubmit = (data: InsertDownloader) => {
     if (editingDownloader) {
@@ -430,6 +517,7 @@ export default function DownloadersPage() {
 
   const handleEdit = (downloader: Downloader) => {
     setEditingDownloader(downloader);
+    setRealDebridAuth(null);
     form.reset({
       name: downloader.name,
       type: downloader.type,
@@ -455,6 +543,7 @@ export default function DownloadersPage() {
 
   const handleAdd = () => {
     setEditingDownloader(null);
+    setRealDebridAuth(null);
     form.reset({
       name: "",
       type: "transmission",
@@ -517,7 +606,7 @@ export default function DownloadersPage() {
     <div className="h-full overflow-auto p-4 md:p-6">
       <PageHeader
         title="Downloaders"
-        description="Manage download clients for automated downloads. Downloads are sent to enabled clients in priority order (lowest number first), with automatic fallback if a client fails."
+        description="Manage download clients for automated downloads. Downloads use priority order with automatic fallback; Real-Debrid files are copied back to QuestarrNG before import."
         actions={
           <Button
             className="h-10 justify-center sm:h-9"
@@ -594,7 +683,8 @@ export default function DownloadersPage() {
                 {/* Row 2: type / protocol / status / priority */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Badge variant="outline" className="capitalize">
-                    {downloader.type}
+                    {downloaderTypes.find((type) => type.value === downloader.type)?.label ??
+                      downloader.type}
                   </Badge>
                   <Badge
                     className={`text-xs border-none ${getDownloadTypeColor(isUsenetDownloader(downloader.type) ? "usenet" : "torrent")}`}
@@ -617,6 +707,11 @@ export default function DownloadersPage() {
                       </>
                     )}
                   </Badge>
+                  {downloader.type === "realdebrid" && (
+                    <Badge variant={downloader.password ? "default" : "outline"}>
+                      {downloader.password ? "Account linked" : "Account needs linking"}
+                    </Badge>
+                  )}
                   <PriorityControl
                     id={downloader.id}
                     priority={downloader.priority}
@@ -630,14 +725,18 @@ export default function DownloadersPage() {
                     !downloader.enabled && "opacity-60"
                   )}
                 >
-                  {downloader.url}
+                  {downloader.type === "realdebrid"
+                    ? `Local staging: ${downloader.downloadPath || "not configured"}`
+                    : downloader.url}
                 </p>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {!isUsenetDownloader(downloader.type) && downloader.downloadPath && (
-                    <Badge variant="outline">Path: {downloader.downloadPath}</Badge>
-                  )}
+                  {!isUsenetDownloader(downloader.type) &&
+                    downloader.type !== "realdebrid" &&
+                    downloader.downloadPath && (
+                      <Badge variant="outline">Path: {downloader.downloadPath}</Badge>
+                    )}
                   {downloader.category && (
                     <Badge variant="outline">Category: {downloader.category}</Badge>
                   )}
@@ -652,8 +751,8 @@ export default function DownloadersPage() {
               <CardTitle>No Downloaders Configured</CardTitle>
               <CardDescription>
                 Add your first downloader client to enable automated downloads. Supported clients
-                include Transmission, rTorrent, qBittorrent, Synology Download Station, SABnzbd, and
-                NZBGet.
+                include Transmission, rTorrent, qBittorrent, Synology Download Station, Real-Debrid,
+                SABnzbd, and NZBGet.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -665,12 +764,20 @@ export default function DownloadersPage() {
         )}
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setRealDebridAuth(null);
+        }}
+      >
         <DialogContent className="w-full md:max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingDownloader ? "Edit Downloader" : "Add Downloader"}</DialogTitle>
             <DialogDescription>
-              Configure a torrent or Usenet client for automated game downloads.
+              {isRealDebrid
+                ? "Link Real-Debrid with its account authorization flow, then choose a local path for QuestarrNG to stage completed files."
+                : "Configure a torrent or Usenet client for automated game downloads."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -720,6 +827,20 @@ export default function DownloadersPage() {
 
                           field.onChange(nextType);
 
+                          if (nextType === "realdebrid") {
+                            form.setValue("url", "https://api.real-debrid.com/rest/1.0");
+                            form.setValue("port", undefined);
+                            form.setValue("useSsl", true);
+                            form.setValue("urlPath", "");
+                            form.setValue("username", "");
+                            form.setValue("password", "");
+                            form.setValue("allowInsecureLan", false);
+                            form.setValue("category", "Questarr");
+                          } else if (previousType === "realdebrid") {
+                            form.setValue("url", "");
+                            form.setValue("useSsl", false);
+                          }
+
                           if (
                             nextDefaultPort !== undefined &&
                             (currentPort == null || currentPort === previousDefaultPort)
@@ -763,12 +884,12 @@ export default function DownloadersPage() {
                   control={form.control}
                   name="url"
                   render={({ field }) => (
-                    <FormItem>
-                      <RequiredFormLabel required>Host</RequiredFormLabel>
+                    <FormItem className={cn(isRealDebrid && "hidden")}>
+                      <RequiredFormLabel required={!isRealDebrid}>Host</RequiredFormLabel>
                       <FormControl>
                         <Input
                           placeholder="http://localhost or https://192.168.1.100"
-                          required
+                          required={!isRealDebrid}
                           {...field}
                           data-testid="input-downloader-url"
                         />
@@ -783,7 +904,7 @@ export default function DownloadersPage() {
                     control={form.control}
                     name="port"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className={cn(isRealDebrid && "hidden")}>
                         <FormLabel>Port</FormLabel>
                         <FormControl>
                           <Input
@@ -806,7 +927,12 @@ export default function DownloadersPage() {
                     control={form.control}
                     name="useSsl"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-2">
+                      <FormItem
+                        className={cn(
+                          "flex flex-row items-center justify-between rounded-lg border p-2",
+                          isRealDebrid && "hidden"
+                        )}
+                      >
                         <div className="space-y-0">
                           <FormLabel className="text-sm">Use SSL</FormLabel>
                           <FormDescription className="text-xs">
@@ -895,7 +1021,7 @@ export default function DownloadersPage() {
                   control={form.control}
                   name="urlPath"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className={cn(isRealDebrid && "hidden")}>
                       <FormLabel>URL Path (Optional)</FormLabel>
                       <FormControl>
                         <Input
@@ -924,7 +1050,7 @@ export default function DownloadersPage() {
                   control={form.control}
                   name="username"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className={cn(isRealDebrid && "hidden")}>
                       <RequiredFormLabel
                         required={
                           form.watch("type") === "sabnzbd" || form.watch("type") === "synology"
@@ -977,7 +1103,7 @@ export default function DownloadersPage() {
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className={cn(isRealDebrid && "hidden")}>
                       <RequiredFormLabel
                         required={
                           form.watch("type") === "synology" ||
@@ -1022,7 +1148,11 @@ export default function DownloadersPage() {
                     name="downloadPath"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Download Path (Optional)</FormLabel>
+                        <FormLabel>
+                          {isRealDebrid
+                            ? "QuestarrNG Local Staging Path (Required)"
+                            : "Download Path (Optional)"}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder={
@@ -1030,28 +1160,100 @@ export default function DownloadersPage() {
                                 ? "video/downloads"
                                 : "/home/downloads/games"
                             }
+                            required={isRealDebrid}
                             {...field}
                             value={field.value || ""}
                             data-testid="input-downloader-path"
                           />
                         </FormControl>
-                        {form.watch("type") === "synology" && (
+                        {isRealDebrid ? (
+                          <FormDescription className="text-xs">
+                            This path is on the QuestarrNG server and must be writable by its
+                            process. Real-Debrid completes downloads in the cloud; QuestarrNG copies
+                            the selected files here before importing them. A premium account may be
+                            required for torrent downloads.
+                          </FormDescription>
+                        ) : form.watch("type") === "synology" ? (
                           <FormDescription className="text-xs">
                             Use a shared-folder-relative destination such as{" "}
                             <code>video/downloads</code>; avoid absolute <code>/volume1/...</code>{" "}
                             paths.
                           </FormDescription>
-                        )}
+                        ) : null}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 )}
+                {isRealDebrid && (
+                  <div className="space-y-3 rounded-lg border border-sky-800 bg-sky-950/20 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">Real-Debrid account</p>
+                        <p className="text-xs text-muted-foreground">
+                          {isRealDebridConnected
+                            ? "Connected. Account credentials are stored encrypted by QuestarrNG."
+                            : "Authorize QuestarrNG through Real-Debrid's device sign-in."}
+                        </p>
+                      </div>
+                      {editingDownloader && (
+                        <Button
+                          type="button"
+                          variant={isRealDebridConnected ? "outline" : "default"}
+                          size="sm"
+                          onClick={() => startRealDebridAuthMutation.mutate(editingDownloader.id)}
+                          disabled={startRealDebridAuthMutation.isPending || !!realDebridAuth}
+                        >
+                          {startRealDebridAuthMutation.isPending ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                          )}
+                          {isRealDebridConnected ? "Reconnect" : "Connect account"}
+                        </Button>
+                      )}
+                    </div>
+                    {!editingDownloader && (
+                      <p className="text-xs text-muted-foreground">
+                        Save this downloader first, then open it again to link the account.
+                      </p>
+                    )}
+                    {activeRealDebridAuth && (
+                      <div className="space-y-2 rounded-md bg-background/70 p-3 text-sm">
+                        <p>Open Real-Debrid and enter this one-time code:</p>
+                        <p className="font-mono text-lg font-bold tracking-widest">
+                          {activeRealDebridAuth.userCode}
+                        </p>
+                        <a
+                          className="inline-flex items-center gap-1 text-sky-300 underline"
+                          href={activeRealDebridAuth.verificationUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open device authorization
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <p className="text-xs text-muted-foreground">
+                          QuestarrNG checks for approval automatically. This code expires after
+                          about 30 minutes.
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setRealDebridAuth(null)}
+                        >
+                          Cancel account linking
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <FormField
                   control={form.control}
                   name="category"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className={cn(isRealDebrid && "hidden")}>
                       <FormLabel>Category</FormLabel>
                       <FormControl>
                         <Input
@@ -1268,24 +1470,34 @@ export default function DownloadersPage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={async () => {
-                    const isValid = await form.trigger();
-                    if (!isValid) {
-                      return;
-                    }
-
-                    const formData = form.getValues();
-                    testConnectionMutation.mutate({ formData });
-                  }}
-                  disabled={testingDownloaderId !== null}
-                  data-testid="button-test-connection-dialog"
-                >
-                  <Activity className="h-4 w-4 mr-2" />
-                  {testingDownloaderId === "new" ? "Testing..." : "Test Connection"}
-                </Button>
+                {!isRealDebrid ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={async () => {
+                      const isValid = await form.trigger();
+                      if (!isValid) return;
+                      testConnectionMutation.mutate({ formData: form.getValues() });
+                    }}
+                    disabled={testingDownloaderId !== null}
+                    data-testid="button-test-connection-dialog"
+                  >
+                    <Activity className="h-4 w-4 mr-2" />
+                    {testingDownloaderId === "new" ? "Testing..." : "Test Connection"}
+                  </Button>
+                ) : editingDownloader && isRealDebridConnected ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => testConnectionMutation.mutate({ id: editingDownloader.id })}
+                    disabled={testingDownloaderId !== null}
+                  >
+                    <Activity className="h-4 w-4 mr-2" />
+                    {testingDownloaderId === editingDownloader.id
+                      ? "Testing..."
+                      : "Test Connection"}
+                  </Button>
+                ) : null}
                 <Button
                   type="submit"
                   disabled={addMutation.isPending || updateMutation.isPending}

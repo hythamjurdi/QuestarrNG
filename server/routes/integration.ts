@@ -1,9 +1,16 @@
 import { Router, type Request, type Response } from "express";
-import { createReadStream, promises as fs, readFileSync } from "node:fs";
+import {
+  constants as fsConstants,
+  createReadStream,
+  promises as fs,
+  readFileSync,
+  type Stats,
+} from "node:fs";
 import path from "node:path";
 import { z } from "zod";
 import { createHash } from "node:crypto";
-import { TarArchive, type ArchiverError } from "archiver";
+import { TarArchive } from "archiver";
+
 import { storage } from "../storage.js";
 import { routesLogger as logger } from "../logger.js";
 import { igdbClient, matchesCatalogMetadataFilters, type CatalogSearchCursor } from "../igdb.js";
@@ -15,6 +22,8 @@ import { quickAddGameByTitle } from "../game-quick-add.js";
 // game-quick-add.ts.
 import { GAME_STATUSES, type Game } from "../../shared/schema.js";
 import { getContentFilterFlags, excludeFilteredContent } from "../content-filter.js";
+import { config } from "../config.js";
+import { steamService } from "../steam.js";
 
 const { version: APP_VERSION } = JSON.parse(
   readFileSync(path.resolve(process.cwd(), "package.json"), "utf-8")
@@ -104,6 +113,19 @@ const catalogSearchIdentity = (
   genre?: string,
   releaseYear?: number
 ) => `${query}:${platformIds.join(",")}:${genre?.toLocaleLowerCase() ?? ""}:${releaseYear ?? ""}`;
+const safeArchiveBaseName = (value: string) => {
+  const cleaned = Array.from(value, (character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return /[\\/:*?"<>|]/.test(character) || codePoint < 0x20 || codePoint === 0x7f
+      ? "_"
+      : character;
+  })
+    .join("")
+    .trim()
+    .replace(/[. ]+$/g, "")
+    .slice(0, 100);
+  return cleaned || "game";
+};
 const parseCatalogMetadataFilters = (query: Request["query"]) => {
   const genre = z.string().trim().min(1).max(64).optional().safeParse(query.genre);
   const releaseYear = z.coerce
@@ -157,7 +179,26 @@ const seerrGameSchema = (value: unknown) => {
     platforms: Array.isArray(game.platforms) ? game.platforms : [],
     platformOptions: Array.isArray(game.platformOptions) ? game.platformOptions : [],
     genres: Array.isArray(game.genres) ? game.genres : [],
+    steamAppId:
+      typeof game.steamAppId === "number" && Number.isSafeInteger(game.steamAppId)
+        ? game.steamAppId
+        : null,
+    timeToBeat: null as { hastily?: number; normally?: number; completely?: number } | null,
   };
+};
+
+const withSeerrTimeToBeats = async <T extends { igdbId: number }>(games: T[]) => {
+  if (games.length === 0) return games.map((game) => ({ ...game, timeToBeat: null }));
+  try {
+    const estimates = await igdbClient.getTimeToBeats(games.map((game) => game.igdbId));
+    return games.map((game) => ({
+      ...game,
+      timeToBeat: estimates.get(game.igdbId) ?? null,
+    }));
+  } catch (error) {
+    logger.warn({ error }, "SeerrNG time-to-beat lookup failed");
+    return games.map((game) => ({ ...game, timeToBeat: null }));
+  }
 };
 
 const seerrGameDetailSchema = (value: unknown) => {
@@ -261,6 +302,7 @@ const getSeerrRequest = async (userId: string, externalRequestId: string) => {
         operatingSystem: ledger.operatingSystem,
         architecture: ledger.architecture,
       },
+      identity: ledger.igdbId ? { catalogProvider: "igdb", catalogId: ledger.igdbId } : undefined,
       actions: {
         retry: ledger.status === "failed",
         cancel: false,
@@ -316,8 +358,8 @@ const getSeerrRequest = async (userId: string, externalRequestId: string) => {
     title: game.title,
     game: { id: game.id, title: game.title, status: game.status },
     variant: game.seerrVariant ?? undefined,
-    identity: Number.isSafeInteger(game.igdbId)
-      ? { catalogProvider: "igdb", catalogId: game.igdbId }
+    identity: Number.isSafeInteger(ledger?.igdbId ?? game.igdbId)
+      ? { catalogProvider: "igdb", catalogId: ledger?.igdbId ?? game.igdbId }
       : undefined,
     actions: {
       retry: status === "failed",
@@ -345,12 +387,14 @@ integrationRouter.get("/seerrng/v1/ping", (_req: Request, res: Response) => {
     version: APP_VERSION,
     apiVersion: 1,
     requestContractVersion: INTEGRATION_API_VERSION,
+
     capabilities: {
       catalog: true,
       pcAcquisition: true,
       emulationAcquisition: false,
       requestActions: { retry: true, cancel: true },
       assetStreaming: true,
+      assetBundles: true,
     },
   });
 });
@@ -362,7 +406,8 @@ integrationRouter.get("/seerrng/v1/catalog/search", async (req: Request, res: Re
     return res.status(400).json({ error: "A valid search query and limit are required." });
   }
   try {
-    return res.json((await igdbClient.searchGames(query, limit.data)).map(seerrGameSchema));
+    const games = (await igdbClient.searchGames(query, limit.data)).map(seerrGameSchema);
+    return res.json(await withSeerrTimeToBeats(games));
   } catch (error) {
     logger.error({ error }, "SeerrNG catalog search failed");
     return res.status(502).json({ error: "IGDB catalog search failed." });
@@ -400,7 +445,7 @@ integrationRouter.get("/seerrng/v1/catalog/search-page", async (req: Request, re
       filters
     );
     return res.json({
-      results: page.results.map(seerrGameSchema),
+      results: await withSeerrTimeToBeats(page.results.map(seerrGameSchema)),
       nextCursor: page.cursor ? encodeCatalogCursor(page.cursor, identity) : null,
     });
   } catch (error) {
@@ -413,7 +458,8 @@ integrationRouter.get("/seerrng/v1/catalog/popular", async (req: Request, res: R
   const limit = catalogLimitSchema.safeParse(req.query.limit ?? 20);
   if (!limit.success) return res.status(400).json({ error: "Invalid result limit." });
   try {
-    return res.json((await igdbClient.getPopularGames(limit.data)).map(seerrGameSchema));
+    const games = (await igdbClient.getPopularGames(limit.data)).map(seerrGameSchema);
+    return res.json(await withSeerrTimeToBeats(games));
   } catch (error) {
     logger.error({ error }, "SeerrNG popular catalog fetch failed");
     return res.status(502).json({ error: "IGDB catalog is unavailable." });
@@ -439,7 +485,7 @@ integrationRouter.get("/seerrng/v1/catalog/popular-page", async (req: Request, r
     if (platformIds.length === 0 && !filters.genre && !filters.releaseYear) {
       const games = await igdbClient.getPopularGames(limit.data + 1, offset.data);
       return res.json({
-        results: games.slice(0, limit.data).map(seerrGameSchema),
+        results: await withSeerrTimeToBeats(games.slice(0, limit.data).map(seerrGameSchema)),
         nextOffset:
           games.length > limit.data && offset.data + limit.data <= 10000
             ? offset.data + limit.data
@@ -467,7 +513,7 @@ integrationRouter.get("/seerrng/v1/catalog/popular-page", async (req: Request, r
       if (!hasMore || games.length >= limit.data) break;
     }
     return res.json({
-      results: games.map(seerrGameSchema),
+      results: await withSeerrTimeToBeats(games.map(seerrGameSchema)),
       nextOffset: hasMore && currentOffset <= 10000 ? currentOffset : null,
     });
   } catch (error) {
@@ -504,7 +550,7 @@ integrationRouter.get("/seerrng/v1/catalog/games/:igdbId", async (req: Request, 
         ? await igdbClient.getGameById(igdbId, true)
         : await igdbClient.getGameByIdForPlatform(igdbId, platformId, true);
     if (!game) return res.status(404).json({ error: "Game not found." });
-    const detail = seerrGameDetailSchema(game);
+    const [detail] = await withSeerrTimeToBeats([seerrGameDetailSchema(game)]);
     if (platformId === undefined) return res.json(detail);
     return res.json({
       ...detail,
@@ -518,15 +564,41 @@ integrationRouter.get("/seerrng/v1/catalog/games/:igdbId", async (req: Request, 
 
 integrationRouter.get("/seerrng/v1/library/lookup", async (req: Request, res: Response) => {
   const igdbIds = parseCatalogPlatformIds(req.query.igdbIds);
-  if (!igdbIds || igdbIds.length === 0) {
-    return res.status(400).json({ error: "Provide up to 100 IGDB IDs." });
+  const steamAppIds = (() => {
+    const raw = req.query.steamAppIds;
+    if (raw === undefined) return [];
+    if (typeof raw !== "string" || raw.length > 1200) return null;
+    const parts = raw.split(",");
+    if (parts.length > 100) return null;
+    const values = parts.map((part) => Number(part));
+    if (values.some((value) => !Number.isSafeInteger(value) || value <= 0)) return null;
+    return Array.from(new Set(values));
+  })();
+  if (!igdbIds || igdbIds.length === 0 || steamAppIds === null) {
+    return res.status(400).json({ error: "Provide up to 100 IGDB IDs and Steam App IDs." });
   }
   try {
     const games = await storage.getUserGamesByIgdbIds(req.user!.id, igdbIds);
     const filterFlags = await getContentFilterFlags(req.user!.id);
     const visibleGames = excludeFilteredContent(games, filterFlags);
+    const steamUser =
+      config.steam.apiKey && steamAppIds.length > 0 ? await storage.getUser(req.user!.id) : null;
+    const ownedAppIds =
+      config.steam.apiKey && steamUser?.steamId64 && steamAppIds.length > 0
+        ? await steamService.getOwnedGameAppIds(config.steam.apiKey, steamUser.steamId64)
+        : null;
     return res.json({
-      games: visibleGames.map((game) => ({ igdbId: game.igdbId, status: game.status })),
+      games: await Promise.all(
+        visibleGames.map(async (game) => ({
+          igdbId: game.igdbId,
+          status: game.status,
+          deliverable: (await getSeerrAssets(req.user!.id, game.id)).length > 0,
+        }))
+      ),
+      steamGames: steamAppIds.map((steamAppId) => ({
+        steamAppId,
+        owned: ownedAppIds ? ownedAppIds.has(steamAppId) : null,
+      })),
     });
   } catch (error) {
     logger.error({ error }, "SeerrNG library lookup failed");
@@ -552,11 +624,12 @@ integrationRouter.post("/seerrng/v1/requests", async (req: Request, res: Respons
         const sameRequest =
           ledger.title === title &&
           ledger.operatingSystem === variant.operatingSystem &&
-          ledger.architecture === variant.architecture;
+          ledger.architecture === variant.architecture &&
+          (ledger.igdbId ?? null) === (igdbId ?? null);
         if (!sameRequest) {
           return res
             .status(409)
-            .json({ error: "externalRequestId is already bound to a different request." });
+            .json({ error: "externalRequestId is already bound to a different request identity." });
         }
         const existingGame = await findSeerrGame(req.user!.id, externalRequestId);
         if (
@@ -576,12 +649,18 @@ integrationRouter.post("/seerrng/v1/requests", async (req: Request, res: Respons
           userId: req.user!.id,
           externalRequestId,
           title,
+          igdbId: igdbId ?? null,
           operatingSystem: variant.operatingSystem,
           architecture: variant.architecture,
         });
       }
       const existing = await findSeerrGame(req.user!.id, externalRequestId);
       if (existing) {
+        if (igdbId && existing.igdbId !== igdbId) {
+          return res
+            .status(409)
+            .json({ error: "The request is already linked to a different IGDB title." });
+        }
         await storage.updateIntegrationRequest(req.user!.id, externalRequestId, {
           gameId: existing.id,
         });
@@ -665,6 +744,7 @@ integrationRouter.post(
         const recovered = await quickAddGameByTitle(req.user!.id, ledger.title, {
           status: "wanted",
           source: "api",
+          ...(ledger.igdbId ? { igdbId: ledger.igdbId } : {}),
           targetOperatingSystem: ledger.operatingSystem,
           targetArchitecture: ledger.architecture,
           seerrExternalRequestId: externalRequestId.data,
@@ -874,6 +954,7 @@ integrationRouter.get(
     if (!game) return res.status(404).json({ error: "Request not found." });
     try {
       const assets = await getSeerrAssets(req.user!.id, game.id);
+      const bundleSupported = assets.length > 1;
       return res.json({
         assets: assets.map(({ id, name, size }) => ({
           id,
@@ -881,8 +962,13 @@ integrationRouter.get(
           size,
           url: `/api/integration/seerrng/v1/requests/${encodeURIComponent(externalRequestId.data)}/assets/${encodeURIComponent(id)}`,
         })),
-        bundleSupported: assets.length > 1,
-        ...(assets.length > 1 ? { bundleName: "questarr-assets.tar.gz" } : {}),
+        bundleSupported,
+        ...(bundleSupported
+          ? {
+              bundleName: `${safeArchiveBaseName(game.title)}.tar.gz`,
+              bundleUrl: `/api/integration/seerrng/v1/requests/${encodeURIComponent(externalRequestId.data)}/assets/bundle`,
+            }
+          : {}),
       });
     } catch (error) {
       logger.error({ error }, "SeerrNG software assets lookup failed");
@@ -899,51 +985,81 @@ integrationRouter.get(
     const game = await findSeerrGame(req.user!.id, externalRequestId.data);
     if (!game) return res.status(404).json({ error: "Request not found." });
 
+    const opened: Array<{
+      name: string;
+      handle: Awaited<ReturnType<typeof fs.open>>;
+      stats: Stats;
+      modifiedAt: Date;
+    }> = [];
     try {
       const assets = await getSeerrAssets(req.user!.id, game.id);
-      if (assets.length < 2) {
+      const config = await storage.getImportConfig(req.user!.id);
+      const libraryRoot = await fs.realpath(config.libraryRoot);
+      const usedNames = new Set<string>();
+      for (const asset of assets) {
+        try {
+          const realPath = await fs.realpath(asset.path);
+          if (!isContainedPath(realPath, libraryRoot)) continue;
+          const handle = await fs.open(
+            realPath,
+            fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0)
+          );
+          const stat = await handle.stat();
+          if (!stat.isFile()) {
+            await handle.close();
+            continue;
+          }
+          const entryName = safeArchiveEntryName(asset.name, opened.length, usedNames);
+          opened.push({ name: entryName, handle, stats: stat, modifiedAt: stat.mtime });
+        } catch {
+          // Files removed or replaced while the bundle was being prepared are skipped.
+        }
+      }
+      if (opened.length < 2) {
+        await Promise.all(opened.map(({ handle }) => handle.close().catch(() => undefined)));
         return res
           .status(409)
-          .json({ error: "At least two deliverable assets are required for a bundle." });
+          .json({ error: "At least two deliverable files are needed for a bundle." });
       }
 
+      const safeTitle = safeArchiveBaseName(game.title);
+      const filename = `${safeTitle}.tar.gz`;
       res.set({
         "Content-Type": "application/gzip",
-        "Content-Disposition": "attachment; filename*=UTF-8''questarr-assets.tar.gz",
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
       });
-      const archive = new TarArchive({ gzip: true, gzipOptions: { level: 6 } });
-      archive.on("warning", (error: ArchiverError) => {
+      const output = new TarArchive({ gzip: true, gzipOptions: { level: 1 } });
+      output.on("error", (error: Error) => {
         logger.warn(
           { error, externalRequestId: externalRequestId.data },
-          "SeerrNG asset bundle warning"
+          "SeerrNG bundle stream failed"
         );
+        if (res.headersSent) res.destroy(error);
+        else res.status(500).end();
       });
-      archive.on("error", (error: ArchiverError) => {
-        logger.error(
-          { error, externalRequestId: externalRequestId.data },
-          "SeerrNG asset bundle failed"
-        );
-        if (!res.headersSent) res.status(500).json({ error: "Assets could not be bundled." });
-        else res.destroy(error);
+      res.on("close", () => {
+        if (!res.writableEnded) output.abort();
       });
-
-      archive.pipe(res);
-      const usedNames = new Set<string>();
-      assets.forEach((asset, index) => {
-        archive.append(createReadStream(asset.path), {
-          name: safeArchiveEntryName(asset.name, index, usedNames),
-          date: new Date(0),
+      output.pipe(res.status(200));
+      for (const entry of opened) {
+        output.append(entry.handle.createReadStream(), {
+          name: entry.name,
+          stats: entry.stats,
+          date: entry.modifiedAt,
         });
-      });
-      await archive.finalize();
+      }
+      void output.finalize().catch((error: unknown) => output.emit("error", error));
       return undefined;
     } catch (error) {
+      await Promise.all(opened.map(({ handle }) => handle.close().catch(() => undefined)));
       logger.error(
         { error, externalRequestId: externalRequestId.data },
-        "SeerrNG software asset bundle failed"
+        "SeerrNG bundle could not be prepared"
       );
-      if (!res.headersSent) return res.status(500).json({ error: "Assets could not be bundled." });
-      return res.destroy(error as Error);
+      if (res.headersSent) return res.destroy(error as Error);
+      return res.status(500).json({ error: "Files could not be bundled." });
     }
   }
 );

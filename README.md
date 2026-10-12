@@ -114,10 +114,11 @@ Questarr restarts during a handoff before recording its download, it pauses the
 request for a duplicate-download check before retrying or cancelling. The retry
 or cancel endpoint returns `409` with `confirmationRequired` until the caller
 checks the download queue/history and sends `confirmNoExistingDownload: true`.
-QuestarrNG 1.9.2 advertises provider contract v2 and supports authenticated,
-request-scoped `.tar.gz` bundles for games with multiple imported files. Single-
-file requests continue using the existing asset stream route. Emulation
-acquisition remains unsupported. See the [compatibility guide](docs/SEERRNG-INTEGRATION.md#current-capability-status).
+QuestarrNG 1.10.0 advertises provider contract v2, preserves exact IGDB request
+identity, and can show verified Steam ownership and community play-time
+estimates. It supports authenticated multi-file bundles and can stage
+Real-Debrid downloads locally before import. Emulation acquisition remains
+unsupported. See the [compatibility guide](docs/SEERRNG-INTEGRATION.md#current-capability-status).
 
 ### Import processing and file safety
 

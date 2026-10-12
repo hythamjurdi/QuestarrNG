@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: QuestarrNG SeerrNG software provider
-  version: "1"
+  version: "2"
   description: |
-    Version 1 of QuestarrNG's provider contract for SeerrNG. SeerrNG owns
+    API v1, request contract v2, for QuestarrNG's SeerrNG provider. SeerrNG owns
     approval, quotas, requester permissions, and requester-facing history.
     QuestarrNG owns PC acquisition and streams registered library assets.
 servers:
@@ -147,9 +147,13 @@ paths:
           in: query
           required: true
           schema: { type: string, example: "42,43" }
+        - name: steamAppIds
+          in: query
+          description: Optional Steam App IDs for a separate public-library ownership check.
+          schema: { type: string, example: "570,440" }
       responses:
         "200":
-          description: Visible games owned by the authenticated QuestarrNG account
+          description: Visible games and deliverability in the authenticated QuestarrNG account
           content:
             application/json:
               schema:
@@ -160,10 +164,20 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [igdbId, status]
+                      required: [igdbId, status, deliverable]
                       properties:
                         igdbId: { type: integer }
                         status: { type: string }
+                        deliverable: { type: boolean }
+                  steamGames:
+                    type: array
+                    description: A null ownership value means QuestarrNG could not verify the profile.
+                    items:
+                      type: object
+                      required: [steamAppId, owned]
+                      properties:
+                        steamAppId: { type: integer, minimum: 1 }
+                        owned: { type: [boolean, "null"] }
   /requests:
     post:
       operationId: submitAcquisitionRequest
@@ -181,7 +195,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/RequestState" }
         "200":
-          description: The same ID, title, and variant were already submitted
+          description: The same ID, catalog identity, title, and variant were already submitted
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RequestState" }
@@ -268,8 +282,28 @@ paths:
                   assets:
                     type: array
                     items: { $ref: "#/components/schemas/Asset" }
-                  bundleSupported: { const: false }
+                  bundleSupported: { type: boolean }
+                  bundleName: { type: string }
+                  bundleUrl: { type: string }
         "404": { $ref: "#/components/responses/Error" }
+  /requests/{externalRequestId}/assets/bundle:
+    parameters:
+      - name: externalRequestId
+        in: path
+        required: true
+        schema: { type: string, minLength: 1, maxLength: 255 }
+    get:
+      operationId: streamRequestBundle
+      summary: Stream the request's registered files as a gzip-compressed TAR archive
+      responses:
+        "200":
+          description: Request-scoped archive stream, proxied by SeerrNG
+          headers:
+            Cache-Control: { schema: { const: no-store } }
+          content:
+            application/gzip: { schema: { type: string, format: binary } }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
   /requests/{externalRequestId}/assets/{assetId}:
     parameters:
       - name: externalRequestId
@@ -324,7 +358,7 @@ components:
         service: { const: QuestarrNG }
         version: { type: string }
         apiVersion: { const: 1 }
-        requestContractVersion: { const: 1 }
+        requestContractVersion: { const: 2 }
         capabilities:
           type: object
           required: [catalog, pcAcquisition, emulationAcquisition, requestActions, assetStreaming]
@@ -339,6 +373,7 @@ components:
                 retry: { type: boolean }
                 cancel: { type: boolean }
             assetStreaming: { type: boolean }
+            assetBundles: { type: boolean }
     Variant:
       type: object
       required: [operatingSystem, architecture]
@@ -351,7 +386,12 @@ components:
       properties:
         externalRequestId: { type: string, minLength: 1, maxLength: 255 }
         title: { type: string, minLength: 1, maxLength: 500 }
-        igdbId: { type: integer, minimum: 1 }
+        igdbId:
+          {
+            type: integer,
+            minimum: 1,
+            description: "Exact IGDB identity retained and checked on request replay.",
+          }
         variant: { $ref: "#/components/schemas/Variant" }
     RequestState:
       type: object
@@ -395,10 +435,30 @@ components:
         platforms: { type: array, items: { type: object } }
         platformOptions: { type: array, items: { type: object } }
         genres: { type: array, items: { type: string } }
+        steamAppId: { type: [integer, "null"], minimum: 1 }
+        timeToBeat:
+          oneOf:
+            - type: "null"
+            - type: object
+              properties:
+                hastily:
+                  { type: number, minimum: 0, description: Estimated hours for a hasty completion. }
+                normally:
+                  {
+                    type: number,
+                    minimum: 0,
+                    description: Estimated hours for a normal completion.,
+                  }
+                completely:
+                  {
+                    type: number,
+                    minimum: 0,
+                    description: Estimated hours for a complete playthrough.,
+                  }
         rating: { type: [number, "null"] }
-        publishers: { type: array, items: { type: object } }
-        developers: { type: array, items: { type: object } }
-        screenshots: { type: array, items: { type: object } }
+        publishers: { type: array, items: { type: string } }
+        developers: { type: array, items: { type: string } }
+        screenshots: { type: array, items: { type: string } }
         videos:
           type: array
           items:

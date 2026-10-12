@@ -257,4 +257,40 @@ describe("steamService", () => {
       expect(result[0]?.unlockedAt).toBeNull();
     });
   });
+
+  describe("getOwnedGameAppIds", () => {
+    const steamId = "76561198000000001";
+
+    it("returns owned Steam App IDs from the public library", async () => {
+      vi.mocked(safeFetch).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          response: { game_count: 2, games: [{ appid: 570 }, { appid: 440 }] },
+        }),
+      } as Response);
+
+      const owned = await steamService.getOwnedGameAppIds("steam-test-key", steamId);
+      expect(owned).toEqual(new Set([570, 440]));
+      expect(safeFetch).toHaveBeenCalledWith(
+        expect.stringContaining("IPlayerService/GetOwnedGames/v1/"),
+        { requireHttps: true }
+      );
+      const requestedUrl = new URL(vi.mocked(safeFetch).mock.calls[0]![0] as string);
+      expect(requestedUrl.searchParams.get("steamid")).toBe(steamId);
+      expect(requestedUrl.searchParams.get("include_played_free_games")).toBe("1");
+    });
+
+    it("returns unknown instead of an empty library when the profile is private", async () => {
+      vi.mocked(safeFetch).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ response: {} }),
+      } as Response);
+
+      await expect(
+        steamService.getOwnedGameAppIds("steam-test-key", "76561198000000002")
+      ).resolves.toBeNull();
+    });
+  });
 });
