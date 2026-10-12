@@ -123,7 +123,7 @@ jobs:
             -p 127.0.0.1:15000:5000 \
             -v questarrng-smoke-data:/app/data \
             "$IMAGE"
-          for attempt in $(seq 1 45); do
+          for _ in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:15000/api/health >/dev/null; then
               break
             fi
@@ -151,7 +151,7 @@ jobs:
             -p 127.0.0.1:15001:5000 \
             -v questarrng-rootless-smoke-data:/app/data \
             "$IMAGE"
-          for attempt in $(seq 1 45); do
+          for _ in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:15001/api/health >/dev/null; then
               break
             fi
@@ -448,10 +448,12 @@ jobs:
             exit 1
           }
 
-          echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
-          echo "previous_tag=$previous_tag" >> "$GITHUB_OUTPUT"
-          echo "release_date=$release_date" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          {
+            echo "release_sha=$release_sha"
+            echo "previous_tag=$previous_tag"
+            echo "release_date=$release_date"
+            echo "version=$version"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: step-security/docker-login-action@8c7b695d8738c5699a679ff5254baf0f19f20a94 # v4.6.0
