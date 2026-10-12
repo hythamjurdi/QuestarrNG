@@ -6,7 +6,8 @@ documentation in this repository.
 ## Product and releases
 
 - Product overview and installation: [`README.md`](../README.md)
-- Snapetech fork additions since the upstream baseline:
+- Why QuestarrNG is maintained, how it differs from upstream, and replacement
+  criteria:
   [`docs/FORK_CHANGES.md`](./FORK_CHANGES.md)
 - Download post-processing, RomM routing, and pre-import security scans:
   [`docs/IMPORTS.md`](./IMPORTS.md)
