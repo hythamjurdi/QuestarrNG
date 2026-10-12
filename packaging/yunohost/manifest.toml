@@ -5,7 +5,7 @@ packaging_format = 2
 id = "questarrng"
 name = "QuestarrNG"
 description.en = "Discover, track, and manage a video game collection"
-version = "1.9.2~ynh1"
+version = "1.10.0~ynh1"
 maintainers = ["snapetech"]
 
 [upstream]
@@ -41,8 +41,8 @@ ram.runtime = "1G"
     [resources.sources.main]
     in_subdir = true
     format = "tar.gz"
-    url = "https://github.com/snapetech/QuestarrNG/archive/refs/tags/v1.9.2.tar.gz"
-    sha256 = "0d6ac0d1cef8326689cca1c73f1cd4fa496da79e65583a4074b17b336e6034f3"
+    url = "https://github.com/snapetech/QuestarrNG/archive/refs/tags/v1.10.0.tar.gz"
+    sha256 = "e67e8ea6f48be7962053cf5dba685e87003c6b71db51f3374f98fdc7dc4e1d6f"
     autoupdate.strategy = "latest_github_tag"
 
   [resources.system_user]
