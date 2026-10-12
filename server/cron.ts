@@ -900,13 +900,20 @@ export async function checkDownloadStatus() {
         }
 
         // Match by hash/ID (handle case sensitivity just in case)
-        let remoteDownload = activeDownloadMap.get(download.downloadHash.toLowerCase());
+        // Real-Debrid reaches "downloaded" before its files have been copied
+        // into QuestarrNG's local staging directory. Its per-item status call
+        // starts/resumes that local transfer, so do not let the cloud queue's
+        // completed entry bypass the local staging step.
+        let remoteDownload =
+          downloader.type === "realdebrid"
+            ? undefined
+            : activeDownloadMap.get(download.downloadHash.toLowerCase());
 
         // For Usenet clients (SABnzbd, NZBGet), getAllDownloads() only returns
         // queue items. Once a download finishes it moves to history and disappears
         // from the queue. Fall back to a direct per-item check so history items
         // are found before declaring the download missing.
-        if (!remoteDownload) {
+        if (!remoteDownload || downloader.type === "realdebrid") {
           let individualStatus: Awaited<ReturnType<typeof DownloaderManager.getDownloadStatus>>;
           try {
             // throwOnError so a transient fetch failure surfaces here distinctly

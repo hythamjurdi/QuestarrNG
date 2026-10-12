@@ -1612,6 +1612,12 @@ class IGDBClient {
         .array()
         .catch([])
         .parse(igdbGame.websites ?? []),
+      steamAppId:
+        igdbGame.websites
+          ?.filter((website) => website.category === 13)
+          .map((website) => website.url.match(/store\.steampowered\.com\/app\/(\d+)/i)?.[1])
+          .map((appId) => Number(appId))
+          .find((appId) => Number.isSafeInteger(appId) && appId > 0) ?? null,
       aggregatedRating: igdbGame.aggregated_rating
         ? Math.round(igdbGame.aggregated_rating) / 10
         : undefined,

@@ -63,7 +63,7 @@ services:
               completed downloads. Add a matching entry under Settings -> Path Mappings.
 x-casaos:
   id: com.doezer.questarr
-  version: "1.9.2"
+  version: "1.10.0"
   architectures:
     - amd64
   main: questarr

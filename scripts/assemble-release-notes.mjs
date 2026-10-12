@@ -26,11 +26,17 @@ const head = args.get("--head");
 const input = args.get("--changelog");
 const output = args.get("--output");
 const version = args.get("--version");
+const releaseDate = args.get("--date");
 
 if (!previous || !head || !input || !output) {
   console.error(
-    "Usage: assemble-release-notes.mjs --previous-tag <sha> --head <sha> --changelog <file> --output <file> [--version <version>]"
+    "Usage: assemble-release-notes.mjs --previous-tag <sha> --head <sha> --changelog <file> --output <file> [--version <version>] [--date <YYYY-MM-DD>]"
   );
+  process.exit(2);
+}
+
+if (releaseDate && !/^\d{4}-\d{2}-\d{2}$/.test(releaseDate)) {
+  console.error(`Invalid release date: ${releaseDate}.`);
   process.exit(2);
 }
 
@@ -54,7 +60,7 @@ if (errors.length > 0) {
 }
 
 const changelog = fs.readFileSync(input, "utf8");
-const assembled = injectCuratedNotes(changelog, formatCuratedNotes(notes), version);
+const assembled = injectCuratedNotes(changelog, formatCuratedNotes(notes), version, releaseDate);
 fs.writeFileSync(output, assembled);
 
 console.log(

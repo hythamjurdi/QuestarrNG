@@ -1787,6 +1787,10 @@ describe("API Routes - Extended Coverage", () => {
 
     describe("PATCH /api/downloaders/:id", () => {
       it("should update a synology downloader", async () => {
+        vi.mocked(storage.getDownloader).mockResolvedValue({
+          id: "dl-synology",
+          type: "synology",
+        } as unknown as Downloader);
         vi.mocked(storage.updateDownloader).mockResolvedValue({
           id: "dl-synology",
           type: "synology",

@@ -467,6 +467,9 @@ export const integrationRequests = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     externalRequestId: text("external_request_id").notNull(),
+    // Exact IGDB identity supplied by SeerrNG. Kept nullable for requests
+    // created by older clients that only sent a title.
+    igdbId: integer("igdb_id"),
     gameId: text("game_id").references(() => games.id, { onDelete: "set null" }),
     downloadId: text("download_id").references(() => gameDownloads.id, { onDelete: "set null" }),
     title: text("title").notNull(),

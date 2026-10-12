@@ -19,6 +19,13 @@ vi.mock("../ssrf.js", () => ({
 }));
 
 vi.mock("../logger.js", () => ({
+  logger: {
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    child: vi.fn(() => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() })),
+  },
   downloadersLogger: {
     debug: vi.fn(),
     error: vi.fn(),

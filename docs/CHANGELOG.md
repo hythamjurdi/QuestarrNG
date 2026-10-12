@@ -8,6 +8,26 @@ Discord announcement while this file remains the chronological changelog.
 For a reader-oriented summary of the Snapetech fork's additions since the
 upstream baseline, see [What changed in QuestarrNG](FORK_CHANGES.md).
 
+## [1.10.0] - 2026-10-12
+
+### User-facing changes
+
+#### Changed
+
+- **Integrations:** SeerrNG can show verified Steam-library ownership and community play-time estimates; requests retain exact IGDB identity, distinguish local files from ownership, offer multi-file archives, and stage Real-Debrid downloads locally before import.
+
+## [1.9.3] - 2026-10-11
+
+### User-facing changes
+
+#### Changed
+
+- **Release Pipeline:** QuestarrNG CI now records source-bound receipts for the full test suite and both Node build runners. Final CI reconciliation requires all three results to come from the same workflow attempt, source snapshot, and test inventory.
+
+#### Fixed
+
+- **Validation:** Validation CI now isolates nested contract fixtures from GitHub runner source metadata and pins its receipt download action correctly, allowing valid source-bound results to be reconciled.
+
 ## [1.9.2] - 2026-10-06
 
 ### User-facing changes

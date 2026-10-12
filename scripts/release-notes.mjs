@@ -287,13 +287,23 @@ export function formatCaptureMetadata(notes) {
   return lines.join("\n");
 }
 
-export function injectCuratedNotes(changelog, curatedNotes, version) {
+export function injectCuratedNotes(changelog, curatedNotes, version, releaseDate) {
   if (!curatedNotes) {
     return changelog;
   }
 
   if (version && !/^\d+\.\d+\.\d+$/.test(version)) {
     throw new Error(`Invalid changelog version: ${version}.`);
+  }
+  if (releaseDate) {
+    const parsedDate = new Date(`${releaseDate}T00:00:00.000Z`);
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(releaseDate) ||
+      Number.isNaN(parsedDate.valueOf()) ||
+      parsedDate.toISOString().slice(0, 10) !== releaseDate
+    ) {
+      throw new Error(`Invalid changelog date: ${releaseDate}.`);
+    }
   }
   let headingIndex = -1;
   let headingLength = 0;
@@ -314,7 +324,15 @@ export function injectCuratedNotes(changelog, curatedNotes, version) {
   }
   if (headingIndex < 0) {
     if (version) {
-      throw new Error(`Changelog is missing the section for version ${version}.`);
+      const date = releaseDate ?? new Date().toISOString().slice(0, 10);
+      const firstReleaseHeading = /^## \[\d+\.\d+\.\d+\]/mu.exec(changelog);
+      const insertionIndex = firstReleaseHeading?.index ?? 0;
+      const introduction = changelog.slice(0, insertionIndex).trimEnd();
+      const existingReleases = changelog.slice(insertionIndex).trim();
+      return [introduction, `## [${version}] - ${date}`, curatedNotes, existingReleases]
+        .filter(Boolean)
+        .join("\n\n")
+        .concat("\n");
     }
     return `${curatedNotes}\n\n${changelog.trim()}\n`;
   }
