@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T23:06:26.801Z",
-  "forkHead": "c7daebcb637d30e3f08a713e9bd1825ece9a156e",
+  "capturedAt": "2026-10-12T23:11:01.337Z",
+  "forkHead": "22a3116d93ab20946c1908afa5b17f8ccd9e1e2a",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -66,7 +66,9 @@
         "evidence": [
           "server/config.ts; server/__tests__/config.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:8"]
+        "dependencies": [
+          "issue:8"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -92,7 +94,9 @@
         "evidence": [
           "shared/schema.ts; client/src/lib/downloads-utils.ts; client/src/pages/downloads.tsx; client/src/hooks/use-background-notifications.ts; docs/pr-evidence/upstream-download-status.png; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:17"]
+        "dependencies": [
+          "issue:17"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -118,7 +122,9 @@
         "evidence": [
           "client/src/lib/utils.ts; client/__tests__/utils.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["pr:5"]
+        "dependencies": [
+          "pr:5"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -138,11 +144,16 @@
         "findings": [
           "The merged upstream payload-filtering change is present in the fork through the shared mapper."
         ],
-        "acceptance": ["Create and collection-add flows use only InsertGame fields."],
+        "acceptance": [
+          "Create and collection-add flows use only InsertGame fields."
+        ],
         "evidence": [
           "client/src/lib/utils.ts; client/__tests__/utils.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:4", "issue:18"]
+        "dependencies": [
+          "issue:4",
+          "issue:18"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -168,7 +179,9 @@
         "evidence": [
           ".github/copilot-instructions.md; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["pr:7"]
+        "dependencies": [
+          "pr:7"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -194,7 +207,9 @@
         "evidence": [
           ".github/copilot-instructions.md; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:6"]
+        "dependencies": [
+          "issue:6"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -220,7 +235,11 @@
         "evidence": [
           "server/config.ts; server/db.ts; server/db/connect-postgres.ts; server/__tests__/config.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:2", "issue:14", "issue:16"]
+        "dependencies": [
+          "issue:2",
+          "issue:14",
+          "issue:16"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -237,9 +256,15 @@
       "mergeCommit": null,
       "review": {
         "status": "verified",
-        "findings": ["The TypeScript project excludes example directories."],
-        "acceptance": ["tsconfig.json excludes **/examples/** and npm run check passes."],
-        "evidence": ["tsconfig.json; docs/upstream-resolution/evidence/validation-batch-9.txt"],
+        "findings": [
+          "The TypeScript project excludes example directories."
+        ],
+        "acceptance": [
+          "tsconfig.json excludes **/examples/** and npm run check passes."
+        ],
+        "evidence": [
+          "tsconfig.json; docs/upstream-resolution/evidence/validation-batch-9.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -260,7 +285,9 @@
         "findings": [
           "The aggregated GET /api/indexers/search route searches all enabled indexers."
         ],
-        "acceptance": ["The route returns merged results/errors and has dedicated coverage."],
+        "acceptance": [
+          "The route returns merged results/errors and has dedicated coverage."
+        ],
         "evidence": [
           "server/routes.ts; server/search.ts; server/__tests__/indexers-search.test.ts"
         ],
@@ -290,7 +317,9 @@
         "evidence": [
           "client/src/components/GameCard.tsx; client/src/components/GameDownloadDialog.tsx; client/__tests__/GameCard.remaining.test.tsx; tests/e2e/discover.spec.ts"
         ],
-        "dependencies": ["issue:19"]
+        "dependencies": [
+          "issue:19"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -310,7 +339,9 @@
         "findings": [
           "The qBittorrent client supports authentication, adding torrents, listing status, and details."
         ],
-        "acceptance": ["The client is covered by feature and regression suites."],
+        "acceptance": [
+          "The client is covered by feature and regression suites."
+        ],
         "evidence": [
           "server/downloaders/qbittorrent.ts; server/__tests__/qbittorrent_features.test.ts; server/__tests__/downloaders_qbittorrent_regression.test.ts"
         ],
@@ -360,11 +391,16 @@
         "findings": [
           "Duplicate environment-validation request; the shared Zod config covers IGDB, explicit Postgres selection, DATABASE_URL, and pool size."
         ],
-        "acceptance": ["Configuration validates and keeps SQLite as the safe default."],
+        "acceptance": [
+          "Configuration validates and keeps SQLite as the safe default."
+        ],
         "evidence": [
           "server/config.ts; server/__tests__/config.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:2", "issue:8"]
+        "dependencies": [
+          "issue:2",
+          "issue:8"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -384,11 +420,15 @@
         "findings": [
           "Same global error middleware request as issue #1; the handler is installed and tested."
         ],
-        "acceptance": ["Errors are handled consistently as {error,details}."],
+        "acceptance": [
+          "Errors are handled consistently as {error,details}."
+        ],
         "evidence": [
           "server/middleware.ts; server/index.ts; server/__tests__/security_error_handling.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:1"]
+        "dependencies": [
+          "issue:1"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -408,11 +448,16 @@
         "findings": [
           "Duplicate environment-validation request; the shared Zod config covers IGDB, explicit Postgres selection, DATABASE_URL, and pool size."
         ],
-        "acceptance": ["Configuration validates and keeps SQLite as the safe default."],
+        "acceptance": [
+          "Configuration validates and keeps SQLite as the safe default."
+        ],
         "evidence": [
           "server/config.ts; server/__tests__/config.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:2", "issue:8"]
+        "dependencies": [
+          "issue:2",
+          "issue:8"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -432,11 +477,15 @@
         "findings": [
           "Duplicate of issue #3; the shared DownloadStatus contract is consumed by the client."
         ],
-        "acceptance": ["Client typecheck passes and the page renders after loading."],
+        "acceptance": [
+          "Client typecheck passes and the page renders after loading."
+        ],
         "evidence": [
           "shared/schema.ts; client/src/pages/downloads.tsx; docs/pr-evidence/upstream-download-status.png; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:3"]
+        "dependencies": [
+          "issue:3"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -456,11 +505,16 @@
         "findings": [
           "Duplicate add-game payload filtering request; the shared mapper removes generated and future-state fields."
         ],
-        "acceptance": ["POST requests contain only valid InsertGame data."],
+        "acceptance": [
+          "POST requests contain only valid InsertGame data."
+        ],
         "evidence": [
           "client/src/lib/utils.ts; client/__tests__/utils.test.ts; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:4", "pr:5"]
+        "dependencies": [
+          "issue:4",
+          "pr:5"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -480,11 +534,15 @@
         "findings": [
           "IGDB discovery cards include a Download action that opens the downloader-selection flow."
         ],
-        "acceptance": ["Users can start a download from a discovery game result."],
+        "acceptance": [
+          "Users can start a download from a discovery game result."
+        ],
         "evidence": [
           "client/src/components/GameCard.tsx; client/__tests__/GameCard.remaining.test.tsx; tests/e2e/discover.spec.ts"
         ],
-        "dependencies": ["issue:11"]
+        "dependencies": [
+          "issue:11"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -501,8 +559,12 @@
       "mergeCommit": null,
       "review": {
         "status": "verified",
-        "findings": ["The download details modal and API expose file and tracker information."],
-        "acceptance": ["The details view has files and trackers tabs and the route is covered."],
+        "findings": [
+          "The download details modal and API expose file and tracker information."
+        ],
+        "acceptance": [
+          "The details view has files and trackers tabs and the route is covered."
+        ],
         "evidence": [
           "client/src/components/DownloadDetailsModal.tsx; server/routes.ts; server/__tests__/api_routes.test.ts; client/__tests__/DownloadDetailsModal.test.tsx"
         ],
@@ -549,9 +611,15 @@
       "mergeCommit": null,
       "review": {
         "status": "verified",
-        "findings": ["Indexer settings include a multi-select for Torznab/Newznab categories."],
-        "acceptance": ["Users can load and edit saved indexer categories."],
-        "evidence": ["client/src/pages/indexers.tsx; client/src/components/ui/multi-select.tsx"],
+        "findings": [
+          "Indexer settings include a multi-select for Torznab/Newznab categories."
+        ],
+        "acceptance": [
+          "Users can load and edit saved indexer categories."
+        ],
+        "evidence": [
+          "client/src/pages/indexers.tsx; client/src/components/ui/multi-select.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -569,11 +637,15 @@
       "mergeCommit": null,
       "review": {
         "status": "verified",
-        "findings": ["Indexer rows and the edit/create form expose test-connection actions."],
+        "findings": [
+          "Indexer rows and the edit/create form expose test-connection actions."
+        ],
         "acceptance": [
           "Saved indexers and unsaved configurations can be tested through their corresponding API routes."
         ],
-        "evidence": ["client/src/pages/indexers.tsx; server/routes.ts"],
+        "evidence": [
+          "client/src/pages/indexers.tsx; server/routes.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -649,7 +721,10 @@
         "acceptance": [
           "GET /api/indexers/search aggregates enabled indexers and returns results plus failures."
         ],
-        "evidence": ["server/routes.ts", "server/__tests__/indexers-search.test.ts"],
+        "evidence": [
+          "server/routes.ts",
+          "server/__tests__/indexers-search.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -697,7 +772,9 @@
         "findings": [
           "The library shows collection counts and the Stats page provides the requested library-wide status, genre, and platform summaries."
         ],
-        "acceptance": ["Users can inspect total games and collection breakdowns."],
+        "acceptance": [
+          "Users can inspect total games and collection breakdowns."
+        ],
         "evidence": [
           "client/src/components/Library.tsx",
           "client/src/pages/stats.tsx",
@@ -723,8 +800,13 @@
         "findings": [
           "The Settings page and configuration API expose the app operational settings."
         ],
-        "acceptance": ["Users can open Settings and inspect or update supported configuration."],
-        "evidence": ["client/src/pages/settings.tsx", "server/routes.ts"],
+        "acceptance": [
+          "Users can open Settings and inspect or update supported configuration."
+        ],
+        "evidence": [
+          "client/src/pages/settings.tsx",
+          "server/routes.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -745,8 +827,14 @@
         "findings": [
           "Monitoring is provided by a public liveness endpoint and a separate readiness endpoint that checks database and IGDB connectivity."
         ],
-        "acceptance": ["The service exposes liveness and dependency-aware readiness checks."],
-        "evidence": ["server/routes.ts", "server/__tests__/api_routes.test.ts", "docs/API.md"],
+        "acceptance": [
+          "The service exposes liveness and dependency-aware readiness checks."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/API.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -770,7 +858,10 @@
         "acceptance": [
           "A failed primary downloader does not prevent trying eligible lower-priority clients."
         ],
-        "evidence": ["server/downloaders/manager.ts", "server/__tests__/downloaders.test.ts"],
+        "evidence": [
+          "server/downloaders/manager.ts",
+          "server/__tests__/downloaders.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -791,7 +882,9 @@
         "findings": [
           "Sensitive routes use rate limiting and request sanitization, with regression coverage."
         ],
-        "acceptance": ["Abuse-sensitive endpoints are throttled and untrusted input is sanitized."],
+        "acceptance": [
+          "Abuse-sensitive endpoints are throttled and untrusted input is sanitized."
+        ],
         "evidence": [
           "server/middleware.ts",
           "server/__tests__/middleware.test.ts",
@@ -845,8 +938,13 @@
         "findings": [
           "The broken examples components are absent from the current source tree and TypeScript checks pass."
         ],
-        "acceptance": ["The project typechecks without the old example-component errors."],
-        "evidence": ["tsconfig.json", "npm run check"],
+        "acceptance": [
+          "The project typechecks without the old example-component errors."
+        ],
+        "evidence": [
+          "tsconfig.json",
+          "npm run check"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -867,7 +965,9 @@
         "findings": [
           "Discovery formatting distinguishes untracked games with a null status, while the server insert schema converts missing or null status to wanted before storage."
         ],
-        "acceptance": ["Adding a discovery result without a status stores it as wanted."],
+        "acceptance": [
+          "Adding a discovery result without a status stores it as wanted."
+        ],
         "evidence": [
           "server/igdb.ts",
           "server/routes.ts",
@@ -896,8 +996,13 @@
         "findings": [
           "IGDB search sanitizes and bounds queries and caps phrase and word search at five attempts."
         ],
-        "acceptance": ["A long or multiword query cannot trigger unbounded fallback requests."],
-        "evidence": ["server/igdb.ts", "server/__tests__/igdb.test.ts"],
+        "acceptance": [
+          "A long or multiword query cannot trigger unbounded fallback requests."
+        ],
+        "evidence": [
+          "server/igdb.ts",
+          "server/__tests__/igdb.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -978,7 +1083,11 @@
         "acceptance": [
           "Unused direct packages are absent from package.json and the lockfile root dependency set."
         ],
-        "evidence": ["package.json", "package-lock.json", "server/db/connect-postgres.ts"],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "server/db/connect-postgres.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1030,7 +1139,10 @@
         "acceptance": [
           "Enabled indexers contribute results and failures are reported per indexer."
         ],
-        "evidence": ["server/routes.ts", "server/__tests__/indexers-search.test.ts"],
+        "evidence": [
+          "server/routes.ts",
+          "server/__tests__/indexers-search.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1051,7 +1163,9 @@
         "findings": [
           "Discovery game cards open the download flow and allow the user to choose a result and client."
         ],
-        "acceptance": ["A discovery result can be sent to a configured downloader from its card."],
+        "acceptance": [
+          "A discovery result can be sent to a configured downloader from its card."
+        ],
         "evidence": [
           "client/src/components/CompactGameCard.tsx",
           "client/src/components/GameDownloadDialog.tsx",
@@ -1161,8 +1275,14 @@
         "findings": [
           "Indexer setup supports editing Torznab categories and persists the selection through the API."
         ],
-        "acceptance": ["Saved indexer categories are used for subsequent search."],
-        "evidence": ["client/src/pages/indexers.tsx", "server/routes.ts", "shared/schema.ts"],
+        "acceptance": [
+          "Saved indexer categories are used for subsequent search."
+        ],
+        "evidence": [
+          "client/src/pages/indexers.tsx",
+          "server/routes.ts",
+          "shared/schema.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1183,7 +1303,9 @@
         "findings": [
           "Each indexer has a Test connection action backed by the indexer test endpoint."
         ],
-        "acceptance": ["The user can test a configured indexer and see the result."],
+        "acceptance": [
+          "The user can test a configured indexer and see the result."
+        ],
         "evidence": [
           "client/src/pages/indexers.tsx",
           "server/routes.ts",
@@ -1212,7 +1334,10 @@
         "acceptance": [
           "The production CSS build completes without the PostCSS source-path warning."
         ],
-        "evidence": ["vite.config.ts", "docs/upstream-resolution/evidence/validation-batch-10.txt"],
+        "evidence": [
+          "vite.config.ts",
+          "docs/upstream-resolution/evidence/validation-batch-10.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1236,7 +1361,11 @@
         "acceptance": [
           "Production logs are structured and configurable without leaking credentials."
         ],
-        "evidence": ["server/logger.ts", "server/__tests__/logger.test.ts", "server/security.ts"],
+        "evidence": [
+          "server/logger.ts",
+          "server/__tests__/logger.test.ts",
+          "server/security.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1257,7 +1386,9 @@
         "findings": [
           "This duplicate health-check request is covered by the liveness/readiness endpoints and their route tests."
         ],
-        "acceptance": ["Monitoring can probe liveness and readiness separately."],
+        "acceptance": [
+          "Monitoring can probe liveness and readiness separately."
+        ],
         "evidence": [
           "server/routes.ts",
           "server/__tests__/api_routes.test.ts",
@@ -1283,8 +1414,13 @@
         "findings": [
           "This duplicate rate-limit and sanitization request is covered by shared middleware and route tests."
         ],
-        "acceptance": ["Sensitive routes reject or throttle abusive and malformed input."],
-        "evidence": ["server/middleware.ts", "server/__tests__/middleware.test.ts"],
+        "acceptance": [
+          "Sensitive routes reject or throttle abusive and malformed input."
+        ],
+        "evidence": [
+          "server/middleware.ts",
+          "server/__tests__/middleware.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1334,8 +1470,13 @@
         "findings": [
           "The former example components are absent and the project TypeScript check passes."
         ],
-        "acceptance": ["The examples no longer break typechecking."],
-        "evidence": ["tsconfig.json", "npm run check"],
+        "acceptance": [
+          "The examples no longer break typechecking."
+        ],
+        "evidence": [
+          "tsconfig.json",
+          "npm run check"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1386,7 +1527,10 @@
         "acceptance": [
           "The manager tries eligible clients in configured priority order after a failure."
         ],
-        "evidence": ["server/downloaders/manager.ts", "server/__tests__/downloaders.test.ts"],
+        "evidence": [
+          "server/downloaders/manager.ts",
+          "server/__tests__/downloaders.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1407,7 +1551,9 @@
         "findings": [
           "The project has comprehensive server, client, and browser test suites covering API and IGDB behavior."
         ],
-        "acceptance": ["The combined suite passes with the current regression coverage."],
+        "acceptance": [
+          "The combined suite passes with the current regression coverage."
+        ],
         "evidence": [
           "server/__tests__/igdb.test.ts",
           "server/__tests__/api_routes.test.ts",
@@ -1433,7 +1579,9 @@
         "findings": [
           "Collection summaries and the Stats page show game totals and the requested status, genre, and platform breakdowns."
         ],
-        "acceptance": ["Users can inspect the overall collection and its categorical breakdowns."],
+        "acceptance": [
+          "Users can inspect the overall collection and its categorical breakdowns."
+        ],
         "evidence": [
           "client/src/components/Library.tsx",
           "client/src/pages/stats.tsx",
@@ -1486,8 +1634,13 @@
         "findings": [
           "The Settings page provides the requested configuration surface and API integration."
         ],
-        "acceptance": ["Users can inspect and manage supported settings."],
-        "evidence": ["client/src/pages/settings.tsx", "server/routes.ts"],
+        "acceptance": [
+          "Users can inspect and manage supported settings."
+        ],
+        "evidence": [
+          "client/src/pages/settings.tsx",
+          "server/routes.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1539,7 +1692,11 @@
         "acceptance": [
           "Operations can monitor process liveness and database/IGDB readiness with distinct endpoints."
         ],
-        "evidence": ["server/routes.ts", "server/__tests__/api_routes.test.ts", "docs/API.md"],
+        "evidence": [
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/API.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1560,7 +1717,9 @@
         "findings": [
           "This closed PR has no changed files; its indexer connection-test request is implemented by merged PR #85 and is present in the current UI and API."
         ],
-        "acceptance": ["An indexer can be tested from its configuration row."],
+        "acceptance": [
+          "An indexer can be tested from its configuration row."
+        ],
         "evidence": [
           "client/src/pages/indexers.tsx",
           "server/routes.ts",
@@ -1586,7 +1745,9 @@
         "findings": [
           "This closed WIP PR has no changed files; the discovery download flow was completed by merged PR #87 and is present in current discovery cards."
         ],
-        "acceptance": ["A discovery result can be sent to a configured downloader."],
+        "acceptance": [
+          "A discovery result can be sent to a configured downloader."
+        ],
         "evidence": [
           "client/src/components/CompactGameCard.tsx",
           "client/src/components/GameDownloadDialog.tsx"
@@ -1611,7 +1772,9 @@
         "findings": [
           "This closed WIP PR has no changed files; background download notifications were completed by merged PR #71 and are present in the client hook."
         ],
-        "acceptance": ["Download state changes produce background notifications."],
+        "acceptance": [
+          "Download state changes produce background notifications."
+        ],
         "evidence": [
           "client/src/hooks/use-background-notifications.ts",
           "client/__tests__/use-background-notifications.test.ts"
@@ -1633,8 +1796,12 @@
       "mergeCommit": "157ac49f7d3b2e9384645c383d37595b413b1437",
       "review": {
         "status": "verified",
-        "findings": ["AddGameModal filters client-only fields from the request before posting."],
-        "acceptance": ["The server receives only game fields allowed by the insert schema."],
+        "findings": [
+          "AddGameModal filters client-only fields from the request before posting."
+        ],
+        "acceptance": [
+          "The server receives only game fields allowed by the insert schema."
+        ],
         "evidence": [
           "client/src/components/AddGameModal.tsx",
           "client/__tests__/AddGameModal.test.tsx"
@@ -1659,11 +1826,16 @@
         "findings": [
           "The later Copilot-instructions PR request is met by the maintained QuestarrNG-specific instruction file."
         ],
-        "acceptance": ["The file reflects current architecture and validation practices."],
+        "acceptance": [
+          "The file reflects current architecture and validation practices."
+        ],
         "evidence": [
           ".github/copilot-instructions.md; docs/upstream-resolution/evidence/validation-batch-9.txt"
         ],
-        "dependencies": ["issue:6", "pr:7"]
+        "dependencies": [
+          "issue:6",
+          "pr:7"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -1683,7 +1855,9 @@
         "findings": [
           "The global Express error handler and route errors use a consistent error/details response shape."
         ],
-        "acceptance": ["API errors expose error and optional details fields."],
+        "acceptance": [
+          "API errors expose error and optional details fields."
+        ],
         "evidence": [
           "server/index.ts",
           "server/routes.ts",
@@ -1737,8 +1911,14 @@
         "findings": [
           "The root dependencies no longer include direct Neon serverless or ws packages."
         ],
-        "acceptance": ["Unused packages are absent from the manifest root dependency set."],
-        "evidence": ["package.json", "package-lock.json", "server/db/connect-postgres.ts"],
+        "acceptance": [
+          "Unused packages are absent from the manifest root dependency set."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "server/db/connect-postgres.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -1759,14 +1939,18 @@
         "findings": [
           "The issue has no body or comments. Merged PR #80 removed the Replit-only artifacts; no Replit-specific source references or tracked config remain."
         ],
-        "acceptance": ["Replit plugins, dependencies, and platform files are removed."],
+        "acceptance": [
+          "Replit plugins, dependencies, and platform files are removed."
+        ],
         "evidence": [
           "package.json",
           "vite.config.ts",
           "client/index.html",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["pr:80"]
+        "dependencies": [
+          "pr:80"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -1796,7 +1980,9 @@
           "client/__tests__/use-background-notifications.test.ts",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:27"]
+        "dependencies": [
+          "issue:27"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -1931,7 +2117,9 @@
         "findings": [
           "The Radix UI package set in the lockfile resolves beyond the versions requested by this grouped update."
         ],
-        "acceptance": ["All grouped Radix UI packages resolve to the requested release or newer."],
+        "acceptance": [
+          "All grouped Radix UI packages resolve to the requested release or newer."
+        ],
         "evidence": [
           "package.json",
           "package-lock.json",
@@ -1966,7 +2154,9 @@
           ".github/dependabot.yml",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["pr:80"]
+        "dependencies": [
+          "pr:80"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -1986,7 +2176,9 @@
         "findings": [
           "drizzle-orm is at 0.45.3 in the manifest and lockfile, beyond the requested 0.44.7 release."
         ],
-        "acceptance": ["drizzle-orm is updated to 0.44.7 or newer."],
+        "acceptance": [
+          "drizzle-orm is updated to 0.44.7 or newer."
+        ],
         "evidence": [
           "package.json",
           "package-lock.json",
@@ -2012,7 +2204,9 @@
         "findings": [
           "@tanstack/react-query is at 5.104.0 or newer in the manifest and lockfile, beyond the requested 5.90.7 release."
         ],
-        "acceptance": ["React Query is updated to 5.90.7 or newer."],
+        "acceptance": [
+          "React Query is updated to 5.90.7 or newer."
+        ],
         "evidence": [
           "package.json",
           "package-lock.json",
@@ -2038,14 +2232,18 @@
         "findings": [
           "Replit Vite plugins, project files, and packages are absent; later cleanup also removed Replit references from tracked application code."
         ],
-        "acceptance": ["The app and build configuration run without Replit platform dependencies."],
+        "acceptance": [
+          "The app and build configuration run without Replit platform dependencies."
+        ],
         "evidence": [
           "package.json",
           "vite.config.ts",
           "client/index.html",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:70"]
+        "dependencies": [
+          "issue:70"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2065,14 +2263,18 @@
         "findings": [
           "The closed issue has no body or comments. The merged sidebar fix adds the Indexers and Downloaders navigation entries."
         ],
-        "acceptance": ["The Indexers page is reachable from the application navigation."],
+        "acceptance": [
+          "The Indexers page is reachable from the application navigation."
+        ],
         "evidence": [
           "client/src/App.tsx",
           "client/src/components/AppSidebar.tsx",
           "client/src/components/navigation-items.ts",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["pr:82"]
+        "dependencies": [
+          "pr:82"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2103,7 +2305,9 @@
           "https://github.com/Doezer/Questarr/pull/82",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:81"]
+        "dependencies": [
+          "issue:81"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2132,7 +2336,10 @@
           "server/__tests__/downloaders.test.ts",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:31", "issue:55"]
+        "dependencies": [
+          "issue:31",
+          "issue:55"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2162,7 +2369,10 @@
           "server/__tests__/middleware.test.ts",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:32", "issue:51"]
+        "dependencies": [
+          "issue:32",
+          "issue:51"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2191,7 +2401,9 @@
           "https://github.com/Doezer/Questarr/pull/85",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:23"]
+        "dependencies": [
+          "issue:23"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2221,7 +2433,10 @@
           "https://github.com/Doezer/Questarr/pull/87",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:42", "pr:63"]
+        "dependencies": [
+          "issue:42",
+          "pr:63"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2251,7 +2466,9 @@
           "https://github.com/Doezer/Questarr/pull/88",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:43"]
+        "dependencies": [
+          "issue:43"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2311,7 +2528,10 @@
           "client/src/pages/indexers.tsx",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["pr:96", "pr:110"]
+        "dependencies": [
+          "pr:96",
+          "pr:110"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2328,8 +2548,12 @@
       "mergeCommit": "fc4809444a49c028de640fc0658e1774db446695",
       "review": {
         "status": "verified",
-        "findings": ["wouter resolves to 3.12.0, beyond the requested 3.7.1 release."],
-        "acceptance": ["wouter is updated to 3.7.1 or newer."],
+        "findings": [
+          "wouter resolves to 3.12.0, beyond the requested 3.7.1 release."
+        ],
+        "acceptance": [
+          "wouter is updated to 3.7.1 or newer."
+        ],
         "evidence": [
           "package.json",
           "package-lock.json",
@@ -2352,8 +2576,12 @@
       "mergeCommit": "08610e606a7bba81a864766046389312f331760b",
       "review": {
         "status": "verified",
-        "findings": ["lucide-react resolves to 1.48.0, beyond the requested 0.554.0 release."],
-        "acceptance": ["lucide-react is updated to 0.554.0 or newer."],
+        "findings": [
+          "lucide-react resolves to 1.48.0, beyond the requested 0.554.0 release."
+        ],
+        "acceptance": [
+          "lucide-react is updated to 0.554.0 or newer."
+        ],
         "evidence": [
           "package.json",
           "package-lock.json",
@@ -2376,8 +2604,12 @@
       "mergeCommit": "0a211b02632e73662fe85c04f9923e6c6b8ebece",
       "review": {
         "status": "verified",
-        "findings": ["framer-motion resolves to 13.5.1, beyond the requested 11.18.2 release."],
-        "acceptance": ["framer-motion is updated to 11.18.2 or newer."],
+        "findings": [
+          "framer-motion resolves to 13.5.1, beyond the requested 11.18.2 release."
+        ],
+        "acceptance": [
+          "framer-motion is updated to 11.18.2 or newer."
+        ],
         "evidence": [
           "package.json",
           "package-lock.json",
@@ -2403,13 +2635,17 @@
         "findings": [
           "The closed issue has no body or comments. The current Deploy Web App workflow supports manual dispatch and publishes images to GHCR."
         ],
-        "acceptance": ["Maintainers can publish a Docker image on demand."],
+        "acceptance": [
+          "Maintainers can publish a Docker image on demand."
+        ],
         "evidence": [
           ".github/workflows/deploy.yml",
           "README.md",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["pr:95"]
+        "dependencies": [
+          "pr:95"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2440,7 +2676,9 @@
           "https://github.com/Doezer/Questarr/pull/95",
           "docs/upstream-resolution/evidence/validation-batch-11.txt"
         ],
-        "dependencies": ["issue:94"]
+        "dependencies": [
+          "issue:94"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2470,7 +2708,9 @@
           "shared/schema.ts",
           "npm run check"
         ],
-        "dependencies": ["pr:110"]
+        "dependencies": [
+          "pr:110"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2548,7 +2788,9 @@
         "findings": [
           "The TypeScript configuration excludes examples directories, and the project typecheck passes."
         ],
-        "acceptance": ["Example code is not included in the application TypeScript compilation."],
+        "acceptance": [
+          "Example code is not included in the application TypeScript compilation."
+        ],
         "evidence": [
           "tsconfig.json",
           "npm run check",
@@ -2603,7 +2845,9 @@
         "findings": [
           "Vite config sets css.postcss.from to undefined; the current production build succeeds."
         ],
-        "acceptance": ["The Vite/PostCSS build does not emit the historical missing-from warning."],
+        "acceptance": [
+          "The Vite/PostCSS build does not emit the historical missing-from warning."
+        ],
         "evidence": [
           "vite.config.ts:22-24",
           "npm run build",
@@ -2686,7 +2930,9 @@
       "mergeCommit": "3257b28b5fa18c6f2a7eebc641ab4d3755ef1adc",
       "review": {
         "status": "verified",
-        "findings": ["The locked react-hook-form version is 7.89.0, beyond the requested 7.66.1."],
+        "findings": [
+          "The locked react-hook-form version is 7.89.0, beyond the requested 7.66.1."
+        ],
         "acceptance": [
           "The requested patch update is included and superseded by a newer compatible locked release."
         ],
@@ -2740,7 +2986,9 @@
       "mergeCommit": "7e870fa64f3d05d5e953f01308e84a1d13008875",
       "review": {
         "status": "verified",
-        "findings": ["The locked express-validator version is 7.3.2, beyond the requested 7.3.1."],
+        "findings": [
+          "The locked express-validator version is 7.3.2, beyond the requested 7.3.1."
+        ],
         "acceptance": [
           "The requested patch update is included and superseded by a newer compatible locked release."
         ],
@@ -2766,7 +3014,9 @@
       "mergeCommit": "d9d40826a9f5d422285873948c7cf71f5ea520b5",
       "review": {
         "status": "verified",
-        "findings": ["The locked fast-xml-parser version is 5.11.2, beyond the requested 5.3.2."],
+        "findings": [
+          "The locked fast-xml-parser version is 5.11.2, beyond the requested 5.3.2."
+        ],
         "acceptance": [
           "The requested patch update is included and superseded by a newer compatible locked release."
         ],
@@ -2838,7 +3088,9 @@
           "https://github.com/Doezer/Questarr/issues/109",
           "https://github.com/Doezer/Questarr/pull/111"
         ],
-        "dependencies": ["pr:111"]
+        "dependencies": [
+          "pr:111"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2858,7 +3110,9 @@
         "findings": [
           "The current drizzle-zod 0.8.3 migration resolves TypeScript compatibility, and the full-project typecheck passes."
         ],
-        "acceptance": ["The project uses drizzle-zod 0.8.3 with schema types that compile."],
+        "acceptance": [
+          "The project uses drizzle-zod 0.8.3 with schema types that compile."
+        ],
         "evidence": [
           "package.json",
           "package-lock.json",
@@ -2898,7 +3152,9 @@
           "production smoke: GET /api/health, /login, and /activity/imports returned 200",
           "https://github.com/Doezer/Questarr/pull/111"
         ],
-        "dependencies": ["issue:109"]
+        "dependencies": [
+          "issue:109"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -2982,7 +3238,9 @@
         "acceptance": [
           "The requested production structured logging is in place for the listed server modules, with secret-safe log output."
         ],
-        "evidence": ["server/__tests__/logger.test.ts"],
+        "evidence": [
+          "server/__tests__/logger.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3097,7 +3355,11 @@
         "acceptance": [
           "Heuristic IGDB search is bounded to five attempts and the cap is deterministic under tests."
         ],
-        "evidence": ["server/igdb.ts", "server/__tests__/igdb.test.ts", "npm test"],
+        "evidence": [
+          "server/igdb.ts",
+          "server/__tests__/igdb.test.ts",
+          "npm test"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3149,7 +3411,9 @@
         "findings": [
           "The downloader page explains lower-number-is-higher priority and automatic fallback. The backend dispatches through enabled downloaders in priority order and continues when a client fails."
         ],
-        "acceptance": ["Users can understand priority order and automatic fallback behavior."],
+        "acceptance": [
+          "Users can understand priority order and automatic fallback behavior."
+        ],
         "evidence": [
           "client/src/pages/downloaders.tsx",
           "server/routes.ts",
@@ -3249,7 +3513,9 @@
           "server/__tests__/qbittorrent_features.test.ts",
           "https://github.com/Doezer/Questarr/pull/119"
         ],
-        "dependencies": ["pr:119"]
+        "dependencies": [
+          "pr:119"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -3269,8 +3535,13 @@
         "findings": [
           "The lockfile resolves react-hook-form to 7.89.0, above the requested 7.68.0."
         ],
-        "acceptance": ["react-hook-form is at least 7.68.0."],
-        "evidence": ["package.json", "package-lock.json"],
+        "acceptance": [
+          "react-hook-form is at least 7.68.0."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3294,7 +3565,10 @@
         "acceptance": [
           "Each package in the Dependabot group is resolved at its requested version or later."
         ],
-        "evidence": ["package.json", "package-lock.json"],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3315,7 +3589,9 @@
         "findings": [
           "The requested wouter 3.8.1 upgrade is superseded by wouter 3.12.0 in package.json and package-lock.json; the PR has no comments or reviews."
         ],
-        "acceptance": ["The manifest and lockfile resolve wouter to 3.8.1 or newer."],
+        "acceptance": [
+          "The manifest and lockfile resolve wouter to 3.8.1 or newer."
+        ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/126",
           "package.json",
@@ -3369,7 +3645,9 @@
         "findings": [
           "tw-animate-css resolves to 1.4.0, the requested target. Dependabot commented that the package was already up to date and the update was no longer needed."
         ],
-        "acceptance": ["The manifest and lockfile use tw-animate-css 1.4.0 or newer."],
+        "acceptance": [
+          "The manifest and lockfile use tw-animate-css 1.4.0 or newer."
+        ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/128",
           "package.json",
@@ -3422,7 +3700,9 @@
         "findings": [
           "GameCard is exported through React.memo, matching the requested re-render optimization."
         ],
-        "acceptance": ["GameCard is memoized and still passes its current card behavior tests."],
+        "acceptance": [
+          "GameCard is memoized and still passes its current card behavior tests."
+        ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/130",
           "client/src/components/GameCard.tsx",
@@ -3477,7 +3757,9 @@
         "findings": [
           "The current library uses a stable useCallback for handleStatusChange when passing it into the game grid. The historical Dashboard component no longer exists."
         ],
-        "acceptance": ["The callback passed into GameGrid remains stable across parent renders."],
+        "acceptance": [
+          "The callback passed into GameGrid remains stable across parent renders."
+        ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/132",
           "client/src/components/Library.tsx",
@@ -3622,7 +3904,9 @@
         "findings": [
           "GameCarouselSection is exported through React.memo. The PR has no current file diff in GitHub; its discussion only asks Jules to rebase after fetch timeouts, and no review was submitted."
         ],
-        "acceptance": ["The active GameCarouselSection component is memoized."],
+        "acceptance": [
+          "The active GameCarouselSection component is memoized."
+        ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/137",
           "client/src/components/GameCarouselSection.tsx"
@@ -3647,13 +3931,17 @@
         "findings": [
           "The closed PR requested a tooltip for the search-page download action. Merged PR #140 adds the same tooltip plus an accessible name; the remaining discussion concerns failed automated rebases."
         ],
-        "acceptance": ["Retain the tooltip and accessible download label from PR #140."],
+        "acceptance": [
+          "Retain the tooltip and accessible download label from PR #140."
+        ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/138",
           "https://github.com/Doezer/Questarr/pull/140",
           "client/src/pages/search.tsx"
         ],
-        "dependencies": ["pr:140"]
+        "dependencies": [
+          "pr:140"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -3704,7 +3992,10 @@
         "acceptance": [
           "The icon-only search result action has an accessible name and a visible tooltip."
         ],
-        "evidence": ["https://github.com/Doezer/Questarr/pull/140", "client/src/pages/search.tsx"],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/140",
+          "client/src/pages/search.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -3838,8 +4129,12 @@
       "mergeCommit": "d1fdcdae1f7bb525088024b72024aa7c2c80a9cc",
       "review": {
         "status": "verified",
-        "findings": ["GameCard cover images already use the browser's lazy-loading behavior."],
-        "acceptance": ["Cover images below the initial viewport are marked for lazy loading."],
+        "findings": [
+          "GameCard cover images already use the browser's lazy-loading behavior."
+        ],
+        "acceptance": [
+          "Cover images below the initial viewport are marked for lazy loading."
+        ],
         "evidence": [
           "https://github.com/Doezer/Questarr/pull/145",
           "client/src/components/GameCard.tsx"
@@ -5491,7 +5786,10 @@
           "https://github.com/Doezer/Questarr/issues/237",
           "https://github.com/Doezer/Questarr/issues/260"
         ],
-        "dependencies": ["issue:245", "issue:260"]
+        "dependencies": [
+          "issue:245",
+          "issue:260"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18680,7 +18978,9 @@
         "acceptance": [
           "Record the protocol for future product review; no implementation is required to resolve this issue."
         ],
-        "evidence": ["https://github.com/Doezer/Questarr/issues/906"],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/906"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19021,7 +19321,9 @@
         "findings": [
           "The library and compact game cards show an Update badge when a search result matches a newer update. Background update availability sends an owner-scoped event."
         ],
-        "acceptance": ["Desktop/mobile visual journey plus badge and cron ownership tests pass."],
+        "acceptance": [
+          "Desktop/mobile visual journey plus badge and cron ownership tests pass."
+        ],
         "evidence": [
           "client/__tests__/SearchResultsBadge.test.tsx",
           "server/__tests__/cron_autosearch.test.ts",
@@ -22150,7 +22452,9 @@
           "https://github.com/Doezer/Questarr/pull/1083/files",
           "docs/upstream-resolution/sources.json (PR #1083 and issue #906 records)"
         ],
-        "dependencies": ["issue:906"]
+        "dependencies": [
+          "issue:906"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -22376,7 +22680,9 @@
           "docs/pr-evidence/upstream-release-scoring-search.png",
           "docs/upstream-resolution/evidence/validation-batch-3.txt"
         ],
-        "dependencies": ["pr:1166"]
+        "dependencies": [
+          "pr:1166"
+        ]
       },
       "sourceChangedSinceReview": false
     },
