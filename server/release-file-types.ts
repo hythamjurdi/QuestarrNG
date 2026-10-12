@@ -31,8 +31,9 @@ export async function filterReleaseFileTypes(
           const response = await safeFetch(url.href, {
             allowPrivate: Boolean(sameOrigin),
             requireHttps: url.protocol === "https:",
-            // Torrent URLs can contain indexer credentials. Never forward them to a redirect.
-            redirect: "manual",
+            // safeFetch validates every redirect hop, strips credential headers across
+            // origins, and pins HTTPS credential-bearing requests to their source origin.
+            redirect: "follow",
             signal: AbortSignal.timeout(5000),
           });
           if (!response.ok || !response.body) {

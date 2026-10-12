@@ -52,7 +52,7 @@ describe("verified torrent file types", () => {
     safeFetch.mockRejectedValueOnce(new Error("timeout"));
     expect(await filterReleaseFileTypes([item()], ["nsp"], [])).toEqual([]);
   });
-  it("requires explicit source consent for HTTP and never forwards URL credentials through redirects", async () => {
+  it("requires explicit source consent for HTTP and delegates redirects to safeFetch", async () => {
     const release = item({ link: "http://indexer.example/game.torrent?apikey=example" });
     const indexer = {
       id: "indexer",
@@ -67,7 +67,7 @@ describe("verified torrent file types", () => {
     ).toHaveLength(1);
     expect(safeFetch).toHaveBeenCalledWith(
       release.link,
-      expect.objectContaining({ redirect: "manual", allowPrivate: true })
+      expect.objectContaining({ redirect: "follow", allowPrivate: true })
     );
   });
   it("bounds external work to twenty candidates", async () => {

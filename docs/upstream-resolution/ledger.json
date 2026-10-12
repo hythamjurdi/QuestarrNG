@@ -7879,17 +7879,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "implemented-unverified",
+        "status": "verified",
         "findings": [
-          "Added a file extension search filter that validates the actual torrent manifest. Unknown payloads fail closed; title text is not treated as proof of file type."
+          "Verified file-type search checks the bounded torrent manifest rather than trusting a release title, follows redirects through the SSRF-checked fetcher, and excludes unknown, unavailable, malformed, oversized, magnet, and Usenet payloads. The running UI explains these limits; a real third-party indexer account was not available for a live-provider check."
         ],
         "acceptance": [
-          "Bencoded manifest, route pagination and browser filter journey pass. Real indexer redirect behavior remains to verify."
+          "Bencoded manifests verify selected extensions; route tests cover pagination and unsupported results fail closed.",
+          "A local indexer redirect integration test verifies that redirected torrent manifests are inspected, and the safe-fetch suite covers redirect target validation.",
+          "The browser journey sends the selected extension filter and explains that magnets, Usenet, archives, and unavailable file lists are excluded."
         ],
         "evidence": [
           "server/release-file-types.ts",
           "server/__tests__/release-file-types.test.ts",
-          "tests/e2e/file-type-search.spec.ts"
+          "server/__tests__/release-file-types-redirect.integration.test.ts",
+          "server/__tests__/ssrf.test.ts",
+          "tests/e2e/file-type-search.spec.ts",
+          "docs/pr-evidence/upstream-file-type-search.png",
+          "docs/upstream-resolution/evidence/validation-batch-4.txt"
         ],
         "dependencies": []
       },
