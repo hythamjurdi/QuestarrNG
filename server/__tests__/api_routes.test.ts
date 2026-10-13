@@ -2702,6 +2702,33 @@ describe("API Routes - Extended Coverage", () => {
         expect(response.status).toBe(400);
         expect(response.body.error).toBe("Validation failed");
       });
+
+      it.each([1, 168])(
+        "should accept steamSyncIntervalHours at boundary value %s",
+        async (value) => {
+          vi.mocked(storage.getUserSettings).mockResolvedValue({ id: "s-1" } as any);
+          vi.mocked(storage.updateUserSettings).mockResolvedValue({ id: "s-1" } as any);
+
+          const response = await request(app)
+            .patch("/api/settings")
+            .send({ steamSyncIntervalHours: value });
+
+          expect(response.status).toBe(200);
+          expect(storage.updateUserSettings).toHaveBeenCalledWith("user-1", {
+            steamSyncIntervalHours: value,
+          });
+        }
+      );
+
+      it.each([0, 169, 1.5])("should reject steamSyncIntervalHours value %s", async (value) => {
+        const response = await request(app)
+          .patch("/api/settings")
+          .send({ steamSyncIntervalHours: value });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe("Validation failed");
+        expect(storage.updateUserSettings).not.toHaveBeenCalled();
+      });
     });
   });
 

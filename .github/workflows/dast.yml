@@ -47,6 +47,12 @@ jobs:
       - name: Build project
         run: npm run build
 
+      # ZAP rule 10110 uses text matching and can mistake library methods named
+      # `eval` for the global dynamic-code evaluator. Keep a syntax-aware check
+      # over the exact served bundles when that rule is ignored below.
+      - name: Check built JavaScript for dangerous calls
+        run: node scripts/check-built-js-security.mjs dist/public/assets
+
       # Runs the built production server directly on the runner (rather than
       # in Docker) so the ZAP container, started by zaproxy/action-baseline
       # with --network host, can reach it at http://localhost:5000.

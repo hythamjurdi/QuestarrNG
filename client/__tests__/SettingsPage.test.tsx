@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import React from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -543,6 +543,66 @@ describe("SettingsPage", () => {
 
     const rateLimitInput = await screen.findByLabelText("IGDB API Rate Limit (requests/second)");
     expect(rateLimitInput).toHaveValue(4);
+  });
+
+  it("clamps the Steam wishlist sync interval and saves the selected setting", async () => {
+    const { apiRequest } = await import("@/lib/queryClient");
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Settings");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Integrations" }));
+
+    const enabled = await screen.findByRole("switch", { name: "Auto-Sync Wishlist" });
+    fireEvent.click(enabled);
+    const interval = await screen.findByLabelText("Sync Interval (hours)");
+
+    fireEvent.change(interval, { target: { value: "-1" } });
+    expect(interval).toHaveValue(1);
+    fireEvent.change(interval, { target: { value: "999" } });
+    expect(interval).toHaveValue(168);
+    fireEvent.click(screen.getByRole("button", { name: "Save Sync Settings" }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith(
+        "PATCH",
+        "/api/settings",
+        expect.objectContaining({ steamSyncEnabled: true, steamSyncIntervalHours: 168 })
+      );
+    });
+  });
+
+  it("preserves unsaved Steam sync choices across a background settings refresh", async () => {
+    const testQueryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Settings");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Integrations" }));
+
+    const enabled = await screen.findByRole("switch", { name: "Auto-Sync Wishlist" });
+    fireEvent.click(enabled);
+    const interval = await screen.findByLabelText("Sync Interval (hours)");
+    fireEvent.change(interval, { target: { value: "36" } });
+    expect(interval).toHaveValue(36);
+
+    await act(async () => {
+      testQueryClient.setQueryData(["/api/settings"], {
+        ...defaultUserSettings,
+        searchIntervalHours: 12,
+        steamSyncEnabled: false,
+        steamSyncIntervalHours: 24,
+      });
+    });
+
+    expect(enabled).toBeChecked();
+    expect(interval).toHaveValue(36);
   });
 
   it("switches to the System tab and toggles downloader debug logging", async () => {

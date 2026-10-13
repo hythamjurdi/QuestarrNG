@@ -27,8 +27,20 @@ The ledger has 587 verified, 179 superseded, 13 not applicable, 5 implemented-un
 - `npx vitest run server/__tests__/security.test.ts --maxWorkers=1` passed 14/14 tests.
 - Production smoke requests returned HTTP 200 for `/api/health` and `/api/auth/status`. The latter returned `font-src 'self' data:`, `style-src 'self' 'unsafe-inline'`, and exactly `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()`.
 
-A local ZAP container scan was not run: no image was cached, and the desktop root filesystem had only 40 GB free at 98% use. After this commit is pushed, use the DAST workflow's manual dispatch on the campaign ref and append that run's result here.
+## Post-push DAST follow-up
+
+- Manually dispatched the DAST workflow on this batch's pushed commit. Run
+  `38469014234` (`https://github.com/snapetech/QuestarrNG/actions/runs/38469014234`)
+  completed the scan but failed on one new WARN alert: ZAP rule 10110,
+  `Dangerous JS Functions`, with evidence `eval(` in the built client bundle.
+- The alert is a text-pattern false positive on RE2JS's regex-engine instance
+  method named `eval` and internal calls to that method. Batch 68 adds a
+  syntax-aware production-bundle check and records the compensating control and
+  regression coverage in `docs/VULNERABILITY_MANAGEMENT.md`.
+- The ZAP report was downloaded for triage to
+  `/tmp/questarrng-b67-zap-report`; Batch 68 evidence records the passing
+  follow-up scan and scratch cleanup.
 
 ## Scratch cleanup
 
-Validation ran on `kspld0`. The host confirmed `/tmp` had 44 GB free and the NFS mount `kspls0:/mnt/datapool_lvm_media` was available with about 32 TB free; the NFS share was not used. The disposable worktree at `/tmp/questarr-b67-dast` (including its SQLite test database, build output, and installed dependencies) was removed after the server was stopped. Port 5000 was released. Temporary actionlint caches were removed. No task scratch remains.
+Validation ran on `kspld0`. The host confirmed `/tmp` had 44 GB free and the NFS mount `kspls0:/mnt/datapool_lvm_media` was available with about 32 TB free; the NFS share was not used. The disposable worktree at `/tmp/questarr-b67-dast` (including its SQLite test database, build output, and installed dependencies) was removed after the server was stopped. Port 5000 was released. Temporary actionlint caches were removed. The later ZAP report scratch is covered by Batch 68's cleanup record.

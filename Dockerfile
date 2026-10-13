@@ -61,9 +61,8 @@ RUN apk update && apk upgrade --no-cache && \
 # binary needs on musl. `--proto '=https'` makes curl refuse to follow a redirect to
 # anything but https, so a compromised or misconfigured redirect can't silently downgrade
 # this download to plaintext.
-# Checksum below was computed against rarlab.com by CodeRabbit's review sandbox (this
-# authoring environment has no network access to rarlab.com to verify it independently) —
-# double-check it against the vendor's published hash before relying on this in production.
+# The exact pinned archive was downloaded from RARLAB over HTTPS and its SHA-256 was
+# independently recomputed during Batch 68 validation; see the campaign evidence record.
 ARG RARLAB_UNRAR_VERSION=712
 ARG RARLAB_UNRAR_SHA256=630d9a9dd131367273667bee079ad103f469f1b7cdbc9b42a4f283cc2993bab2
 RUN curl -fsSL --proto '=https' --tlsv1.2 -o /tmp/unrar.tar.gz \

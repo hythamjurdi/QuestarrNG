@@ -364,9 +364,22 @@ describe("syncUserSteamWishlist", () => {
 describe("checkSteamWishlist", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(storage.createImportTask).mockResolvedValue({
+    const importTask: ImportTask = {
       id: "task-id",
-    } as unknown as ImportTask);
+      userId: null,
+      taskType: "steam_wishlist",
+      triggeredBy: "system",
+      status: "pending",
+      createdAt: new Date("2026-10-13T00:00:00.000Z"),
+      startedAt: null,
+      completedAt: null,
+      totalItems: 0,
+      addedItems: 0,
+      skippedItems: 0,
+      failedItems: 0,
+      errorMessage: null,
+    };
+    vi.mocked(storage.createImportTask).mockResolvedValue(importTask);
     vi.mocked(storage.startImportTask).mockResolvedValue(undefined);
     vi.mocked(storage.updateImportTask).mockResolvedValue(undefined);
     vi.mocked(storage.addImportTaskItemsBatch).mockResolvedValue([]);
@@ -496,7 +509,7 @@ describe("checkSteamWishlist", () => {
       steamId64: "76561198000000001",
     } as unknown as User);
 
-    await expect(checkSteamWishlist()).resolves.not.toThrow();
+    await expect(checkSteamWishlist()).resolves.toBeUndefined();
 
     expect(steamService.getWishlist).toHaveBeenCalledWith("76561198000000001");
   });

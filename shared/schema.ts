@@ -969,6 +969,7 @@ export const updateUserSettingsSchema = createInsertSchema(userSettings)
   .partial()
   .extend({
     igdbRateLimitPerSecond: z.number().int().min(1).max(4).optional(),
+    steamSyncIntervalHours: z.number().int().min(1).max(168).optional(),
   })
   .superRefine(validateUserSettingsEnums);
 
