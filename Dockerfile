@@ -118,4 +118,4 @@ LABEL org.opencontainers.image.description="QuestarrNG game discovery and acquis
 LABEL org.opencontainers.image.authors="Doezer and Snapetech contributors"
 LABEL org.opencontainers.image.source="https://github.com/snapetech/QuestarrNG"
 LABEL org.opencontainers.image.licenses="GPL-3.0-only"
-LABEL org.opencontainers.image.version="1.10.0"
+LABEL org.opencontainers.image.version="1.11.0"

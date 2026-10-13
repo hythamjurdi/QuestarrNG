@@ -16,7 +16,7 @@
   <ReadMe>https://github.com/snapetech/QuestarrNG/blob/main/README.md</ReadMe>
   <Category>MediaApp:Other</Category>
   <ExtraSearchTerms>questarrng questarr pc game igdb seerrng</ExtraSearchTerms>
-  <Changes>1.10.0: Real-Debrid OAuth and local staging, verified Steam ownership and play-time estimates, and multi-file SeerrNG acquisition. 1.9.2: SeerrNG request-contract v2 with authenticated bundles for multi-file imports. 1.9.1: Upstream sync, game file categories, installed-version tracking, and safer Prowlarr transport.</Changes>
+  <Changes>1.11.0: Browser-local interface language, regional date and number formatting, and RTL-safe rendering of upstream values. 1.10.0: Real-Debrid OAuth and local staging, verified Steam ownership and play-time estimates, and multi-file SeerrNG acquisition. 1.9.2: SeerrNG request-contract v2 with authenticated bundles for multi-file imports.</Changes>
   <Requires>Docker and persistent appdata. Configure this app independently before connecting it to SeerrNG.</Requires>
   <ExtraParams>--restart=unless-stopped --user=99:100</ExtraParams>
 
