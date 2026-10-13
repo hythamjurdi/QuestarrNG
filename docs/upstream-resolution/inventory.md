@@ -272,12 +272,12 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #277](https://github.com/Doezer/Questarr/pull/277) | chore: iterative hardening and operational documentation | CLOSED | no-merge-commit | verified |
 | [issue #278](https://github.com/Doezer/Questarr/issues/278) | Broken Database Schema in v1.0.1 | CLOSED | no-merge-commit | not-applicable |
 | [pr #279](https://github.com/Doezer/Questarr/pull/279) | Jules: Repo Hardening & Type Fixes | CLOSED | no-merge-commit | verified |
-| [pr #280](https://github.com/Doezer/Questarr/pull/280) | trying a fix for #270 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #281](https://github.com/Doezer/Questarr/pull/281) | Downloader/indexer list update | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #282](https://github.com/Doezer/Questarr/pull/282) | fix: fix free space widget for qBittorrent | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #283](https://github.com/Doezer/Questarr/pull/283) | feat: iterative hardening and operational improvements | CLOSED | no-merge-commit | unreviewed |
-| [issue #284](https://github.com/Doezer/Questarr/issues/284) | Add support for steam wishlist  | CLOSED | no-merge-commit | unreviewed |
-| [pr #285](https://github.com/Doezer/Questarr/pull/285) | feat: add indexerName to DownloadItem interface | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #280](https://github.com/Doezer/Questarr/pull/280) | trying a fix for #270 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #281](https://github.com/Doezer/Questarr/pull/281) | Downloader/indexer list update | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #282](https://github.com/Doezer/Questarr/pull/282) | fix: fix free space widget for qBittorrent | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #283](https://github.com/Doezer/Questarr/pull/283) | feat: iterative hardening and operational improvements | CLOSED | no-merge-commit | verified |
+| [issue #284](https://github.com/Doezer/Questarr/issues/284) | Add support for steam wishlist  | CLOSED | no-merge-commit | verified |
+| [pr #285](https://github.com/Doezer/Questarr/pull/285) | feat: add indexerName to DownloadItem interface | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #286](https://github.com/Doezer/Questarr/issues/286) | Provide "ready to use" docker container | CLOSED | no-merge-commit | unreviewed |
 | [issue #287](https://github.com/Doezer/Questarr/issues/287) | Add xrel.to Integration | CLOSED | no-merge-commit | unreviewed |
 | [issue #288](https://github.com/Doezer/Questarr/issues/288) | npm run db:push -> sh: drizzle-kit: not found | CLOSED | no-merge-commit | unreviewed |

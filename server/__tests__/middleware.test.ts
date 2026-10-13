@@ -316,6 +316,24 @@ describe("Middleware - Input Sanitization", () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
+    it.each(["http://localhost:9696", "http://192.168.1.20:9696", "http://prowlarr.lan:9696"])(
+      "should allow internal indexer URL %s",
+      async (url) => {
+        const req = createMockRequest({ body: { name: "Internal Indexer", url } });
+        const res = createMockResponse();
+        const next = createMockNext();
+
+        for (const validator of sanitizeIndexerData) {
+          await validator(req as Request, res as Response, next);
+        }
+
+        validateRequest(req as Request, res as Response, next);
+
+        expect(next).toHaveBeenCalled();
+        expect(res.status).not.toHaveBeenCalled();
+      }
+    );
+
     it("should reject indexer with invalid URL", async () => {
       const req = createMockRequest({
         body: { name: "Test", url: "not-a-url" },
@@ -403,12 +421,13 @@ describe("Middleware - Input Sanitization", () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it("should reject downloader with invalid type", async () => {
+    it("should allow the supported Deluge downloader type", async () => {
       const req = createMockRequest({
         body: {
-          name: "Test",
-          type: "invalid-type",
-          url: "https://example.com",
+          name: "Deluge Downloader",
+          type: "deluge",
+          url: "deluge.local",
+          enabled: true,
         },
       });
       const res = createMockResponse();
@@ -420,8 +439,32 @@ describe("Middleware - Input Sanitization", () => {
 
       validateRequest(req as Request, res as Response, next);
 
-      expect(res.status).toHaveBeenCalledWith(400);
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
     });
+
+    it.each(["invalid-type", "utorrent", "vuze"])(
+      "should reject unsupported downloader type %s",
+      async (type) => {
+        const req = createMockRequest({
+          body: {
+            name: "Test",
+            type,
+            url: "https://example.com",
+          },
+        });
+        const res = createMockResponse();
+        const next = createMockNext();
+
+        for (const validator of sanitizeDownloaderData) {
+          await validator(req as Request, res as Response, next);
+        }
+
+        validateRequest(req as Request, res as Response, next);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+      }
+    );
 
     it("should trim url, username, password, and urlPath fields", async () => {
       const req = createMockRequest({

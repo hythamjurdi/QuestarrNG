@@ -7800,10 +7800,26 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "979f40b05144b1409028f5f62e270953df9b4d87",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork keeps the upstream link button variant, accepts valid HTTP and HTTPS indexer URLs including localhost and private-network hosts, and defaults logs to debug in development/test and info in production while honoring LOG_LEVEL.",
+          "Downloader validation is derived from the implemented downloader set. Deluge is supported in this fork and remains available; unsupported uTorrent and Vuze types are rejected.",
+          "Regression cases now exercise localhost, private IPv4, internal DNS, Deluge, and unsupported downloader types."
+        ],
+        "acceptance": [
+          "HTTP(S) indexers on localhost and private/internal hosts pass validation; malformed URLs fail.",
+          "Known supported downloaders, including Deluge, pass validation; unknown, uTorrent, and Vuze types fail.",
+          "Development/test default to debug logging, production defaults to info, and LOG_LEVEL overrides either default."
+        ],
+        "evidence": [
+          "client/src/components/ui/button.tsx",
+          "server/middleware.ts",
+          "shared/downloader-types.ts",
+          "server/logger.ts",
+          "server/__tests__/middleware.test.ts",
+          "server/__tests__/logger.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-32.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7820,10 +7836,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "42b74ee304acca358eaa6908b497f9df56bd724a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer and downloader cards use a shared enabled-first, priority-ascending, case-insensitive name sort. Disabled entries are visually muted, their enabled state is labeled, and downloader names adapt to the selected client type."
+        ],
+        "acceptance": [
+          "Enabled entries appear first; priority and then name determine order within each enabled group.",
+          "Disabled indexers and downloaders remain visible but visually recede, and the downloader name prompt reflects the selected type."
+        ],
+        "evidence": [
+          "client/src/lib/utils.ts",
+          "client/src/pages/indexers.tsx",
+          "client/src/pages/downloaders.tsx",
+          "client/__tests__/utils.test.ts",
+          "client/__tests__/DownloadersPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-32.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7840,10 +7868,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "f490a7dad733b95498bad8311d55d1501f8d1a3c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The qBittorrent storage widget tries app/free_space using the configured save path, then sync/maindata, then transfer/info. Responses are validated as byte counts and malformed or unavailable endpoints fall through safely."
+        ],
+        "acceptance": [
+          "The first supported endpoint returns free space; missing, invalid, or failed responses fall back to the next endpoint.",
+          "If all endpoints fail, the adapter returns zero without failing the storage view."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/qbittorrent_features.test.ts",
+          "server/__tests__/downloaders_qbittorrent_remaining.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-32.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7860,10 +7898,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork already has equivalent contribution and PR guidance under GitHub-recognized .github paths, a maintained operations guide, and the full per-item upstream audit ledger in place of a generic TASKS file.",
+          "The downloader/search type and lint issues described by the closed PR are covered by the fork’s current source and clean TypeScript, lint, test, format, and production-build checks. No upstream version bump is needed for the fork release."
+        ],
+        "acceptance": [
+          "Contributor, pull-request, and operations guidance is maintained in the fork and includes its own verification and release practices.",
+          "Focused tests pass, npm run check passes, npm run lint passes without warnings, formatting passes, and the production build/type-only build pass."
+        ],
+        "evidence": [
+          ".github/CONTRIBUTING.md",
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          "docs/OPERATIONS.md",
+          "docs/upstream-resolution/README.md",
+          "server/downloaders/qbittorrent.ts",
+          "server/torznab.ts",
+          "docs/upstream-resolution/evidence/validation-batch-32.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7880,10 +7932,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Users can link a Steam ID and manually or automatically sync the official Steam wishlist. Matching games are resolved through IGDB and added to the user’s QuestarrNG wishlist with status wanted; existing games are linked or skipped instead of duplicated, and failures are recorded for the user."
+        ],
+        "acceptance": [
+          "A linked Steam wishlist is fetched, mapped to IGDB, and added to that user’s wanted games with Steam App IDs.",
+          "Already-owned games are not duplicated; unmatched games and Steam/API failures are tracked, and manual/scheduled sync routes remain user-scoped."
+        ],
+        "evidence": [
+          "server/steam.ts",
+          "server/steam-routes.ts",
+          "server/cron.ts",
+          "client/src/components/Header.tsx",
+          "client/src/pages/settings.tsx",
+          "server/__tests__/steam_service.test.ts",
+          "server/__tests__/steam_routes.test.ts",
+          "server/__tests__/steam_wishlist.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-32.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7900,10 +7967,25 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "61d93e717a4f21b91972862f658e00f8b789d23c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer IDs and names are carried from Torznab/Newznab search results into the download result types. GameDownloadDialog displays the source indexer for torrent and Usenet releases and uses the name in source filtering and priority ordering."
+        ],
+        "acceptance": [
+          "Search results retain source indexer identity, and torrent and Usenet result cards show the originating indexer name.",
+          "The download dialog can filter results by indexer and sort known indexers by their configured priority."
+        ],
+        "evidence": [
+          "server/torznab.ts",
+          "server/newznab.ts",
+          "server/search.ts",
+          "shared/schema.ts",
+          "client/src/pages/search.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "server/__tests__/search.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-32.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

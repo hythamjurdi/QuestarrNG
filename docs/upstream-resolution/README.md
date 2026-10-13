@@ -792,3 +792,39 @@ interaction. See [batch 31 evidence](evidence/validation-batch-31.txt).
 The ledger now records **241 verified**, **29 superseded**, **868 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**
 records. Issue #37 remains outstanding.
+
+## Follow-up: downloader/indexer behavior, Steam wishlist and hardening (#280–285)
+
+PR [#280](https://github.com/Doezer/Questarr/pull/280) is verified: HTTP(S)
+indexer URLs work for localhost and private/internal hosts, logger defaults
+remain environment-appropriate, and downloader validation reflects the
+integrations the fork actually supports. Regression tests retain Deluge support
+while rejecting unsupported uTorrent and Vuze types. The fork also has the
+link button variant from this PR.
+
+PR [#281](https://github.com/Doezer/Questarr/pull/281) is verified: indexers
+and downloaders sort enabled-first by priority and name, disabled cards are
+visually muted, and the downloader name prompt follows the selected type. PR
+[#282](https://github.com/Doezer/Questarr/pull/282) is verified: qBittorrent
+free-space lookup falls back from `app/free_space` to `sync/maindata` and then
+`transfer/info`, with invalid responses handled safely.
+
+PR [#283](https://github.com/Doezer/Questarr/pull/283) is verified against the
+fork’s GitHub-recognized contributor and PR guidance, maintained operations
+guide, upstream ledger, and current type/lint/build checks; its generic version
+bump was not applied to the fork. Issue
+[#284](https://github.com/Doezer/Questarr/issues/284) is verified: users can
+manually or automatically sync their Steam wishlist, and matched games enter
+their QuestarrNG wishlist as wanted games. PR
+[#285](https://github.com/Doezer/Questarr/pull/285) is verified: torrent and
+Usenet search results retain and display their source indexer name, which also
+drives filtering and priority ordering.
+
+Twelve focused suites passed (290 tests, one skipped). TypeScript, lint,
+Prettier, and the production client/server build passed. The production build
+continues to report its existing large-chunk advisory. See
+[batch 32 evidence](evidence/validation-batch-32.txt).
+
+The ledger now records **247 verified**, **29 superseded**, **862 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**
+records. Issue #37 remains outstanding.

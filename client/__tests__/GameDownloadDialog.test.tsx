@@ -363,6 +363,19 @@ describe("GameDownloadDialog", () => {
     );
   });
 
+  it("shows the source indexer for torrent and Usenet releases", async () => {
+    renderComponent();
+
+    await waitFor(
+      () => {
+        expect(screen.getAllByText("Indexer A").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Indexer B").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Indexer C").length).toBeGreaterThan(0);
+      },
+      { timeout: 3000 }
+    );
+  });
+
   it("filters search results by indexer", async () => {
     renderComponent();
 

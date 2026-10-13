@@ -1,0 +1,45 @@
+Batch 32 validation — 2026-10-12
+
+Scope: upstream items #280–285. The product behaviors were already present in
+QuestarrNG. Added regression coverage for local/internal indexer URLs, the
+supported Deluge downloader, rejection of unsupported uTorrent/Vuze downloader
+types, and indexer-name rendering for torrent and Usenet search results.
+
+Focused suites:
+  rtk npm test -- --reporter=dot --maxWorkers=2 \
+    server/__tests__/middleware.test.ts \
+    server/__tests__/logger.test.ts \
+    server/__tests__/qbittorrent_features.test.ts \
+    server/__tests__/downloaders_qbittorrent_remaining.test.ts \
+    server/__tests__/steam_service.test.ts \
+    server/__tests__/steam_routes.test.ts \
+    server/__tests__/steam_wishlist.test.ts \
+    server/__tests__/search.test.ts \
+    client/__tests__/DownloadersPage.test.tsx \
+    client/__tests__/utils.test.ts \
+    client/__tests__/GameDownloadDialog.test.tsx \
+    client/__tests__/SearchPage.test.tsx
+  Result: 12 test files passed; 290 passed, 1 skipped (291 total).
+
+Additional post-format check:
+  rtk npm test -- --reporter=dot --maxWorkers=2 server/__tests__/middleware.test.ts
+  Result: 1 test file passed; 55 tests passed.
+
+Repository checks:
+  rtk npm run check
+  Result: passed.
+  rtk npm run lint
+  Result: passed with zero warnings/errors.
+  rtk npm run format:check
+  Result: passed.
+
+Production build checks:
+  rtk npx vite build --outDir /dev/shm/questarr-upstream-batch32-20261013/build/public
+  Result: passed. Vite reports the existing large-chunk advisory (including the
+  Three.js and main entry chunks); this batch does not change production code.
+  rtk npx tsc -p tsconfig.build.json --noEmit
+  Result: passed.
+
+The SearchPage infinite-scroll test logs React duplicate-key warnings because
+its mock returns the same 50 IDs for both pages. Assertions pass; this test-only
+fixture warning is unrelated to items #280–285.
