@@ -1,6 +1,6 @@
 import React from "react";
 import { Notification } from "@shared/schema";
-import { formatDistanceToNow } from "date-fns";
+import { formatRegionalDistanceToNow } from "@/lib/regional-format";
 import { Check, Info, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -59,8 +59,7 @@ export function NotificationItem({ notification, onRead, onClick }: Notification
         </div>
         <p className="text-muted-foreground">{notification.message}</p>
         <p className="text-xs text-muted-foreground pt-1">
-          {notification.createdAt &&
-            formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+          {notification.createdAt && formatRegionalDistanceToNow(new Date(notification.createdAt))}
         </p>
       </div>
     </button>

@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { RssFeedItem } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
+import { formatRegionalDistanceToNow } from "@/lib/regional-format";
 import { ExternalLink, RefreshCw, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -138,9 +138,7 @@ export default function RssFeedList() {
                     {item.sourceName}
                   </Badge>
                   <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
-                    {item.pubDate
-                      ? formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })
-                      : ""}
+                    {item.pubDate ? formatRegionalDistanceToNow(new Date(item.pubDate)) : ""}
                   </span>
                 </div>
                 <CardTitle className="text-sm font-medium leading-tight" title={item.title}>

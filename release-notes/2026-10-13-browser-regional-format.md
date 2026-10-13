@@ -6,4 +6,4 @@ action: none
 breaking: false
 ---
 
-Settings > Appearance now lets each browser choose regional date, time, and number formatting. The existing regional date and number displays use the selected format; interface text remains English.
+Settings > Appearance now lets each browser choose regional date, time, and number formatting. Existing date, time, number, and relative-time displays use that choice, and calendar views start weeks on the selected locale’s first day. Interface text remains English.

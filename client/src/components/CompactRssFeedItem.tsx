@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { ExternalLink, Calendar, Link } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
+import { formatRegionalDistanceToNow } from "@/lib/regional-format";
 import { RssFeedItem } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { safeUrl } from "@/lib/utils";
@@ -54,9 +54,7 @@ const CompactRssFeedItem = ({ item }: CompactRssFeedItemProps) => {
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             <span>
-              {item.pubDate
-                ? formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })
-                : "Unknown date"}
+              {item.pubDate ? formatRegionalDistanceToNow(new Date(item.pubDate)) : "Unknown date"}
             </span>
           </div>
         </div>

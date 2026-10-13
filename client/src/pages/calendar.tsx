@@ -1,4 +1,4 @@
-import { getRegionalLocale } from "@/lib/regional-format";
+import { getRegionalLocale, getRegionalWeekStartsOn } from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -37,26 +37,29 @@ function getMonthName(month: number): string {
   return new Date(2000, month, 1).toLocaleDateString(getRegionalLocale(), { month: "long" });
 }
 
-export function getWeekDays(date: Date): Date[] {
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
-  const monday = new Date(date);
-  monday.setDate(diff);
+export function getWeekDays(date: Date, weekStartsOn: number = getRegionalWeekStartsOn()): Date[] {
+  const daysSinceWeekStart = (date.getDay() - weekStartsOn + 7) % 7;
+  const firstDay = new Date(date);
+  firstDay.setDate(date.getDate() - daysSinceWeekStart);
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+    const d = new Date(firstDay);
+    d.setDate(firstDay.getDate() + i);
     return d;
   });
 }
 
-export function getDaysInMonth(year: number, month: number): Date[] {
+export function getDaysInMonth(
+  year: number,
+  month: number,
+  weekStartsOn: number = getRegionalWeekStartsOn()
+): Date[] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const days: Date[] = [];
 
   // Add days from previous month to fill the week
   const firstDayOfWeek = firstDay.getDay();
-  const daysToAdd = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+  const daysToAdd = (firstDayOfWeek - weekStartsOn + 7) % 7;
   for (let i = daysToAdd; i > 0; i--) {
     const d = new Date(year, month, 1 - i);
     days.push(d);
@@ -69,7 +72,7 @@ export function getDaysInMonth(year: number, month: number): Date[] {
 
   // Add days from next month to complete the week
   const lastDayOfWeek = lastDay.getDay();
-  const daysToAddEnd = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+  const daysToAddEnd = (weekStartsOn + 6 - lastDayOfWeek + 7) % 7;
   for (let i = 1; i <= daysToAddEnd; i++) {
     days.push(new Date(year, month + 1, i));
   }
@@ -382,8 +385,13 @@ function MonthView({
 }) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  const days = getDaysInMonth(year, month);
-  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekStartsOn = getRegionalWeekStartsOn();
+  const days = getDaysInMonth(year, month, weekStartsOn);
+  const weekDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekDays = Array.from(
+    { length: 7 },
+    (_, index) => weekDayNames[(weekStartsOn + index) % 7]!
+  );
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const todayKey = formatDate(today);
 

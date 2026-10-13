@@ -220,7 +220,7 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
 
   const [ghostUnlocked] = useLocalStorageState(GHOST_UNLOCK_KEY, false);
-  const [storedRegionalFormat, setRegionalFormat] = useLocalStorageState(
+  const [storedRegionalFormat, setRegionalFormat] = useLocalStorageState<string>(
     REGIONAL_FORMAT_KEY,
     "system"
   );

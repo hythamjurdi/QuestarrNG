@@ -1,13 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { formatDate, getDaysInMonth, getWeekDays } from "../src/pages/calendar";
+import { REGIONAL_FORMAT_KEY } from "../src/lib/regional-format";
 
 describe("calendar date helpers", () => {
+  beforeEach(() => {
+    localStorage.setItem(REGIONAL_FORMAT_KEY, "es");
+  });
   it("formats dates as yyyy-mm-dd", () => {
     expect(formatDate(new Date("2026-05-28T12:00:00.000Z"))).toBe("2026-05-28");
   });
 
-  it("returns a monday-first week even when starting from sunday", () => {
+  it("uses a Monday-first week for a Monday-first locale", () => {
     const week = getWeekDays(new Date("2026-06-07T12:00:00.000Z"));
     expect(week).toHaveLength(7);
     expect(formatDate(week[0])).toBe("2026-06-01");
