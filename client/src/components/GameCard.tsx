@@ -260,12 +260,16 @@ const GameCard = ({
               <div
                 className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 role="img"
-                aria-label={`IGDB rating: ${game.rating ? game.rating + " out of 10" : "Not rated"}`}
+                aria-label={`IGDB rating: ${
+                  game.rating !== null && game.rating !== undefined
+                    ? `${game.rating} out of 10`
+                    : "Not rated"
+                }`}
                 tabIndex={0}
               >
                 <Star className="w-3 h-3 text-accent" aria-hidden="true" />
                 <span data-testid={`text-rating-${game.id}`}>
-                  {game.rating ? `${game.rating}/10` : "N/A"}
+                  {game.rating !== null && game.rating !== undefined ? `${game.rating}/10` : "N/A"}
                 </span>
               </div>
             </TooltipTrigger>

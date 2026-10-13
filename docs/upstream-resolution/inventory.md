@@ -512,22 +512,22 @@ Snapshot: 2026-10-13T05:20:58.476Z. 1147 items. All ancestry observations requir
 | [pr #519](https://github.com/Doezer/Questarr/pull/519) | feat: add early access feature to games | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #521](https://github.com/Doezer/Questarr/pull/521) | feat: replace SearchBar and DisplaySettingsModal with PageToolbar | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #522](https://github.com/Doezer/Questarr/pull/522) | fix igdb request issues in discover page | MERGED | merge-commit-not-in-either-main-history | verified |
-| [pr #523](https://github.com/Doezer/Questarr/pull/523) | Add toggle for source filter on downloads page | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #524](https://github.com/Doezer/Questarr/pull/524) | chore(deps): bump step-security/harden-runner from 2.16.0 to 2.16.1 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #525](https://github.com/Doezer/Questarr/pull/525) | chore(deps): bump react-hook-form from 7.72.0 to 7.72.1 in the react group | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #526](https://github.com/Doezer/Questarr/pull/526) | chore(deps-dev): bump the dev-dependencies group with 4 updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #527](https://github.com/Doezer/Questarr/pull/527) | chore(deps): bump express-validator from 7.3.1 to 7.3.2 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #528](https://github.com/Doezer/Questarr/pull/528) | chore(deps): bump express-rate-limit from 8.3.1 to 8.3.2 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #529](https://github.com/Doezer/Questarr/pull/529) | chore(deps): bump dotenv from 17.3.1 to 17.4.1 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #530](https://github.com/Doezer/Questarr/pull/530) | feat: implement user rating feature | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #531](https://github.com/Doezer/Questarr/pull/531) | feat: add preferred platform selection and filtering for downloads | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #532](https://github.com/Doezer/Questarr/pull/532) | 🎨 Palette: Add roles and aria-labels to focusable tooltip triggers | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #533](https://github.com/Doezer/Questarr/pull/533) | ⚡ Bolt: Add missing memoization to search results sorting | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #534](https://github.com/Doezer/Questarr/pull/534) | 🛡️ Sentinel: [HIGH] Fix Vite and other dependency vulnerabilities | CLOSED | no-merge-commit | unreviewed |
-| [issue #535](https://github.com/Doezer/Questarr/issues/535) | UI: Increase dialog maximum width to prevent data truncation in search results | CLOSED | no-merge-commit | unreviewed |
-| [issue #536](https://github.com/Doezer/Questarr/issues/536) | Category IDs | CLOSED | no-merge-commit | unreviewed |
-| [pr #537](https://github.com/Doezer/Questarr/pull/537) | feat: add HowLongToBeat API integration | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #538](https://github.com/Doezer/Questarr/pull/538) | Add PCGamingWiki API support for game URL retrieval | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #523](https://github.com/Doezer/Questarr/pull/523) | Add toggle for source filter on downloads page | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #524](https://github.com/Doezer/Questarr/pull/524) | chore(deps): bump step-security/harden-runner from 2.16.0 to 2.16.1 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #525](https://github.com/Doezer/Questarr/pull/525) | chore(deps): bump react-hook-form from 7.72.0 to 7.72.1 in the react group | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #526](https://github.com/Doezer/Questarr/pull/526) | chore(deps-dev): bump the dev-dependencies group with 4 updates | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #527](https://github.com/Doezer/Questarr/pull/527) | chore(deps): bump express-validator from 7.3.1 to 7.3.2 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #528](https://github.com/Doezer/Questarr/pull/528) | chore(deps): bump express-rate-limit from 8.3.1 to 8.3.2 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #529](https://github.com/Doezer/Questarr/pull/529) | chore(deps): bump dotenv from 17.3.1 to 17.4.1 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #530](https://github.com/Doezer/Questarr/pull/530) | feat: implement user rating feature | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #531](https://github.com/Doezer/Questarr/pull/531) | feat: add preferred platform selection and filtering for downloads | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #532](https://github.com/Doezer/Questarr/pull/532) | 🎨 Palette: Add roles and aria-labels to focusable tooltip triggers | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #533](https://github.com/Doezer/Questarr/pull/533) | ⚡ Bolt: Add missing memoization to search results sorting | MERGED | merge-commit-in-fork-history | verified |
+| [pr #534](https://github.com/Doezer/Questarr/pull/534) | 🛡️ Sentinel: [HIGH] Fix Vite and other dependency vulnerabilities | CLOSED | no-merge-commit | superseded |
+| [issue #535](https://github.com/Doezer/Questarr/issues/535) | UI: Increase dialog maximum width to prevent data truncation in search results | CLOSED | no-merge-commit | verified |
+| [issue #536](https://github.com/Doezer/Questarr/issues/536) | Category IDs | CLOSED | no-merge-commit | not-applicable |
+| [pr #537](https://github.com/Doezer/Questarr/pull/537) | feat: add HowLongToBeat API integration | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #538](https://github.com/Doezer/Questarr/pull/538) | Add PCGamingWiki API support for game URL retrieval | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #539](https://github.com/Doezer/Questarr/pull/539) | Bug fixes batch | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #540](https://github.com/Doezer/Questarr/pull/540) | feat: add NexusMods API integration | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [issue #541](https://github.com/Doezer/Questarr/issues/541) | Unable to save downloader (qBittorrent) – validation failed despite successful connection test | CLOSED | no-merge-commit | unreviewed |

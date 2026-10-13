@@ -1,0 +1,9 @@
+Batch 49 validation — October 13, 2026
+
+- Focused suite: 12 test files passed, 710 tests passed, 1 skipped. Coverage includes HowLongToBeat lookup and caching, PCGamingWiki routes, personal ratings, preferred-platform searches, source filtering, memoized search, zero-valued ratings, and the wider download dialog.
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run secretlint`: passed.
+- `npm audit`: found 0 vulnerabilities. `npm ls --depth=0` confirmed the requested dependencies are already at current versions, including react-hook-form 7.89.0, express-validator 7.3.2, express-rate-limit 8.7.0, dotenv 18.0.5, and Vite 8.3.1. The harden-runner actions are SHA-pinned at v2.21.1.
+- `npm run build`: passed. Vite emitted the existing advisory that the three.js and main client chunks exceed 500 kB after minification.
+- Release-note validation: one user-facing fragment passed against the pre-batch commit and staged Batch 49 tree.
+- Running UI evidence: launched `npm run dev:test` against a task-specific SQLite database on port 5102 and used headless Chromium with a stubbed IGDB search response. The Add Game search visibly shows a valid zero score as `0/10`; the browser reported no page errors. Screenshots: [Add Game zero score](../../pr-evidence/upstream-rating-zero-add-game-batch-49.png), [game card zero score](../../pr-evidence/upstream-rating-zero-card-batch-49.png), [HowLongToBeat details](../../pr-evidence/upstream-hltb-details-batch-49.png), and [wide download search](../../pr-evidence/upstream-wide-download-search-batch-49.png). The download dialog measured 1843px inside a 1920px viewport and showed the Date, Size, Health, and Actions columns.
+- Cleanup: stopped the port-5102 test server, restored `package.json`, and removed the task-specific SQLite database and its WAL/SHM files plus the temporary Playwright script. Existing `data/test.db-wal` and `data/test.db-shm` files were preserved. No NFS scratch was created.

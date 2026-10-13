@@ -279,6 +279,7 @@ import { importRouter } from "./routes/import.js";
 import { importTasksRouter } from "./routes/import-tasks.js";
 import { systemRouter } from "./routes/system.js";
 import { pcgamingwikiRouter } from "./pcgamingwiki-router.js";
+import { hltbRouter } from "./hltb.js";
 import { probeRootFolder, isWithinDeletableRootFolder, isStrictlyInside } from "./root-folders.js";
 import {
   scanRootFolderById,
@@ -970,6 +971,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(gameJournalRoutes);
   // Use PCGamingWiki Routes
   app.use(pcgamingwikiRouter);
+  // Use HowLongToBeat Routes
+  app.use(hltbRouter);
 
   // ── Server logs ──────────────────────────────────────────────────────────────
 

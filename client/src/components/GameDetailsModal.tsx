@@ -127,6 +127,15 @@ interface GameDetailsModalProps {
 
 type GameDownloadWithDownloader = GameDownload & { downloaderName: string | null };
 
+interface HLTBEntry {
+  id: number;
+  name: string;
+  gameplayMain: number;
+  gameplayMainExtra: number;
+  gameplayCompletionist: number;
+  url: string;
+}
+
 type FileDeletionResult =
   | { deleted: true; path: string | null }
   | { deleted: false; reason: "outside-library-root" | "delete-failed"; path: string };
@@ -241,11 +250,18 @@ function resolveWebsiteConfig(w: { category?: number; url: string }): SiteLinkCo
 
 function getDerivedLinks(
   game: Game,
-  pcgwUrl?: string | null
+  pcgwUrl?: string | null,
+  hltbUrl?: string | null
 ): Array<SiteLinkConfig & { href: string }> {
   const t = encodeURIComponent(game.title);
 
   return [
+    {
+      label: "HowLongToBeat",
+      Icon: Clock as IconComponent,
+      colorClass: "text-yellow-400",
+      href: hltbUrl ?? `https://howlongtobeat.com/?q=${t}`,
+    },
     {
       label: "PCGamingWiki",
       Icon: SiPcgamingwiki as IconComponent,
@@ -852,6 +868,19 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
     staleTime: 24 * 60 * 60 * 1000,
   });
 
+  const { data: hltbData } = useQuery<{ data: HLTBEntry | null }>({
+    queryKey: ["/api/hltb/lookup", game?.title],
+    queryFn: async () => {
+      const res = await apiRequest(
+        "GET",
+        `/api/hltb/lookup?title=${encodeURIComponent(game!.title)}`
+      );
+      return res.json();
+    },
+    enabled: open && !!game?.title,
+    retry: false,
+  });
+
   const {
     data: gameFiles = [],
     isLoading: filesLoading,
@@ -919,7 +948,13 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
         ]
       : rawWebsites;
 
-  const derivedLinks = getDerivedLinks(game, pcgwData?.url);
+  const hltbEntry = hltbData?.data;
+  const hltbTimes = [
+    { label: "Main Story", hours: hltbEntry?.gameplayMain ?? 0 },
+    { label: "Main + Extras", hours: hltbEntry?.gameplayMainExtra ?? 0 },
+    { label: "Completionist", hours: hltbEntry?.gameplayCompletionist ?? 0 },
+  ].filter((entry) => entry.hours > 0);
+  const derivedLinks = getDerivedLinks(game, pcgwData?.url, hltbEntry?.url);
   // Optimistic display: show pending value immediately while the mutation is in flight.
   const currentUserRating = userRatingMutation.isPending
     ? (userRatingMutation.variables?.userRating ?? null)
@@ -962,7 +997,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                   <TooltipContent className="sm:hidden">Early Access</TooltipContent>
                 </Tooltip>
               )}
-              {game.rating ? (
+              {game.rating !== null && game.rating !== undefined ? (
                 <div className="flex items-center gap-1 text-sm">
                   <Star className="w-4 h-4 text-accent" />
                   <span data-testid={`text-rating-${game.id}`}>{game.rating}/10</span>
@@ -1174,6 +1209,42 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                 </div>
               )}
 
+              {hltbEntry && hltbTimes.length > 0 && (
+                <section data-testid="section-hltb" aria-label="HowLongToBeat estimates">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="flex items-center gap-2 font-semibold">
+                      <Clock className="h-4 w-4 text-yellow-400" aria-hidden="true" />
+                      HowLongToBeat
+                    </h3>
+                    <a
+                      href={safeUrl(hltbEntry.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      View {hltbEntry.name} on HLTB
+                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    </a>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {hltbTimes.map(({ label, hours }) => (
+                      <div key={label} className="rounded-md border bg-muted/30 px-3 py-2">
+                        <div className="text-xs text-muted-foreground">{label}</div>
+                        <div
+                          className="text-lg font-semibold"
+                          aria-label={`${label}: ${hours} hours`}
+                        >
+                          {hours}h
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Estimated play times from HowLongToBeat.
+                  </p>
+                </section>
+              )}
+
               {/* Crack status (sourced from xREL) */}
               {!isDiscoveryId(game.id) && (
                 <div>
@@ -1192,7 +1263,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
 
               {/* Metadata grid */}
               <div className="grid grid-cols-2 gap-4">
-                {game.rating && (
+                {game.rating !== null && game.rating !== undefined && (
                   <div>
                     <h4 className="font-medium text-sm text-muted-foreground mb-1">IGDB score</h4>
                     <div className="flex items-center gap-1">
@@ -1616,7 +1687,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                   Ratings
                 </h3>
                 <div className="flex flex-wrap gap-4 mb-4">
-                  {game.rating ? (
+                  {game.rating !== null && game.rating !== undefined ? (
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${scoreColor(game.rating)}`}
@@ -1632,7 +1703,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                       </div>
                     </div>
                   ) : null}
-                  {game.aggregatedRating ? (
+                  {game.aggregatedRating !== null && game.aggregatedRating !== undefined ? (
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${scoreColor(game.aggregatedRating)}`}

@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 435,
+      "verified": 444,
       "needs-implementation": 1,
-      "superseded": 72,
-      "not-applicable": 8,
-      "unreviewed": 630,
+      "superseded": 78,
+      "not-applicable": 9,
+      "unreviewed": 614,
       "implemented-unverified": 1
     }
   },
@@ -14951,10 +14951,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "6b544e1d8cc4a31c59089fcb169d4570c0e31cd5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Downloads includes a Questarr-only source toggle alongside search and category filtering; the source-specific view is covered by the Downloads page tests."
+        ],
+        "acceptance": [
+          "Users can switch between all downloads and Questarr-sourced downloads while retaining the other active filters."
+        ],
+        "evidence": [
+          "client/src/pages/downloads.tsx",
+          "client/__tests__/DownloadsPage.test.tsx",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-49.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14971,10 +14980,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "38c421f841160baec22f7cad159349c1ea57ff68",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested harden-runner 2.16.1 bump is superseded by the SHA-pinned v2.21.1 action already used across the workflows."
+        ],
+        "acceptance": [
+          "Keep the newer SHA-pinned harden-runner action; do not downgrade it to the requested older patch."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/vulnerability-scan.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14991,10 +15007,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f0ac3200f1f7542848ed1bb66ef6cee1450387dd",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested react-hook-form 7.72.1 update is superseded by 7.89.0 in the installed dependency set."
+        ],
+        "acceptance": [
+          "Retain the newer locked react-hook-form version."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "npm ls --depth=0 react-hook-form"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15011,10 +15034,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "13cbaed237449ecf1e9ba3d6a1eb665ff2f1de97",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The four requested development dependency updates are superseded: Playwright is 1.63.0, @types/node 26.6.4, esbuild 0.28.2, and Vite 8.3.1."
+        ],
+        "acceptance": [
+          "Keep the newer locked development dependencies."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "npm ls --depth=0 @playwright/test @types/node esbuild vite"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15031,10 +15061,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "bb4fbef9d14a995aa6f94c24de94dd9bee7ee8a0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork already uses the exact requested express-validator 7.3.2 release."
+        ],
+        "acceptance": [
+          "Keep express-validator at 7.3.2 or a compatible newer version."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "npm ls --depth=0 express-validator"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15051,10 +15088,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "70069e3e4c6450fe0d92bdadff6b2501a1ff8c7f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested express-rate-limit 8.3.2 update is superseded by 8.7.0 in the installed dependency set."
+        ],
+        "acceptance": [
+          "Retain the newer locked express-rate-limit version."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "npm ls --depth=0 express-rate-limit"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15071,10 +15115,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "29f6ef6adf25c9dab2cb57d0d24fbd6463b2f745",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested dotenv 17.4.1 update is superseded by 18.0.5 in the installed dependency set."
+        ],
+        "acceptance": [
+          "Retain the newer locked dotenv version."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "npm ls --depth=0 dotenv"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15091,10 +15142,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "7076be3753817ba6e0ecafd6b1ebebbf291068d7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Personal game ratings are stored per authenticated user, support accessible half-star steps from 0.5 through 10, can be cleared, and are validated by the API."
+        ],
+        "acceptance": [
+          "Users can save, update, and clear their own rating without changing another user’s rating; invalid values are rejected."
+        ],
+        "evidence": [
+          "client/src/components/GameDetailsModal.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx",
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-48.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15111,10 +15172,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "6df36a4b5cf8a0ad640ae8cc5f749423bb0be223",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Preferred platform settings filter manual release searches and automated searches, while a game-specific target platform takes precedence when available."
+        ],
+        "acceptance": [
+          "The configured preference is editable and filters search results; per-game targets override it, with a clear fallback when the target is unavailable."
+        ],
+        "evidence": [
+          "client/src/components/PlatformsSettings.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "server/__tests__/cron_autosearch.test.ts",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/pr-evidence/upstream-game-platform-preselection-batch-48.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15131,10 +15203,25 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "4847e19e31cd2eb3af29a7441eec5368ca9e6e74",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Focusable game-card rating and date indicators expose screen-reader labels, carousel boundary controls identify the first and last page, and zero-valued IGDB ratings remain visible across cards, details, and Add Game results."
+        ],
+        "acceptance": [
+          "Tooltip-trigger indicators have accessible names; carousel edge states are announced; a valid 0/10 score is shown rather than omitted."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/src/components/AddGameModal.tsx",
+          "client/src/components/GameCarouselSection.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx",
+          "client/__tests__/AddGameModal.test.tsx",
+          "docs/pr-evidence/upstream-rating-zero-card-batch-49.png",
+          "docs/pr-evidence/upstream-hltb-details-batch-49.png",
+          "docs/pr-evidence/upstream-rating-zero-add-game-batch-49.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15151,10 +15238,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "36c35e6438b1fcb3a2788b427046ca40c132b58f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Search-page source items and the filtered/sorted result list are memoized from their inputs instead of being rebuilt on every render."
+        ],
+        "acceptance": [
+          "Keep derived search results memoized without changing filter and sort behavior."
+        ],
+        "evidence": [
+          "client/src/pages/search.tsx",
+          "client/__tests__/SearchPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15171,10 +15265,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The vulnerability-fix proposal is closed and its dependency updates are superseded by newer locked versions; a full npm audit reports zero vulnerabilities."
+        ],
+        "acceptance": [
+          "Maintain current patched dependency versions and require the full dependency audit to remain clean."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "npm audit",
+          "docs/upstream-resolution/evidence/validation-batch-49.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15191,10 +15293,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The desktop download-search dialog now uses 96vw up to 2000px, so the Date, Size, Health, and Actions columns fit together on a 1920px viewport."
+        ],
+        "acceptance": [
+          "Search-result columns remain readable on wide displays while the dialog stays within the viewport on smaller screens."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/pr-evidence/upstream-wide-download-search-batch-49.png",
+          "https://github.com/Doezer/Questarr/issues/535"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15211,10 +15322,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The author explicitly withdrew the request and asked maintainers to ignore it; no product behavior or implementation criteria remain."
+        ],
+        "acceptance": [
+          "No code change is appropriate after the author’s withdrawal."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/536",
+          "docs/upstream-resolution/sources.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15231,10 +15349,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e911e8ac51f25b97133760ab967ba589d687c65f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Game details can look up HowLongToBeat estimates for a close title match, show Main Story/Main + Extras/Completionist hours, and link to the matched HLTB page or fall back to a title search. Successful and definitive no-match responses are cached; transient provider failures are not."
+        ],
+        "acceptance": [
+          "The authenticated lookup validates title input, uses the SSRF-safe fetcher with a timeout, rejects weak title matches, and never caches transient failures."
+        ],
+        "evidence": [
+          "server/hltb.ts",
+          "server/routes.ts",
+          "server/__tests__/hltb.test.ts",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx",
+          "docs/pr-evidence/upstream-hltb-details-batch-49.png",
+          "https://github.com/Doezer/Questarr/pull/537"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15251,10 +15381,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b340713526b98ae835f7a4defd1f57dceb9a088e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Game details retrieve a PCGamingWiki URL through the server API, preferring Steam-app lookup when available and providing a title-search fallback."
+        ],
+        "acceptance": [
+          "The external link is shown when a matching URL is available and falls back safely when the provider has no result."
+        ],
+        "evidence": [
+          "server/pcgamingwiki-router.ts",
+          "server/__tests__/pcgamingwiki_routes.test.ts",
+          "client/src/components/GameDetailsModal.tsx",
+          "https://github.com/Doezer/Questarr/pull/538"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

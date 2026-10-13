@@ -2020,7 +2020,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col ">
+        <DialogContent className="w-[96vw] max-w-[2000px] max-h-[90vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Download {game.title}</DialogTitle>
             <DialogDescription>

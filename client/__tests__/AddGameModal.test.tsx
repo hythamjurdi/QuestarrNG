@@ -164,6 +164,14 @@ describe("AddGameModal", () => {
     );
   });
 
+  it("shows a zero IGDB score in search results", async () => {
+    setupFetch({ searchResults: [{ ...makeSearchResult(), rating: 0 }] });
+    renderModal({ initialQuery: "Test Game" });
+    fireEvent.click(screen.getByTestId("open-btn"));
+
+    expect(await screen.findAllByText("0/10")).not.toHaveLength(0);
+  });
+
   it("shows release year only for year-end release dates (Dec 31)", async () => {
     setupFetch({ searchResults: [makeSearchResult("TBD Game", "2024-12-31")] });
     renderModal({ initialQuery: "TBD Game" });

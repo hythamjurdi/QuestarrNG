@@ -949,6 +949,41 @@ The ledger now records **435 verified**, **72 superseded**, **630 unreviewed**,
 **8 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**
 item. Issue #37 remains outstanding.
 
+## Batch 49 — October 13, 2026
+
+Batch 49 reviewed PRs #523–534 and #537–538, plus issues [#535](https://github.com/Doezer/Questarr/issues/535)
+and [#536](https://github.com/Doezer/Questarr/issues/536). Downloads already had
+the Questarr-only source toggle (#523), personal half-step ratings are scoped to
+the signed-in user (#530), preferred-platform filtering applies to manual and
+automated searches (#531), and search sorting is memoized (#533). PR #532's
+tooltip names and carousel boundary roles are present; this batch also preserves
+a valid 0/10 score in game cards, Add Game search results, and every details tab.
+
+Issue #535's desktop download-search dialog now uses 96% of the viewport up to
+2000px, keeping Date, Size, Health, and Actions readable on wide screens while
+remaining viewport-bound on smaller displays. Issue #536 was explicitly
+withdrawn by its author. PR #537's HowLongToBeat lookup is implemented with
+close-title matching, three completion estimates, a direct game link, and a
+search fallback; transient provider failures are not cached. PR #538's
+PCGamingWiki lookup and game-details link are present with a title-search
+fallback.
+
+Dependency requests #524–526, #528–529, and #534 are superseded by newer locked
+versions or a newer SHA-pinned harden-runner action. The full dependency audit
+reports zero vulnerabilities. See the [Add Game zero-score screenshot](../pr-evidence/upstream-rating-zero-add-game-batch-49.png),
+[game-card screenshot](../pr-evidence/upstream-rating-zero-card-batch-49.png),
+[HowLongToBeat details screenshot](../pr-evidence/upstream-hltb-details-batch-49.png),
+[wide download-search screenshot](../pr-evidence/upstream-wide-download-search-batch-49.png),
+[release note](../../release-notes/2026-10-13-hltb-and-wide-download-search.md),
+and [batch 49 validation](evidence/validation-batch-49.txt).
+
+Focused validation passed across 12 test files and 710 tests (one skipped).
+Typecheck, lint, formatting, secret scanning, dependency audit, and production
+build passed; the build retains its existing large-chunk advisory. The ledger
+now records **444 verified**, **78 superseded**, **614 unreviewed**,
+**9 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** item. Issue #37 remains outstanding.
+
 ## Follow-up: RomM, IGDB, downloads and hardening (#306–319)
 
 PRs [#306](https://github.com/Doezer/Questarr/pull/306),

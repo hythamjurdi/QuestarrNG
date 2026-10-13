@@ -194,6 +194,7 @@ global.fetch = vi.fn();
 function makeFetchMock(overrides: Record<string, unknown> = {}) {
   const defaults: Record<string, unknown> = {
     "/api/nexusmods/game-domain": { configured: false, domain: null },
+    "/api/hltb/lookup": { data: null },
     "/xrel-status": { crackTypes: [] },
   };
   const routes = { ...defaults, ...overrides };
@@ -232,6 +233,17 @@ describe("GameDetailsModal", () => {
     expect(screen.getByTestId("text-rating-1")).toHaveTextContent("8.5/10");
     expect(screen.getByTestId("text-release-date-1")).toHaveTextContent("2023");
     expect(screen.getByTestId("img-cover-1")).toBeInTheDocument();
+  });
+
+  it("shows a zero IGDB score throughout game details", () => {
+    renderComponent({ ...mockGame, rating: 0 } as typeof mockGame);
+    expect(screen.getByText("IGDB score")).toBeInTheDocument();
+    expect(screen.getAllByText("0/10")).toHaveLength(2);
+    expect(screen.getByTestId("text-rating-1")).toHaveTextContent("0/10");
+
+    fireEvent.click(screen.getByRole("tab", { name: /links & ratings/i }));
+    expect(screen.getByText("IGDB Users")).toBeInTheDocument();
+    expect(screen.getByText("0.0")).toBeInTheDocument();
   });
 
   describe("Crack Status", () => {
@@ -277,6 +289,75 @@ describe("GameDetailsModal", () => {
     expect(screen.getByTestId("badge-genre-adventure")).toBeInTheDocument();
     expect(screen.getByTestId("badge-platform-pc")).toBeInTheDocument();
     expect(screen.getByTestId("badge-platform-ps5")).toBeInTheDocument();
+  });
+
+  it("shows HowLongToBeat estimates and uses the matched game link", async () => {
+    const hltbUrl = "https://howlongtobeat.com/game/12345";
+    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+      makeFetchMock({
+        "/api/hltb/lookup": {
+          data: {
+            id: 12345,
+            name: "Test Game",
+            gameplayMain: 25,
+            gameplayMainExtra: 40,
+            gameplayCompletionist: 65,
+            url: hltbUrl,
+          },
+        },
+      })
+    );
+
+    renderComponent();
+
+    const section = await screen.findByTestId("section-hltb");
+    expect(within(section).getByText("Main Story")).toBeInTheDocument();
+    expect(within(section).getByText("25h")).toBeInTheDocument();
+    expect(within(section).getByText("Main + Extras")).toBeInTheDocument();
+    expect(within(section).getByText("40h")).toBeInTheDocument();
+    expect(within(section).getByText("Completionist")).toBeInTheDocument();
+    expect(within(section).getByText("65h")).toBeInTheDocument();
+    expect(within(section).getByRole("link")).toHaveAttribute("href", hltbUrl);
+
+    fireEvent.click(screen.getByRole("tab", { name: /links & ratings/i }));
+    await waitFor(() => {
+      const hltbLinks = screen.getAllByRole("link", { name: /howlongtobeat/i, hidden: true });
+      expect(hltbLinks.some((link) => link.getAttribute("href") === hltbUrl)).toBe(true);
+    });
+  });
+
+  it("hides empty HLTB estimates but keeps the matched page link", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+      makeFetchMock({
+        "/api/hltb/lookup": {
+          data: {
+            id: 12345,
+            name: "Test Game",
+            gameplayMain: 0,
+            gameplayMainExtra: 0,
+            gameplayCompletionist: 0,
+            url: "https://howlongtobeat.com/game/12345",
+          },
+        },
+      })
+    );
+
+    renderComponent();
+    await waitFor(() => {
+      expect(screen.queryByTestId("section-hltb")).not.toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("tab", { name: /links & ratings/i }));
+
+    const hltbLink = await screen.findByRole("link", { name: /howlongtobeat/i, hidden: true });
+    expect(hltbLink).toHaveAttribute("href", "https://howlongtobeat.com/game/12345");
+  });
+
+  it("uses a title-search link when HLTB has no match", async () => {
+    renderComponent();
+    fireEvent.click(screen.getByRole("tab", { name: /links & ratings/i }));
+
+    const hltbLink = await screen.findByRole("link", { name: /howlongtobeat/i, hidden: true });
+    expect(hltbLink).toHaveAttribute("href", "https://howlongtobeat.com/?q=Test%20Game");
   });
 
   it("updates and clears the automatic download target", async () => {
