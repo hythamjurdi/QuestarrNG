@@ -83,6 +83,13 @@ checks exist.
 
 ## 2. Authentication secret (`JWT_SECRET`)
 
+`JWT_SECRET`, when set, must contain at least 32 UTF-8 bytes and must not
+be the legacy default. Invalid overrides stop startup without logging the
+secret. Use a random value, for example `openssl rand -hex 32`, or leave
+the variable unset to generate one. Weak secrets found in `system_config`
+are replaced with 64 random bytes on first use; this invalidates sessions
+signed with the old weak secret. Strong persisted secrets are preserved.
+
 Session tokens are signed HS256 JWTs (`jsonwebtoken`), 7-day expiry
 (`server/auth.ts:77-82`), verified on every authenticated request by
 `authenticateToken` / `optionalAuthenticateToken` (`server/auth.ts:88-126`).
@@ -344,3 +351,21 @@ points operators at is on the safe side of the fix.
       `DATABASE_URL` to your real source credentials and verify the row counts
       it reports — it continues past per-table failures and still reports
       success (see [MIGRATION.md](./MIGRATION.md)).
+
+## 10. GitHub Actions secrets
+
+Repository secrets are available to every workflow in this repository. Do not
+store integration credentials at repository or organization scope when an
+environment can restrict their use. The Codecov upload workflow uses the
+`codecov-main` environment, restricted to `main`. Discord announcements use the
+`discord-release` environment, restricted to `main`. Tag announcements run
+from a separate default-branch `workflow_run` workflow after the image-release
+workflow succeeds; manual announcements run only from `main`.
+
+Create a new `DISCORD_WEBHOOK` secret in `discord-release`, then delete the
+existing repository-level `DISCORD_RELEASE_WEBHOOK`. The different name prevents
+the release workflow from silently falling back to the repository secret.
+GitHub does not return stored secret values through its API, so create a
+replacement Discord webhook instead of trying to copy the old value. Until the
+repository-scoped secret is removed, any same-repository pull-request workflow
+could still reference it.

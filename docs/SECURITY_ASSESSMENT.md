@@ -70,6 +70,40 @@ revalidates each redirect with the same policy. This preserves self-hosted
 Prowlarr downloads without allowing arbitrary bundle URLs to reach internal
 services.
 
+## CI test execution and secret boundaries
+
+Pull-request validation executes candidate code, so candidate-controlled
+workflow steps must not receive repository secrets. The regular CI workflow
+contains no Codecov token reference. It uploads reports only for `main` pushes;
+a separate `workflow_run` workflow loaded from the default branch accepts only
+a same-repository push to `main` and runs in the `codecov-main` environment.
+That environment's deployment policy allows `main` only. The uploader checks out
+the trusted repository default branch and uses Codecov's commit override for the
+triggering run, so the secret-bearing workflow never checks out run-provided
+source. Store
+`CODECOV_TOKEN`, if configured, as a secret in that environment; do not create a
+repository or organization secret with that name. The `trusted-pr-validation`
+workflow is also loaded from the pull-request base and runs the base validator
+against the candidate snapshot inside Bubblewrap without repository secrets.
+The sandbox unshares external networking and supplies only synthetic `localhost`
+entries plus a resolver file with no nameserver for tests that open local sockets;
+it does not mount the host's `/etc/hosts` or resolver settings, or expose host
+services.
+Contracts in `scripts/validation-engine/workflow-security.contract.mjs` guard
+the workflow structure; the environment's branch policy is configured in
+GitHub repository settings.
+
+GitHub exposes repository secrets to every workflow in the repository, so the
+release webhook must not remain repository-scoped. The announcement jobs use
+the `discord-release` environment, restricted to `main`, and read a separately
+named `DISCORD_WEBHOOK` environment secret. Tag announcements run in a
+default-branch `workflow_run` workflow only after the trusted image workflow
+succeeds. Create a replacement
+webhook in that environment, then delete the repository-level
+`DISCORD_RELEASE_WEBHOOK`; GitHub does not reveal the stored secret's value for
+transfer. Until the repository secret is removed, same-repository
+pull-request workflows can still reference it.
+
 ## Optional pre-import scanning
 
 The VirusTotal and ClamAV checks are disabled unless an operator enables and

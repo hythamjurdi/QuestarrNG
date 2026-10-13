@@ -1,0 +1,25 @@
+Campaign branch integration and validation — 2026-10-13
+
+Integrated the live origin/main commit 3c7288f736f661eee75855124e9ebe8de24a31ce into the upstream-resolution campaign branch after Batch 62 commit b02a7739. This is a campaign-branch integration only; it does not merge the campaign into main.
+
+Conflict resolutions preserve the current main-side trusted test launcher, locked npm runtime, Bubblewrap sandbox, runtime-probe isolation, bounded failure diagnostics, and separate not-run accounting. PostgreSQL and TRUST_PROXY configuration from the campaign branch remain alongside main's strong JWT-secret validation. Contributor DCO changes and both download-bundle and GitHub Actions threat-model entries are retained.
+
+The release-image workflow conflict exposed an important behavioral mismatch: the campaign tag helper originally supplied mutable release aliases to the image build, while main's new workflow intends to attach those aliases only after manifest verification, both platform scans, and the smoke test. The helper now supplies only the immutable SHA tag to the build and emits `dev` or the semantic-version alias for the later promotion step. Helper and workflow contracts cover the ordering and ref behavior.
+
+Dependency conflict resolution removes Passport packages already retired by the campaign, retains `re2js`, adopts the newer `pg`, `pino`, and `react-day-picker` ranges from main, and refreshes Apprise to 2.0.1. The lockfile was regenerated and installed cleanly with `npm ci --ignore-scripts --no-audit --no-fund`.
+
+Validation results:
+
+- `npm test`: 4,229 passed, 7 skipped; 269 files passed and 1 file skipped (270 total).
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run secretlint`: passed.
+- `npm run check:overrides`, `npm run check:licenses` (417 production package versions), and `npm run check:deprecated`: passed. The deprecation check reports three upstream-pinned deprecated packages with no available project action.
+- `npm audit --audit-level=high`, the npm runtime and npm source audits at `--audit-level=low`, and `node scripts/audit-prod.mjs`: passed with zero applicable advisories.
+- `npm run build`: passed; Vite retains its existing large-chunk warning (largest chunk 868.86 kB).
+- DCO Vitest tests: 4 passed. Validation-engine, trusted-launcher, source-policy, and workflow-security Node contracts: 46 passed, 1 environment-gated skip. CI receipt reconciliation contract: 9 passed.
+- Playwright E2E: 50 passed using an isolated temporary database, log, and report directory. The pre-existing `playwright/.auth` directory was restored unchanged; the temporary server and data were removed.
+- Release-note validation: 7 fragments passed. The existing history emitted a `fatal: path ... does not exist in v1.5.0` diagnostic for the modified, unshipped validation-environment fragment, but the validator exited successfully.
+- All 20 GitHub workflow YAML files parsed successfully; `git diff --check` passed.
+
+Cleanup removed generated `dist/`, validation-engine temporary directories, and the isolated E2E directory. Existing `server.log`, `playwright-report/`, and the pre-existing Playwright auth directory were preserved. The initial E2E attempt without a server wrote one failure diagnostic under the pre-existing ignored `test-results/` directory; it was left in place because the directory's prior contents were ambiguous. No NFS scratch space was used.
+
+The DCO policy rollout remains a separate human-controlled gate: no sign-off trailers were added to existing commits, and repository environment/branch-protection settings cannot be verified from this local integration. Ledger item #729 therefore remains implemented-unverified as recorded in Batch 62.

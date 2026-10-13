@@ -4,17 +4,17 @@ import process from "node:process";
 import { pathToFileURL } from "node:url";
 
 export function getForkImageTags({ image, ref, refName, sha }) {
-  const tags = [`${image}:sha-${sha}`];
+  getForkImageReleaseTag(ref, refName);
+  return [`${image}:sha-${sha}`];
+}
 
+export function getForkImageReleaseTag(ref, refName) {
   if (ref.startsWith("refs/tags/v")) {
-    tags.push(`${image}:${refName.slice(1)}`, `${image}:latest`);
-  } else if (ref === "refs/heads/main") {
-    tags.push(`${image}:dev`);
-  } else {
-    throw new Error(`Unsupported image publishing ref: ${ref}`);
+    return refName.slice(1);
   }
+  if (ref === "refs/heads/main") return "dev";
 
-  return tags;
+  throw new Error(`Unsupported image publishing ref: ${ref}`);
 }
 
 function main(args) {
@@ -23,8 +23,10 @@ function main(args) {
     throw new Error("Expected image, ref, ref name, commit SHA, and GitHub output path");
   }
 
+  const releaseTag = getForkImageReleaseTag(ref, refName);
   const tags = getForkImageTags({ image, ref, refName, sha });
   appendFileSync(outputFile, `tags<<EOF\n${tags.join("\n")}\nEOF\n`);
+  appendFileSync(outputFile, `release_tag=${releaseTag}\n`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
