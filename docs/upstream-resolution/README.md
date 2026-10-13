@@ -22,27 +22,29 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The ledger's `capturedAt` records audit generation time, not an
 individual GitHub request timestamp. Review status is independent of GitHub's
-open, closed, or merged state. Batch 68 refreshed the live source snapshot,
-ledger, and inventory before reviewing the next source records.
+open, closed, or merged state. The Batch 69 review uses the live source snapshot
+captured on October 13, 2026 at 22:12 UTC and regenerated the ledger and
+inventory from that same sanitized export.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       595 |
-| `superseded`             |       180 |
+| `verified`               |       603 |
+| `superseded`             |       182 |
 | `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       370 |
+| `unreviewed`             |       360 |
 | **Total**                | **1,163** |
 
-The ledger gives 793 items an assigned disposition. Four implemented
+The ledger gives 803 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 370 are unreviewed. The
+currently identified item needs implementation, and 360 are unreviewed. The
 latest live refresh retains one changed-source flag: PR #1194's body changed
-after its snapshot and still needs review. These counts describe the ledger,
-not completion of the campaign. Batch 68 is the latest completed review; see
-[validation evidence](evidence/validation-batch-68.txt).
+after its snapshot and still needs review. The ten Batch 69 records were
+unchanged from their source snapshots before disposition. These counts describe
+the ledger, not completion of the campaign. Batch 69 is the latest completed
+review; see [validation evidence](evidence/validation-batch-69.txt).
 
 ## Project records
 
@@ -2087,6 +2089,42 @@ and the cleanup record are in [Batch 68 evidence](evidence/validation-batch-68.t
 
 The ledger now records 595 verified, 180 superseded, 13 not applicable, 5
 implemented-unverified, 0 needs-implementation, and 370 unreviewed items.
+Upstream main remains `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, with 232
+issues and 931 pull requests. The campaign remains incomplete and must not be
+merged to `main`.
+
+## Batch 69 — October 13, 2026
+
+Batch 69 reviewed upstream PRs [#806](https://github.com/Doezer/Questarr/pull/806)–
+[#810](https://github.com/Doezer/Questarr/pull/810), issues
+[#811](https://github.com/Doezer/Questarr/issues/811) and
+[#812](https://github.com/Doezer/Questarr/issues/812), PRs
+[#813](https://github.com/Doezer/Questarr/pull/813) and
+[#814](https://github.com/Doezer/Questarr/pull/814), and issue
+[#815](https://github.com/Doezer/Questarr/issues/815). Eight requests were
+verified against current behavior; PRs #806 and #810 were superseded. The
+current CI suite runs in one test job in about three minutes, so four shards
+and a merge job would add five runners and five installs for similar wall time.
+The requested action updates are already covered by the pinned setup-node and
+the hardened release action that replaced softprops.
+
+The batch adds regression coverage for separate Erotic and age-rating signals,
+independent content-filter settings and age-restricted quick-add, Windows 2000
+theme persistence, and the hardlink/symlink tradeoffs shown during import
+review. It also verifies the existing search-priority ordering, Prowlarr
+service-alias URL handling, single-pass library statistics, styled RSS view
+tooltips, and SABnzbd's final storage-path resolution. No application source
+files changed in this batch.
+
+Focused validation passed 383 tests across 14 files, with one skipped. TypeScript,
+full lint, formatting, and `git diff --check` passed. A disposable headless
+browser check confirmed the Windows 2000 Settings class and saved preference,
+and showed the styled “List View” tooltip on the RSS page. The dev server,
+test database, temporary worktree, and downloaded browser artifacts were
+removed after the check. See [Batch 69 validation evidence](evidence/validation-batch-69.txt).
+
+The ledger now records 603 verified, 182 superseded, 13 not applicable, 5
+implemented-unverified, 0 needs-implementation, and 360 unreviewed items.
 Upstream main remains `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, with 232
 issues and 931 pull requests. The campaign remains incomplete and must not be
 merged to `main`.

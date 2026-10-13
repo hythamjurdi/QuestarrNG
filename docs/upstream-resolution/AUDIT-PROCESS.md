@@ -29,28 +29,29 @@ deployment, database, security, and user-facing behavior where applicable.
 ## Current snapshot
 
 The issue and PR lists were refreshed in a live GitHub audit against upstream
-main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 21:43
-UTC**. That sanitized source snapshot contains 232 issues and 931 pull requests
-(1,163 records total). The refresh regenerated the ledger and inventory from
-live exports; the full discussion, review threads, and diffs for the B68 source
-records were then rechecked individually. The ledger's `capturedAt` records
-audit generation time, not an individual GitHub request timestamp. Its
-review-status counts after batch 68 are:
+main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at
+22:12:18 UTC**. That sanitized source snapshot contains 232 issues and 931 pull
+requests (1,163 records total). The ledger and inventory were regenerated from
+that same export at 22:17:30 UTC, preserving existing review dispositions. The
+full discussion, review threads, and diffs for the ten B69 source records were
+then rechecked individually. The ledger's `capturedAt` records audit generation
+time, not an individual GitHub request timestamp. Its review-status counts
+after batch 69 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   595 | Acceptance checks have evidence showing the behavior is present and works.             |
-| `superseded`             |   180 | A later request or implementation replaces the original; the relationship is recorded. |
+| `verified`               |   603 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |   182 | A later request or implementation replaces the original; the relationship is recorded. |
 | `not-applicable`         |    13 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
 | `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
 | `implemented-unverified` |     5 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   370 | No completed source-by-source disposition has been recorded yet.                       |
+| `unreviewed`             |   360 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
-After Batch 68, the ledger has 793 assigned dispositions and no
+After Batch 69, the ledger has 803 assigned dispositions and no
 `needs-implementation` records. The only `sourceChangedSinceReview` flag is
 open PR #1194, whose updated body remains queued for its chronological review.
-All nine B68 records were confirmed unchanged from their source snapshots
+All ten B69 records were confirmed unchanged from their source snapshots
 before disposition. The audit serializes object keys in a stable order to
 prevent JSON property ordering from changing future digests. See `capturedAt`,
 `forkHead`, and `upstreamHead` in the ledger for inventory-generation

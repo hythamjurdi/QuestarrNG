@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T21:43:11.083Z",
-  "forkHead": "c883a87603804735370f5a128eeab34472ab01eb",
+  "capturedAt": "2026-10-13T22:17:30.154Z",
+  "forkHead": "041814ab91d42dc0dd5ac3600cc6852220da71eb",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -23285,10 +23285,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0f3c13791ebecc6904c8d36252d39052933519e0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The four-shard plus merge-job design addressed the older test suite's runtime.",
+          "The current workflow deliberately runs the full test plan in one job, about three minutes; four shard jobs plus a merge would consume five runners and five npm installs for similar wall time. Shared concurrent-runner capacity is the binding constraint, so the original sharding design is superseded."
+        ],
+        "acceptance": [
+          "The full test plan remains gated by one CI test job without the five-runner sharding overhead."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          "docs/SECURITY_ASSESSMENT.md",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23305,10 +23314,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a626a5430d116815e216778ce8e955e8f9bac46b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Windows 2000 is available in Settings → Appearance and selection persists through the unified theme key.",
+          "The selected theme applies the theme-win2k root class and its retro title bar, square corners, beveled controls, and scrollbar styling; a headless browser visual check confirmed the Settings screen renders in this theme."
+        ],
+        "acceptance": [
+          "Selecting Windows 2000 persists the choice and applies the theme class.",
+          "The live Settings screen visibly uses the Windows 2000 styling."
+        ],
+        "evidence": [
+          "client/src/pages/settings.tsx",
+          "client/src/lib/theme-mode.ts",
+          "client/src/index.css",
+          "client/__tests__/SettingsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23325,10 +23346,30 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2e350139d861727de0281685524de21dc9272120",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "IGDB formatting classifies the Erotic theme separately from ESRB Adults Only and PEGI 18 ratings; both independent user preferences default to hidden.",
+          "The server applies filters to library lists/search, IGDB and RAWG discovery, detail lookup, and quick add. User-varying discovery results use private cache policy, and the two persisted flags exist in SQLite and PostgreSQL schemas.",
+          "Added regression coverage for Erotic, ESRB AO, PEGI 18, unrelated signals, independent filter combinations, and age-restricted quick-add rejection."
+        ],
+        "acceptance": [
+          "Each signal is classified independently and disabling one filter does not disable the other.",
+          "Filtered games are omitted from lists and detail/quick-add paths without being added to the library."
+        ],
+        "evidence": [
+          "server/igdb.ts",
+          "server/content-filter.ts",
+          "server/routes.ts",
+          "server/game-quick-add.ts",
+          "shared/schema.ts",
+          "shared/schema.pg.ts",
+          "migrations/0024_jazzy_gambit.sql",
+          "migrations/0025_damp_storm.sql",
+          "server/__tests__/igdb_extended.test.ts",
+          "server/__tests__/integration_api.test.ts",
+          "client/__tests__/SettingsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23345,10 +23386,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Move and copy imports relocate the archive family to the library destination before extraction; hardlink and symlink imports extract from the source archive and transfer remaining loose files separately.",
+          "The implementation detects downloader-extracted content, handles .partN.rar and other volume families, normalizes cross-platform paths, stages extraction safely, and surfaces extraction failures with recovery guidance.",
+          "Import review explains same-volume hardlink fallback and symlink breakage when a source is moved or removed."
+        ],
+        "acceptance": [
+          "Archive extraction completes at the library destination for move/copy modes while preserving volume-family integrity and existing library files.",
+          "Hardlink/symlink constraints are visible, already-extracted archives are not transferred twice, and failures leave actionable recovery guidance."
+        ],
+        "evidence": [
+          "server/services/ArchiveService.ts",
+          "server/services/ImportManager.ts",
+          "client/src/components/ImportReviewModal.tsx",
+          "server/__tests__/archive_service.test.ts",
+          "server/__tests__/archive_service_extract_merge.test.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts",
+          "client/__tests__/ImportReviewModal.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23365,10 +23422,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0b14cf6f04da79e2040f5f30081d1eb64ec8220e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All current workflow references to actions/setup-node use the v7.0.0 commit pin.",
+          "The release workflow no longer uses softprops/action-gh-release; it uses the pinned step-security/action-gh-release v3.0.3 action instead, so the old softprops version request is obsolete."
+        ],
+        "acceptance": [
+          "The requested setup-node major upgrade is present and release creation uses the current pinned hardened action."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/release.yml",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23385,10 +23451,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reporter clarified that priority had previously controlled which indexers were queried, then requested an option to sort visible releases by priority.",
+          "The download dialog supports Priority sorting: lower configured priority numbers sort first, while indexers without a current priority remain last in either sort direction."
+        ],
+        "acceptance": [
+          "Users can sort search results by configured indexer priority, with unknown indexers consistently last."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23405,10 +23480,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Prowlarr proxy links are recognized by the configured numeric indexer path and the presence of a link token even when the returned host is a private container IP or reverse-proxy alias.",
+          "The recognized URL is rewritten to the configured Prowlarr endpoint without nesting its token; the exact Docker service-name-to-172.19.0.8 regression and reverse-proxy variants are covered."
+        ],
+        "acceptance": [
+          "A Prowlarr /{id}/download URL returned on an alias preserves its original link token and is passed to the download client without double-wrapping.",
+          "Safe network fetches continue pinning validated DNS addresses while preserving the configured hostname for Host/TLS routing."
+        ],
+        "evidence": [
+          "server/torznab.ts",
+          "server/ssrf.ts",
+          "server/__tests__/torznab.test.ts",
+          "server/__tests__/ssrf-host-header.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23425,10 +23512,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "09c6dacb67fe1b95d79db75111818f251d36d893",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "calculateLibraryStats accumulates its metrics in one pass through the games list instead of chaining multiple full-list traversals.",
+          "The completeness calculation excludes both null and undefined ratings, retaining the upstream review correction."
+        ],
+        "acceptance": [
+          "Statistics preserve existing outputs while traversing the input once and treating missing ratings as incomplete."
+        ],
+        "evidence": [
+          "client/src/lib/stats.ts",
+          "client/src/lib/__tests__/stats.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23445,10 +23541,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "RSS grid/list toggles use the shared styled Tooltip component instead of native title attributes and keep explicit Grid View/List View accessible names.",
+          "Headless browser hover showed the styled List View tooltip, and the RSS feed list accessibility test covers both toggle names and article-link labels.",
+          "fast-xml-parser remains a production dependency in the package manifest."
+        ],
+        "acceptance": [
+          "Hovering an icon-only view toggle shows its matching styled tooltip while screen readers retain the explicit button name."
+        ],
+        "evidence": [
+          "client/src/components/RssFeedList.tsx",
+          "client/__tests__/RssFeedList.test.tsx",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23465,10 +23573,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SABnzbd history resolution prefers its storage field, which points to the final category destination, instead of relying only on a path value that may still name an incomplete directory.",
+          "The issue's custom /incomplete-bigstorage path and /downloads/complete/games storage destination have a regression test; the upstream reporter confirmed the fix image worked."
+        ],
+        "acceptance": [
+          "When SABnzbd has moved a completed job to a category directory, import uses the final storage path and avoids retrying a stale temporary path."
+        ],
+        "evidence": [
+          "server/downloaders/sabnzbd.ts",
+          "server/services/ImportManager.ts",
+          "server/__tests__/downloaders_comprehensive.test.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
+          "docs/upstream-resolution/sources.json",
+          "docs/upstream-resolution/evidence/validation-batch-69.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

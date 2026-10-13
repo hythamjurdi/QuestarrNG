@@ -1,0 +1,80 @@
+Batch 69 validation — October 13, 2026
+
+Scope and source snapshot
+------------------------
+Reviewed PRs #806–810, #813–814 and issues #811, #812, #815 against upstream
+main 0b538fe4b0a2269edcc8fd3e71e2bbc240291868. The sanitized live export was
+captured at 2026-10-13T22:12:18.866Z and contains 232 issues and 931 pull
+requests. The ledger and generated inventory were regenerated from that same
+export at 22:17:30.154Z. All ten reviewed records were unchanged from their
+source snapshots. PR #1194 remains the only sourceChangedSinceReview flag.
+
+Disposition results
+-------------------
+- PR #806 — superseded: the current test plan runs in one CI job in about three
+  minutes; four shard jobs plus a merge job would consume five runners and five
+  npm installs for similar wall time under the shared concurrency limit.
+- PR #807 — verified: the Windows 2000 theme is selectable and persists its
+  setting. A regression test checks the applied theme class and local storage.
+- PR #808 — verified: Erotic, ESRB Adults Only, and PEGI 18 signals are
+  classified independently; the two preferences default to hidden and are
+  applied independently to lists and quick-add. Regression tests cover these
+  signals and the independent preference combinations.
+- PR #809 — verified: archive imports handle library-side extraction, existing
+  extracted content, volume families, and recovery guidance. The import review
+  explains hardlink same-volume/copy fallback and symlink source-lifetime risks.
+- PR #810 — superseded: setup-node references are pinned to v7.0.0 and release
+  creation uses the pinned hardened action that replaced softprops.
+- Issue #811 — verified: manual download search sorts lower configured indexer
+  priorities first and leaves unconfigured indexers last in either direction.
+- Issue #812 — verified: Prowlarr proxy URLs returned with Docker service-name
+  aliases are rewritten to the configured origin without nesting the existing
+  link token; reverse-proxy forms are covered. Safe fetches retain validated-IP
+  pinning and the configured host for Host/TLS routing.
+- PR #813 — verified: library statistics use a single pass and missing ratings
+  remain excluded from completeness calculations.
+- PR #814 — verified: RSS grid/list controls use the shared styled tooltip and
+  retain accessible names; fast-xml-parser remains a production dependency.
+- Issue #815 — verified: SABnzbd history resolution prefers the final `storage`
+  category path over a stale incomplete `path`, with the issue's custom paths
+  covered by regression tests.
+
+Automated validation
+--------------------
+- Focused Vitest run across 14 files: 383 passed, 1 skipped (384 total).
+- `npm run check` — passed.
+- `npm run lint` — passed with zero warnings.
+- Prettier check for all four changed test files and `ledger.json` — passed.
+- `git diff --check` — passed.
+
+The focused test files were:
+`server/__tests__/torznab.test.ts`,
+`server/__tests__/integration_api.test.ts`,
+`server/__tests__/downloaders_comprehensive.test.ts`,
+`server/__tests__/downloaders_sabnzbd_remaining.test.ts`,
+`server/__tests__/archive_service.test.ts`,
+`server/__tests__/archive_service_extract_merge.test.ts`,
+`server/__tests__/import_manager_archive_extraction.test.ts`,
+`server/__tests__/newznab.test.ts`,
+`client/__tests__/GameDownloadDialog.test.tsx`,
+`client/__tests__/RssFeedList.test.tsx`,
+`client/src/lib/__tests__/stats.test.ts`,
+`server/__tests__/igdb_extended.test.ts`,
+`client/__tests__/SettingsPage.test.tsx`, and
+`client/__tests__/ImportReviewModal.test.tsx`.
+
+Manual browser check and cleanup
+-------------------------------
+In an isolated `npm run dev:test` worktree, selected the Windows 2000 theme in
+Settings and verified the `theme-win2k` class and persisted `win2k` preference.
+On the RSS page, hovering the list-view control displayed the styled “List
+View” tooltip. The screens were inspected in the browser. No `client/src/**`
+files changed in this batch. The dev server, temporary worktree and database,
+downloaded browser, and browser cache were removed; port 5100 was confirmed
+free. Temporary source-snapshot files used to regenerate the inventory were
+also removed.
+
+The batch changed regression tests and campaign documentation only; existing
+application behavior was verified rather than changed. The campaign remains
+incomplete: 360 items are unreviewed and five are implemented-unverified, so
+it is not ready to merge to `main`.
