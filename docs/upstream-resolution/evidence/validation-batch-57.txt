@@ -1,0 +1,75 @@
+# Batch 57 validation — October 13, 2026
+
+Snapshot: upstream `main` `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`; 1,163
+source records (232 issues, 931 PRs). The batch reviewed PRs #631–645.
+
+## Dispositions and coverage
+
+- PRs #631–638 are superseded by merged dependency roll-up #641 and current
+  package, lockfile, and workflow versions that exceed their requested targets.
+  PR #641 is verified against its merge commit in the fork and current resolved
+  dependencies. PR #642's release/1.4.0 backport is superseded by current
+  mainline PR #640 behavior.
+- PR #639 is verified: Discovery builds the hidden, owned, and wanted local-game
+  lookups in one pass and includes hidden games in its filtering behavior.
+- PR #640 is verified: downloader requests use `safeFetch`, with DNS/address
+  validation, connection pinning, redirect revalidation, preserved Host/TLS
+  semantics, and cross-origin credential stripping. Downloader modules contain
+  no direct `fetch()` calls. SABnzbd TLS fallback behavior is also covered.
+- PR #643 is verified: an accepted but unconfirmed qBittorrent add remains an
+  accepted result, explains why the user should check qBittorrent before
+  retrying, and avoids duplicate upload attempts. Its related issue #626 was
+  reviewed in batch 56.
+- PR #644 is verified: mobile drawers, bottom navigation, the More sheet,
+  loading states, retained selections, destructive error feedback, and the
+  calendar's date input are present and covered.
+- PR #645 is verified: Shelved is available as a persistent status, and the
+  compact-card status trigger is disabled during an active download.
+
+## Regression checks
+
+- Focused client group — `npm run test -- client/__tests__/DiscoverPage.test.tsx client/__tests__/CalendarPage.test.tsx client/__tests__/StatusPicker.test.tsx client/__tests__/CompactGameCard.test.tsx client/__tests__/CompactGameCard.remaining.test.tsx client/__tests__/GameCard.test.tsx client/__tests__/GameCard.remaining.test.tsx client/__tests__/AddGameModal.test.tsx client/__tests__/DownloadDetailsModal.test.tsx client/__tests__/GameDownloadDialog.test.tsx client/__tests__/SearchPage.test.tsx`: 11 files passed, 159 tests passed, 1 skipped.
+- Focused downloader/security group — SSRF, Host-header, downloader request,
+  SABnzbd TLS, SSL fallback, qBittorrent, and client regression suites: 8 files
+  passed, 118 tests passed.
+- Async qBittorrent route regression —
+  `npm run test -- server/__tests__/api_routes_async_download.test.ts`: 1 file
+  passed, 10 tests passed.
+- Full suite — `npm run test` with `TMPDIR` set to the task scratch directory:
+  261 files passed, 1 skipped; 4,172 tests passed, 7 skipped.
+- `npm run check`, `npm run lint`, `npm run format:check`, `npm run build`, and
+  `npm run secretlint` passed. The production build showed the existing Vite
+  large-chunk advisory.
+- Release-note validation passed with an explicit `release-note: none` marker;
+  this batch adds test coverage, audit records, and evidence without changing
+  shipped behavior.
+- `git diff --check` passed.
+
+## Running mobile browser checks
+
+Ran `npm run dev:test` at localhost port 51992 with a disposable database and a
+390×844 Chromium viewport. Opened the Shelved status menu, changed a test game's
+status, and confirmed `GET /api/games` returned the persisted `shelved` status.
+Also opened the Add Game drawer, discovery settings drawer, and More navigation
+sheet. The document width stayed at 390 pixels, with no horizontal overflow or
+browser page errors. Screenshots were visually inspected:
+
+- [Mobile Shelved picker](batch-57-mobile-shelved-status-picker.png)
+- [Add Game drawer](batch-57-mobile-add-game-drawer.png)
+- [Discovery settings drawer](batch-57-mobile-discover-settings.png)
+- [Mobile navigation sheet](batch-57-mobile-navigation.png)
+
+The disposable setup used format-valid dummy IGDB credentials; IGDB returned
+HTTP 400 and the server fell back to its local list. This was expected for the
+placeholder credentials and did not produce browser page errors. The browser
+run validates mobile layout and status persistence, not live IGDB integration.
+
+## Scratch and cleanup
+
+`/tmp` had no usable free space, so test temporary files and the isolated browser
+database used a task-owned directory under `/home/keith/Documents/code`. The
+NFS LVM mount's capacity checks hung, so no NFS data was written without a
+confirmed available path. Port 51992 was stopped and confirmed free; unrelated
+port 5100 was untouched. The disposable database and temporary worktree were
+removed. Task scratch and the generated build directory are removed after the
+final repository checks.

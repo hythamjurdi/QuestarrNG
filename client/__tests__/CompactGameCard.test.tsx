@@ -135,6 +135,24 @@ describe("CompactGameCard", () => {
 
       expect(screen.getByLabelText(`Change status for ${mockGame.title}`)).toBeInTheDocument();
     });
+
+    it("disables the status trigger while a game is downloading", () => {
+      const onStatusChange = vi.fn();
+      renderWithProviders(
+        <CompactGameCard
+          game={{ ...mockGame, status: "downloading" }}
+          onStatusChange={onStatusChange}
+        />
+      );
+
+      const trigger = screen.getByLabelText(`Change status for ${mockGame.title}`);
+      expect(trigger).toBeDisabled();
+
+      fireEvent.click(trigger);
+
+      expect(screen.queryByRole("button", { name: "shelved" })).not.toBeInTheDocument();
+      expect(onStatusChange).not.toHaveBeenCalled();
+    });
   });
 
   it("shows a loading fallback when opening details", async () => {

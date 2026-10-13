@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T13:30:13.031Z",
-  "forkHead": "159f5a707b786c2cf84a63d67ca70c235304cc9e",
+  "capturedAt": "2026-10-13T14:05:15.670Z",
+  "forkHead": "f1e7d07e88b0395f1729d8833dc50e1d7e7c451a",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -18094,11 +18094,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This individual dependency update was explicitly superseded by the merged Dependabot roll-up PR #641. QuestarrNG already resolves versions beyond the requested targets in its current manifest and lockfile; the corresponding workflow actions are also newer than the requested tags."
+        ],
+        "acceptance": [
+          "The current manifest, lockfile, and workflow action references exceed this PR’s requested versions, and the combined test suite and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/631",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:641"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18114,11 +18127,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This individual dependency update was explicitly superseded by the merged Dependabot roll-up PR #641. QuestarrNG already resolves versions beyond the requested targets in its current manifest and lockfile; the corresponding workflow actions are also newer than the requested tags."
+        ],
+        "acceptance": [
+          "The current manifest, lockfile, and workflow action references exceed this PR’s requested versions, and the combined test suite and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/632",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:641"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18134,11 +18160,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This individual dependency update was explicitly superseded by the merged Dependabot roll-up PR #641. QuestarrNG already resolves versions beyond the requested targets in its current manifest and lockfile; the corresponding workflow actions are also newer than the requested tags."
+        ],
+        "acceptance": [
+          "The current manifest, lockfile, and workflow action references exceed this PR’s requested versions, and the combined test suite and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/633",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:641"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18154,11 +18193,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This individual dependency update was explicitly superseded by the merged Dependabot roll-up PR #641. QuestarrNG already resolves versions beyond the requested targets in its current manifest and lockfile; the corresponding workflow actions are also newer than the requested tags."
+        ],
+        "acceptance": [
+          "The current manifest, lockfile, and workflow action references exceed this PR’s requested versions, and the combined test suite and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/634",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:641"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18174,11 +18226,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This individual dependency update was explicitly superseded by the merged Dependabot roll-up PR #641. QuestarrNG already resolves versions beyond the requested targets in its current manifest and lockfile; the corresponding workflow actions are also newer than the requested tags."
+        ],
+        "acceptance": [
+          "The current manifest, lockfile, and workflow action references exceed this PR’s requested versions, and the combined test suite and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/635",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:641"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18194,11 +18259,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This individual dependency update was explicitly superseded by the merged Dependabot roll-up PR #641. QuestarrNG already resolves versions beyond the requested targets in its current manifest and lockfile; the corresponding workflow actions are also newer than the requested tags."
+        ],
+        "acceptance": [
+          "The current manifest, lockfile, and workflow action references exceed this PR’s requested versions, and the combined test suite and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/636",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:641"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18214,11 +18292,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This individual dependency update was explicitly superseded by the merged Dependabot roll-up PR #641. QuestarrNG already resolves versions beyond the requested targets in its current manifest and lockfile; the corresponding workflow actions are also newer than the requested tags."
+        ],
+        "acceptance": [
+          "The current manifest, lockfile, and workflow action references exceed this PR’s requested versions, and the combined test suite and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/637",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:641"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18234,11 +18325,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This individual dependency update was explicitly superseded by the merged Dependabot roll-up PR #641. QuestarrNG already resolves versions beyond the requested targets in its current manifest and lockfile; the corresponding workflow actions are also newer than the requested tags."
+        ],
+        "acceptance": [
+          "The current manifest, lockfile, and workflow action references exceed this PR’s requested versions, and the combined test suite and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/638",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:641"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18254,10 +18358,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Discover parses the local game collection once and builds the hidden, owned, and wanted lookup sets and maps in that pass. The hidden-games set is included when filtering Discovery results, preserving the expected exclusion behavior."
+        ],
+        "acceptance": [
+          "Local games are indexed in one pass and hidden, owned, and wanted games are correctly reflected in Discovery results."
+        ],
+        "evidence": [
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/639",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18274,10 +18387,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Outbound downloader requests use safeFetch. It resolves and validates all destination addresses, pins the validated connection, revalidates redirects, preserves the original Host and TLS server name, and removes credentials when a redirect changes origin. The reviewed SABnzbd TLS fallback concern is covered; downloader modules have no remaining direct fetch calls."
+        ],
+        "acceptance": [
+          "Private, loopback, and otherwise unsafe resolved addresses are rejected; redirects are checked again; Host/TLS behavior is preserved; cross-origin credentials are stripped; downloader TLS handling has no insecure-certificate fallback."
+        ],
+        "evidence": [
+          "server/ssrf.ts",
+          "server/downloaders/",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/ssrf-host-header.test.ts",
+          "server/__tests__/downloaders_ssrf.test.ts",
+          "server/__tests__/downloaders_sabnzbd_tls.test.ts",
+          "server/__tests__/downloaders_ssl_fallback.test.ts",
+          "https://github.com/Doezer/Questarr/pull/640",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18294,10 +18421,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3237a92d1894a79c8d007612d2296ba71d03569c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Dependabot roll-up is merged in the current fork history at 3237a92d1894a79c8d007612d2296ba71d03569c. Its covered dependency and action updates are represented by the current manifest, lockfile, and workflow references, which have since advanced beyond the bundled targets."
+        ],
+        "acceptance": [
+          "The roll-up merge is in the current branch history; current dependency and action state builds cleanly and passes the complete test suite."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/641",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18314,11 +18451,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This release/1.4.0 SSRF backport is superseded by the current mainline implementation of PR #640. The mainline safeFetch protection and its regression coverage are present in QuestarrNG."
+        ],
+        "acceptance": [
+          "Current mainline downloader requests use safeFetch with redirect and destination validation; the SSRF and TLS regression suites pass."
+        ],
+        "evidence": [
+          "server/ssrf.ts",
+          "server/downloaders/",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/downloaders_ssrf.test.ts",
+          "https://github.com/Doezer/Questarr/pull/642",
+          "https://github.com/Doezer/Questarr/pull/640",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "pr:640"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18334,11 +18485,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "When qBittorrent accepts an add request but cannot yet confirm the torrent, Questarr reports the accepted-but-unconfirmed state and tells the user to check qBittorrent before retrying. It preserves the accepted result instead of turning it into a false 500 or submitting a second upload."
+        ],
+        "acceptance": [
+          "An accepted but not yet visible torrent is reported without a false failure, and retry guidance warns against creating a duplicate; route and downloader regression tests pass."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/routes.ts",
+          "client/src/pages/search.tsx",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/api_routes_async_download.test.ts",
+          "client/__tests__/SearchPage.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/643",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
+        "dependencies": [
+          "issue:626"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18354,10 +18520,30 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "cfeea78e9d500f501b5b11c6d704769955eed474",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The mobile layout uses focused drawers for Add Game, discovery settings, and download details, with a bottom navigation bar and a More sheet. Loading states, retained user selections, destructive error feedback, and a deterministic calendar date are present."
+        ],
+        "acceptance": [
+          "At 390×844, the mobile drawers and navigation render without horizontal overflow or browser page errors; relevant dialog and calendar behaviors pass focused client tests."
+        ],
+        "evidence": [
+          "client/src/components/AddGameModal.tsx",
+          "client/src/components/DiscoverSettingsModal.tsx",
+          "client/src/components/DownloadDetailsModal.tsx",
+          "client/src/components/MobileBottomNav.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/components/ui/calendar.tsx",
+          "client/__tests__/AddGameModal.test.tsx",
+          "client/__tests__/DownloadDetailsModal.test.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "client/__tests__/CalendarPage.test.tsx",
+          "docs/upstream-resolution/evidence/batch-57-mobile-add-game-drawer.png",
+          "docs/upstream-resolution/evidence/batch-57-mobile-discover-settings.png",
+          "docs/upstream-resolution/evidence/batch-57-mobile-navigation.png",
+          "https://github.com/Doezer/Questarr/pull/644",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18374,10 +18560,24 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "2ca77bc7910a315cd3e32371316823a148156f6a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Shelved is supported as a game status in the shared schema and API, and the status picker exposes it in the UI. Compact game cards disable the custom status trigger while a download is active, preventing conflicting status changes."
+        ],
+        "acceptance": [
+          "Shelved can be selected and persists through the API; the status trigger cannot open or change status while downloading; schema, API, focused tests, and a running mobile browser check pass."
+        ],
+        "evidence": [
+          "shared/schema.ts",
+          "shared/schema.pg.ts",
+          "client/src/components/StatusPicker.tsx",
+          "client/src/components/CompactGameCard.tsx",
+          "server/__tests__/api_routes.test.ts",
+          "client/__tests__/CompactGameCard.test.tsx",
+          "docs/upstream-resolution/evidence/batch-57-mobile-shelved-status-picker.png",
+          "https://github.com/Doezer/Questarr/pull/645",
+          "docs/upstream-resolution/evidence/validation-batch-57.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

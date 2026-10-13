@@ -31,21 +31,21 @@ deployment, database, security, and user-facing behavior where applicable.
 The source export was refreshed against upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 12:59 UTC**.
 The saved source export contains 232 issues and 931 pull requests (1,163
-records total). The ledger was regenerated from that export at 13:30 UTC. Its
-review-status counts after batch 56 are:
+records total). The ledger was regenerated from that export at 14:05 UTC. Its
+review-status counts after batch 57 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   489 | Acceptance checks have evidence showing the behavior is present and works.             |
-| `superseded`             |   119 | A later request or implementation replaces the original; the relationship is recorded. |
+| `verified`               |   495 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |   128 | A later request or implementation replaces the original; the relationship is recorded. |
 | `not-applicable`         |     9 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
 | `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
 | `implemented-unverified` |     4 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   542 | No completed source-by-source disposition has been recorded yet.                       |
+| `unreviewed`             |   527 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
 The source export contains 1,163 items and the counts above reflect reviews
-through batch 56. Four previously reviewed source records—PRs #1195, #1196,
+through batch 57. Four previously reviewed source records—PRs #1195, #1196,
 #1198, and #1202—changed in the refreshed export and remain flagged for renewed
 triage. See `capturedAt`, `forkHead`, and `upstreamHead` in the ledger for
 inventory-generation metadata. The branch may contain later implementation

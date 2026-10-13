@@ -20,27 +20,27 @@ behavior when implementing upstream requests.
 
 The saved issue and PR exports were refreshed against upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 12:59
-UTC**. The ledger was regenerated from that saved export at **13:30 UTC**; the
+UTC**. The ledger was regenerated from that saved export at **14:05 UTC**; the
 source capture time and ledger generation time are kept distinct in the audit
 record. Review status is independent of GitHub's open, closed, or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       489 |
-| `superseded`             |       119 |
+| `verified`               |       495 |
+| `superseded`             |       128 |
 | `not-applicable`         |         9 |
 | `implemented-unverified` |         4 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       542 |
+| `unreviewed`             |       527 |
 | **Total**                | **1,163** |
 
-The ledger now gives 617 items an assigned disposition. Four implemented
+The ledger now gives 632 items an assigned disposition. Four implemented
 integrations still need live-service verification, no currently identified
-item needs implementation, and 542 are unreviewed. Four previously reviewed
+item needs implementation, and 527 are unreviewed. Four previously reviewed
 PRs (#1195, #1196, #1198, and #1202) changed in the refreshed source export and
 remain flagged for renewed triage. These numbers describe the ledger, not
-completion of the campaign. Batch 56 is the latest completed review; its results
-are in [validation evidence](evidence/validation-batch-56.txt).
+completion of the campaign. Batch 57 is the latest completed review; its results
+are in [validation evidence](evidence/validation-batch-57.txt).
 
 ## Project records
 
@@ -1607,5 +1607,41 @@ advisory. Exact outcomes and scratch cleanup are in
 
 After batch 56, the ledger records 489 verified, 119 superseded, 9
 not-applicable, 4 implemented-unverified, 0 needs-implementation, and 542
+unreviewed items. The four refreshed-source flags noted above remain open for
+renewed triage, and the full audit remains in progress.
+
+## Batch 57 — October 13, 2026
+
+Batch 57 reviewed PRs [#631](https://github.com/Doezer/Questarr/pull/631)–
+[#645](https://github.com/Doezer/Questarr/pull/645). PRs #631–638 are
+superseded by the merged dependency roll-up #641 and the newer dependency and
+workflow versions currently in QuestarrNG. The release/1.4.0 backport #642 is
+superseded by the current mainline SSRF implementation in #640. PR #641 itself
+is verified against its merge commit and the current dependency state.
+
+The Discovery local-game parsing optimization in #639 is present and covered by
+the page tests. The high-priority outbound-fetch protections in #640 validate
+resolved addresses and redirects, pin validated connections, preserve Host/TLS
+semantics, and strip cross-origin credentials; downloader-specific SSRF and TLS
+regressions pass. PR #643's qBittorrent accepted-but-unconfirmed flow preserves
+the accepted result and warns users before retrying, avoiding false server
+errors and duplicate uploads.
+
+Mobile drawers and navigation from #644 were exercised in Chromium at 390×844.
+The Shelved status from #645 persists through the API, and the compact-card
+status control stays disabled during an active download. Four screenshots show
+the mobile status picker, Add Game drawer, discovery settings drawer, and More
+navigation sheet. The browser run found no horizontal overflow or page errors.
+
+Focused client checks passed 159 tests across 11 files, with one skipped. The
+focused downloader/security group passed 118 tests across 8 files; the async
+download route regression file passed all 10 tests. The full suite passed
+4,172 tests across 261 files, with 7 skipped. Type checking, lint, formatting,
+production build, secret scanning, and release-note validation passed. See
+[batch 57 validation evidence](evidence/validation-batch-57.txt) for commands,
+environment details, and cleanup.
+
+After batch 57, the ledger records 495 verified, 128 superseded, 9
+not-applicable, 4 implemented-unverified, 0 needs-implementation, and 527
 unreviewed items. The four refreshed-source flags noted above remain open for
 renewed triage, and the full audit remains in progress.

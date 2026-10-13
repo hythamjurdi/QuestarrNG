@@ -631,8 +631,8 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
 [validation evidence](docs/upstream-resolution/evidence/). At the latest ledger
-snapshot on October 13, 2026, 489 items are verified, 119 are superseded, and 9
-are not applicable. Another 542 remain unreviewed, four await live-service
+snapshot on October 13, 2026, 495 items are verified, 128 are superseded, and 9
+are not applicable. Another 527 remain unreviewed, four await live-service
 verification, and none currently need implementation. Four source records
 changed after their prior review and remain flagged for renewed triage. This is
 an active effort; the full review and validation gate must pass before campaign
