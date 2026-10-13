@@ -33,6 +33,8 @@ describe("AppSidebar translated labels", () => {
     const libraryButton = screen.getByTestId("nav-library");
     const translatedLabel = within(libraryButton).getByText("المكتبة");
 
+    expect(libraryButton).toHaveAttribute("lang", "ar");
+    expect(libraryButton).toHaveAttribute("dir", "rtl");
     expect(translatedLabel).toHaveAttribute("lang", "ar");
     expect(translatedLabel).toHaveAttribute("dir", "rtl");
   });

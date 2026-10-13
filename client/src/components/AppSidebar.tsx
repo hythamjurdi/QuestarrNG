@@ -127,6 +127,8 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                             item.children.some((child) => child.url === activeItem)
                           }
                           data-testid={`nav-${item.title.toLowerCase()}`}
+                          lang={languageFor(item.title)}
+                          dir={directionFor(item.title)}
                         >
                           <item.icon className="w-4 h-4" aria-hidden="true" />
                           <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
