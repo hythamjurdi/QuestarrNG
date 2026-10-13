@@ -44,7 +44,7 @@ type SetupForm = {
 export default function SetupPage() {
   const { checkSetup } = useAuth();
   const { toast } = useToast();
-  const { language, setLanguage, t } = useInterfaceLanguage();
+  const { language, setLanguage, t, languageFor, directionFor } = useInterfaceLanguage();
   // const [_, setLocation] = useLocation();
 
   // GET /api/config requires authentication, which doesn't exist yet during
@@ -156,7 +156,12 @@ export default function SetupPage() {
           <CardDescription>Create your admin account to get started</CardDescription>
           <div className="mt-4 space-y-2 text-left">
             <label htmlFor="setup-interface-language" className="text-sm font-medium">
-              {t("Interface language")}
+              <span
+                lang={languageFor("Interface language")}
+                dir={directionFor("Interface language")}
+              >
+                {t("Interface language")}
+              </span>
             </label>
             <Select
               value={language}
@@ -173,7 +178,15 @@ export default function SetupPage() {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
+            <p
+              className="text-xs text-muted-foreground"
+              lang={languageFor(
+                "Translations currently cover navigation and language settings; most other screens are still in English."
+              )}
+              dir={directionFor(
+                "Translations currently cover navigation and language settings; most other screens are still in English."
+              )}
+            >
               {t(
                 "Translations currently cover navigation and language settings; most other screens are still in English."
               )}

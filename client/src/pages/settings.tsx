@@ -218,7 +218,7 @@ function SettingsFilterCard({
  */
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { language, setLanguage, t } = useInterfaceLanguage();
+  const { language, setLanguage, t, languageFor, directionFor } = useInterfaceLanguage();
   const queryClient = useQueryClient();
 
   const [ghostUnlocked] = useLocalStorageState(GHOST_UNLOCK_KEY, false);
@@ -1276,7 +1276,13 @@ export default function SettingsPage() {
   return (
     <div className="h-full overflow-auto p-4 pb-20 sm:p-6 md:pb-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">{t("Settings")}</h1>
+        <h1
+          className="text-2xl font-bold tracking-tight"
+          lang={languageFor("Settings")}
+          dir={directionFor("Settings")}
+        >
+          {t("Settings")}
+        </h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Configure your preferences and system settings
         </p>
@@ -1304,7 +1310,13 @@ export default function SettingsPage() {
               className="mb-0 flex w-full flex-nowrap justify-start overflow-x-auto motion-safe:scroll-smooth motion-reduce:scroll-auto"
             >
               <div ref={setTabsInnerNode} className="flex w-max flex-nowrap [&>*]:shrink-0">
-                <TabsTrigger value="appearance">{t("Appearance")}</TabsTrigger>
+                <TabsTrigger
+                  value="appearance"
+                  lang={languageFor("Appearance")}
+                  dir={directionFor("Appearance")}
+                >
+                  {t("Appearance")}
+                </TabsTrigger>
                 <TabsTrigger value="discovery">Discovery & Downloads</TabsTrigger>
                 <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 <TabsTrigger value="platforms">Platforms</TabsTrigger>
@@ -1382,16 +1394,42 @@ export default function SettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">{t("Interface language")}</CardTitle>
+                <CardTitle
+                  className="text-lg"
+                  lang={languageFor("Interface language")}
+                  dir={directionFor("Interface language")}
+                >
+                  {t("Interface language")}
+                </CardTitle>
                 <CardDescription>
-                  {t("Choose the language used for the interface.")}{" "}
-                  {t(
-                    "Translations currently cover navigation and language settings; most other screens are still in English."
-                  )}
+                  <span
+                    lang={languageFor("Choose the language used for the interface.")}
+                    dir={directionFor("Choose the language used for the interface.")}
+                  >
+                    {t("Choose the language used for the interface.")}
+                  </span>{" "}
+                  <span
+                    lang={languageFor(
+                      "Translations currently cover navigation and language settings; most other screens are still in English."
+                    )}
+                    dir={directionFor(
+                      "Translations currently cover navigation and language settings; most other screens are still in English."
+                    )}
+                  >
+                    {t(
+                      "Translations currently cover navigation and language settings; most other screens are still in English."
+                    )}
+                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Label htmlFor="interface-language">{t("Select a language")}</Label>
+                <Label
+                  htmlFor="interface-language"
+                  lang={languageFor("Select a language")}
+                  dir={directionFor("Select a language")}
+                >
+                  {t("Select a language")}
+                </Label>
                 <Select
                   value={language}
                   onValueChange={(value) => setLanguage(value as typeof language)}
@@ -1412,15 +1450,36 @@ export default function SettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">{t("Regional format")}</CardTitle>
+                <CardTitle
+                  className="text-lg"
+                  lang={languageFor("Regional format")}
+                  dir={directionFor("Regional format")}
+                >
+                  {t("Regional format")}
+                </CardTitle>
                 <CardDescription>
-                  {t(
-                    "Choose how dates, times, and numbers are displayed. This setting is separate from interface language."
-                  )}
+                  <span
+                    lang={languageFor(
+                      "Choose how dates, times, and numbers are displayed. This setting is separate from interface language."
+                    )}
+                    dir={directionFor(
+                      "Choose how dates, times, and numbers are displayed. This setting is separate from interface language."
+                    )}
+                  >
+                    {t(
+                      "Choose how dates, times, and numbers are displayed. This setting is separate from interface language."
+                    )}
+                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Label htmlFor="regional-format">{t("Date, time, and number format")}</Label>
+                <Label
+                  htmlFor="regional-format"
+                  lang={languageFor("Date, time, and number format")}
+                  dir={directionFor("Date, time, and number format")}
+                >
+                  {t("Date, time, and number format")}
+                </Label>
                 <Select value={regionalFormat} onValueChange={setRegionalFormat}>
                   <SelectTrigger id="regional-format" className="w-full sm:w-80">
                     <SelectValue placeholder="Use browser settings" />

@@ -32,7 +32,7 @@ export default function MobileBottomNav({
   onNavigate,
 }: Readonly<MobileBottomNavProps>) {
   const [moreOpen, setMoreOpen] = useState(false);
-  const { t } = useInterfaceLanguage();
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
 
   const handleNavigate = (url: string) => {
     setMoreOpen(false);
@@ -46,6 +46,8 @@ export default function MobileBottomNav({
       <nav
         className="fixed inset-x-0 bottom-0 z-20 border-t border-border/80 bg-background/95 px-2 pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-8px_24px_hsl(var(--background)/0.35)] backdrop-blur-lg md:hidden"
         aria-label={t("Primary navigation")}
+        lang={languageFor("Primary navigation")}
+        dir={directionFor("Primary navigation")}
       >
         <div className="grid grid-cols-5 gap-1">
           {mobileBottomNavigation.map((item) => {
@@ -63,6 +65,8 @@ export default function MobileBottomNav({
                 )}
                 aria-current={isActive ? "page" : undefined}
                 aria-label={t(item.title)}
+                lang={languageFor(item.title)}
+                dir={directionFor(item.title)}
               >
                 <span
                   className={cn(
@@ -73,7 +77,13 @@ export default function MobileBottomNav({
                 >
                   <item.icon className="h-5 w-5" />
                 </span>
-                <span className="max-w-full truncate leading-4">{t(item.title)}</span>
+                <span
+                  className="max-w-full truncate leading-4"
+                  lang={languageFor(item.title)}
+                  dir={directionFor(item.title)}
+                >
+                  {t(item.title)}
+                </span>
               </button>
             );
           })}
@@ -88,6 +98,8 @@ export default function MobileBottomNav({
                 : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
             )}
             aria-label={t("More navigation options")}
+            lang={languageFor("More navigation options")}
+            dir={directionFor("More navigation options")}
             aria-expanded={moreOpen}
             aria-controls="mobile-more-navigation"
           >
@@ -100,7 +112,9 @@ export default function MobileBottomNav({
             >
               <MoreHorizontal className="h-5 w-5" />
             </span>
-            <span className="leading-4">{t("More")}</span>
+            <span className="leading-4" lang={languageFor("More")} dir={directionFor("More")}>
+              {t("More")}
+            </span>
           </button>
         </div>
       </nav>
@@ -112,12 +126,26 @@ export default function MobileBottomNav({
           className="max-h-[70svh] overflow-y-auto rounded-t-2xl pb-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <SheetHeader className="mb-4">
-            <SheetTitle className="text-left text-sm font-semibold">{t("More")}</SheetTitle>
+            <SheetTitle
+              className="text-left text-sm font-semibold"
+              lang={languageFor("More")}
+              dir={directionFor("More")}
+            >
+              {t("More")}
+            </SheetTitle>
           </SheetHeader>
 
           <div className="space-y-4">
-            <section aria-label={t("Pages")}>
-              <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <section
+              aria-label={t("Pages")}
+              lang={languageFor("Pages")}
+              dir={directionFor("Pages")}
+            >
+              <p
+                className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                lang={languageFor("Pages")}
+                dir={directionFor("Pages")}
+              >
                 {t("Pages")}
               </p>
               <div className="grid grid-cols-1 gap-0.5">
@@ -135,17 +163,29 @@ export default function MobileBottomNav({
                           : "text-foreground hover:bg-muted/60"
                       )}
                       aria-current={isActive ? "page" : undefined}
+                      lang={languageFor(item.title)}
+                      dir={directionFor(item.title)}
                     >
                       <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      {t(item.title)}
+                      <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
+                        {t(item.title)}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </section>
 
-            <section aria-label={t("Management")}>
-              <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <section
+              aria-label={t("Management")}
+              lang={languageFor("Management")}
+              dir={directionFor("Management")}
+            >
+              <p
+                className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                lang={languageFor("Management")}
+                dir={directionFor("Management")}
+              >
                 {t("Management")}
               </p>
               <div className="grid grid-cols-1 gap-0.5">
@@ -163,17 +203,29 @@ export default function MobileBottomNav({
                           : "text-foreground hover:bg-muted/60"
                       )}
                       aria-current={isActive ? "page" : undefined}
+                      lang={languageFor(item.title)}
+                      dir={directionFor(item.title)}
                     >
                       <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      {t(item.title)}
+                      <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
+                        {t(item.title)}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </section>
 
-            <section aria-label={t("Activity")}>
-              <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <section
+              aria-label={t("Activity")}
+              lang={languageFor("Activity")}
+              dir={directionFor("Activity")}
+            >
+              <p
+                className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                lang={languageFor("Activity")}
+                dir={directionFor("Activity")}
+              >
                 {t("Activity")}
               </p>
               <div className="grid grid-cols-1 gap-0.5">
@@ -191,9 +243,13 @@ export default function MobileBottomNav({
                           : "text-foreground hover:bg-muted/60"
                       )}
                       aria-current={isActive ? "page" : undefined}
+                      lang={languageFor(item.title)}
+                      dir={directionFor(item.title)}
                     >
                       <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      {t(item.title)}
+                      <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
+                        {t(item.title)}
+                      </span>
                     </button>
                   );
                 })}

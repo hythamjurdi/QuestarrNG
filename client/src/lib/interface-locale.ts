@@ -59,10 +59,29 @@ function readLanguage(): InterfaceLanguage {
   }
 }
 
-function applyDocumentLanguage(language: InterfaceLanguage) {
+export function getInterfaceTextLanguage(
+  source: string,
+  language: InterfaceLanguage
+): InterfaceLanguage {
+  if (language === "en") return "en";
+  const entry = (UI_LABELS as Record<string, Partial<Record<InterfaceLanguage, string>>>)[source];
+  return entry?.[language] ? language : "en";
+}
+
+export function getInterfaceTextDirection(
+  source: string,
+  language: InterfaceLanguage
+): "ltr" | "rtl" {
+  return getInterfaceTextLanguage(source, language) === "ar" ? "rtl" : "ltr";
+}
+
+function applyDocumentLanguage() {
   if (typeof document === "undefined") return;
-  document.documentElement.lang = language;
-  document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+  // The catalog currently covers only part of the interface. Keep the document
+  // language aligned with its English fallback and mark translated strings at
+  // their own elements instead of mislabeling the remaining English content.
+  document.documentElement.lang = "en";
+  document.documentElement.dir = "ltr";
 }
 
 let activeLanguage = readLanguage();
@@ -75,14 +94,14 @@ if (typeof window !== "undefined") {
   window.addEventListener("storage", (event) => {
     if (event.key !== STORAGE_KEY && event.key !== null) return;
     activeLanguage = readLanguage();
-    applyDocumentLanguage(activeLanguage);
+    applyDocumentLanguage();
     notify();
   });
 }
 
 export function applyInitialInterfaceLanguage() {
   activeLanguage = readLanguage();
-  applyDocumentLanguage(activeLanguage);
+  applyDocumentLanguage();
 }
 
 export function setInterfaceLanguage(language: InterfaceLanguage) {
@@ -92,12 +111,12 @@ export function setInterfaceLanguage(language: InterfaceLanguage) {
   } catch {
     // Keep the current tab usable when browser storage is disabled.
   }
-  applyDocumentLanguage(language);
+  applyDocumentLanguage();
   notify();
 }
 
 export function useInterfaceLanguage() {
-  const language = useSyncExternalStore(
+  const language = useSyncExternalStore<InterfaceLanguage>(
     (listener) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
@@ -110,5 +129,7 @@ export function useInterfaceLanguage() {
     const entry = (UI_LABELS as Record<string, Partial<Record<InterfaceLanguage, string>>>)[source];
     return entry?.[language] ?? source;
   };
-  return { language, setLanguage: setInterfaceLanguage, t };
+  const languageFor = (source: string) => getInterfaceTextLanguage(source, language);
+  const directionFor = (source: string) => getInterfaceTextDirection(source, language);
+  return { language, setLanguage: setInterfaceLanguage, t, languageFor, directionFor };
 }

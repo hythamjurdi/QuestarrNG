@@ -154,7 +154,7 @@ function AppContent() {
 
 function AppShell() {
   const [location, navigate] = useLocation();
-  const { t } = useInterfaceLanguage();
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
 
   useKonamiCode(() => navigate(routePaths.play));
 
@@ -205,7 +205,11 @@ function AppShell() {
               <div className="flex h-screen w-full overflow-hidden">
                 <AppSidebar activeItem={location} onNavigate={navigate} />
                 <div className="flex flex-col flex-1 min-w-0">
-                  <Header title={t(getPageTitle(location))} />
+                  <Header
+                    title={t(getPageTitle(location))}
+                    titleLanguage={languageFor(getPageTitle(location))}
+                    titleDirection={directionFor(getPageTitle(location))}
+                  />
                   <main className="flex-1 overflow-hidden pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
                     <AppContent />
                   </main>
