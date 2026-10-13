@@ -8,6 +8,7 @@ import {
   Gamepad2,
   HardDrive,
   Home,
+  List,
   MoreHorizontal,
   Newspaper,
   PieChart,
@@ -38,6 +39,7 @@ export const primaryNavigation: AppNavItem[] = [
     children: [
       { title: "All Games", url: "/", icon: Home },
       { title: "Playing", url: "/playing", icon: Gamepad2 },
+      { title: "Custom Lists", url: "/lists", icon: List },
       { title: "Library Import", url: "/library-import", icon: FolderInput },
     ],
   },

@@ -26,6 +26,8 @@ export const {
   gameFiles,
   integrationRequests,
   gameJournalEntries,
+  gameListItems,
+  gameLists,
   gameMilestones,
   gameScreenshots,
   games,

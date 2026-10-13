@@ -512,6 +512,45 @@ export const gameScreenshots = sqliteTable(
   (t) => [index("game_screenshots_game_user_idx").on(t.gameId, t.userId)]
 );
 
+// User-created collections group a user's games without changing lifecycle status.
+export const gameLists = sqliteTable(
+  "game_lists",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(
+      sql`(strftime('%s', 'now') * 1000)`
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(
+      sql`(strftime('%s', 'now') * 1000)`
+    ),
+  },
+  (t) => [uniqueIndex("game_lists_user_name_idx").on(t.userId, t.name)]
+);
+
+export const gameListItems = sqliteTable(
+  "game_list_items",
+  {
+    id: text("id").primaryKey(),
+    listId: text("list_id")
+      .notNull()
+      .references(() => gameLists.id, { onDelete: "cascade" }),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    addedAt: integer("added_at", { mode: "timestamp_ms" }).default(
+      sql`(strftime('%s', 'now') * 1000)`
+    ),
+  },
+  (t) => [
+    uniqueIndex("game_list_items_list_game_idx").on(t.listId, t.gameId),
+    index("game_list_items_game_idx").on(t.gameId),
+  ]
+);
+
 export const notifications = sqliteTable("notifications", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
@@ -676,6 +715,15 @@ export const insertGameMilestoneSchema = createInsertSchema(gameMilestones, {
   id: true,
   createdAt: true,
   completedAt: true,
+});
+
+export const insertGameListSchema = createInsertSchema(gameLists, {
+  name: (schema) => schema.trim().min(1, "List name is required").max(80),
+}).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const updateGameMilestoneSchema = z.object({
@@ -974,6 +1022,9 @@ export type GameMilestone = typeof gameMilestones.$inferSelect;
 export type InsertGameMilestone = (typeof insertGameMilestoneSchema)["_output"];
 
 export type GameScreenshot = typeof gameScreenshots.$inferSelect;
+export type GameList = typeof gameLists.$inferSelect;
+export type InsertGameList = (typeof insertGameListSchema)["_output"];
+export type GameListItem = typeof gameListItems.$inferSelect;
 
 export type XrelNotifiedRelease = typeof xrelNotifiedReleases.$inferSelect;
 export type InsertXrelNotifiedRelease = (typeof insertXrelNotifiedReleaseSchema)["_output"];

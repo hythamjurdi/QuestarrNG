@@ -423,11 +423,22 @@ describe("GameDownloadDialog", () => {
   });
 
   it("sorts results", async () => {
+    globalThis.fetch = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({ guid: "low-health", title: "Low health release", seeders: 1 }),
+        makeTorrentItem({ guid: "high-health", title: "High health release", seeders: 90 }),
+      ]),
+    });
     renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText("Health")).toBeInTheDocument();
+      expect(screen.getByText("Low health release")).toBeInTheDocument();
+      expect(screen.getByText("High health release")).toBeInTheDocument();
     });
+
+    const firstPosition = (title: string) => (document.body.textContent ?? "").indexOf(title);
+    expect(firstPosition("High health release")).toBeLessThan(firstPosition("Low health release"));
 
     // Click on Health sort header
     // Initial state is Seeders Desc (ArrowDown). Clicking it should toggle to Asc (ArrowUp).
@@ -436,6 +447,11 @@ describe("GameDownloadDialog", () => {
 
     // Should trigger a re-sort -> Ascending -> ArrowUp
     expect(screen.getAllByTestId("icon-sort-up").length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(firstPosition("Low health release")).toBeLessThan(
+        firstPosition("High health release")
+      );
+    });
   });
 
   it("sorts results by indexer priority", async () => {
@@ -1053,6 +1069,27 @@ describe("GameDownloadDialog", () => {
       },
       { timeout: 3000 }
     );
+  });
+
+  it("offers detected release groups in the filter and narrows results to the selection", async () => {
+    globalThis.fetch = createFetchMock({ search: groupSearchResults });
+
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Test Game SKIDROW").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Test Game CODEX").length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByText("Show Filters"));
+    expect(screen.getByText("Release Groups")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Select groups..."));
+    fireEvent.click(await screen.findByRole("option", { name: /SKIDROW/ }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Test Game SKIDROW").length).toBeGreaterThan(0);
+      expect(screen.queryByText("Test Game CODEX")).not.toBeInTheDocument();
+    });
   });
 
   const pcItem = makeTorrentItem({

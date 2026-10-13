@@ -950,4 +950,78 @@ describe("API Routes - Additional Coverage", () => {
       expect(storage.updateDownloader).toHaveBeenCalledWith("dl-1", { priority: 2 });
     });
   });
+
+  describe("Custom game lists", () => {
+    const listId = "11111111-1111-4111-8111-111111111111";
+    const gameId = "22222222-2222-4222-8222-222222222222";
+
+    it("lists only the current user's lists", async () => {
+      const lists = [{ id: listId, userId: "user-1", name: "Co-op", createdAt: new Date() }];
+      vi.mocked(storage.getGameLists).mockResolvedValue(lists as never);
+
+      const res = await request(app).get("/api/game-lists");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([
+        {
+          ...lists[0],
+          createdAt: lists[0]!.createdAt!.toISOString(),
+        },
+      ]);
+      expect(storage.getGameLists).toHaveBeenCalledWith("user-1");
+    });
+
+    it("trims and creates a named list", async () => {
+      vi.mocked(storage.getGameLists).mockResolvedValue([]);
+      vi.mocked(storage.createGameList).mockResolvedValue({
+        id: listId,
+        userId: "user-1",
+        name: "Co-op",
+      } as never);
+
+      const res = await request(app).post("/api/game-lists").send({ name: "  Co-op  " });
+
+      expect(res.status).toBe(201);
+      expect(storage.createGameList).toHaveBeenCalledWith("user-1", "Co-op");
+    });
+
+    it("rejects blank and duplicate list names", async () => {
+      const blank = await request(app).post("/api/game-lists").send({ name: "  " });
+      expect(blank.status).toBe(400);
+
+      vi.mocked(storage.getGameLists).mockResolvedValue([
+        { id: listId, userId: "user-1", name: "Co-op" },
+      ] as never);
+      const duplicate = await request(app).post("/api/game-lists").send({ name: "co-op" });
+      expect(duplicate.status).toBe(409);
+      expect(storage.createGameList).not.toHaveBeenCalled();
+    });
+
+    it("does not expose a list owned by another user", async () => {
+      vi.mocked(storage.getGameListGames).mockResolvedValue(undefined);
+
+      const res = await request(app).get(`/api/game-lists/${listId}/games`);
+
+      expect(res.status).toBe(404);
+      expect(storage.getGameListGames).toHaveBeenCalledWith("user-1", listId);
+    });
+
+    it("only adds a game when storage confirms both list and game belong to the user", async () => {
+      vi.mocked(storage.addGameToList).mockResolvedValue(false);
+
+      const res = await request(app).post(`/api/game-lists/${listId}/games`).send({ gameId });
+
+      expect(res.status).toBe(404);
+      expect(storage.addGameToList).toHaveBeenCalledWith("user-1", listId, gameId);
+    });
+
+    it("returns 404 when a list cannot be deleted by the current user", async () => {
+      vi.mocked(storage.deleteGameList).mockResolvedValue(false);
+
+      const res = await request(app).delete(`/api/game-lists/${listId}`);
+
+      expect(res.status).toBe(404);
+      expect(storage.deleteGameList).toHaveBeenCalledWith("user-1", listId);
+    });
+  });
 });

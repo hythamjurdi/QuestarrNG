@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 330,
+      "verified": 345,
       "needs-implementation": 1,
-      "superseded": 35,
+      "superseded": 36,
       "not-applicable": 7,
-      "unreviewed": 773,
+      "unreviewed": 757,
       "implemented-unverified": 1
     }
   },
@@ -10704,10 +10704,29 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork already provides a Shelved lifecycle state, personal game ratings, and per-game journal notes. The requester agreed that Shelved better describes their proposed dropped state; journal notes save through an explicit Add action rather than saving on blur. This batch adds the missing private custom collections requested by the issue.",
+          "Users can create, rename, and delete lists, search their library, and add or remove games. List and membership operations are scoped to the authenticated owner; SQLite and PostgreSQL schemas are aligned."
+        ],
+        "acceptance": [
+          "An authenticated user can manage multiple named lists and place a library game in more than one list.",
+          "A user cannot read or change another account's lists or add games they do not own; duplicate membership adds are idempotent and deleting a list preserves its games.",
+          "Personal journal notes and the Shelved lifecycle state remain available alongside custom lists."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/376",
+          "shared/schema.ts",
+          "shared/schema.pg.ts",
+          "client/src/components/GameJournalTab.tsx",
+          "client/__tests__/GameJournalTab.test.tsx",
+          "server/routes.ts",
+          "server/storage.ts",
+          "server/__tests__/game-lists-storage.test.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "server/__tests__/database_storage_integration.test.ts",
+          "docs/pr-evidence/upstream-custom-lists-batch-40.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10724,10 +10743,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork has authenticated Steam wishlist linking and synchronization, with sync service and route coverage."
+        ],
+        "acceptance": [
+          "A linked public Steam wishlist can be synchronized through the authenticated Questarr account."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/377",
+          "server/steam.ts",
+          "server/steam-routes.ts",
+          "server/__tests__/steam_wishlist.test.ts",
+          "server/__tests__/steam_routes.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10744,10 +10773,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "383392e52bc5bc82ae71fc35597eb1beb6f02ce4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All four requested development-tool versions are met or exceeded by the current lockfile."
+        ],
+        "acceptance": [
+          "The dependency group resolves to versions at least as recent as the PR targets."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/378",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10764,10 +10801,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a2b4fa0f7aa937bb0dcc83a7785a5bdc87e9634f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "fast-xml-parser is locked at 5.11.2, above the requested 5.3.5."
+        ],
+        "acceptance": [
+          "The lockfile resolves fast-xml-parser to at least 5.3.5."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/379",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10784,10 +10828,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3357d5fe8a434b6536d78c7a8ed0e673820af8a8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "semver is locked at 7.8.5, above the requested 7.7.4."
+        ],
+        "acceptance": [
+          "The lockfile resolves semver to at least 7.7.4."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/380",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10804,10 +10855,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4603aa1081d7a5d931249624467f22057018687f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "dotenv is locked at 18.0.4, above the requested 17.2.4."
+        ],
+        "acceptance": [
+          "The lockfile resolves dotenv to at least 17.2.4."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/381",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10824,10 +10882,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "HTTP deployments do not receive Helmet's HTTPS upgrade directive or HSTS unless SSL is enabled. Optional HTTP-to-HTTPS redirection is activated only after the HTTPS listener is bound."
+        ],
+        "acceptance": [
+          "A plain-HTTP installation stays on HTTP unless the operator configures SSL and explicitly enables redirection."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/382",
+          "server/security.ts",
+          "server/index.ts",
+          "server/__tests__/security.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10844,10 +10911,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The closed proposal fixes HTTP behavior by allowing wildcard CORS and disabling HSTS. QuestarrNG supports plain HTTP while retaining explicit origin configuration and SSL-dependent HSTS, so the requested compatibility is already met through a safer implementation."
+        ],
+        "acceptance": [
+          "Plain HTTP works without weakening cross-origin restrictions or disabling transport security for SSL deployments."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/383",
+          "server/security.ts",
+          "server/index.ts",
+          "server/__tests__/security.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10864,10 +10940,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e9e572c22f72816411c6bb37ed5855d41cbf4438",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork includes the requested statistics page, shared statistics calculations, and page coverage."
+        ],
+        "acceptance": [
+          "The statistics page renders the user's game-library statistics."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/384",
+          "client/src/pages/stats.tsx",
+          "client/src/lib/stats.ts",
+          "client/__tests__/StatsPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10884,10 +10969,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "df22db7ed7e82bf60250b8e4afe2b99175ee881b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Outbound requests resolve and validate every address, reject mixed safe/unsafe answers, and pin the validated address to the connection to prevent DNS rebinding between validation and connect."
+        ],
+        "acceptance": [
+          "A hostname that changes to a private or otherwise unsafe address after validation cannot redirect the outbound request."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/385",
+          "server/ssrf.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/ssrf_routes.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10904,10 +10998,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "5de434fe9281f1bb0fb39968c18e7189e17171d0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GET /api/games filters the authenticated user's collection on the server by requested lifecycle status; Library and Wishlist use this path."
+        ],
+        "acceptance": [
+          "Status filtering returns only matching games owned by the authenticated user."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/386",
+          "server/routes.ts",
+          "server/storage.ts",
+          "server/__tests__/api_routes_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10924,10 +11027,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "aefc2c478962bbd119da3cb116b526b314f8c7f0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Game actions expose state-aware accessible labels and live status changes, with accessibility regression coverage."
+        ],
+        "acceptance": [
+          "Assistive technology receives a descriptive action name and updated state for game controls."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/387",
+          "client/src/components/GameCard.tsx",
+          "client/__tests__/Accessibility.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10944,10 +11055,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The container publication workflow builds and verifies linux/amd64 and linux/arm64 images."
+        ],
+        "acceptance": [
+          "ARM64 is included in the published multi-architecture image."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/388",
+          ".github/workflows/fork-image.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10964,10 +11082,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameGrid uses responsive column breakpoints and supports the user's selected card density, including list view."
+        ],
+        "acceptance": [
+          "Cards reflow at viewport breakpoints and remain sized according to the selected grid density."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/389",
+          "client/src/components/GameGrid.tsx",
+          "client/__tests__/GameGrid.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10984,10 +11110,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Health sorting compares seeders for torrents and grabs for Usenet results, respects sort direction, and now has a result-order regression assertion."
+        ],
+        "acceptance": [
+          "Changing Health sort direction changes result order by the appropriate availability measure."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/390",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11004,10 +11138,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Release-group values are parsed from search results, populate the available-group options, and filter results; regression coverage selects one group and checks the excluded group's result disappears."
+        ],
+        "acceptance": [
+          "The release-group filter is populated when returned titles include recognized groups and selecting an option narrows results."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/391",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

@@ -25,6 +25,8 @@ const EXPECTED_TABLES = [
   "gameDownloads",
   "gameFiles",
   "gameJournalEntries",
+  "gameListItems",
+  "gameLists",
   "gameMilestones",
   "gameScreenshots",
   "games",

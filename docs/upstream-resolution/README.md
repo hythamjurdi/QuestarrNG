@@ -1029,3 +1029,27 @@ and [batch 39 validation](evidence/validation-batch-39.txt).
 The ledger now records **330 verified**, **35 superseded**, **773 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** records. Issue #37 remains outstanding.
+
+## Batch 40 — October 12, 2026
+
+Batch 40 reviewed [issues #376–377](inventory.md), [PRs #378–381](inventory.md),
+[issue #382](inventory.md), [PRs #383–387](inventory.md), and [issues #388–391](inventory.md).
+Issue #376's personal ratings, journal notes, and shelved lifecycle state were
+already present; this batch adds private, per-user custom game lists with
+create, rename, delete, and multi-list membership. SQLite and PostgreSQL schemas
+match, storage and API operations enforce ownership, and deleting a list removes
+only its memberships. The responsive Library page is shown in the
+[running UI evidence](../pr-evidence/upstream-custom-lists-batch-40.png).
+
+The dependency targets are exceeded by the current lockfile. HTTP remains
+supported unless SSL is configured, fixing issue #382; PR #383's wildcard CORS
+and disabled HSTS proposal is superseded by the fork's explicit-origin and
+SSL-aware security configuration. The Stats page, DNS-pinned SSRF protection,
+server-side status filtering, accessible game actions, ARM64 builds, responsive
+card grid, health sorting, and release-group filtering were verified. See the
+[personal lists release note](../../release-notes/2026-10-12-personal-game-lists.md)
+and [batch 40 validation](evidence/validation-batch-40.txt).
+
+The ledger now records **345 verified**, **36 superseded**, **757 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** records. Issue #37 remains outstanding.

@@ -367,6 +367,38 @@ export const gameScreenshots = pgTable(
   (t) => [index("game_screenshots_game_user_idx").on(t.gameId, t.userId)]
 );
 
+export const gameLists = pgTable(
+  "game_lists",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestampMs("created_at").default(sql`(EXTRACT(EPOCH FROM now()) * 1000)::bigint`),
+    updatedAt: timestampMs("updated_at").default(sql`(EXTRACT(EPOCH FROM now()) * 1000)::bigint`),
+  },
+  (t) => [uniqueIndex("game_lists_user_name_idx").on(t.userId, t.name)]
+);
+
+export const gameListItems = pgTable(
+  "game_list_items",
+  {
+    id: text("id").primaryKey(),
+    listId: text("list_id")
+      .notNull()
+      .references(() => gameLists.id, { onDelete: "cascade" }),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    addedAt: timestampMs("added_at").default(sql`(EXTRACT(EPOCH FROM now()) * 1000)::bigint`),
+  },
+  (t) => [
+    uniqueIndex("game_list_items_list_game_idx").on(t.listId, t.gameId),
+    index("game_list_items_game_idx").on(t.gameId),
+  ]
+);
+
 export const notifications = pgTable("notifications", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),

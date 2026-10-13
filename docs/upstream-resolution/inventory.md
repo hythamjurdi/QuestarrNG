@@ -368,22 +368,22 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #373](https://github.com/Doezer/Questarr/pull/373) | ⚡ Bolt: Optimize metadata refresh with chunked fetching | MERGED | merge-commit-in-fork-history | verified |
 | [pr #374](https://github.com/Doezer/Questarr/pull/374) | 🎨 Palette: Improve GameCard accessibility with better ARIA labels | MERGED | merge-commit-in-fork-history | verified |
 | [issue #375](https://github.com/Doezer/Questarr/issues/375) | UI filter for different release groups | CLOSED | no-merge-commit | verified |
-| [issue #376](https://github.com/Doezer/Questarr/issues/376) | FR: Add status "dropped"; option to rate games; create custom list; and option to add personal notes | CLOSED | no-merge-commit | unreviewed |
-| [issue #377](https://github.com/Doezer/Questarr/issues/377) | Steam wishlist sync | CLOSED | no-merge-commit | unreviewed |
-| [pr #378](https://github.com/Doezer/Questarr/pull/378) | chore(deps-dev): bump the dev-dependencies group with 4 updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #379](https://github.com/Doezer/Questarr/pull/379) | chore(deps): bump fast-xml-parser from 5.3.4 to 5.3.5 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #380](https://github.com/Doezer/Questarr/pull/380) | chore(deps): bump semver from 7.7.3 to 7.7.4 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #381](https://github.com/Doezer/Questarr/pull/381) | chore(deps): bump dotenv from 17.2.3 to 17.2.4 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #382](https://github.com/Doezer/Questarr/issues/382) | Last version broke Questarr | CLOSED | no-merge-commit | unreviewed |
-| [pr #383](https://github.com/Doezer/Questarr/pull/383) | fix: relax CORS and disable mandatory HTTPs in helmet | CLOSED | no-merge-commit | unreviewed |
-| [pr #384](https://github.com/Doezer/Questarr/pull/384) | Stats page | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #385](https://github.com/Doezer/Questarr/pull/385) | 🛡️ Sentinel: [HIGH] Fix SSRF DNS Rebinding vulnerability | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #386](https://github.com/Doezer/Questarr/pull/386) | ⚡ Bolt: server-side filtering for user games | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #387](https://github.com/Doezer/Questarr/pull/387) | 🎨 Palette: Dynamic ARIA labels for game actions | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #388](https://github.com/Doezer/Questarr/issues/388) | ARM64 Builds | CLOSED | no-merge-commit | unreviewed |
-| [issue #389](https://github.com/Doezer/Questarr/issues/389) | Game cards do not resize correctly | CLOSED | no-merge-commit | unreviewed |
-| [issue #390](https://github.com/Doezer/Questarr/issues/390) | Sort option "Health" doesn't work as intended | CLOSED | no-merge-commit | unreviewed |
-| [issue #391](https://github.com/Doezer/Questarr/issues/391) | New filter option for release groups is empty | CLOSED | no-merge-commit | unreviewed |
+| [issue #376](https://github.com/Doezer/Questarr/issues/376) | FR: Add status "dropped"; option to rate games; create custom list; and option to add personal notes | CLOSED | no-merge-commit | verified |
+| [issue #377](https://github.com/Doezer/Questarr/issues/377) | Steam wishlist sync | CLOSED | no-merge-commit | verified |
+| [pr #378](https://github.com/Doezer/Questarr/pull/378) | chore(deps-dev): bump the dev-dependencies group with 4 updates | MERGED | merge-commit-in-fork-history | verified |
+| [pr #379](https://github.com/Doezer/Questarr/pull/379) | chore(deps): bump fast-xml-parser from 5.3.4 to 5.3.5 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #380](https://github.com/Doezer/Questarr/pull/380) | chore(deps): bump semver from 7.7.3 to 7.7.4 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #381](https://github.com/Doezer/Questarr/pull/381) | chore(deps): bump dotenv from 17.2.3 to 17.2.4 | MERGED | merge-commit-in-fork-history | verified |
+| [issue #382](https://github.com/Doezer/Questarr/issues/382) | Last version broke Questarr | CLOSED | no-merge-commit | verified |
+| [pr #383](https://github.com/Doezer/Questarr/pull/383) | fix: relax CORS and disable mandatory HTTPs in helmet | CLOSED | no-merge-commit | superseded |
+| [pr #384](https://github.com/Doezer/Questarr/pull/384) | Stats page | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #385](https://github.com/Doezer/Questarr/pull/385) | 🛡️ Sentinel: [HIGH] Fix SSRF DNS Rebinding vulnerability | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #386](https://github.com/Doezer/Questarr/pull/386) | ⚡ Bolt: server-side filtering for user games | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #387](https://github.com/Doezer/Questarr/pull/387) | 🎨 Palette: Dynamic ARIA labels for game actions | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #388](https://github.com/Doezer/Questarr/issues/388) | ARM64 Builds | CLOSED | no-merge-commit | verified |
+| [issue #389](https://github.com/Doezer/Questarr/issues/389) | Game cards do not resize correctly | CLOSED | no-merge-commit | verified |
+| [issue #390](https://github.com/Doezer/Questarr/issues/390) | Sort option "Health" doesn't work as intended | CLOSED | no-merge-commit | verified |
+| [issue #391](https://github.com/Doezer/Questarr/issues/391) | New filter option for release groups is empty | CLOSED | no-merge-commit | verified |
 | [issue #392](https://github.com/Doezer/Questarr/issues/392) | Add favorite release groups for auto downloading releases | CLOSED | no-merge-commit | unreviewed |
 | [issue #393](https://github.com/Doezer/Questarr/issues/393) | Blacklist wrong releases/search results | CLOSED | no-merge-commit | unreviewed |
 | [pr #394](https://github.com/Doezer/Questarr/pull/394) | feat: Disable auto-search for unreleased games and allow enabling it optionally | MERGED | merge-commit-not-in-either-main-history | unreviewed |

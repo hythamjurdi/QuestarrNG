@@ -22,6 +22,7 @@ import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
 // ⚡ Bolt: Code splitting with React.lazy
 // This reduces the initial bundle size by loading pages only when needed.
 const Library = lazy(() => import("@/components/Library"));
+const GameListsPage = lazy(() => import("@/pages/game-lists"));
 const DiscoverPage = lazy(() => import("@/pages/discover"));
 const SearchPage = lazy(() => import("@/pages/search"));
 const DownloadsPage = lazy(() => import("@/pages/downloads"));
@@ -124,6 +125,7 @@ function Router() {
         <Route path={routePaths.setup} component={SetupPage} />
         <Route path={routePaths.play} component={PlayPage} />
         <Route path={routePaths.library} component={Library} />
+        <Route path={routePaths.gameLists} component={GameListsPage} />
         <Route path={routePaths.discover} component={DiscoverPage} />
         <Route path={routePaths.search} component={SearchPage} />
         <Route path={routePaths.downloads} component={DownloadsPage} />

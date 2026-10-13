@@ -32,6 +32,8 @@ import {
   type GameMilestone,
   type InsertGameMilestone,
   type GameScreenshot,
+  type GameList,
+  type GameListItem,
   type ImportTask,
   type ImportTaskItem,
   type ImportTaskType,
@@ -68,6 +70,8 @@ import {
   gameJournalEntries,
   gameMilestones,
   gameScreenshots,
+  gameLists,
+  gameListItems,
   indexers,
   downloaders,
   notifications,
@@ -291,6 +295,16 @@ export interface IStorage {
   getGameJournalEntries(gameId: string, userId: string): Promise<GameJournalEntry[]>;
   addGameJournalEntry(entry: InsertGameJournalEntry): Promise<GameJournalEntry>;
   deleteGameJournalEntry(id: string, gameId: string, userId: string): Promise<boolean>;
+
+  // User-created custom lists
+  getGameLists(userId: string): Promise<GameList[]>;
+  getGameList(userId: string, listId: string): Promise<GameList | undefined>;
+  getGameListGames(userId: string, listId: string): Promise<Game[] | undefined>;
+  createGameList(userId: string, name: string): Promise<GameList>;
+  renameGameList(userId: string, listId: string, name: string): Promise<GameList | undefined>;
+  deleteGameList(userId: string, listId: string): Promise<boolean>;
+  addGameToList(userId: string, listId: string, gameId: string): Promise<boolean>;
+  removeGameFromList(userId: string, listId: string, gameId: string): Promise<boolean>;
 
   // Game milestone methods (manual "successes" checklist)
   getGameMilestones(gameId: string, userId: string): Promise<GameMilestone[]>;
@@ -542,6 +556,8 @@ export class MemStorage implements IStorage {
   private gameJournalEntries: Map<string, GameJournalEntry>;
   private gameMilestones: Map<string, GameMilestone>;
   private gameScreenshots: Map<string, GameScreenshot>;
+  private gameLists: Map<string, GameList>;
+  private gameListItems: Map<string, GameListItem>;
   private integrationRequests: Map<string, IntegrationRequest>;
 
   constructor() {
@@ -566,6 +582,8 @@ export class MemStorage implements IStorage {
     this.gameJournalEntries = new Map();
     this.gameMilestones = new Map();
     this.gameScreenshots = new Map();
+    this.gameLists = new Map();
+    this.gameListItems = new Map();
     this.integrationRequests = new Map();
   }
 
@@ -857,6 +875,84 @@ export class MemStorage implements IStorage {
     const entry = this.gameJournalEntries.get(id);
     if (entry?.gameId !== gameId || entry.userId !== userId) return false;
     return this.gameJournalEntries.delete(id);
+  }
+
+  async getGameLists(userId: string): Promise<GameList[]> {
+    return Array.from(this.gameLists.values())
+      .filter((list) => list.userId === userId)
+      .sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0));
+  }
+
+  async getGameList(userId: string, listId: string): Promise<GameList | undefined> {
+    const list = this.gameLists.get(listId);
+    return list?.userId === userId ? list : undefined;
+  }
+
+  async getGameListGames(userId: string, listId: string): Promise<Game[] | undefined> {
+    if (!(await this.getGameList(userId, listId))) return undefined;
+    const items = Array.from(this.gameListItems.values())
+      .filter((item) => item.listId === listId)
+      .sort((a, b) => (b.addedAt?.getTime() ?? 0) - (a.addedAt?.getTime() ?? 0));
+    return items.flatMap((item) => {
+      const game = this.games.get(item.gameId);
+      return game?.userId === userId ? [game] : [];
+    });
+  }
+
+  async createGameList(userId: string, name: string): Promise<GameList> {
+    const now = new Date();
+    const list: GameList = { id: randomUUID(), userId, name, createdAt: now, updatedAt: now };
+    this.gameLists.set(list.id, list);
+    return list;
+  }
+
+  async renameGameList(
+    userId: string,
+    listId: string,
+    name: string
+  ): Promise<GameList | undefined> {
+    const list = await this.getGameList(userId, listId);
+    if (!list) return undefined;
+    const updated = { ...list, name, updatedAt: new Date() };
+    this.gameLists.set(listId, updated);
+    return updated;
+  }
+
+  async deleteGameList(userId: string, listId: string): Promise<boolean> {
+    if (!(await this.getGameList(userId, listId))) return false;
+    for (const [id, item] of this.gameListItems) {
+      if (item.listId === listId) this.gameListItems.delete(id);
+    }
+    return this.gameLists.delete(listId);
+  }
+
+  async addGameToList(userId: string, listId: string, gameId: string): Promise<boolean> {
+    if (!(await this.getGameList(userId, listId))) return false;
+    const game = this.games.get(gameId);
+    if (game?.userId !== userId) return false;
+    const exists = Array.from(this.gameListItems.values()).some(
+      (item) => item.listId === listId && item.gameId === gameId
+    );
+    if (!exists) {
+      const item: GameListItem = {
+        id: randomUUID(),
+        listId,
+        gameId,
+        addedAt: new Date(),
+      };
+      this.gameListItems.set(item.id, item);
+    }
+    return true;
+  }
+
+  async removeGameFromList(userId: string, listId: string, gameId: string): Promise<boolean> {
+    if (!(await this.getGameList(userId, listId))) return false;
+    const game = this.games.get(gameId);
+    if (game?.userId !== userId) return false;
+    for (const [id, item] of this.gameListItems) {
+      if (item.listId === listId && item.gameId === gameId) this.gameListItems.delete(id);
+    }
+    return true;
   }
 
   async getGameMilestones(gameId: string, userId: string): Promise<GameMilestone[]> {
@@ -2665,6 +2761,106 @@ export class DatabaseStorage implements IStorage {
       )
       .returning();
     return result.length > 0;
+  }
+
+  async getGameLists(userId: string): Promise<GameList[]> {
+    return db
+      .select()
+      .from(gameLists)
+      .where(eq(gameLists.userId, userId))
+      .orderBy(gameLists.createdAt);
+  }
+
+  async getGameList(userId: string, listId: string): Promise<GameList | undefined> {
+    const [list] = await db
+      .select()
+      .from(gameLists)
+      .where(and(eq(gameLists.id, listId), eq(gameLists.userId, userId)))
+      .limit(1);
+    return list;
+  }
+
+  async getGameListGames(userId: string, listId: string): Promise<Game[] | undefined> {
+    if (!(await this.getGameList(userId, listId))) return undefined;
+    const rows = await db
+      .select({ game: games })
+      .from(gameListItems)
+      .innerJoin(gameLists, eq(gameLists.id, gameListItems.listId))
+      .innerJoin(games, eq(games.id, gameListItems.gameId))
+      .where(
+        and(
+          eq(gameListItems.listId, listId),
+          eq(gameLists.userId, userId),
+          eq(games.userId, userId)
+        )
+      )
+      .orderBy(desc(gameListItems.addedAt));
+    return rows.map((row) => row.game);
+  }
+
+  async createGameList(userId: string, name: string): Promise<GameList> {
+    const rows = await db.insert(gameLists).values({ id: randomUUID(), userId, name }).returning();
+    return firstOrThrow(rows);
+  }
+
+  async renameGameList(
+    userId: string,
+    listId: string,
+    name: string
+  ): Promise<GameList | undefined> {
+    const [list] = await db
+      .update(gameLists)
+      .set({ name, updatedAt: new Date() })
+      .where(and(eq(gameLists.id, listId), eq(gameLists.userId, userId)))
+      .returning();
+    return list;
+  }
+
+  async deleteGameList(userId: string, listId: string): Promise<boolean> {
+    const deleted = await db
+      .delete(gameLists)
+      .where(and(eq(gameLists.id, listId), eq(gameLists.userId, userId)))
+      .returning();
+    return deleted.length > 0;
+  }
+
+  async addGameToList(userId: string, listId: string, gameId: string): Promise<boolean> {
+    const [list] = await db
+      .select({ id: gameLists.id })
+      .from(gameLists)
+      .where(and(eq(gameLists.id, listId), eq(gameLists.userId, userId)))
+      .limit(1);
+    if (!list) return false;
+    const [game] = await db
+      .select({ id: games.id })
+      .from(games)
+      .where(and(eq(games.id, gameId), eq(games.userId, userId)))
+      .limit(1);
+    if (!game) return false;
+    await db
+      .insert(gameListItems)
+      .values({ id: randomUUID(), listId, gameId })
+      .onConflictDoNothing();
+    return true;
+  }
+
+  async removeGameFromList(userId: string, listId: string, gameId: string): Promise<boolean> {
+    const [list] = await db
+      .select({ id: gameLists.id })
+      .from(gameLists)
+      .where(and(eq(gameLists.id, listId), eq(gameLists.userId, userId)))
+      .limit(1);
+    if (!list) return false;
+    const [game] = await db
+      .select({ id: games.id })
+      .from(games)
+      .where(and(eq(games.id, gameId), eq(games.userId, userId)))
+      .limit(1);
+    if (!game) return false;
+    await db
+      .delete(gameListItems)
+      .where(and(eq(gameListItems.listId, listId), eq(gameListItems.gameId, gameId)));
+    return true;
   }
 
   async getGameMilestones(gameId: string, userId: string): Promise<GameMilestone[]> {

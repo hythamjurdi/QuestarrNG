@@ -31,6 +31,7 @@ import {
   insertRssFeedSchema,
   insertReleaseBlacklistSchema,
   insertGameFileSchema,
+  insertGameListSchema,
   claimDownloadRequestSchema,
   insertRootFolderSchema,
   updateRootFolderSchema,
@@ -1854,6 +1855,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch games" });
     }
   });
+
+  // User-owned custom lists. Membership writes are checked by storage against
+  // both the list owner and the game's owner, so a guessed ID cannot cross users.
+  app.get("/api/game-lists", async (req, res) => {
+    try {
+      res.json(await storage.getGameLists(req.user!.id));
+    } catch (error) {
+      routesLogger.error({ error }, "error fetching game lists");
+      res.status(500).json({ error: "Failed to fetch game lists" });
+    }
+  });
+
+  app.post("/api/game-lists", sensitiveEndpointLimiter, async (req, res) => {
+    const parsed = insertGameListSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: "Invalid game list data", details: parsed.error.issues });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const lists = await storage.getGameLists(userId);
+      if (
+        lists.some((list) => list.name.toLocaleLowerCase() === parsed.data.name.toLocaleLowerCase())
+      ) {
+        return res.status(409).json({ error: "A list with that name already exists" });
+      }
+      return res.status(201).json(await storage.createGameList(userId, parsed.data.name));
+    } catch (error) {
+      routesLogger.error({ error }, "error creating game list");
+      return res.status(500).json({ error: "Failed to create game list" });
+    }
+  });
+
+  app.patch("/api/game-lists/:listId", sensitiveEndpointLimiter, async (req, res) => {
+    const listId = z.string().uuid().safeParse(req.params.listId);
+    const parsed = insertGameListSchema.safeParse(req.body);
+    if (!listId.success || !parsed.success) {
+      return res.status(400).json({ error: "Invalid game list data" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const lists = await storage.getGameLists(userId);
+      if (
+        lists.some(
+          (list) =>
+            list.id !== listId.data &&
+            list.name.toLocaleLowerCase() === parsed.data.name.toLocaleLowerCase()
+        )
+      ) {
+        return res.status(409).json({ error: "A list with that name already exists" });
+      }
+      const updated = await storage.renameGameList(userId, listId.data, parsed.data.name);
+      return updated ? res.json(updated) : res.status(404).json({ error: "Game list not found" });
+    } catch (error) {
+      routesLogger.error({ error }, "error renaming game list");
+      return res.status(500).json({ error: "Failed to rename game list" });
+    }
+  });
+
+  app.delete("/api/game-lists/:listId", sensitiveEndpointLimiter, async (req, res) => {
+    const listId = z.string().uuid().safeParse(req.params.listId);
+    if (!listId.success) return res.status(400).json({ error: "Invalid game list ID" });
+    try {
+      const removed = await storage.deleteGameList(req.user!.id, listId.data);
+      return removed
+        ? res.status(204).end()
+        : res.status(404).json({ error: "Game list not found" });
+    } catch (error) {
+      routesLogger.error({ error }, "error deleting game list");
+      return res.status(500).json({ error: "Failed to delete game list" });
+    }
+  });
+
+  app.get("/api/game-lists/:listId/games", async (req, res) => {
+    const listId = z.string().uuid().safeParse(req.params.listId);
+    if (!listId.success) return res.status(400).json({ error: "Invalid game list ID" });
+    try {
+      const games = await storage.getGameListGames(req.user!.id, listId.data);
+      return games ? res.json(games) : res.status(404).json({ error: "Game list not found" });
+    } catch (error) {
+      routesLogger.error({ error }, "error fetching game list games");
+      return res.status(500).json({ error: "Failed to fetch game list games" });
+    }
+  });
+
+  app.post("/api/game-lists/:listId/games", sensitiveEndpointLimiter, async (req, res) => {
+    const listId = z.string().uuid().safeParse(req.params.listId);
+    const gameId = z.string().uuid().safeParse(req.body?.gameId);
+    if (!listId.success || !gameId.success) {
+      return res.status(400).json({ error: "Invalid game list membership data" });
+    }
+    try {
+      const added = await storage.addGameToList(req.user!.id, listId.data, gameId.data);
+      return added
+        ? res.status(204).end()
+        : res.status(404).json({ error: "Game or list not found" });
+    } catch (error) {
+      routesLogger.error({ error }, "error adding game to list");
+      return res.status(500).json({ error: "Failed to add game to list" });
+    }
+  });
+
+  app.delete(
+    "/api/game-lists/:listId/games/:gameId",
+    sensitiveEndpointLimiter,
+    async (req, res) => {
+      const listId = z.string().uuid().safeParse(req.params.listId);
+      const gameId = z.string().uuid().safeParse(req.params.gameId);
+      if (!listId.success || !gameId.success) {
+        return res.status(400).json({ error: "Invalid game list membership data" });
+      }
+      try {
+        const removed = await storage.removeGameFromList(req.user!.id, listId.data, gameId.data);
+        return removed
+          ? res.status(204).end()
+          : res.status(404).json({ error: "Game or list not found" });
+      } catch (error) {
+        routesLogger.error({ error }, "error removing game from list");
+        return res.status(500).json({ error: "Failed to remove game from list" });
+      }
+    }
+  );
 
   // Get games by status
   app.get(
