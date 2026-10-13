@@ -266,12 +266,12 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [issue #271](https://github.com/Doezer/Questarr/issues/271) | Add ROM Support | CLOSED | no-merge-commit | verified |
 | [pr #272](https://github.com/Doezer/Questarr/pull/272) | ⚡ Bolt: Parallelize download bundle fetching | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #273](https://github.com/Doezer/Questarr/pull/273) | 🛡️ Sentinel: [CRITICAL] Fix SSRF in download bundle endpoint | CLOSED | no-merge-commit | superseded |
-| [pr #274](https://github.com/Doezer/Questarr/pull/274) | ⚡ Bolt: Cache storage info for 30s | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #275](https://github.com/Doezer/Questarr/issues/275) | Can't find torrents for download, even though the are available and well-seeded on the tracker. | CLOSED | no-merge-commit | unreviewed |
-| [pr #276](https://github.com/Doezer/Questarr/pull/276) | Qbittorrent behind vpn fix | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #277](https://github.com/Doezer/Questarr/pull/277) | chore: iterative hardening and operational documentation | CLOSED | no-merge-commit | unreviewed |
-| [issue #278](https://github.com/Doezer/Questarr/issues/278) | Broken Database Schema in v1.0.1 | CLOSED | no-merge-commit | unreviewed |
-| [pr #279](https://github.com/Doezer/Questarr/pull/279) | Jules: Repo Hardening & Type Fixes | CLOSED | no-merge-commit | unreviewed |
+| [pr #274](https://github.com/Doezer/Questarr/pull/274) | ⚡ Bolt: Cache storage info for 30s | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #275](https://github.com/Doezer/Questarr/issues/275) | Can't find torrents for download, even though the are available and well-seeded on the tracker. | CLOSED | no-merge-commit | not-applicable |
+| [pr #276](https://github.com/Doezer/Questarr/pull/276) | Qbittorrent behind vpn fix | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #277](https://github.com/Doezer/Questarr/pull/277) | chore: iterative hardening and operational documentation | CLOSED | no-merge-commit | verified |
+| [issue #278](https://github.com/Doezer/Questarr/issues/278) | Broken Database Schema in v1.0.1 | CLOSED | no-merge-commit | not-applicable |
+| [pr #279](https://github.com/Doezer/Questarr/pull/279) | Jules: Repo Hardening & Type Fixes | CLOSED | no-merge-commit | verified |
 | [pr #280](https://github.com/Doezer/Questarr/pull/280) | trying a fix for #270 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #281](https://github.com/Doezer/Questarr/pull/281) | Downloader/indexer list update | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #282](https://github.com/Doezer/Questarr/pull/282) | fix: fix free space widget for qBittorrent | MERGED | merge-commit-not-in-either-main-history | unreviewed |

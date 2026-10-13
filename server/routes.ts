@@ -296,10 +296,23 @@ const CC_IGDB_METADATA = "public, max-age=86400, stale-while-revalidate=3600";
 // Adult-content filtering makes game-list responses vary per user, so they must not be shared-cacheable
 const CC_IGDB_GAME_LIST_PRIVATE = "private, max-age=3600, stale-while-revalidate=600";
 
+interface StorageCacheItem {
+  downloaderId: string;
+  downloaderName: string;
+  freeSpace: number;
+  error?: string;
+}
+
+interface StorageCache {
+  data: StorageCacheItem[] | null;
+  expiry: number;
+  ttl: number;
+}
+
 // ⚡ Bolt: Simple in-memory cache implementation to avoid external dependencies
 // Caches storage info for 30 seconds to prevent spamming downloaders
-const storageCache = {
-  data: null as unknown,
+const storageCache: StorageCache = {
+  data: null,
   expiry: 0,
   ttl: 30 * 1000, // 30 seconds in milliseconds
 };
@@ -3515,7 +3528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "fetching storage info for downloaders"
       );
       // ⚡ Bolt: Fetch storage info from all downloaders in parallel
-      const storageInfo = await Promise.all(
+      const storageInfo: StorageCacheItem[] = await Promise.all(
         enabledDownloaders.map(async (downloader) => {
           try {
             const freeSpace = await DownloaderManager.getFreeSpace(downloader);

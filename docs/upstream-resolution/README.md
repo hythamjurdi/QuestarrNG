@@ -752,3 +752,43 @@ security release note validates. See [batch 30 evidence](evidence/validation-bat
 
 The ledger now records **237 verified**, **29 superseded**, **874 unreviewed**,
 **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
+
+## Follow-up: storage caching, qBittorrent, and repository hardening (#274–279)
+
+PR [#274](https://github.com/Doezer/Questarr/pull/274) is verified: the
+storage endpoint fetches enabled downloaders concurrently and reuses its
+in-memory result for 30 seconds. Individual downloader failures remain
+isolated in the response. Issue
+[#275](https://github.com/Doezer/Questarr/issues/275) is `not-applicable`:
+the reporter later found that their Prowlarr configuration excluded `.rar`
+results, then apologized for the false alarm; Questarr did not need a code
+change.
+
+PR [#276](https://github.com/Doezer/Questarr/pull/276) is verified against the
+qBittorrent client and regression suites: it can fetch a torrent file itself
+and upload it when qBittorrent is behind a VPN, exposes download details, and
+maps current client status into the downloads view. PRs
+[#277](https://github.com/Doezer/Questarr/pull/277) and
+[#279](https://github.com/Doezer/Questarr/pull/279) are verified: action
+buttons now default to `type="button"`, explicit form submits still work, and
+the storage cache has a concrete TypeScript shape. The fork's
+[operations guide](../OPERATIONS.md), contributor guide, and this per-item
+ledger provide the operational and task-tracking guidance requested by the
+closed PRs. Running-browser evidence for the form behavior is in
+[PR evidence](../pr-evidence/upstream-button-form-safety.png).
+
+Issue [#278](https://github.com/Doezer/Questarr/issues/278) is
+`not-applicable`: the maintainer found no schema change in the reported v1.0.1
+release, and the reporter confirmed that recreating their stale local database
+volume restored login. The current Postgres baseline declares the user settings
+columns used by the app; no reproducible migration defect was reported after
+the volume reset.
+
+The API-route and Button suites passed (372 tests), as did four focused
+qBittorrent suites (61 tests). TypeScript, changed-file ESLint, Prettier, and
+the production client build passed, as did the `npm run dev:test` browser
+interaction. See [batch 31 evidence](evidence/validation-batch-31.txt).
+
+The ledger now records **241 verified**, **29 superseded**, **868 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**
+records. Issue #37 remains outstanding.

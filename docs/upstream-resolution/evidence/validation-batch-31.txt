@@ -1,0 +1,45 @@
+Upstream review batch 31
+========================
+
+Items reviewed
+--------------
+
+- PR #274 verified: `/api/downloaders/storage` fetches enabled downloaders in
+  parallel, caches the result for 30 seconds, and keeps per-downloader errors
+  independent.
+- Issue #275 not applicable: the reporter confirmed that Prowlarr was excluding
+  `.rar` results and closed the support report after discovering the setting.
+- PR #276 verified: qBittorrent downloads a torrent file and uploads it when a
+  URL cannot be fetched from behind a VPN; download-detail and status behavior
+  are covered by the current client implementation.
+- PR #277 verified: buttons default to non-submit behavior, cache typing is
+  concrete, and the fork's operations/contribution docs and audit ledger cover
+  the requested repository guidance.
+- Issue #278 not applicable: the maintainer reported no schema changes in the
+  cited v1.0.1 release; the reporter confirmed that recreating the local DB
+  volume restored login. The current Postgres baseline includes the settings
+  fields used by the app.
+- PR #279 verified: storage-cache types are explicit and the fork has maintained
+  operations and task-tracking documentation.
+
+Validation
+----------
+
+- `npm test -- --run client/__tests__/Button.test.tsx
+  server/__tests__/api_routes.test.ts` — 2 files passed; 372 tests passed.
+- `npm test -- --run server/__tests__/downloaders_qbittorrent_regression.test.ts
+  server/__tests__/downloaders_qbittorrent_remaining.test.ts
+  server/__tests__/qbittorrent_features.test.ts
+  server/__tests__/downloaders_comprehensive.test.ts` — 4 files passed; 61 tests passed.
+- `npm run check` — passed.
+- Vite production client build and `tsc -p tsconfig.build.json --noEmit` — passed;
+  Vite printed its chunk-size advisory for existing bundles over 500 kB.
+- `npx eslint client/src/components/ui/button.tsx server/routes.ts
+  --max-warnings 0` — passed.
+- Prettier passed for the changed source, test, and release-note files.
+- `npm run dev:test` and headless Playwright: clicking “Show options” left the
+  submission count at zero; clicking explicit “Save settings” submitted once.
+  Screenshot: `docs/pr-evidence/upstream-button-form-safety.png`.
+- The TypeScript AST audit found no existing `<Button>` inside a form without
+  an explicit `type` prop.
+- `git diff --check` passed.

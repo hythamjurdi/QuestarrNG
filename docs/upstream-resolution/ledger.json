@@ -7642,10 +7642,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "db0f74ca22c3150000ee8cba4219d34e00a929c3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GET /api/downloaders/storage fetches enabled downloader space concurrently and keeps individual failures isolated. It caches the response in memory for 30 seconds; the cache record now has an explicit StorageCacheItem[] shape."
+        ],
+        "acceptance": [
+          "The first request fetches each enabled downloader, subsequent requests within the 30-second TTL reuse the response, and an expired entry triggers a fresh lookup.",
+          "One downloader failure does not fail the entire storage response."
+        ],
+        "evidence": [
+          "server/routes.ts; server/__tests__/api_routes.test.ts; docs/upstream-resolution/evidence/validation-batch-31.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7662,10 +7669,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The reporter found that their Prowlarr configuration was automatically excluding .rar results, then apologized for the false alarm. The report did not identify a Questarr defect."
+        ],
+        "acceptance": [
+          "The upstream discussion identifies an external indexer configuration as the cause and the reporter closed the support case after finding it; no code change is required."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/275#issuecomment-3733399693; https://github.com/Doezer/Questarr/issues/275#issuecomment-3733447034"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7682,10 +7695,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d1d004617bcd78a92aea73e76cd13520d3c0a4e9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The qBittorrent client can download the torrent file from the indexer and upload it to the client when qBittorrent cannot fetch indexer URLs from behind a VPN. It also returns download details and maps client states for the downloads view."
+        ],
+        "acceptance": [
+          "A VPN-isolated qBittorrent can receive the torrent through a file upload fallback; torrent details and supported statuses remain available."
+        ],
+        "evidence": [
+          "server/downloaders.ts; server/__tests__/downloaders_qbittorrent_regression.test.ts; server/__tests__/downloaders_qbittorrent_remaining.test.ts; server/__tests__/qbittorrent_features.test.ts; server/__tests__/downloaders_comprehensive.test.ts; docs/upstream-resolution/evidence/validation-batch-31.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7702,10 +7721,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork now defaults reusable Button actions to type=button while preserving explicit submits, gives the downloader storage cache a concrete type, and maintains equivalent operations/contribution guidance plus the per-item audit ledger. The old lockfile metadata adjustment is already covered by the fork’s current npm lockfile."
+        ],
+        "acceptance": [
+          "A button without an explicit type does not submit an enclosing form; type=submit still submits, and asChild links receive no default button type.",
+          "The storage cache uses a typed item and cache shape; current operations, contributor, and audit documentation cover the repository guidance requested."
+        ],
+        "evidence": [
+          "client/src/components/ui/button.tsx; client/__tests__/Button.test.tsx; server/routes.ts; docs/OPERATIONS.md; CONTRIBUTING.md; docs/upstream-resolution/ledger.json; docs/pr-evidence/upstream-button-form-safety.png; docs/upstream-resolution/evidence/validation-batch-31.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7722,10 +7748,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The maintainer stated that v1.0.1 had no database changes; the reporter later confirmed that recreating their old local database volume restored login. The current PostgreSQL baseline includes the user_settings fields the app reads, so this was a stale local volume problem rather than a reproducible current migration defect."
+        ],
+        "acceptance": [
+          "The upstream report was resolved by the reporter’s local volume reset, and the current baseline schema contains auto_search_enabled, auto_download_enabled, search_interval_hours, igdb_rate_limit_per_second, and notification_preferences."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/278#issuecomment-3725811270; https://github.com/Doezer/Questarr/issues/278#issuecomment-3725919418; migrations-pg/0000_init.sql; shared/schema.pg.ts; docs/upstream-resolution/evidence/validation-batch-31.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7742,10 +7774,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork now uses explicit types for the downloader storage cache; docs/OPERATIONS.md and the full upstream audit ledger supersede the proposed generic operations and task-tracking files."
+        ],
+        "acceptance": [
+          "The storage cache has explicit item/cache types, and the fork retains maintained operations guidance and a durable task ledger."
+        ],
+        "evidence": [
+          "server/routes.ts; docs/OPERATIONS.md; docs/upstream-resolution/README.md; docs/upstream-resolution/ledger.json; docs/upstream-resolution/evidence/validation-batch-31.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
