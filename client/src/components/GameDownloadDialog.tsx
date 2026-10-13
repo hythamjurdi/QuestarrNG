@@ -1450,7 +1450,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-start gap-1.5 min-w-0">
-                                        <h4 className="font-semibold text-sm leading-snug break-words line-clamp-2 min-w-0 flex-1">
+                                        <h4 className="font-semibold text-sm leading-snug break-words min-w-0 flex-1">
                                           {download.comments ? (
                                             <a
                                               href={safeUrl(download.comments)}

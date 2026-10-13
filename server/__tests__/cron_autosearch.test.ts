@@ -1719,6 +1719,22 @@ describe("Cron - checkAutoSearch", () => {
       );
     });
 
+    it("respects the selected visible categories when grouping auto-search results", () => {
+      const mainGame = { ...ITEM_HIGH_SEEDERS, title: "Test Game-CODEX" };
+      const update = { ...ITEM_HIGH_SEEDERS, title: "Test Game.Update.v1.2-GROUP" };
+      const packs = { ...ITEM_HIGH_SEEDERS, title: "Test Game.Content.Pack-GROUP" };
+
+      const result = categorizeSearchItems([mainGame, update, packs], {
+        minSeeders: 0,
+        sortBy: "seeders",
+        visibleCategoriesSet: new Set(["update", "packs"]),
+      });
+
+      expect(result.mainItems).toEqual([]);
+      expect(result.updateItems).toEqual([update]);
+      expect(result.packsItems).toEqual([packs]);
+    });
+
     it("should fall back to default rules when downloadRules JSON is malformed", async () => {
       const game = { ...baseGame, releaseStatus: "released" as const };
       const settings = {

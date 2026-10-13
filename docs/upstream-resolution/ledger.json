@@ -8188,10 +8188,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Fork hardening, strict lint/type safety, maintained contributor and PR guidance, operations documentation, and this itemized ledger cover the request. GitHub currently reports upstream build (20.x) failure despite the PR body saying checks were green."
+        ],
+        "acceptance": [
+          "Current typecheck and zero-warning lint pass.",
+          "Fork-specific contribution/PR templates, operations guidance, and task tracking are present."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/downloaders.ts",
+          "server/torznab.ts",
+          ".github/CONTRIBUTING.md",
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          "docs/OPERATIONS.md",
+          "docs/upstream-resolution/ledger.json",
+          "gh pr view 292 --repo Doezer/Questarr --json statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8208,10 +8223,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "G4U VIP API support is implemented. Multi-word game titles are sent to G4U with dot separators, matching the scene-style release names described in the issue discussion."
+        ],
+        "acceptance": [
+          "G4U routes through the Newznab client and uses dot-separated queries, while ordinary Newznab queries remain unchanged.",
+          "API and search tests cover G4U categories, query normalization, and returned Usenet results."
+        ],
+        "evidence": [
+          "client/src/pages/indexers.tsx",
+          "server/routes.ts",
+          "server/search.ts",
+          "server/__tests__/search.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/CHANGELOG.md",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8228,11 +8256,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Desktop release names already wrap within their flexible result row. Mobile cards previously clamped names to two lines; they now wrap the full name. Existing safe source links cover the issue's second request."
+        ],
+        "acceptance": [
+          "A long release name is fully visible on a 390px-wide mobile viewport and remains linked to its safe indexer comments page when present."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/pr-evidence/upstream-release-name-mobile-full.png",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
+        "dependencies": [
+          "pr:289"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -8248,10 +8287,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork uses a configurable bounded Postgres pool (default 10, minimum 2), five-second connection and statement timeouts, idle-client error handling, and explicit shutdown. This supersedes the proposed hardcoded pool size of 20 while retaining stability and operator control."
+        ],
+        "acceptance": [
+          "Invalid pool sizes below 2 fail at startup; operations have finite connection and statement deadlines; closeDatabase ends the pool.",
+          "Current upstream build and Docker checks for this PR are successful."
+        ],
+        "evidence": [
+          "server/config.ts",
+          "server/db/connect-postgres.ts",
+          "server/db.ts",
+          "docs/DATABASE.md",
+          "server/__tests__/config.test.ts",
+          "server/__tests__/db.test.ts",
+          "gh pr view 295 --repo Doezer/Questarr --json statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8268,10 +8321,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e0117f4826d695b1380318b36cdc0c2e10320cfe",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested react-hook-form 7.71.0 update is present at 7.89.0 in the current lockfile."
+        ],
+        "acceptance": [
+          "The locked version is at least 7.71.0 and the current typecheck/build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "gh pr view 296 --repo Doezer/Questarr --json statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8288,10 +8350,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "39af11d2baa110b21c53e207e39b1e87959fb611",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested @types/node 20.19.28 and typescript-eslint 8.52.0 updates are superseded by locked versions 26.6.4 and 8.71.0; this project targets Node 22.19 or newer and CI includes Node 26."
+        ],
+        "acceptance": [
+          "Current dependency resolution, TypeScript check, lint, and build pass on the configured Node toolchain."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/ci.yml",
+          "gh pr view 297 --repo Doezer/Questarr --json statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8308,10 +8380,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d83f4bb46585b596c76d9e6e65e60031d5df5bc3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested lucide-react 0.562.0 update is superseded by the current locked 1.48.0 release."
+        ],
+        "acceptance": [
+          "The current icon package resolves at 1.48.0 and the client build passes."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "gh pr view 298 --repo Doezer/Questarr --json statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8328,10 +8409,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b439b5bcad504833394caea9bb58aaeb3531d2c7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested @types/pg 8.16.0 update is superseded by the current lockfile's 8.23.1."
+        ],
+        "acceptance": [
+          "The locked PostgreSQL type package is at least 8.16.0 and the current typecheck passes."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "gh pr view 299 --repo Doezer/Questarr --json statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8348,10 +8438,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR was closed after the maintainer called the 0.6.1-to-0.8.3 change breaking and Dependabot reported the dependency was already up to date. The fork currently uses drizzle-zod 0.8.3, and the current typecheck/build pass."
+        ],
+        "acceptance": [
+          "The requested 0.8.3 release is present; the closed upstream PR needs no separate patch."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "gh pr view 300 --repo Doezer/Questarr --json comments,statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8368,10 +8467,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Download Rules are implemented in settings, manual search defaults, and scheduled searches. Auto-search filters through visibleCategoriesSet and applies seeder/sort rules; malformed settings fall back safely. Upstream reviews flagged category filtering, settings-error feedback, migration registration, and type errors; the fork has category filtering, actionable recovery guidance, managed migrations, and passing checks."
+        ],
+        "acceptance": [
+          "Auto-search rules control minimum seeders, ordering, and selected categories; a regression test verifies unselected categories are excluded.",
+          "The current settings UI and migration path pass focused tests, typecheck, and build."
+        ],
+        "evidence": [
+          "client/src/components/AutoDownloadRulesSettings.tsx",
+          "client/src/pages/settings.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "shared/schema.ts",
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "gh pr view 301 --repo Doezer/Questarr --json reviews,comments,statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8388,11 +8501,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c8b0442c064642c4d011cda0fe8f2d0697b5fd3e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The requested @vitest/ui 4.0.17 and typescript-eslint 8.53.0 updates are superseded by locked versions 5.0.2 and 8.71.0."
+        ],
+        "acceptance": [
+          "Current test, typecheck, lint, and build tooling resolves and runs successfully."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "gh pr view 302 --repo Doezer/Questarr --json statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
+        "dependencies": [
+          "pr:297"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -8408,10 +8532,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "3cfb2a87545af94f7e6cd31cff87ab751596b30f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The README contains the contributors image/list and wraps the detailed IGDB credentials instructions in a collapsible details section."
+        ],
+        "acceptance": [
+          "Both requested README changes are present in the current fork."
+        ],
+        "evidence": [
+          "README.md",
+          "gh pr view 303 --repo Doezer/Questarr --json files,comments,statusCheckRollup",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8428,10 +8560,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Questarr has a current community invite linked in README and documentation; the Discord endpoint confirms it is active and non-expiring. The older invite posted in the upstream issue is expired."
+        ],
+        "acceptance": [
+          "The current documented invite resolves to the Questarr community server."
+        ],
+        "evidence": [
+          "README.md",
+          "docs/docs.json",
+          "gh issue view 304 --repo Doezer/Questarr --comments",
+          "https://discord.com/api/v10/invites/STkp86wP9F?with_counts=true",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8448,11 +8590,27 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The registry-first workflow publishes dev for main builds and publishes latest plus the exact semantic version and immutable SHA tag for versioned releases. Upstream comments confirm the author settled on dev/latest tags and that registry images resolved the Portainer concern."
+        ],
+        "acceptance": [
+          "Workflow tests and docs cover main/dev, versioned/latest, exact semantic-version, and immutable SHA tags."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          "scripts/fork-image-tags.mjs",
+          "scripts/__tests__/fork-image-tags.test.mjs",
+          "docker-compose.yml",
+          "README.md",
+          "docs/QUICKSTART.md",
+          "gh issue view 305 --repo Doezer/Questarr --comments",
+          "docs/upstream-resolution/evidence/validation-batch-33.txt",
+          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+        ],
+        "dependencies": [
+          "issue:291"
+        ]
       },
       "sourceChangedSinceReview": false
     },

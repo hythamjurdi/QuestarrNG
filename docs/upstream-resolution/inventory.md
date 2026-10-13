@@ -284,20 +284,20 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #289](https://github.com/Doezer/Questarr/pull/289) | feat: added links to torrent on indexer if available | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #290](https://github.com/Doezer/Questarr/pull/290) | feat: add indexer filtering to download items in GameDownloadDialog | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #291](https://github.com/Doezer/Questarr/issues/291) | Installation is a mess | CLOSED | no-merge-commit | verified |
-| [pr #292](https://github.com/Doezer/Questarr/pull/292) | 🛡️ Jules: Hardening Follow-up and Linting Fixes | CLOSED | no-merge-commit | unreviewed |
-| [issue #293](https://github.com/Doezer/Questarr/issues/293) | Add g4u.to as source | CLOSED | no-merge-commit | unreviewed |
-| [issue #294](https://github.com/Doezer/Questarr/issues/294) | Adjust width for release name column | CLOSED | no-merge-commit | unreviewed |
-| [pr #295](https://github.com/Doezer/Questarr/pull/295) | feat: iterative hardening and operational improvements | CLOSED | no-merge-commit | unreviewed |
-| [pr #296](https://github.com/Doezer/Questarr/pull/296) | chore(deps): bump react-hook-form from 7.70.0 to 7.71.0 in the react group | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #297](https://github.com/Doezer/Questarr/pull/297) | chore(deps-dev): bump the dev-dependencies group with 2 updates | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #298](https://github.com/Doezer/Questarr/pull/298) | chore(deps): bump lucide-react from 0.554.0 to 0.562.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #299](https://github.com/Doezer/Questarr/pull/299) | chore(deps): bump @types/pg from 8.15.6 to 8.16.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #300](https://github.com/Doezer/Questarr/pull/300) | chore(deps): bump drizzle-zod from 0.6.1 to 0.8.3 | CLOSED | no-merge-commit | unreviewed |
-| [pr #301](https://github.com/Doezer/Questarr/pull/301) | Download filter updates | CLOSED | no-merge-commit | unreviewed |
-| [pr #302](https://github.com/Doezer/Questarr/pull/302) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 3 updates | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #303](https://github.com/Doezer/Questarr/pull/303) | 🎨 Palette: [UX improvement] Add contributors list and shorten readme | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #304](https://github.com/Doezer/Questarr/issues/304) | Discord Server | CLOSED | no-merge-commit | unreviewed |
-| [issue #305](https://github.com/Doezer/Questarr/issues/305) | Update Package Release Pattern | CLOSED | no-merge-commit | unreviewed |
+| [pr #292](https://github.com/Doezer/Questarr/pull/292) | 🛡️ Jules: Hardening Follow-up and Linting Fixes | CLOSED | no-merge-commit | verified |
+| [issue #293](https://github.com/Doezer/Questarr/issues/293) | Add g4u.to as source | CLOSED | no-merge-commit | verified |
+| [issue #294](https://github.com/Doezer/Questarr/issues/294) | Adjust width for release name column | CLOSED | no-merge-commit | verified |
+| [pr #295](https://github.com/Doezer/Questarr/pull/295) | feat: iterative hardening and operational improvements | CLOSED | no-merge-commit | verified |
+| [pr #296](https://github.com/Doezer/Questarr/pull/296) | chore(deps): bump react-hook-form from 7.70.0 to 7.71.0 in the react group | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #297](https://github.com/Doezer/Questarr/pull/297) | chore(deps-dev): bump the dev-dependencies group with 2 updates | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #298](https://github.com/Doezer/Questarr/pull/298) | chore(deps): bump lucide-react from 0.554.0 to 0.562.0 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #299](https://github.com/Doezer/Questarr/pull/299) | chore(deps): bump @types/pg from 8.15.6 to 8.16.0 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #300](https://github.com/Doezer/Questarr/pull/300) | chore(deps): bump drizzle-zod from 0.6.1 to 0.8.3 | CLOSED | no-merge-commit | superseded |
+| [pr #301](https://github.com/Doezer/Questarr/pull/301) | Download filter updates | CLOSED | no-merge-commit | verified |
+| [pr #302](https://github.com/Doezer/Questarr/pull/302) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 3 updates | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #303](https://github.com/Doezer/Questarr/pull/303) | 🎨 Palette: [UX improvement] Add contributors list and shorten readme | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #304](https://github.com/Doezer/Questarr/issues/304) | Discord Server | CLOSED | no-merge-commit | verified |
+| [issue #305](https://github.com/Doezer/Questarr/issues/305) | Update Package Release Pattern | CLOSED | no-merge-commit | verified |
 | [pr #306](https://github.com/Doezer/Questarr/pull/306) | chore: iterative hardening and lint fixes | CLOSED | no-merge-commit | unreviewed |
 | [pr #307](https://github.com/Doezer/Questarr/pull/307) | Refactor migration runner for Docker and db:push compatibility | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #308](https://github.com/Doezer/Questarr/pull/308) | 🎨 Palette: Add accessibility attributes to search and header components | MERGED | merge-commit-not-in-either-main-history | unreviewed |

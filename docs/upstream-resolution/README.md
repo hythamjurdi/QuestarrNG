@@ -862,3 +862,53 @@ build retains its existing large-chunk advisory. The ledger now records
 **253 verified**, **29 superseded**, **856 unreviewed**, **7 not-applicable**,
 **1 implemented-unverified**, and **1 needs-implementation** records. Issue
 #37 remains outstanding.
+
+## Follow-up: hardening, G4U, download rules and release titles (#292–305)
+
+PRs [#292](https://github.com/Doezer/Questarr/pull/292) and
+[#295](https://github.com/Doezer/Questarr/pull/295) are verified against the
+fork's stronger lint, type-safety, and operations baseline. Contributor and PR
+templates, an operations guide, and this per-item ledger cover the requested
+maintenance artifacts. Postgres uses a configurable bounded pool (default 10,
+minimum 2), five-second connection and statement timeouts, and explicit pool
+shutdown; this retains operator control instead of hardcoding a 20-connection
+pool.
+
+Issue [#293](https://github.com/Doezer/Questarr/issues/293) is verified: G4U
+VIP API support is implemented, and multi-word game titles are converted to the
+dot-separated query format G4U expects. Issue
+[#294](https://github.com/Doezer/Questarr/issues/294) is verified: desktop
+titles already use the available row width, and long titles now wrap fully on
+mobile instead of being clipped. Safe source-page links are covered by PR #289.
+See [mobile browser evidence](../pr-evidence/upstream-release-name-mobile-full.png).
+
+Dependency PRs [#296](https://github.com/Doezer/Questarr/pull/296),
+[#297](https://github.com/Doezer/Questarr/pull/297),
+[#298](https://github.com/Doezer/Questarr/pull/298),
+[#299](https://github.com/Doezer/Questarr/pull/299), and
+[#302](https://github.com/Doezer/Questarr/pull/302) are verified against the
+current lockfile, which contains each requested version or a later one. PR
+[#300](https://github.com/Doezer/Questarr/pull/300) is superseded: its upstream
+build check failed, maintainers described the update as breaking, and the bot
+reported the dependency already up to date. This fork uses drizzle-zod 0.8.3
+and passes its current checks, so the PR does not require a separate change.
+PR [#301](https://github.com/Doezer/Questarr/pull/301)'s download rules are
+implemented across settings, manual searches, and scheduled auto-search; a
+regression test confirms the selected categories filter scheduled results. PR
+[#303](https://github.com/Doezer/Questarr/pull/303)'s contributor list and
+collapsible IGDB setup guide are already present in the README.
+
+Issue [#304](https://github.com/Doezer/Questarr/issues/304) is verified: the
+current Questarr Discord invite is linked in the README and documentation, and
+the invite endpoint confirms it is active. Issue
+[#305](https://github.com/Doezer/Questarr/issues/305) is verified with the tag
+workflow from batch 33: main builds publish `dev`, while semantic-version
+releases publish `latest`, the exact version, and an immutable commit tag.
+See [batch 34 validation](evidence/validation-batch-34.txt).
+
+Seven focused suites passed (579 tests, seven skipped). TypeScript, lint,
+formatting, the production build, and Compose validation passed. The build
+retains its existing large-chunk advisory. The ledger now records **266
+verified**, **30 superseded**, **842 unreviewed**, **7 not-applicable**,
+**1 implemented-unverified**, and **1 needs-implementation** records. Issue #37
+remains outstanding.

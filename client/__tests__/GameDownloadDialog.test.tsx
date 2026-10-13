@@ -329,6 +329,21 @@ describe("GameDownloadDialog", () => {
     }
   );
 
+  it("keeps the full release name visible on narrow screens", async () => {
+    mockIsMobile = true;
+    const longTitle =
+      "A.Very.Long.Game.Release.Name.With.Version.Platform.Edition.And.Release.Group.Information";
+    globalThis.fetch = createFetchMock({
+      search: makeSearchResult([makeTorrentItem({ title: longTitle })]),
+    });
+
+    renderComponent();
+
+    const heading = await screen.findByRole("heading", { name: longTitle });
+    expect(heading).toBeVisible();
+    expect(heading).not.toHaveClass("line-clamp-2");
+  });
+
   it.each([false, true])(
     "sanitizes an unsafe indexer comments URL when mobile is %s",
     async (isMobile) => {
