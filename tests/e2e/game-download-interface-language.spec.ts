@@ -234,11 +234,46 @@ test.describe("Game download interface language", () => {
       await page.route("**/api/config", async (route) =>
         route.fulfill({ json: { igdb: { configured: true } } })
       );
+      const calendarYear = await page.evaluate(() => new Date().getFullYear());
       await page.route("**/api/games*", async (route) =>
-        route.fulfill({ json: [{ ...game, releaseDate: "2026-10-15" }] })
+        route.fulfill({
+          json: [
+            { ...game, releaseDate: `${calendarYear}-10-15` },
+            {
+              ...game,
+              id: "undated-calendar-game",
+              title: "Mystery Release Date",
+              releaseDate: `${calendarYear}-12-31`,
+            },
+          ],
+        })
       );
 
       await page.goto("/calendar");
+      const [expectedOctober, expectedPersianMonth, expectedYear, groupedYear] =
+        await page.evaluate(
+          (year) => [
+            new Intl.DateTimeFormat(undefined, { calendar: "gregory", month: "long" }).format(
+              new Date(year, 9, 1)
+            ),
+            new Intl.DateTimeFormat(undefined, { month: "long" }).format(new Date(year, 9, 1)),
+            new Intl.NumberFormat(undefined, { useGrouping: false }).format(year),
+            new Intl.NumberFormat(undefined).format(year),
+          ],
+          calendarYear
+        );
+      expect(expectedOctober).not.toBe(expectedPersianMonth);
+      await expect(page.getByRole("heading", { name: expectedOctober, exact: true })).toBeVisible();
+      const undatedYearHeading = page.getByRole("heading", { name: /No Release Date/u });
+      await expect(undatedYearHeading).toContainText(expectedYear);
+      await expect(undatedYearHeading).not.toContainText(groupedYear);
+      if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+        await page.screenshot({
+          path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-calendar-gregorian-year-view-fa-IR.png`,
+          fullPage: true,
+        });
+      }
+
       await page.getByRole("combobox").click();
       await page.getByRole("option").nth(1).click();
 

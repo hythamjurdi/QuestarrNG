@@ -77,8 +77,11 @@ export function formatCalendarTitle(
   return formatter.format(weekDays[0]!) + " – " + formatter.format(weekDays[6]!);
 }
 
-function getMonthName(month: number): string {
-  return new Date(2000, month, 1).toLocaleDateString(getRegionalLocale(), { month: "long" });
+export function getGregorianMonthName(month: number, locale = getRegionalLocale()): string {
+  return new Intl.DateTimeFormat(locale, {
+    calendar: "gregory",
+    month: "long",
+  }).format(new Date(2000, month, 1));
 }
 
 function getRegionalLanguage(): string {
@@ -449,7 +452,7 @@ function YearView({
                 lang={getRegionalLanguage()}
                 dir={getRegionalDirection()}
               >
-                {getMonthName(month)}
+                {getGregorianMonthName(month)}
               </h3>
               {gameCount > 0 && (
                 <Badge variant="secondary" className="text-xs">
@@ -857,7 +860,7 @@ function UndatedSection({
         <h2 className="text-base font-semibold text-muted-foreground">
           <LocalizedText source="No Release Date" /> —{" "}
           <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
-            {formatRegionalNumber(year)}
+            {formatRegionalNumber(year, { useGrouping: false })}
           </span>
         </h2>
         <Badge variant="secondary" className="text-xs">

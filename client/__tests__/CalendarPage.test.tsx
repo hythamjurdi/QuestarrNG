@@ -154,6 +154,20 @@ describe("CalendarPage", () => {
     });
   });
 
+  it("formats the undated year with regional digits and no grouping", async () => {
+    act(() => setRegionalPreference("ar"));
+    mockGamesFetch([{ ...baseGame, id: "undated-game", releaseDate: "2026-12-31" }]);
+
+    renderPage();
+
+    const expectedYear = new Intl.NumberFormat("ar", { useGrouping: false }).format(2026);
+    const groupedYear = new Intl.NumberFormat("ar").format(2026);
+    const title = await screen.findByRole("heading", { name: /No Release Date/u });
+
+    expect(title).toHaveTextContent(`No Release Date — ${expectedYear}`);
+    expect(title).not.toHaveTextContent(groupedYear);
+  });
+
   it("switches to week view and opens the download dialog from a visible game", async () => {
     mockGamesFetch([{ ...baseGame, id: "game-4", title: "Week Hero", releaseDate: "2026-05-29" }]);
 

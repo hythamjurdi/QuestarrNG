@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   formatCalendarTitle,
   formatDate,
+  getGregorianMonthName,
   formatReleaseCount,
   getDaysInMonth,
   getWeekDays,
@@ -79,5 +80,23 @@ describe("calendar locale week structure", () => {
       expect(title).toBe(gregorianTitle);
       expect(title).not.toBe(localeDefaultTitle);
     }
+  });
+
+  it("keeps year-view month names aligned with Gregorian month positions", () => {
+    const date = new Date(2000, 9, 1);
+
+    for (const locale of ["fa-IR", "th-TH"]) {
+      const monthName = getGregorianMonthName(9, locale);
+      const gregorianMonthName = new Intl.DateTimeFormat(locale, {
+        calendar: "gregory",
+        month: "long",
+      }).format(date);
+
+      expect(monthName).toBe(gregorianMonthName);
+    }
+
+    expect(getGregorianMonthName(9, "fa-IR")).not.toBe(
+      new Intl.DateTimeFormat("fa-IR", { month: "long" }).format(date)
+    );
   });
 });
