@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T22:17:30.154Z",
-  "forkHead": "041814ab91d42dc0dd5ac3600cc6852220da71eb",
+  "capturedAt": "2026-10-13T22:34:44.183Z",
+  "forkHead": "82bcb4e1d5572152e2afd1147298a2b6917c7b1e",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -23605,10 +23605,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "83f0f77c075cc2c1908dd8f6e24ed75e7177f2ee",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR requested fast-xml-parser 5.10.1 and fast-uri 3.1.4. The current production lock resolves 5.11.2 and 3.1.8, so later releases supersede the requested patch versions.",
+          "fast-xml-parser remains a production dependency and its XML parsing is covered by the existing Newznab/feed tests."
+        ],
+        "acceptance": [
+          "The requested parser and URI-parser updates are present at newer locked versions."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "server/__tests__/newznab.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23625,11 +23634,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The report says qBittorrent and Questarr share the same /data mount but provides no qBittorrent version or diagnostic log, so its original installation cannot be reproduced exactly.",
+          "The current qBittorrent 5 asynchronous URL-add flow polls for the real hash and uses a correlation tag when the hash is not immediately available. The API creates a game_downloads record for the accepted add, and later resolution makes the completed download visible to the import pipeline.",
+          "Regression tests cover asynchronous hash resolution, temporary correlation-tag tracking, and import handling; no missing implementation path was found for the reported no-import symptom."
+        ],
+        "acceptance": [
+          "An accepted qBittorrent URL add is tracked before its asynchronous hash appears and can proceed through completion/import handling."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/routes.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/api_routes_async_download.test.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
+        "dependencies": [
+          "pr:823"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -23645,11 +23669,27 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The later reporter supplied the concrete Prowlarr Docker URL and error: the configured service hostname was lost on a plain-HTTP safeFetch connection, causing Prowlarr to return a proxy URL that Questarr could wrap again.",
+          "safeFetch now pins the validated address while retaining the configured hostname in the URL/Host header. Torznab rewriting preserves the existing token, and the qBittorrent add path tracks the resulting download."
+        ],
+        "acceptance": [
+          "Prowlarr receives its configured hostname on plain HTTP and already-proxied download links reach qBittorrent without double-wrapping."
+        ],
+        "evidence": [
+          "server/ssrf.ts",
+          "server/torznab.ts",
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/ssrf-host-header.test.ts",
+          "server/__tests__/torznab.test.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
+        "dependencies": [
+          "issue:812",
+          "pr:822"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -23665,10 +23705,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0099e3761155fd3d678606b7c2bb31faffd85309",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR requested js-yaml 5.2.2 and body-parser 1.20.6. The current lock resolves js-yaml 5.4.3 and body-parser 2.3.0, superseding both requested versions."
+        ],
+        "acceptance": [
+          "Both dependencies are locked at later versions and the production audit passes."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23685,10 +23732,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6bb53a672574d25a8fe209bab253acdaede133f4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The hotfix requested brace-expansion 5.0.8, js-yaml 5.2.2, and body-parser 1.20.6 to close production vulnerabilities. The current lock resolves 5.0.12, 5.4.3, and 2.3.0 respectively.",
+          "The locked production dependency audit reports zero vulnerabilities, and the current dependency override checks retain the required safe versions."
+        ],
+        "acceptance": [
+          "All three vulnerable dependency lines are resolved at newer versions and the production audit has no findings."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "package.json",
+          "scripts/check-overrides.mjs",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23705,10 +23762,27 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "671cb2d9824b20e4ceed7b1bc108f4fb90eed2e1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Non-runtime CI, SCA, and vulnerability-scan jobs use npm ci --ignore-scripts; runtime build/DAST jobs retain script execution where native modules are needed. Workflow tool calls use locally locked tools rather than on-demand npx installs.",
+          "Semgrep is installed from a hash-pinned requirements file. Apprise is hash-pinned at 2.0.1 in the later Python-tooling policy, replacing the PR-era version while preserving reproducible, verified installs. QuestarrNG uses its own locked production-license checker."
+        ],
+        "acceptance": [
+          "Non-runtime checks avoid unnecessary lifecycle scripts and dynamic installs; runtime checks retain required native setup; security tooling and Python runtime dependencies are reproducibly pinned."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/vulnerability-scan.yml",
+          ".github/workflows/dast.yml",
+          ".github/workflows/sast.yml",
+          ".github/requirements/semgrep.txt",
+          "Dockerfile",
+          "requirements/apprise.txt",
+          "package.json",
+          "scripts/check-production-licenses.mjs",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23725,11 +23799,26 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6664555e04702aa0bd9ea70a5e2b2ea680583e68",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The fork preserves the requested hostname and TLS identity while pinning connections to the validated IP; an actual loopback HTTP test verifies the Host header, and Torznab tests cover the Prowlarr alias regression.",
+          "A 10-second idle cache keyed by validated address and family reuses undici Agents and closes idle pools; tests verify reuse, address separation, and expiry. This addresses the PR review finding about creating a dispatcher per request.",
+          "The separate suggestion to remove Undici/DOM type casts was evaluated. Directly exposing Undici types causes incompatibilities in the existing global Response, Headers, and FormData call sites, so the narrow compatibility casts remain at the transport boundary."
+        ],
+        "acceptance": [
+          "Plain-HTTP requests retain the configured Host while each connection stays pinned to a freshly validated address; pooled agents are retired after an idle window."
+        ],
+        "evidence": [
+          "server/ssrf.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/ssrf-host-header.test.ts",
+          "server/__tests__/torznab.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
+        "dependencies": [
+          "issue:812",
+          "issue:818"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -23745,11 +23834,25 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9dd6efa0fba01eb2dc5dbb4949ab98cc995e7c4e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The client handles qBittorrent 5 JSON pending/immediate responses, resolves hashes with tag-scoped polling, catches transient lookup errors without resubmitting an accepted torrent, and avoids stacking the helper delay on each poll.",
+          "The game-download route persists a correlation tag before the infohash is available. The asynchronous polling timer spy is restored in a finally block, so assertion failures cannot contaminate later tests."
+        ],
+        "acceptance": [
+          "Accepted qBittorrent 5 URL adds remain associated with their game and are eventually resolved without duplicate submissions or leaking test timers."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/routes.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/api_routes_async_download.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
+        "dependencies": [
+          "issue:817",
+          "issue:818"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -23765,11 +23868,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f4128366d7d0c939e56b7715be64cb432fad5167",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "SABnzbd history resolution prefers its final storage category path over a stale incomplete path, including custom incomplete-bigstorage directories. The current regression coverage includes the exact issue paths and import behavior."
+        ],
+        "acceptance": [
+          "Completed SABnzbd jobs import from the final storage directory when the API supplies it."
+        ],
+        "evidence": [
+          "server/downloaders/sabnzbd.ts",
+          "server/services/ImportManager.ts",
+          "server/__tests__/downloaders_comprehensive.test.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
+        "dependencies": [
+          "issue:815"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -23785,10 +23900,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ad6a9676ec810eb2fd8827372b257a0b756d1d4a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested development dependency versions are already present or exceeded: @tailwindcss/vite 4.3.3, @types/supertest 7.2.1, autoprefixer 10.6.1, eslint-plugin-sonarjs 4.2.2, lint-staged 17.6.0, postcss 8.5.29, typescript-eslint 8.71.1, and Vite 8.3.2."
+        ],
+        "acceptance": [
+          "Every requested development dependency is locked at its requested version or a later compatible version."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "package.json",
+          "docs/upstream-resolution/evidence/validation-batch-70.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

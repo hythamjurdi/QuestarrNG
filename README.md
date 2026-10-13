@@ -653,13 +653,13 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
-[validation evidence](docs/upstream-resolution/evidence/). After Batch 69, the
-ledger records 603 verified, 182 superseded, 13 not applicable, five
-implemented-unverified, zero needing implementation, and 360 unreviewed
-records. Batch 69 reviewed PRs #806–810 and #813–814, plus issues #811, #812,
-and #815. It added regression coverage for content filters, Windows 2000 theme
-persistence, and import guidance, and verified the related upstream behavior.
-See [the Batch 69 validation record](docs/upstream-resolution/evidence/validation-batch-69.txt).
+[validation evidence](docs/upstream-resolution/evidence/). After Batch 70, the
+ledger records 609 verified, 186 superseded, 13 not applicable, five
+implemented-unverified, zero needing implementation, and 350 unreviewed
+records. Batch 70 reviewed PRs #816, #819–825 and issues #817–818. It
+strengthened the safe HTTP fetch dispatcher and verified qBittorrent
+asynchronous tracking, Prowlarr host handling, and the current locked
+dependencies. See [the Batch 70 validation record](docs/upstream-resolution/evidence/validation-batch-70.txt).
 The DCO sign-off policy is implemented in the campaign branch, but its
 rollout still needs a maintainer decision because the campaign history includes
 unsigned commits. The full review and validation gate must pass before campaign

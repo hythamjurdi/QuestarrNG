@@ -22,29 +22,29 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The ledger's `capturedAt` records audit generation time, not an
 individual GitHub request timestamp. Review status is independent of GitHub's
-open, closed, or merged state. The Batch 69 review uses the live source snapshot
-captured on October 13, 2026 at 22:12 UTC and regenerated the ledger and
-inventory from that same sanitized export.
+open, closed, or merged state. Batch 70 uses the live source snapshot captured
+on October 13, 2026 at 22:20 UTC and regenerates the ledger and inventory from
+that same sanitized export.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       603 |
-| `superseded`             |       182 |
+| `verified`               |       609 |
+| `superseded`             |       186 |
 | `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       360 |
+| `unreviewed`             |       350 |
 | **Total**                | **1,163** |
 
-The ledger gives 803 items an assigned disposition. Four implemented
+The ledger gives 813 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 360 are unreviewed. The
+currently identified item needs implementation, and 350 are unreviewed. The
 latest live refresh retains one changed-source flag: PR #1194's body changed
-after its snapshot and still needs review. The ten Batch 69 records were
-unchanged from their source snapshots before disposition. These counts describe
-the ledger, not completion of the campaign. Batch 69 is the latest completed
-review; see [validation evidence](evidence/validation-batch-69.txt).
+after its snapshot and still needs review. The ten Batch 69 records and ten
+Batch 70 records were unchanged from their source snapshots before disposition.
+These counts describe the ledger, not completion of the campaign. Batch 70 is
+the latest completed review; see [validation evidence](evidence/validation-batch-70.txt).
 
 ## Project records
 
@@ -2125,6 +2125,49 @@ removed after the check. See [Batch 69 validation evidence](evidence/validation-
 
 The ledger now records 603 verified, 182 superseded, 13 not applicable, 5
 implemented-unverified, 0 needs-implementation, and 360 unreviewed items.
+Upstream main remains `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, with 232
+issues and 931 pull requests. The campaign remains incomplete and must not be
+merged to `main`.
+
+## Batch 70 — October 13, 2026
+
+Batch 70 reviewed PRs [#816](https://github.com/Doezer/Questarr/pull/816),
+[#819](https://github.com/Doezer/Questarr/pull/819)–
+[#825](https://github.com/Doezer/Questarr/pull/825), and issues
+[#817](https://github.com/Doezer/Questarr/issues/817) and
+[#818](https://github.com/Doezer/Questarr/issues/818). Six records were
+verified; dependency requests #816, #819, #820, and #825 were superseded by
+newer locked versions.
+
+For issue #817, the current qBittorrent 5 path tracks accepted asynchronous
+adds before an infohash is available, then resolves the hash for completion and
+import. The original report did not include a qBittorrent version or logs, so
+the evidence is the current regression coverage for async tracking and import
+handling. Issue #818's follow-up supplied the concrete Prowlarr alias failure;
+the validated-IP fetch preserves its configured Host while avoiding a nested
+proxy URL. PR #822's per-request connection-pool review note was addressed with
+a short-lived undici Agent cache keyed by validated address and family. PR #823
+also has tag-scoped polling, transient-error handling, and guaranteed timer-mock
+cleanup. PR #824's SABnzbd storage-path behavior remains covered by the
+custom-incomplete-directory tests.
+
+PR #821's workflow hardening is present: non-runtime jobs skip lifecycle
+scripts, runtime jobs retain native setup, and scans use locked tools. The fork
+hash-pins Apprise at 2.0.1 and Semgrep from requirement files. Dependency
+requests in #816, #819, #820, and #825 now resolve to equal or later locked
+versions.
+
+Focused validation passed 308 tests across 12 files. TypeScript, full lint,
+Prettier, the production build, override and license checks, and the production
+audit passed; the production audit found zero vulnerabilities. The existing
+build still reports its large-chunk advisory, and the deprecation check lists
+three inherited packages pinned upstream. The build used a task-scoped backup
+for the pre-existing `dist` directory, restored it after validation, and
+removed its temporary directory. No UI source files changed. See [Batch 70
+validation evidence](evidence/validation-batch-70.txt).
+
+The ledger now records 609 verified, 186 superseded, 13 not applicable, 5
+implemented-unverified, 0 needs-implementation, and 350 unreviewed items.
 Upstream main remains `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, with 232
 issues and 931 pull requests. The campaign remains incomplete and must not be
 merged to `main`.
