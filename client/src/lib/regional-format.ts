@@ -5,6 +5,7 @@ import {
   enAU,
   enCA,
   enGB,
+  enNZ,
   enUS,
   es,
   fr,
@@ -49,6 +50,7 @@ const dateFnsLocales = {
   "en-au": enAU,
   "en-ca": enCA,
   "en-gb": enGB,
+  "en-nz": enNZ,
   "en-us": enUS,
   es,
   fr,
@@ -65,6 +67,43 @@ const dateFnsLocales = {
 } as const;
 
 type RegionalDateFnsLocale = (typeof dateFnsLocales)[keyof typeof dateFnsLocales];
+
+// CLDR supplemental weekData territory overrides, converted to Date weekday indexes.
+const sundayFirstRegions = new Set(
+  "AG AS BD BR BS BT BW BZ CA CO DM DO ET GT GU HK HN ID IL IN IS JM JP KE KH KR LA MH MM MO MT MX MZ NI NP PA PE PH PK PR PT PY SA SG SV TH TT TW UM US VE VI WS YE ZA ZW".split(
+    " "
+  )
+);
+const saturdayFirstRegions = new Set("AF BH DJ DZ EG IQ IR JO KW LY OM QA SD SY".split(" "));
+
+function getLocaleRegion(locale: string): string | undefined {
+  const subtags = locale.replaceAll("_", "-").split("-");
+  const unicodeExtensionIndex = subtags.findIndex((subtag, index) => index > 0 && subtag === "u");
+
+  if (unicodeExtensionIndex >= 0) {
+    const unicodeExtension = subtags.slice(unicodeExtensionIndex + 1);
+    const regionOverrideIndex = unicodeExtension.indexOf("rg");
+    const regionOverride =
+      unicodeExtension[regionOverrideIndex + 1]?.match(/^([a-z]{2}|\d{3})zzzz$/i)?.[1];
+    if (regionOverride) return regionOverride.toUpperCase();
+  }
+
+  const baseSubtags =
+    unicodeExtensionIndex < 0 ? subtags.slice(1) : subtags.slice(1, unicodeExtensionIndex);
+  return baseSubtags.find((subtag) => /^[a-z]{2}$|^\d{3}$/i.test(subtag))?.toUpperCase();
+}
+
+function getRegionWeekStartsOn(locale: string): number | undefined {
+  const region = getLocaleRegion(locale);
+  if (!region) return undefined;
+
+  if (sundayFirstRegions.has(region)) return 0;
+  if (saturdayFirstRegions.has(region)) return 6;
+  if (region === "MV") return 5;
+
+  // Monday is CLDR's default for regions without an explicit first-day override.
+  return 1;
+}
 
 function getCurrentLocale(): string {
   const regionalLocale = getRegionalLocale();
@@ -120,6 +159,9 @@ export function getRegionalWeekStartsOn(): number {
   } catch {
     // Older browsers may not expose Intl.Locale week data.
   }
+
+  const regionWeekStartsOn = getRegionWeekStartsOn(locale);
+  if (regionWeekStartsOn !== undefined) return regionWeekStartsOn;
 
   const normalizedLocale = locale.replaceAll("_", "-").toLowerCase();
   // date-fns currently marks zhTW as Monday-first, but CLDR uses Sunday for Taiwan.

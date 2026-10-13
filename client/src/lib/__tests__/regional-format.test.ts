@@ -81,4 +81,22 @@ describe("regional formatting locale", () => {
       resolvedOptions.mockRestore();
     }
   });
+
+  it("uses a region-specific first weekday when Intl week data is unavailable", () => {
+    localStorage.setItem(REGIONAL_FORMAT_KEY, "system");
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "en-NZ" } as Intl.ResolvedDateTimeFormatOptions);
+    const weekInfo = vi.spyOn(Intl.Locale.prototype, "getWeekInfo").mockImplementation(() => {
+      throw new TypeError("Simulate a browser without usable week data");
+    });
+
+    try {
+      expect(getRegionalDateFnsLocale()?.code).toBe("en-NZ");
+      expect(getRegionalWeekStartsOn()).toBe(1);
+    } finally {
+      weekInfo.mockRestore();
+      resolvedOptions.mockRestore();
+    }
+  });
 });
