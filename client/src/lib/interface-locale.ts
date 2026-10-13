@@ -86,7 +86,7 @@ export function getInterfaceTextDirection(
   source: string,
   language: InterfaceLanguage
 ): "ltr" | "rtl" {
-  return getInterfaceTextLanguage(source, language) === "ar" ? "rtl" : "ltr";
+  return getInterfaceLanguageDirection(getInterfaceTextLanguage(source, language));
 }
 
 function applyDocumentLanguage() {
@@ -127,6 +127,14 @@ export function setInterfaceLanguage(language: InterfaceLanguage) {
   }
   applyDocumentLanguage();
   notify();
+}
+
+export function getInterfaceLanguage(): InterfaceLanguage {
+  return activeLanguage;
+}
+
+export function getInterfaceLanguageDirection(language: InterfaceLanguage): "ltr" | "rtl" {
+  return language === "ar" ? "rtl" : "ltr";
 }
 
 export function useInterfaceLanguage() {

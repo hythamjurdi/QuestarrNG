@@ -2,7 +2,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { RssFeedItem } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatRegionalDistanceToNow } from "@/lib/regional-format";
 import { ExternalLink, RefreshCw, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import CompactRssFeedItem from "./CompactRssFeedItem";
 import { cn, safeUrl } from "@/lib/utils";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
+import { RegionalRelativeTime } from "./RegionalRelativeTime";
 
 export default function RssFeedList() {
   const [viewMode, setViewMode] = useLocalStorageState(
@@ -137,9 +137,11 @@ export default function RssFeedList() {
                   <Badge variant="secondary" className="text-xs">
                     {item.sourceName}
                   </Badge>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
-                    {item.pubDate ? formatRegionalDistanceToNow(new Date(item.pubDate)) : ""}
-                  </span>
+                  {item.pubDate && (
+                    <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                      <RegionalRelativeTime date={new Date(item.pubDate)} />
+                    </span>
+                  )}
                 </div>
                 <CardTitle className="text-sm font-medium leading-tight" title={item.title}>
                   {item.title}

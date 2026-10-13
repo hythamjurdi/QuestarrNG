@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 
 const game = {
   id: "test-game-id-123",
@@ -76,6 +76,28 @@ async function openLocalizedBundle(
   await expect(downloadDialog).toHaveAttribute("dir", "rtl");
   await downloadDialog.getByRole("button", { name: "تنزيل Localization Demo Full" }).waitFor();
   return downloadDialog.getByRole("button", { name: "تنزيل Localization Demo Full" });
+}
+
+async function expectSeparatedDownloadAccessibleName(
+  page: Page,
+  button: Locator,
+  actionText: string
+) {
+  const labelIds = (await button.getAttribute("aria-labelledby"))?.split(/\s+/) ?? [];
+  expect(labelIds).toHaveLength(2);
+  const [actionLabelId, titleLabelId] = labelIds;
+  const actionLabel = page.locator(`[id="${actionLabelId}"]`);
+  const titleLabel = page.locator(`[id="${titleLabelId}"]`);
+
+  await expect(button).toHaveAccessibleName(`${actionText} Localization Demo Full`);
+  await expect(button).not.toHaveAttribute("lang");
+  await expect(button).not.toHaveAttribute("dir");
+  await expect(actionLabel).toHaveText(actionText);
+  await expect(actionLabel).toHaveAttribute("lang", "ar");
+  await expect(actionLabel).toHaveAttribute("dir", "rtl");
+  await expect(titleLabel).toHaveText("Localization Demo Full");
+  await expect(titleLabel).toHaveAttribute("lang", "und");
+  await expect(titleLabel).toHaveAttribute("dir", "auto");
 }
 
 test.describe("Game download interface language", () => {
@@ -268,11 +290,55 @@ test.describe("Game download interface language", () => {
     }
   });
 
+  test("keeps RSS relative-time wording in the interface language", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("questarr.interface-language", "en");
+      localStorage.setItem("questarrng.regional-format", "ja");
+    });
+    await page.route("**/api/rss/items", async (route) =>
+      route.fulfill({
+        json: [
+          {
+            id: "localized-relative-time",
+            feedId: "localization-demo-feed",
+            guid: "localized-relative-time-guid",
+            title: "Relative time localization demo",
+            link: "https://example.com/relative-time",
+            pubDate: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+            sourceName: "Example feed",
+            igdbGameId: null,
+            igdbGameName: null,
+            coverUrl: null,
+          },
+        ],
+      })
+    );
+    await page.route("**/api/rss/feeds*", async (route) => route.fulfill({ json: [] }));
+
+    await page.goto("/rss");
+
+    const relativeTime = page.locator("time").filter({ hasText: "about" });
+    await expect(relativeTime).toHaveText("about 1 hour ago");
+    await expect(relativeTime).toHaveAttribute("lang", "en");
+    await expect(relativeTime).toHaveAttribute("dir", "ltr");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-relative-time-interface-language.png`,
+        fullPage: true,
+      });
+    }
+  });
+
   test("localizes nested filter controls and singular update copy", async ({ page }) => {
     const downloadButton = await openLocalizedBundle(page, 1);
     await expect(downloadButton).toBeVisible();
-    await expect(downloadButton).toHaveAttribute("lang", "ar");
-    await expect(downloadButton).toHaveAttribute("dir", "rtl");
+    await expectSeparatedDownloadAccessibleName(page, downloadButton, "تنزيل");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-download-action-language-segments.png`,
+        fullPage: true,
+      });
+    }
 
     await page.getByRole("button", { name: "إظهار عوامل التصفية" }).click();
     await page.getByText("اختر المجموعات...").click();
@@ -339,7 +405,8 @@ test.describe("Game download interface language", () => {
 
   test("sets RTL direction on the mobile download drawer", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await openLocalizedBundle(page, 1, "ar");
+    const downloadButton = await openLocalizedBundle(page, 1, "ar");
+    await expectSeparatedDownloadAccessibleName(page, downloadButton, "تنزيل");
 
     const downloadDrawer = page.getByRole("dialog", {
       name: "تنزيل Localization Demo",

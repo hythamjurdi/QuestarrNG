@@ -1,18 +1,16 @@
 import React, { memo } from "react";
 import { ExternalLink, Calendar, Link } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatRegionalDistanceToNow, useRegionalPreference } from "@/lib/regional-format";
 import { RssFeedItem } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { safeUrl } from "@/lib/utils";
+import { RegionalRelativeTime } from "./RegionalRelativeTime";
 
 interface CompactRssFeedItemProps {
   item: RssFeedItem;
 }
 
 const CompactRssFeedItem = ({ item }: CompactRssFeedItemProps) => {
-  useRegionalPreference();
-
   return (
     <div
       className="group flex items-center gap-4 p-3 rounded-lg border bg-card text-card-foreground shadow-sm transition-colors hover:bg-accent/50"
@@ -55,9 +53,11 @@ const CompactRssFeedItem = ({ item }: CompactRssFeedItemProps) => {
           {/* Pub Date */}
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            <span>
-              {item.pubDate ? formatRegionalDistanceToNow(new Date(item.pubDate)) : "Unknown date"}
-            </span>
+            {item.pubDate ? (
+              <RegionalRelativeTime date={new Date(item.pubDate)} />
+            ) : (
+              <span>Unknown date</span>
+            )}
           </div>
         </div>
       </div>

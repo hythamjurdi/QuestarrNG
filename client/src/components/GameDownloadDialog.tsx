@@ -4,7 +4,7 @@ import {
   useRegionalPreference,
 } from "@/lib/regional-format";
 import { getInterfaceCollator } from "@/lib/interface-locale";
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef, useId } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -239,6 +239,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const downloadLabelIdPrefix = useId();
   const { t, language, languageFor, directionFor } = useInterfaceLanguage();
   const regionalPreference = useRegionalPreference();
   const formatNumber = (value: number) =>
@@ -1144,7 +1145,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                         </div>
                       )}
 
-                      {downloadsInCategory.map((download: DownloadItem) => {
+                      {downloadsInCategory.map((download: DownloadItem, downloadIndex: number) => {
+                        const labelIdPrefix = `${downloadLabelIdPrefix}-${category}-${downloadIndex}`;
+                        const actionLabelId = `${labelIdPrefix}-action`;
+                        const titleLabelId = `${labelIdPrefix}-title`;
                         const isUsenet = isUsenetItem(download);
                         const metadata =
                           itemsMetadata.get(download.title) ?? parseReleaseMetadata(download.title);
@@ -1281,10 +1285,14 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                               className="hover:underline cursor-pointer"
                                               onClick={(event) => event.stopPropagation()}
                                             >
-                                              {download.title}
+                                              <span id={titleLabelId} lang="und" dir="auto">
+                                                {download.title}
+                                              </span>
                                             </a>
                                           ) : (
-                                            <span>{download.title}</span>
+                                            <span id={titleLabelId} lang="und" dir="auto">
+                                              {download.title}
+                                            </span>
                                           )}
                                         </h4>
                                         {isNew && (
@@ -1306,10 +1314,16 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                           downloadingGuid === (download.guid || download.link)
                                         }
                                         className="h-9 w-9 hover:bg-primary hover:text-primary-foreground transition-all"
-                                        aria-label={`${translateText("Download")} ${download.title.replace(/[._]/g, " ")}`}
-                                        lang={languageFor("Download")}
-                                        dir={directionFor("Download")}
+                                        aria-labelledby={`${actionLabelId} ${titleLabelId}`}
                                       >
+                                        <span
+                                          id={actionLabelId}
+                                          className="sr-only"
+                                          lang={languageFor("Download")}
+                                          dir={directionFor("Download")}
+                                        >
+                                          {translateText("Download")}
+                                        </span>
                                         {downloadingGuid === (download.guid || download.link) ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
@@ -1399,10 +1413,14 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                         className="hover:underline cursor-pointer"
                                         onClick={(event) => event.stopPropagation()}
                                       >
-                                        {download.title}
+                                        <span id={titleLabelId} lang="und" dir="auto">
+                                          {download.title}
+                                        </span>
                                       </a>
                                     ) : (
-                                      <span>{download.title}</span>
+                                      <span id={titleLabelId} lang="und" dir="auto">
+                                        {download.title}
+                                      </span>
                                     )}
                                   </h4>
 
@@ -1496,10 +1514,16 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                     onClick={() => handleDownload(download)}
                                     disabled={downloadingGuid === (download.guid || download.link)}
                                     className="h-9 w-9 hover:bg-primary hover:text-primary-foreground transition-all"
-                                    aria-label={`${translateText("Download")} ${download.title.replace(/[._]/g, " ")}`}
-                                    lang={languageFor("Download")}
-                                    dir={directionFor("Download")}
+                                    aria-labelledby={`${actionLabelId} ${titleLabelId}`}
                                   >
+                                    <span
+                                      id={actionLabelId}
+                                      className="sr-only"
+                                      lang={languageFor("Download")}
+                                      dir={directionFor("Download")}
+                                    >
+                                      {translateText("Download")}
+                                    </span>
                                     {downloadingGuid === (download.guid || download.link) ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (

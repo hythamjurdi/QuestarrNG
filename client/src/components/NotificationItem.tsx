@@ -1,8 +1,8 @@
 import React from "react";
 import { Notification } from "@shared/schema";
-import { formatRegionalDistanceToNow } from "@/lib/regional-format";
 import { Check, Info, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RegionalRelativeTime } from "./RegionalRelativeTime";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -59,7 +59,9 @@ export function NotificationItem({ notification, onRead, onClick }: Notification
         </div>
         <p className="text-muted-foreground">{notification.message}</p>
         <p className="text-xs text-muted-foreground pt-1">
-          {notification.createdAt && formatRegionalDistanceToNow(new Date(notification.createdAt))}
+          {notification.createdAt && (
+            <RegionalRelativeTime date={new Date(notification.createdAt)} />
+          )}
         </p>
       </div>
     </button>

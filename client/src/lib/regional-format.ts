@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { useSyncExternalStore } from "react";
+import { getInterfaceLanguage } from "./interface-locale";
 import {
   ar,
   de,
@@ -288,23 +289,19 @@ export function getRegionalWeekStartsOn(): number {
 }
 
 export function formatRegionalDistanceToNow(date: Date): string {
-  const localeCode = getCurrentLocale();
-  const locale = getRegionalDateFnsLocale();
-  if (locale) return formatDistanceToNow(date, { addSuffix: true, locale });
+  const interfaceLocale = getDateFnsLocale(getInterfaceLanguage()) ?? enUS;
+  // Keep date-fns wording and plural rules, but format its count with the separate regional choice.
+  const regionalizedLocale = {
+    ...interfaceLocale,
+    formatDistance: (
+      token: Parameters<typeof interfaceLocale.formatDistance>[0],
+      count: number,
+      options?: Parameters<typeof interfaceLocale.formatDistance>[2]
+    ) =>
+      interfaceLocale
+        .formatDistance(token, count, options)
+        .replace(String(count), formatRegionalNumber(count, { useGrouping: false })),
+  };
 
-  const secondsFromNow = (date.getTime() - Date.now()) / 1000;
-  const absoluteSeconds = Math.abs(secondsFromNow);
-  const units = [
-    { unit: "second", seconds: 1 },
-    { unit: "minute", seconds: 60 },
-    { unit: "hour", seconds: 60 * 60 },
-    { unit: "day", seconds: 24 * 60 * 60 },
-    { unit: "month", seconds: 30 * 24 * 60 * 60 },
-    { unit: "year", seconds: 365 * 24 * 60 * 60 },
-  ] as const;
-  const selectedUnit =
-    [...units].reverse().find(({ seconds }) => absoluteSeconds >= seconds) ?? units[0];
-  const relativeTime = new Intl.RelativeTimeFormat(localeCode, { numeric: "auto" });
-
-  return relativeTime.format(Math.round(secondsFromNow / selectedUnit.seconds), selectedUnit.unit);
+  return formatDistanceToNow(date, { addSuffix: true, locale: regionalizedLocale });
 }

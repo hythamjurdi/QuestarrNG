@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { createElement } from "react";
+import { setInterfaceLanguage } from "../interface-locale";
 import {
   formatRegionalDistanceToNow,
   getRegionalCollator,
@@ -18,6 +19,7 @@ import {
 describe("regional formatting locale", () => {
   beforeEach(() => {
     localStorage.clear();
+    setInterfaceLanguage("en");
     setRegionalPreference("system");
   });
 
@@ -46,11 +48,23 @@ describe("regional formatting locale", () => {
     expect(getRegionalPreference()).toBe("system");
   });
 
-  it("uses the selected locale for relative time", () => {
-    setRegionalPreference("es");
+  it("uses interface-language wording with regional formatting for relative time", () => {
+    setInterfaceLanguage("es");
+    setRegionalPreference("ja");
 
-    expect(getRegionalDateFnsLocale()?.code).toBe("es");
-    expect(formatRegionalDistanceToNow(new Date(Date.now() - 60 * 60 * 1000))).toContain("hace");
+    const relativeTime = formatRegionalDistanceToNow(new Date(Date.now() - 60 * 60 * 1000));
+    expect(getRegionalDateFnsLocale()?.code).toBe("ja");
+    expect(relativeTime).toContain("hace");
+    expect(relativeTime).not.toContain("前");
+  });
+
+  it("uses regional digits in relative-time text", () => {
+    setInterfaceLanguage("en");
+    setRegionalPreference("ar");
+
+    expect(formatRegionalDistanceToNow(new Date(Date.now() - 60 * 60 * 1000))).toBe(
+      `about ${new Intl.NumberFormat("ar", { useGrouping: false }).format(1)} hour ago`
+    );
   });
 
   it.each(["fr", "de", "ar"])(
@@ -85,7 +99,7 @@ describe("regional formatting locale", () => {
     );
   });
 
-  it("uses Intl relative-time formatting for an unlisted browser locale", () => {
+  it("uses interface-language wording when the browser regional locale is unlisted", () => {
     setRegionalPreference("system");
     const resolvedOptions = vi
       .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
@@ -95,27 +109,17 @@ describe("regional formatting locale", () => {
 
     try {
       expect(getRegionalDateFnsLocale()).toBeUndefined();
-      expect(formatRegionalDistanceToNow(date)).toBe(
-        new Intl.RelativeTimeFormat("ru-RU", { numeric: "auto" }).format(-1, "hour")
-      );
+      expect(formatRegionalDistanceToNow(date)).toBe("about 1 hour ago");
     } finally {
       resolvedOptions.mockRestore();
     }
   });
 
-  it("formats near-zero relative times through Intl's fallback", () => {
+  it("formats near-zero relative times in the interface language", () => {
     setRegionalPreference("system");
-    const resolvedOptions = vi
-      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
-      .mockReturnValue({ locale: "ru-RU" } as Intl.ResolvedDateTimeFormatOptions);
-
-    try {
-      expect(formatRegionalDistanceToNow(new Date(Date.now() + 1))).toBe(
-        new Intl.RelativeTimeFormat("ru-RU", { numeric: "auto" }).format(0, "second")
-      );
-    } finally {
-      resolvedOptions.mockRestore();
-    }
+    const relativeTime = formatRegionalDistanceToNow(new Date(Date.now() + 1));
+    expect(relativeTime).toContain("less than");
+    expect(relativeTime).toContain("minute");
   });
 
   it("uses the Hong Kong Traditional Chinese locale and Sunday-first fallback", () => {
