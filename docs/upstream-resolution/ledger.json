@@ -1,18 +1,14 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T05:20:58.476Z",
-  "forkHead": "9d1dc7ed262abf2371abcc81e8b6043fd20da9cc",
+  "capturedAt": "2026-10-13T10:34:42.273Z",
+  "forkHead": "95ba0a849469eccf1bc913997646be57f8a38b2d",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
-    "total": 1147,
-    "byStatus": {
-      "verified": 444,
-      "needs-implementation": 1,
-      "superseded": 78,
-      "not-applicable": 9,
-      "unreviewed": 614,
-      "implemented-unverified": 1
-    }
+    "issue:CLOSED": 228,
+    "pr:MERGED": 705,
+    "pr:CLOSED": 208,
+    "issue:OPEN": 4,
+    "pr:OPEN": 2
   },
   "limitations": [
     "Ancestry is not behavioral verification: changes can be reverted, superseded or ported with different hashes.",
@@ -1023,18 +1019,27 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "needs-implementation",
+        "status": "verified",
         "findings": [
-          "Validation is not yet uniformly Zod-based across every POST/PATCH body. The shared validateRequest middleware still consumes express-validator results, and many routes retain route-specific checks; the new indexer/downloader PATCH schemas cover only part of the surface."
+          "Every body-consuming POST, PATCH, and PUT in the six route modules is now validated through reusable Zod middleware or a Zod-backed sanitizer before its handler runs. Valid bodies are replaced with parsed, normalized data; malformed bodies receive a consistent 400 response with structured details that omit submitted values. Express-validator remains in use for query and parameter validation."
         ],
         "acceptance": [
-          "Every mutation body is parsed through reusable Zod schemas before storage or side effects; malformed-body tests cover representative routes."
+          "Every body-consuming POST, PATCH, and PUT route in server/routes.ts, server/game-journal-routes.ts, server/routes/api-keys.ts, server/routes/import.ts, server/routes/integration.ts, and server/steam-routes.ts has Zod body-validation middleware before its handler.",
+          "Valid request bodies reach handlers as parsed and normalized data; invalid bodies return HTTP 400 with the shared error/details shape and do not expose submitted values.",
+          "A route-contract regression test and representative happy-path and malformed-body tests pass."
         ],
         "evidence": [
           "server/middleware.ts",
           "server/routes.ts",
           "server/routes/import.ts",
-          "docs/upstream-resolution/evidence/validation-batch-10.txt"
+          "server/routes/integration.ts",
+          "server/routes/api-keys.ts",
+          "server/game-journal-routes.ts",
+          "server/steam-routes.ts",
+          "server/__tests__/route-validation-contract.test.ts",
+          "server/__tests__/middleware.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-50.txt"
         ],
         "dependencies": []
       },

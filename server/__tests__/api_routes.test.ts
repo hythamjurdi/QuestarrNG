@@ -533,13 +533,13 @@ describe("API Routes - Extended Coverage", () => {
       it("should return 400 when username is missing", async () => {
         const res = await request(app).post("/api/auth/login").send({ password: "password123" });
         expect(res.status).toBe(400);
-        expect(res.body.error).toBe("Username and password are required and must be strings");
+        expect(res.body.error).toBe("Validation failed");
       });
 
       it("should return 400 when password is missing", async () => {
         const res = await request(app).post("/api/auth/login").send({ username: "testuser" });
         expect(res.status).toBe(400);
-        expect(res.body.error).toBe("Username and password are required and must be strings");
+        expect(res.body.error).toBe("Validation failed");
       });
 
       it("should return 400 for non-string username", async () => {
@@ -547,7 +547,7 @@ describe("API Routes - Extended Coverage", () => {
           .post("/api/auth/login")
           .send({ username: 123, password: "password123" });
         expect(res.status).toBe(400);
-        expect(res.body.error).toBe("Username and password are required and must be strings");
+        expect(res.body.error).toBe("Validation failed");
       });
 
       it("should trim username and password before authentication", async () => {
@@ -966,7 +966,7 @@ describe("API Routes - Extended Coverage", () => {
         .post("/api/games")
         .send({ title: "New Game", steamAppId: "not-a-number" });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid game data");
+      expect(response.body.error).toBe("Validation failed");
     });
   });
 
@@ -1044,7 +1044,7 @@ describe("API Routes - Extended Coverage", () => {
         .patch(`/api/games/${gameId}/hidden`)
         .send({ hidden: "yes" });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid hidden data");
+      expect(response.body.error).toBe("Validation failed");
     });
   });
 
@@ -1092,7 +1092,7 @@ describe("API Routes - Extended Coverage", () => {
         .patch(`/api/games/${gameId}/installed-version`)
         .send({ installedVersion: "v".repeat(65) });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid installed version data");
+      expect(response.body.error).toBe("Validation failed");
     });
 
     it("should return 404 when the game is not the user's", async () => {
@@ -1210,7 +1210,7 @@ describe("API Routes - Extended Coverage", () => {
         .send({ targetPlatformId: 8, targetPlatformName: null });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid target platform data");
+      expect(response.body.error).toBe("Validation failed");
     });
 
     it("rejects a mismatched complete target pair before storage", async () => {
@@ -1219,7 +1219,7 @@ describe("API Routes - Extended Coverage", () => {
         .send({ targetPlatformId: 8, targetPlatformName: "PlayStation 5" });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid target platform data");
+      expect(response.body.error).toBe("Validation failed");
       expect(vi.mocked(storage.updateGame)).not.toHaveBeenCalled();
     });
   });
@@ -1666,7 +1666,7 @@ describe("API Routes - Extended Coverage", () => {
           url: "https://example.com",
         });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid indexer data");
+        expect(response.body.error).toBe("Validation failed");
       });
     });
 
@@ -1888,7 +1888,7 @@ describe("API Routes - Extended Coverage", () => {
         });
 
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid downloader data");
+        expect(response.body.error).toBe("Validation failed");
       });
     });
 
@@ -2373,7 +2373,37 @@ describe("API Routes - Extended Coverage", () => {
       it("should return 400 when required fields are missing", async () => {
         const response = await request(app).post("/api/notifications").send({});
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid notification data");
+        expect(response.body.error).toBe("Validation failed");
+        expect(response.body.details).toEqual(
+          expect.arrayContaining([expect.objectContaining({ path: "type" })])
+        );
+        expect(storage.addNotification).not.toHaveBeenCalled();
+      });
+
+      it("should create a notification from a valid body", async () => {
+        const notification = {
+          id: "notification-1",
+          userId: "user-1",
+          type: "info",
+          title: "Download started",
+          message: "A game download has started.",
+          link: "/downloads",
+          read: false,
+          createdAt: new Date(),
+        };
+        vi.mocked(storage.addNotification).mockResolvedValue(notification as any);
+
+        const response = await request(app).post("/api/notifications").send({
+          type: "info",
+          title: "Download started",
+          message: "A game download has started.",
+          link: "/downloads",
+        });
+
+        expect(response.status).toBe(201);
+        expect(storage.addNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ userId: "user-1", title: "Download started" })
+        );
       });
     });
 
@@ -2634,7 +2664,7 @@ describe("API Routes - Extended Coverage", () => {
           .patch("/api/settings")
           .send({ transferMode: "not-a-real-mode" });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid settings data");
+        expect(response.body.error).toBe("Validation failed");
       });
 
       it("should accept igdbRateLimitPerSecond at boundary value 1", async () => {
@@ -2662,7 +2692,7 @@ describe("API Routes - Extended Coverage", () => {
           .patch("/api/settings")
           .send({ igdbRateLimitPerSecond: 0 });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid settings data");
+        expect(response.body.error).toBe("Validation failed");
       });
 
       it("should reject igdbRateLimitPerSecond above 4", async () => {
@@ -2670,7 +2700,7 @@ describe("API Routes - Extended Coverage", () => {
           .patch("/api/settings")
           .send({ igdbRateLimitPerSecond: 5 });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid settings data");
+        expect(response.body.error).toBe("Validation failed");
       });
     });
   });
@@ -3501,7 +3531,7 @@ describe("API Routes - Extended Coverage", () => {
         category: "main",
       });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe("Invalid request");
+      expect(res.body.error).toBe("Validation failed");
     });
 
     it("persists a mixed-case Usenet id verbatim instead of lowercasing it", async () => {
@@ -3629,13 +3659,13 @@ describe("API Routes - Extended Coverage", () => {
     it("returns 400 when items is missing", async () => {
       const res = await request(app).post("/api/downloads/claim-batch").send({});
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe("items must be a non-empty array");
+      expect(res.body.error).toBe("Validation failed");
     });
 
     it("returns 400 when items is an empty array", async () => {
       const res = await request(app).post("/api/downloads/claim-batch").send({ items: [] });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe("items must be a non-empty array");
+      expect(res.body.error).toBe("Validation failed");
     });
 
     it("returns 400 when an item fails schema validation", async () => {
@@ -3653,7 +3683,7 @@ describe("API Routes - Extended Coverage", () => {
           ],
         });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe("Invalid item in batch");
+      expect(res.body.error).toBe("Validation failed");
     });
 
     it("returns success when gameId resolves and download is added", async () => {
@@ -4480,7 +4510,7 @@ describe("API Routes - Extended Coverage", () => {
         .send({ mode: "api", apiUrl: { malicious: true }, key: "config-key" });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/invalid request payload/i);
+      expect(response.body.error).toBe("Validation failed");
     });
 
     it("should test the configured transport", async () => {

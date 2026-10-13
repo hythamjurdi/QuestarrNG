@@ -2,7 +2,7 @@ import { filterReleaseFileTypes } from "./release-file-types.js";
 import { jsonCatalogClient } from "./json-catalog.js";
 import { isSameProwlarrUrl } from "../shared/prowlarr-url.js";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
-import { body, param } from "express-validator";
+import { param } from "express-validator";
 import { createServer, type Server } from "http";
 import { storage, type IStorage } from "./storage.js";
 import { stripUndefined } from "./object-utils.js";
@@ -69,6 +69,7 @@ import {
   authRateLimiter,
   scanRateLimiter,
   integrationRateLimiter,
+  validate,
   validateRequest,
   sanitizeSearchQuery,
   sanitizeGameId,
@@ -1027,167 +1028,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/setup", authRateLimiter, async (req, res) => {
-    try {
-      // Atomic setup check and creation
-      const userCount = await storage.countUsers();
-      if (userCount > 0) {
-        return res.status(403).json({ error: "Setup already completed" });
-      }
-
-      const { username, password, igdbClientId, igdbClientSecret } = req.body;
-
-      const validated = validateSetupCredentials(username, password);
-      if ("error" in validated) {
-        return res.status(400).json({ error: validated.error });
-      }
-      const { username: trimmedUsername, password: trimmedPassword } = validated;
-
-      // Validate IGDB credential format before creating the user account: rejecting it after
-      // the account exists would leave the caller stuck (setup can't be re-run once a user
-      // exists), so a bad format -- an incomplete pair, or a non-string value, all of which
-      // saveIgdbCredentialsIfProvided would otherwise silently discard below -- must fail fast,
-      // before anything is persisted.
-      const igdbClientIdSupplied = igdbClientId !== undefined && igdbClientId !== null;
-      const igdbClientSecretSupplied = igdbClientSecret !== undefined && igdbClientSecret !== null;
-      if (
-        (igdbClientIdSupplied && typeof igdbClientId !== "string") ||
-        (igdbClientSecretSupplied && typeof igdbClientSecret !== "string")
-      ) {
-        return res.status(400).json({ error: "IGDB Client ID and Client Secret must be strings" });
-      }
-
-      const trimmedIgdbClientId = typeof igdbClientId === "string" ? igdbClientId.trim() : "";
-      const trimmedIgdbClientSecret =
-        typeof igdbClientSecret === "string" ? igdbClientSecret.trim() : "";
-      const hasIgdbClientId = trimmedIgdbClientId.length > 0;
-      const hasIgdbClientSecret = trimmedIgdbClientSecret.length > 0;
-
-      if (hasIgdbClientId !== hasIgdbClientSecret) {
-        return res
-          .status(400)
-          .json({ error: "Both IGDB Client ID and Client Secret are required together" });
-      }
-
-      if (hasIgdbClientId && hasIgdbClientSecret) {
-        const formatError = validateIgdbCredentialFormat(
-          trimmedIgdbClientId,
-          trimmedIgdbClientSecret
-        );
-        if (formatError) {
-          return res.status(400).json(formatError);
-        }
-      }
-
-      // Create first user
-      // Create first user atomically
-      const passwordHash = await hashPassword(trimmedPassword);
-
-      let user;
+  app.post(
+    "/api/auth/setup",
+    authRateLimiter,
+    validate(
+      z
+        .object({
+          username: z.string(),
+          password: z.string(),
+          igdbClientId: z.string().nullable().optional(),
+          igdbClientSecret: z.string().nullable().optional(),
+        })
+        .passthrough()
+    ),
+    async (req, res) => {
       try {
-        user = await storage.registerSetupUser({ username: trimmedUsername, passwordHash });
-      } catch (error) {
-        if (error instanceof Error && error.message === "Setup already completed") {
+        // Atomic setup check and creation
+        const userCount = await storage.countUsers();
+        if (userCount > 0) {
           return res.status(403).json({ error: "Setup already completed" });
         }
-        throw error;
+
+        const { username, password, igdbClientId, igdbClientSecret } = req.body;
+
+        const validated = validateSetupCredentials(username, password);
+        if ("error" in validated) {
+          return res.status(400).json({ error: validated.error });
+        }
+        const { username: trimmedUsername, password: trimmedPassword } = validated;
+
+        // Validate IGDB credential format before creating the user account: rejecting it after
+        // the account exists would leave the caller stuck (setup can't be re-run once a user
+        // exists), so a bad format -- an incomplete pair, or a non-string value, all of which
+        // saveIgdbCredentialsIfProvided would otherwise silently discard below -- must fail fast,
+        // before anything is persisted.
+        const igdbClientIdSupplied = igdbClientId !== undefined && igdbClientId !== null;
+        const igdbClientSecretSupplied =
+          igdbClientSecret !== undefined && igdbClientSecret !== null;
+        if (
+          (igdbClientIdSupplied && typeof igdbClientId !== "string") ||
+          (igdbClientSecretSupplied && typeof igdbClientSecret !== "string")
+        ) {
+          return res
+            .status(400)
+            .json({ error: "IGDB Client ID and Client Secret must be strings" });
+        }
+
+        const trimmedIgdbClientId = typeof igdbClientId === "string" ? igdbClientId.trim() : "";
+        const trimmedIgdbClientSecret =
+          typeof igdbClientSecret === "string" ? igdbClientSecret.trim() : "";
+        const hasIgdbClientId = trimmedIgdbClientId.length > 0;
+        const hasIgdbClientSecret = trimmedIgdbClientSecret.length > 0;
+
+        if (hasIgdbClientId !== hasIgdbClientSecret) {
+          return res
+            .status(400)
+            .json({ error: "Both IGDB Client ID and Client Secret are required together" });
+        }
+
+        if (hasIgdbClientId && hasIgdbClientSecret) {
+          const formatError = validateIgdbCredentialFormat(
+            trimmedIgdbClientId,
+            trimmedIgdbClientSecret
+          );
+          if (formatError) {
+            return res.status(400).json(formatError);
+          }
+        }
+
+        // Create first user
+        // Create first user atomically
+        const passwordHash = await hashPassword(trimmedPassword);
+
+        let user;
+        try {
+          user = await storage.registerSetupUser({ username: trimmedUsername, passwordHash });
+        } catch (error) {
+          if (error instanceof Error && error.message === "Setup already completed") {
+            return res.status(403).json({ error: "Setup already completed" });
+          }
+          throw error;
+        }
+
+        const token = await generateToken(user);
+
+        // Save IGDB creds if provided (format already validated above).
+        await saveIgdbCredentialsIfProvided(igdbClientId, igdbClientSecret);
+
+        routesLogger.info({ username: trimmedUsername }, "Initial setup completed");
+        // Cookie-based auth is the primary mechanism for browser clients (see
+        // server/security.ts); the token is also still returned in the body
+        // for backward compatibility with any non-browser/bearer-only client.
+        setAuthCookies(req, res, token);
+        return res.json({ token, user: { id: user.id, username: user.username } });
+      } catch (error) {
+        routesLogger.error(
+          {
+            error,
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "Setup failed"
+        );
+        return res.status(500).json({ error: "Setup failed. Please try again." });
+      }
+    }
+  );
+
+  // "Test connection" button on the setup wizard. Public (no user/token exists yet), but only
+  // does anything before setup completes, so it can't become a standing unauthenticated
+  // Twitch-credential probe once the instance is in normal use.
+  app.post(
+    "/api/auth/setup/test-igdb",
+    authRateLimiter,
+    validate(z.object({ clientId: z.string(), clientSecret: z.string() }).passthrough()),
+    async (req, res) => {
+      try {
+        const userCount = await storage.countUsers();
+        if (userCount > 0) {
+          return res.status(403).json({ success: false, error: "Setup already completed" });
+        }
+
+        const { clientId, clientSecret } = req.body;
+        if (typeof clientId !== "string" || typeof clientSecret !== "string") {
+          return res
+            .status(400)
+            .json({ success: false, error: "Client ID and Client Secret are required" });
+        }
+
+        const trimmedClientId = clientId.trim();
+        const trimmedClientSecret = clientSecret.trim();
+        const formatError = validateIgdbCredentialFormat(trimmedClientId, trimmedClientSecret);
+        if (formatError) {
+          return res.status(400).json({ success: false, ...formatError });
+        }
+
+        const result = await igdbClient.testCredentials(trimmedClientId, trimmedClientSecret);
+        return res.status(result.success ? 200 : 400).json(result);
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to test IGDB credentials during setup");
+        return res.status(500).json({ success: false, error: "Failed to test IGDB credentials" });
+      }
+    }
+  );
+
+  app.post(
+    "/api/auth/login",
+    authRateLimiter,
+    validate(z.object({ username: z.string(), password: z.string() }).passthrough()),
+    async (req, res) => {
+      const { username, password } = req.body;
+
+      if (typeof username !== "string" || typeof password !== "string") {
+        return res
+          .status(400)
+          .json({ error: "Username and password are required and must be strings" });
       }
 
+      const trimmedUsername = username.trim();
+      const trimmedPassword = password.trim();
+      const user = await storage.getUserByUsername(trimmedUsername);
+
+      // Backward-compatible check: try the raw password first (for accounts created before
+      // trimming was introduced), then fall back to the trimmed value.
+      let passwordMatches = false;
+      if (user) {
+        passwordMatches = await comparePassword(password, user.passwordHash);
+        if (!passwordMatches && trimmedPassword !== password) {
+          passwordMatches = await comparePassword(trimmedPassword, user.passwordHash);
+        }
+      }
+
+      if (!user || !passwordMatches) {
+        routesLogger.warn({ username: trimmedUsername, ip: req.ip }, "Failed login attempt");
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+
+      // Auto-migrate orphan games to this user on login
+      // This handles the transition from single-user to multi-user
+      await storage.assignOrphanGamesToUser(user.id);
+
       const token = await generateToken(user);
-
-      // Save IGDB creds if provided (format already validated above).
-      await saveIgdbCredentialsIfProvided(igdbClientId, igdbClientSecret);
-
-      routesLogger.info({ username: trimmedUsername }, "Initial setup completed");
       // Cookie-based auth is the primary mechanism for browser clients (see
       // server/security.ts); the token is also still returned in the body
       // for backward compatibility with any non-browser/bearer-only client.
       setAuthCookies(req, res, token);
       return res.json({ token, user: { id: user.id, username: user.username } });
-    } catch (error) {
-      routesLogger.error(
-        {
-          error,
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-        },
-        "Setup failed"
-      );
-      return res.status(500).json({ error: "Setup failed. Please try again." });
     }
-  });
-
-  // "Test connection" button on the setup wizard. Public (no user/token exists yet), but only
-  // does anything before setup completes, so it can't become a standing unauthenticated
-  // Twitch-credential probe once the instance is in normal use.
-  app.post("/api/auth/setup/test-igdb", authRateLimiter, async (req, res) => {
-    try {
-      const userCount = await storage.countUsers();
-      if (userCount > 0) {
-        return res.status(403).json({ success: false, error: "Setup already completed" });
-      }
-
-      const { clientId, clientSecret } = req.body;
-      if (typeof clientId !== "string" || typeof clientSecret !== "string") {
-        return res
-          .status(400)
-          .json({ success: false, error: "Client ID and Client Secret are required" });
-      }
-
-      const trimmedClientId = clientId.trim();
-      const trimmedClientSecret = clientSecret.trim();
-      const formatError = validateIgdbCredentialFormat(trimmedClientId, trimmedClientSecret);
-      if (formatError) {
-        return res.status(400).json({ success: false, ...formatError });
-      }
-
-      const result = await igdbClient.testCredentials(trimmedClientId, trimmedClientSecret);
-      return res.status(result.success ? 200 : 400).json(result);
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to test IGDB credentials during setup");
-      return res.status(500).json({ success: false, error: "Failed to test IGDB credentials" });
-    }
-  });
-
-  app.post("/api/auth/login", authRateLimiter, async (req, res) => {
-    const { username, password } = req.body;
-
-    if (typeof username !== "string" || typeof password !== "string") {
-      return res
-        .status(400)
-        .json({ error: "Username and password are required and must be strings" });
-    }
-
-    const trimmedUsername = username.trim();
-    const trimmedPassword = password.trim();
-    const user = await storage.getUserByUsername(trimmedUsername);
-
-    // Backward-compatible check: try the raw password first (for accounts created before
-    // trimming was introduced), then fall back to the trimmed value.
-    let passwordMatches = false;
-    if (user) {
-      passwordMatches = await comparePassword(password, user.passwordHash);
-      if (!passwordMatches && trimmedPassword !== password) {
-        passwordMatches = await comparePassword(trimmedPassword, user.passwordHash);
-      }
-    }
-
-    if (!user || !passwordMatches) {
-      routesLogger.warn({ username: trimmedUsername, ip: req.ip }, "Failed login attempt");
-      return res.status(401).json({ error: "Invalid username or password" });
-    }
-
-    // Auto-migrate orphan games to this user on login
-    // This handles the transition from single-user to multi-user
-    await storage.assignOrphanGamesToUser(user.id);
-
-    const token = await generateToken(user);
-    // Cookie-based auth is the primary mechanism for browser clients (see
-    // server/security.ts); the token is also still returned in the body
-    // for backward compatibility with any non-browser/bearer-only client.
-    setAuthCookies(req, res, token);
-    return res.json({ token, user: { id: user.id, username: user.username } });
-  });
+  );
 
   app.get("/api/auth/me", authenticateToken, (req, res) => {
     const user = req.user!;
@@ -1207,33 +1235,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true });
   });
 
-  app.patch("/api/auth/password", authenticateToken, sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const userId = req.user!.id;
-      const { currentPassword, newPassword } = updatePasswordSchema.parse(req.body);
+  app.patch(
+    "/api/auth/password",
+    authenticateToken,
+    sensitiveEndpointLimiter,
+    validate(updatePasswordSchema),
+    async (req, res) => {
+      try {
+        const userId = req.user!.id;
+        const { currentPassword, newPassword } = updatePasswordSchema.parse(req.body);
 
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        if (!(await comparePassword(currentPassword, user.passwordHash))) {
+          return res.status(401).json({ error: "Incorrect current password" });
+        }
+
+        const newPasswordHash = await hashPassword(newPassword);
+        await storage.updateUserPassword(userId, newPasswordHash);
+
+        routesLogger.info({ userId }, "User password updated");
+        return res.json({ success: true, message: "Password updated successfully" });
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return respondWithZodError(res, error, "Invalid password data");
+        }
+        routesLogger.error({ error }, "Failed to update password");
+        return res.status(500).json({ error: "Failed to update password" });
       }
-
-      if (!(await comparePassword(currentPassword, user.passwordHash))) {
-        return res.status(401).json({ error: "Incorrect current password" });
-      }
-
-      const newPasswordHash = await hashPassword(newPassword);
-      await storage.updateUserPassword(userId, newPasswordHash);
-
-      routesLogger.info({ userId }, "User password updated");
-      return res.json({ success: true, message: "Password updated successfully" });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return respondWithZodError(res, error, "Invalid password data");
-      }
-      routesLogger.error({ error }, "Failed to update password");
-      return res.status(500).json({ error: "Failed to update password" });
     }
-  });
+  );
 
   // Health check endpoint
   app.get("/api/health", async (_req, res) => {
@@ -1275,106 +1309,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // SSL Settings - Update
-  app.patch("/api/settings/ssl", authenticateToken, sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const { enabled, port, certPath, keyPath, redirectHttp } = req.body;
+  app.patch(
+    "/api/settings/ssl",
+    authenticateToken,
+    sensitiveEndpointLimiter,
+    validate(
+      z
+        .object({
+          enabled: z.boolean(),
+          port: z.number(),
+          certPath: z.string().optional(),
+          keyPath: z.string().optional(),
+          redirectHttp: z.boolean().optional(),
+        })
+        .passthrough()
+    ),
+    async (req, res) => {
+      try {
+        const { enabled, port, certPath, keyPath, redirectHttp } = req.body;
 
-      // Basic validation
-      if (typeof enabled !== "boolean")
-        return res.status(400).json({ error: "Invalid 'enabled' value" });
-      if (typeof port !== "number") return res.status(400).json({ error: "Invalid 'port' value" });
+        // Basic validation
+        if (typeof enabled !== "boolean")
+          return res.status(400).json({ error: "Invalid 'enabled' value" });
+        if (typeof port !== "number")
+          return res.status(400).json({ error: "Invalid 'port' value" });
 
-      if (
-        (certPath !== undefined && typeof certPath !== "string") ||
-        (keyPath !== undefined && typeof keyPath !== "string")
-      ) {
-        return res.status(400).json({ error: "Invalid certificate or key path" });
-      }
+        if (
+          (certPath !== undefined && typeof certPath !== "string") ||
+          (keyPath !== undefined && typeof keyPath !== "string")
+        ) {
+          return res.status(400).json({ error: "Invalid certificate or key path" });
+        }
 
-      // Canonicalize both paths and confine them to the configured file browser
-      // root or Questarr's private SSL directory.
-      let resolvedCertPath: string | undefined;
-      let resolvedKeyPath: string | undefined;
-      if (certPath || keyPath) {
-        const allowedSslRoots = [FILE_BROWSER_ROOT, path.join(configLoader.getConfigDir(), "ssl")];
-        if (certPath) {
-          try {
-            resolvedCertPath = await assertWithinRoots(
-              certPath,
-              allowedSslRoots,
-              "Access to cert path is not allowed"
+        // Canonicalize both paths and confine them to the configured file browser
+        // root or Questarr's private SSL directory.
+        let resolvedCertPath: string | undefined;
+        let resolvedKeyPath: string | undefined;
+        if (certPath || keyPath) {
+          const allowedSslRoots = [
+            FILE_BROWSER_ROOT,
+            path.join(configLoader.getConfigDir(), "ssl"),
+          ];
+          if (certPath) {
+            try {
+              resolvedCertPath = await assertWithinRoots(
+                certPath,
+                allowedSslRoots,
+                "Access to cert path is not allowed"
+              );
+            } catch {
+              return res.status(403).json({ error: "Access to cert path is not allowed" });
+            }
+          }
+          if (keyPath) {
+            try {
+              resolvedKeyPath = await assertWithinRoots(
+                keyPath,
+                allowedSslRoots,
+                "Access to key path is not allowed"
+              );
+            } catch {
+              return res.status(403).json({ error: "Access to key path is not allowed" });
+            }
+          }
+        }
+
+        // Validate if enabling SSL
+        if (enabled) {
+          if (certPath && keyPath) {
+            // Validate the same canonical paths that were checked above and get saved below.
+            const { validateCertFiles } = await import("./ssl.js"); // Dynamic import to avoid circular deps if any
+            const { valid, error } = await validateCertFiles(
+              resolvedCertPath ?? certPath,
+              resolvedKeyPath ?? keyPath
             );
-          } catch {
-            return res.status(403).json({ error: "Access to cert path is not allowed" });
+            if (!valid) {
+              return res.status(400).json({ error: `Invalid SSL configuration: ${error}` });
+            }
+          } else {
+            // If enabling but paths not provided in body, check if they exist in current config or are being set?
+            // Actually, if they are undefined in body, we might be keeping existing ones.
+            // But simpler to just require them if they are changing.
+            // If they are missing in body, let's look up current config
+            const current = configLoader.getSslConfig();
+            // current.certPath/keyPath were already root-contained when they were saved,
+            // so only the newly supplied (resolved) values need the same treatment here.
+            const effectiveCert = certPath ? resolvedCertPath : current.certPath;
+            const effectiveKey = keyPath ? resolvedKeyPath : current.keyPath;
+
+            if (!effectiveCert || !effectiveKey) {
+              return res
+                .status(400)
+                .json({ error: "Certificate and key paths are required to enable SSL" });
+            }
+
+            const { validateCertFiles } = await import("./ssl.js");
+            const { valid, error } = await validateCertFiles(effectiveCert, effectiveKey);
+            if (!valid) {
+              return res.status(400).json({ error: `Invalid SSL configuration: ${error}` });
+            }
           }
         }
-        if (keyPath) {
-          try {
-            resolvedKeyPath = await assertWithinRoots(
-              keyPath,
-              allowedSslRoots,
-              "Access to key path is not allowed"
-            );
-          } catch {
-            return res.status(403).json({ error: "Access to key path is not allowed" });
-          }
-        }
+
+        await configLoader.saveConfig({
+          ssl: {
+            enabled,
+            port,
+            certPath: resolvedCertPath,
+            keyPath: resolvedKeyPath,
+            redirectHttp,
+          },
+        });
+
+        routesLogger.info("SSL settings updated");
+        return res.json({ success: true, message: "SSL settings updated. Restart required." });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to update SSL settings");
+        return res.status(500).json({ error: "Failed to update SSL settings" });
       }
-
-      // Validate if enabling SSL
-      if (enabled) {
-        if (certPath && keyPath) {
-          // Validate the same canonical paths that were checked above and get saved below.
-          const { validateCertFiles } = await import("./ssl.js"); // Dynamic import to avoid circular deps if any
-          const { valid, error } = await validateCertFiles(
-            resolvedCertPath ?? certPath,
-            resolvedKeyPath ?? keyPath
-          );
-          if (!valid) {
-            return res.status(400).json({ error: `Invalid SSL configuration: ${error}` });
-          }
-        } else {
-          // If enabling but paths not provided in body, check if they exist in current config or are being set?
-          // Actually, if they are undefined in body, we might be keeping existing ones.
-          // But simpler to just require them if they are changing.
-          // If they are missing in body, let's look up current config
-          const current = configLoader.getSslConfig();
-          // current.certPath/keyPath were already root-contained when they were saved,
-          // so only the newly supplied (resolved) values need the same treatment here.
-          const effectiveCert = certPath ? resolvedCertPath : current.certPath;
-          const effectiveKey = keyPath ? resolvedKeyPath : current.keyPath;
-
-          if (!effectiveCert || !effectiveKey) {
-            return res
-              .status(400)
-              .json({ error: "Certificate and key paths are required to enable SSL" });
-          }
-
-          const { validateCertFiles } = await import("./ssl.js");
-          const { valid, error } = await validateCertFiles(effectiveCert, effectiveKey);
-          if (!valid) {
-            return res.status(400).json({ error: `Invalid SSL configuration: ${error}` });
-          }
-        }
-      }
-
-      await configLoader.saveConfig({
-        ssl: {
-          enabled,
-          port,
-          certPath: resolvedCertPath,
-          keyPath: resolvedKeyPath,
-          redirectHttp,
-        },
-      });
-
-      routesLogger.info("SSL settings updated");
-      return res.json({ success: true, message: "SSL settings updated. Restart required." });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to update SSL settings");
-      return res.status(500).json({ error: "Failed to update SSL settings" });
     }
-  });
+  );
 
   // Generate Self-Signed Cert
   app.post(
@@ -1670,31 +1724,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/api-keys", apiKeysRouter);
 
   // Check Prowlarr's management API and each proxied feed separately.
-  app.post("/api/indexers/prowlarr/diagnose", sensitiveEndpointLimiter, async (req, res, next) => {
-    try {
-      const { url, allowInsecureLan = false } = req.body;
-      let { apiKey } = req.body;
-      if (typeof url !== "string" || !url || typeof apiKey !== "string" || !apiKey) {
-        return res.status(400).json({ error: "URL and API Key are required" });
-      }
-      if (typeof allowInsecureLan !== "boolean") {
-        return res.status(400).json({ error: "Invalid insecure LAN setting" });
-      }
-      if (isUnchangedSentinel(apiKey)) {
-        const saved = await loadProwlarrSyncSettings();
-        if (!saved?.apiKey || saved.url !== url) {
-          return res.status(400).json({ error: "Enter the Prowlarr API key again for this URL" });
+  app.post(
+    "/api/indexers/prowlarr/diagnose",
+    sensitiveEndpointLimiter,
+    validate(
+      z
+        .object({
+          url: z.string().min(1),
+          apiKey: z.string().min(1),
+          allowInsecureLan: z.boolean().default(false),
+        })
+        .passthrough()
+    ),
+    async (req, res, next) => {
+      try {
+        const { url, allowInsecureLan = false } = req.body;
+        let { apiKey } = req.body;
+        if (typeof url !== "string" || !url || typeof apiKey !== "string" || !apiKey) {
+          return res.status(400).json({ error: "URL and API Key are required" });
         }
-        apiKey = saved.apiKey;
+        if (typeof allowInsecureLan !== "boolean") {
+          return res.status(400).json({ error: "Invalid insecure LAN setting" });
+        }
+        if (isUnchangedSentinel(apiKey)) {
+          const saved = await loadProwlarrSyncSettings();
+          if (!saved?.apiKey || saved.url !== url) {
+            return res.status(400).json({ error: "Enter the Prowlarr API key again for this URL" });
+          }
+          apiKey = saved.apiKey;
+        }
+        if (!(await isSafeUrl(url))) {
+          return res.status(400).json({ error: "Invalid or unsafe URL" });
+        }
+        return res.json(await prowlarrClient.diagnose(url, apiKey, allowInsecureLan));
+      } catch (error) {
+        return next(error);
       }
-      if (!(await isSafeUrl(url))) {
-        return res.status(400).json({ error: "Invalid or unsafe URL" });
-      }
-      return res.json(await prowlarrClient.diagnose(url, apiKey, allowInsecureLan));
-    } catch (error) {
-      return next(error);
     }
-  });
+  );
 
   // Last-used Prowlarr sync settings prefill the dialog. The API key is stored
   // encrypted and only a redaction placeholder is returned to the browser.
@@ -1719,6 +1786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/indexers/prowlarr/sync",
     sensitiveEndpointLimiter,
     sanitizeProwlarrSyncData,
+    validate(z.object({ url: z.string().min(1), apiKey: z.string().min(1) }).passthrough()),
     validateRequest,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
@@ -1870,55 +1938,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/game-lists", sensitiveEndpointLimiter, async (req, res) => {
-    const parsed = insertGameListSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res
-        .status(400)
-        .json({ error: "Invalid game list data", details: parsed.error.issues });
-    }
-
-    try {
-      const userId = req.user!.id;
-      const lists = await storage.getGameLists(userId);
-      if (
-        lists.some((list) => list.name.toLocaleLowerCase() === parsed.data.name.toLocaleLowerCase())
-      ) {
-        return res.status(409).json({ error: "A list with that name already exists" });
+  app.post(
+    "/api/game-lists",
+    sensitiveEndpointLimiter,
+    validate(insertGameListSchema),
+    async (req, res) => {
+      const parsed = insertGameListSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res
+          .status(400)
+          .json({ error: "Invalid game list data", details: parsed.error.issues });
       }
-      return res.status(201).json(await storage.createGameList(userId, parsed.data.name));
-    } catch (error) {
-      routesLogger.error({ error }, "error creating game list");
-      return res.status(500).json({ error: "Failed to create game list" });
-    }
-  });
 
-  app.patch("/api/game-lists/:listId", sensitiveEndpointLimiter, async (req, res) => {
-    const listId = z.string().uuid().safeParse(req.params.listId);
-    const parsed = insertGameListSchema.safeParse(req.body);
-    if (!listId.success || !parsed.success) {
-      return res.status(400).json({ error: "Invalid game list data" });
-    }
-
-    try {
-      const userId = req.user!.id;
-      const lists = await storage.getGameLists(userId);
-      if (
-        lists.some(
-          (list) =>
-            list.id !== listId.data &&
-            list.name.toLocaleLowerCase() === parsed.data.name.toLocaleLowerCase()
-        )
-      ) {
-        return res.status(409).json({ error: "A list with that name already exists" });
+      try {
+        const userId = req.user!.id;
+        const lists = await storage.getGameLists(userId);
+        if (
+          lists.some(
+            (list) => list.name.toLocaleLowerCase() === parsed.data.name.toLocaleLowerCase()
+          )
+        ) {
+          return res.status(409).json({ error: "A list with that name already exists" });
+        }
+        return res.status(201).json(await storage.createGameList(userId, parsed.data.name));
+      } catch (error) {
+        routesLogger.error({ error }, "error creating game list");
+        return res.status(500).json({ error: "Failed to create game list" });
       }
-      const updated = await storage.renameGameList(userId, listId.data, parsed.data.name);
-      return updated ? res.json(updated) : res.status(404).json({ error: "Game list not found" });
-    } catch (error) {
-      routesLogger.error({ error }, "error renaming game list");
-      return res.status(500).json({ error: "Failed to rename game list" });
     }
-  });
+  );
+
+  app.patch(
+    "/api/game-lists/:listId",
+    sensitiveEndpointLimiter,
+    validate(insertGameListSchema),
+    async (req, res) => {
+      const listId = z.string().uuid().safeParse(req.params.listId);
+      const parsed = insertGameListSchema.safeParse(req.body);
+      if (!listId.success || !parsed.success) {
+        return res.status(400).json({ error: "Invalid game list data" });
+      }
+
+      try {
+        const userId = req.user!.id;
+        const lists = await storage.getGameLists(userId);
+        if (
+          lists.some(
+            (list) =>
+              list.id !== listId.data &&
+              list.name.toLocaleLowerCase() === parsed.data.name.toLocaleLowerCase()
+          )
+        ) {
+          return res.status(409).json({ error: "A list with that name already exists" });
+        }
+        const updated = await storage.renameGameList(userId, listId.data, parsed.data.name);
+        return updated ? res.json(updated) : res.status(404).json({ error: "Game list not found" });
+      } catch (error) {
+        routesLogger.error({ error }, "error renaming game list");
+        return res.status(500).json({ error: "Failed to rename game list" });
+      }
+    }
+  );
 
   app.delete("/api/game-lists/:listId", sensitiveEndpointLimiter, async (req, res) => {
     const listId = z.string().uuid().safeParse(req.params.listId);
@@ -1946,22 +2026,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/game-lists/:listId/games", sensitiveEndpointLimiter, async (req, res) => {
-    const listId = z.string().uuid().safeParse(req.params.listId);
-    const gameId = z.string().uuid().safeParse(req.body?.gameId);
-    if (!listId.success || !gameId.success) {
-      return res.status(400).json({ error: "Invalid game list membership data" });
+  app.post(
+    "/api/game-lists/:listId/games",
+    sensitiveEndpointLimiter,
+    validate(z.object({ gameId: z.string().uuid() }).passthrough()),
+    async (req, res) => {
+      const listId = z.string().uuid().safeParse(req.params.listId);
+      const gameId = z.string().uuid().safeParse(req.body?.gameId);
+      if (!listId.success || !gameId.success) {
+        return res.status(400).json({ error: "Invalid game list membership data" });
+      }
+      try {
+        const added = await storage.addGameToList(req.user!.id, listId.data, gameId.data);
+        return added
+          ? res.status(204).end()
+          : res.status(404).json({ error: "Game or list not found" });
+      } catch (error) {
+        routesLogger.error({ error }, "error adding game to list");
+        return res.status(500).json({ error: "Failed to add game to list" });
+      }
     }
-    try {
-      const added = await storage.addGameToList(req.user!.id, listId.data, gameId.data);
-      return added
-        ? res.status(204).end()
-        : res.status(404).json({ error: "Game or list not found" });
-    } catch (error) {
-      routesLogger.error({ error }, "error adding game to list");
-      return res.status(500).json({ error: "Failed to add game to list" });
-    }
-  });
+  );
 
   app.delete(
     "/api/game-lists/:listId/games/:gameId",
@@ -2037,6 +2122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/games",
     sensitiveEndpointLimiter,
     sanitizeGameData,
+    validate(insertGameSchema.safeExtend({ userId: z.string().optional() })),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -2079,6 +2165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     sensitiveEndpointLimiter,
     sanitizeGameId,
     sanitizeGameStatus,
+    validate(updateGameStatusSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -2109,6 +2196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/games/:id/hidden",
     sensitiveEndpointLimiter,
     sanitizeGameId,
+    validate(updateGameHiddenSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -2139,6 +2227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/games/:id/user-rating",
     sensitiveEndpointLimiter,
     sanitizeGameId,
+    validate(updateGameUserRatingSchema),
     validateRequest,
     patchOwnGameField(
       updateGameUserRatingSchema,
@@ -2157,6 +2246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/games/:id/installed-version",
     sensitiveEndpointLimiter,
     sanitizeGameId,
+    validate(updateGameInstalledVersionSchema),
     validateRequest,
     patchOwnGameField(
       updateGameInstalledVersionSchema,
@@ -2179,6 +2269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/games/:id/target-platform",
     sensitiveEndpointLimiter,
     sanitizeGameId,
+    validate(updateGameTargetPlatformSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -2420,6 +2511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     authenticateToken,
     sensitiveEndpointLimiter,
     sanitizeRootFolderData,
+    validate(insertRootFolderSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -2472,6 +2564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     sensitiveEndpointLimiter,
     sanitizeRootFolderId,
     sanitizeRootFolderUpdateData,
+    validate(updateRootFolderSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -2838,6 +2931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     "/api/games/:gameId/blacklist",
     authenticateToken,
+    validate(insertReleaseBlacklistSchema.omit({ gameId: true })),
     async (req: Request, res: Response) => {
       try {
         const { gameId } = req.params as { gameId: string };
@@ -2929,16 +3023,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     param("id").trim().isUUID().withMessage("Invalid game file ID format"),
   ];
   const gameFileBodyValidation = [
-    body("gameId").trim().isUUID().withMessage("Invalid game ID format"),
-    body("downloadId")
-      .optional({ nullable: true })
-      .trim()
-      .isUUID()
-      .withMessage("Invalid download ID format"),
-    body("category")
-      .trim()
-      .isIn(["main", "dlc", "update", "extra"])
-      .withMessage("Invalid game file category"),
+    validate(
+      z
+        .object({
+          gameId: z.string().uuid("Invalid game ID format"),
+          downloadId: z.string().uuid("Invalid download ID format").nullable().optional(),
+          category: z.enum(["main", "dlc", "update", "extra"] as const, {
+            message: "Invalid game file category",
+          }),
+        })
+        .passthrough()
+    ),
   ];
 
   // A missing path, a path that isn't a directory, or a symlink cycle are expected
@@ -3073,10 +3168,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/games/:gameId/files/category",
     authenticateToken,
     gameIdParamValidation,
-    body("path").isString().notEmpty().withMessage("File path is required"),
-    body("category")
-      .isIn(["main", "dlc", "update", "extra"])
-      .withMessage("Invalid game file category"),
+    validate(
+      z
+        .object({
+          path: z.string().min(1, "File path is required"),
+          category: z.enum(["main", "dlc", "update", "extra"] as const, {
+            message: "Invalid game file category",
+          }),
+        })
+        .passthrough()
+    ),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -3202,6 +3303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/game-files",
     authenticateToken,
     gameFileBodyValidation,
+    validate(insertGameFileSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -3546,6 +3648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/indexers",
     sensitiveEndpointLimiter,
     sanitizeIndexerData,
+    validate(insertIndexerSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -3572,6 +3675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/indexers/:id",
     sensitiveEndpointLimiter,
     sanitizeIndexerUpdateData,
+    validate(updateIndexerSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -3637,7 +3741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put(
     "/api/downloaders/debug-logging",
-    body("enabled").isBoolean({ strict: true }).withMessage("enabled must be a boolean"),
+    validate(z.object({ enabled: z.boolean() }).passthrough()),
     validateRequest,
     async (req, res) => {
       try {
@@ -3751,6 +3855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/downloaders",
     sensitiveEndpointLimiter,
     sanitizeDownloaderData,
+    validate(insertDownloaderSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -3785,6 +3890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/downloaders/:id",
     sensitiveEndpointLimiter,
     sanitizeDownloaderUpdateData,
+    validate(updateDownloaderSchema),
     validateRequest,
     async (req: Request, res: Response) => {
       try {
@@ -3884,69 +3990,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Test indexer connection with provided configuration (doesn't require saving first)
-  app.post("/api/indexers/test", async (req, res) => {
-    try {
-      const {
-        name,
-        url,
-        apiKey,
-        protocol,
-        enabled,
-        priority,
-        categories,
-        rssEnabled,
-        autoSearchEnabled,
-        allowInsecureLan,
-      } = req.body;
+  app.post(
+    "/api/indexers/test",
+    validate(
+      z
+        .object({
+          name: z.string().optional(),
+          url: z.string().min(1),
+          apiKey: z.string().optional(),
+          protocol: z.enum(["torznab", "newznab", "g4u", "json-catalog"]).optional(),
+          enabled: z.boolean().optional(),
+          priority: z.number().int().positive().optional(),
+          categories: z.array(z.unknown()).optional(),
+          rssEnabled: z.boolean().optional(),
+          autoSearchEnabled: z.boolean().optional(),
+          allowInsecureLan: z.boolean().optional(),
+        })
+        .passthrough()
+    ),
+    async (req, res) => {
+      try {
+        const {
+          name,
+          url,
+          apiKey,
+          protocol,
+          enabled,
+          priority,
+          categories,
+          rssEnabled,
+          autoSearchEnabled,
+          allowInsecureLan,
+        } = req.body;
 
-      if (!url || (!apiKey && protocol !== "json-catalog")) {
-        return res.status(400).json({ error: "URL and API key are required" });
+        if (!url || (!apiKey && protocol !== "json-catalog")) {
+          return res.status(400).json({ error: "URL and API key are required" });
+        }
+
+        if (allowInsecureLan !== undefined && typeof allowInsecureLan !== "boolean") {
+          return res.status(400).json({ error: "Invalid insecure LAN setting" });
+        }
+
+        if (!(await isSafeUrl(url))) {
+          return res.status(400).json({ error: "Invalid or unsafe URL" });
+        }
+
+        const resolvedProtocol: string = protocol || "torznab";
+
+        // Create a temporary indexer object for testing
+        const tempIndexer: Indexer = {
+          id: "test",
+          name: name || "Test Connection",
+          url,
+          apiKey,
+          protocol: resolvedProtocol,
+          enabled: enabled ?? true,
+          priority: priority ?? 1,
+          categories: categories || [],
+          rssEnabled: rssEnabled ?? true,
+          autoSearchEnabled: autoSearchEnabled ?? true,
+          // Mirror the form's opt-in, or testing a plain-HTTP LAN indexer always
+          // fails with 401 because the key is withheld.
+          allowInsecureLan: allowInsecureLan === true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        const client =
+          resolvedProtocol === "json-catalog"
+            ? jsonCatalogClient
+            : isUsenetProtocol(resolvedProtocol)
+              ? newznabClient
+              : torznabClient;
+        const result = await client.testConnection(tempIndexer);
+        return res.json(result);
+      } catch (error) {
+        routesLogger.error({ error }, "error testing indexer");
+        return res.status(500).json({
+          error: "Failed to test indexer connection",
+        });
       }
-
-      if (allowInsecureLan !== undefined && typeof allowInsecureLan !== "boolean") {
-        return res.status(400).json({ error: "Invalid insecure LAN setting" });
-      }
-
-      if (!(await isSafeUrl(url))) {
-        return res.status(400).json({ error: "Invalid or unsafe URL" });
-      }
-
-      const resolvedProtocol: string = protocol || "torznab";
-
-      // Create a temporary indexer object for testing
-      const tempIndexer: Indexer = {
-        id: "test",
-        name: name || "Test Connection",
-        url,
-        apiKey,
-        protocol: resolvedProtocol,
-        enabled: enabled ?? true,
-        priority: priority ?? 1,
-        categories: categories || [],
-        rssEnabled: rssEnabled ?? true,
-        autoSearchEnabled: autoSearchEnabled ?? true,
-        // Mirror the form's opt-in, or testing a plain-HTTP LAN indexer always
-        // fails with 401 because the key is withheld.
-        allowInsecureLan: allowInsecureLan === true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const client =
-        resolvedProtocol === "json-catalog"
-          ? jsonCatalogClient
-          : isUsenetProtocol(resolvedProtocol)
-            ? newznabClient
-            : torznabClient;
-      const result = await client.testConnection(tempIndexer);
-      return res.json(result);
-    } catch (error) {
-      routesLogger.error({ error }, "error testing indexer");
-      return res.status(500).json({
-        error: "Failed to test indexer connection",
-      });
     }
-  });
+  );
 
   // Test existing indexer connection by ID
   app.post("/api/indexers/:id/test", async (req, res) => {
@@ -4151,6 +4276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     "/api/downloaders/:id/realdebrid/auth/poll",
     sensitiveEndpointLimiter,
+    validate(z.object({ handle: z.string().uuid() }).passthrough()),
     async (req, res) => {
       const handle = req.body && typeof req.body.handle === "string" ? req.body.handle : "";
       if (!/^[0-9a-f-]{36}$/i.test(handle)) {
@@ -4528,242 +4654,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Claim (link) a download client entry to a game in the library
-  app.post("/api/downloads/claim", authenticateToken, async (req, res) => {
-    try {
-      const userId = req.user!.id;
-
-      const parsed = claimDownloadRequestSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return respondWithZodError(res, parsed.error, "Invalid request");
-      }
-      const {
-        downloaderId,
-        downloadHash,
-        downloadTitle,
-        currentStatus,
-        category,
-        gameId,
-        newGame,
-      } = parsed.data;
-
-      if (!gameId && !newGame) {
-        return res.status(400).json({ error: "Provide either gameId or newGame" });
-      }
-
-      // Prevent duplicate: reject if this download is already linked to any game
-      const trackedKeys = new Set(
-        Array.from(await storage.getTrackedDownloadKeys()).map(normalizeTrackedKey)
-      );
-      if (trackedKeys.has(`${downloaderId}:${normalizeDownloadHash(downloadHash)}`)) {
-        return res.status(409).json({ error: "This download is already linked to a game" });
-      }
-
-      const isAlreadyComplete = currentStatus === "completed" || currentStatus === "seeding";
-      const importConfig = isAlreadyComplete ? await storage.getImportConfig(userId) : undefined;
-      // Keep completed claims pollable when post-processing is enabled. The normal completion
-      // checker then resolves client paths and starts the same import flow used for Questarr-added
-      // downloads. Without post-processing, preserve the terminal completed status.
-      const shouldPostProcessClaim = Boolean(
-        isAlreadyComplete && importConfig?.enablePostProcessing
-      );
-      const downloadStatus = shouldPostProcessClaim
-        ? "downloading"
-        : isAlreadyComplete
-          ? "completed"
-          : currentStatus === "downloading"
-            ? "downloading"
-            : currentStatus === "paused"
-              ? "paused"
-              : "downloading";
-
-      let resolvedGameId: string | undefined = undefined;
-
-      if (gameId) {
-        const existing = await storage.getGame(gameId);
-        if (!existing || existing.userId !== userId) {
-          return res.status(404).json({ error: "Game not found" });
-        }
-        resolvedGameId = gameId;
-
-        // Update game status if this is the main download
-        if (category === "main") {
-          const targetStatus = downloadStatus === "completed" ? "owned" : "downloading";
-          if (
-            (targetStatus === "downloading" && existing.status === "wanted") ||
-            (targetStatus === "owned" &&
-              (existing.status === "wanted" || existing.status === "downloading"))
-          ) {
-            await storage.updateGameStatus(existing.id, { status: targetStatus });
-          }
-        }
-      } else {
-        // Avoid duplicates: reuse an existing library entry for the same IGDB game
-        if (newGame!.igdbId != null) {
-          const existing = await storage.getGameByIgdbId(newGame!.igdbId);
-          if (existing && existing.userId === userId) {
-            resolvedGameId = existing.id;
-            if (category === "main") {
-              const targetStatus = downloadStatus === "completed" ? "owned" : "downloading";
-              if (
-                (targetStatus === "downloading" && existing.status === "wanted") ||
-                (targetStatus === "owned" &&
-                  (existing.status === "wanted" || existing.status === "downloading"))
-              ) {
-                await storage.updateGameStatus(existing.id, { status: targetStatus });
-              }
-            }
-          }
-        }
-
-        if (!resolvedGameId) {
-          // Determine initial game status
-          const initialGameStatus =
-            category === "main"
-              ? downloadStatus === "completed"
-                ? "owned"
-                : "downloading"
-              : "wanted";
-
-          const game = await storage.addGame(
-            normalizeInitialReleaseStatus(
-              insertGameSchema.parse({
-                ...newGame,
-                userId,
-                status: initialGameStatus,
-              })
-            )
-          );
-          resolvedGameId = game.id;
-        }
-      }
-
-      const downloader = await storage.getDownloader(downloaderId);
-      if (!downloader) {
-        return res.status(404).json({ error: "Downloader not found" });
-      }
-
-      await storage.addGameDownload(
-        insertGameDownloadSchema.parse({
-          gameId: resolvedGameId!,
-          downloaderId,
-          downloadHash: normalizeDownloadHash(downloadHash),
-          downloadTitle,
-          downloadType: isUsenetDownloaderType(downloader.type) ? "usenet" : "torrent",
-          status: downloadStatus,
-          category,
-        })
-      );
-
-      if (shouldPostProcessClaim) {
-        // Run the regular completion check promptly; don't make the user wait for the next cron
-        // interval, and don't hold the claim response open on downloader I/O or extraction.
-        void checkDownloadStatus().catch((error) => {
-          routesLogger.error(
-            { error, gameId: resolvedGameId },
-            "Failed to process claimed download"
-          );
-        });
-      }
-
-      // Clear stale "search results available" flag now that the game has a linked download
-      await storage.updateGameSearchResultsAvailable(resolvedGameId, false);
-
-      return res.json({ success: true, gameId: resolvedGameId });
-    } catch (error) {
-      routesLogger.error({ error }, "error claiming download");
-      return res.status(500).json({ error: "Failed to claim download" });
-    }
-  });
-
-  // Batch-claim multiple unlinked downloads in a single tracked import task
-  app.post("/api/downloads/claim-batch", authenticateToken, async (req, res) => {
-    const userId = req.user!.id;
-    const rawItems = req.body?.items;
-    if (!Array.isArray(rawItems) || rawItems.length === 0) {
-      return res.status(400).json({ error: "items must be a non-empty array" });
-    }
-
-    const parsedItems: (typeof claimDownloadRequestSchema._output)[] = [];
-    for (const raw of rawItems) {
-      const parsed = claimDownloadRequestSchema.safeParse(raw);
-      if (!parsed.success) {
-        return respondWithZodError(res, parsed.error, "Invalid item in batch");
-      }
-      parsedItems.push(parsed.data);
-    }
-
-    const hasCompletedItems = parsedItems.some(
-      (item) => item.currentStatus === "completed" || item.currentStatus === "seeding"
-    );
-    const importConfig = hasCompletedItems ? await storage.getImportConfig(userId) : undefined;
-    let shouldPostProcessClaim = false;
-
-    const task = await storage.createImportTask({
-      userId,
-      taskType: "bulk_add",
-      triggeredBy: "manual",
-    });
-    await storage.startImportTask(task.id);
-    (await import("./socket.js")).notifyUser(
-      "importTaskUpdate",
-      {
-        taskId: task.id,
-        status: "in_progress",
-      },
-      userId
-    );
-
-    const trackedKeys = new Set(
-      Array.from(await storage.getTrackedDownloadKeys()).map(normalizeTrackedKey)
-    );
-    let addedCount = 0;
-    let failedCount = 0;
-    const taskItemsToInsert: InsertImportTaskItem[] = [];
-    const igdbIdToGameId = new Map<number, string>();
-
-    for (const item of parsedItems) {
-      const key = `${item.downloaderId}:${normalizeDownloadHash(item.downloadHash)}`;
-      if (trackedKeys.has(key)) {
-        taskItemsToInsert.push({
-          taskId: task.id,
-          itemName: item.downloadTitle,
-          result: "skipped",
-          errorMessage: "Already linked",
-        });
-        continue;
-      }
+  app.post(
+    "/api/downloads/claim",
+    authenticateToken,
+    validate(claimDownloadRequestSchema),
+    async (req, res) => {
       try {
-        const isAlreadyComplete =
-          item.currentStatus === "completed" || item.currentStatus === "seeding";
-        const shouldPostProcessItem = Boolean(
+        const userId = req.user!.id;
+
+        const parsed = claimDownloadRequestSchema.safeParse(req.body);
+        if (!parsed.success) {
+          return respondWithZodError(res, parsed.error, "Invalid request");
+        }
+        const {
+          downloaderId,
+          downloadHash,
+          downloadTitle,
+          currentStatus,
+          category,
+          gameId,
+          newGame,
+        } = parsed.data;
+
+        if (!gameId && !newGame) {
+          return res.status(400).json({ error: "Provide either gameId or newGame" });
+        }
+
+        // Prevent duplicate: reject if this download is already linked to any game
+        const trackedKeys = new Set(
+          Array.from(await storage.getTrackedDownloadKeys()).map(normalizeTrackedKey)
+        );
+        if (trackedKeys.has(`${downloaderId}:${normalizeDownloadHash(downloadHash)}`)) {
+          return res.status(409).json({ error: "This download is already linked to a game" });
+        }
+
+        const isAlreadyComplete = currentStatus === "completed" || currentStatus === "seeding";
+        const importConfig = isAlreadyComplete ? await storage.getImportConfig(userId) : undefined;
+        // Keep completed claims pollable when post-processing is enabled. The normal completion
+        // checker then resolves client paths and starts the same import flow used for Questarr-added
+        // downloads. Without post-processing, preserve the terminal completed status.
+        const shouldPostProcessClaim = Boolean(
           isAlreadyComplete && importConfig?.enablePostProcessing
         );
-        const downloadStatus = shouldPostProcessItem
+        const downloadStatus = shouldPostProcessClaim
           ? "downloading"
           : isAlreadyComplete
             ? "completed"
-            : item.currentStatus === "downloading"
+            : currentStatus === "downloading"
               ? "downloading"
-              : item.currentStatus === "paused"
+              : currentStatus === "paused"
                 ? "paused"
                 : "downloading";
 
-        let resolvedGameId: string | undefined;
+        let resolvedGameId: string | undefined = undefined;
 
-        if (item.gameId) {
-          const existing = await storage.getGame(item.gameId);
+        if (gameId) {
+          const existing = await storage.getGame(gameId);
           if (!existing || existing.userId !== userId) {
-            taskItemsToInsert.push({
-              taskId: task.id,
-              itemName: item.downloadTitle,
-              result: "failed",
-              errorMessage: "Game not found",
-            });
-            failedCount++;
-            continue;
+            return res.status(404).json({ error: "Game not found" });
           }
-          resolvedGameId = item.gameId;
-          if (item.category === "main") {
+          resolvedGameId = gameId;
+
+          // Update game status if this is the main download
+          if (category === "main") {
             const targetStatus = downloadStatus === "completed" ? "owned" : "downloading";
             if (
               (targetStatus === "downloading" && existing.status === "wanted") ||
@@ -4773,133 +4726,316 @@ export async function registerRoutes(app: Express): Promise<Server> {
               await storage.updateGameStatus(existing.id, { status: targetStatus });
             }
           }
-        } else if (item.newGame) {
-          if (item.newGame.igdbId != null) {
-            const cached = igdbIdToGameId.get(item.newGame.igdbId);
-            if (cached) {
-              resolvedGameId = cached;
-            } else {
-              const existing = await storage.getGameByIgdbId(item.newGame.igdbId);
-              if (existing && existing.userId === userId) {
-                resolvedGameId = existing.id;
-                igdbIdToGameId.set(item.newGame.igdbId, existing.id);
-                if (item.category === "main") {
-                  const targetStatus = downloadStatus === "completed" ? "owned" : "downloading";
-                  if (
-                    (targetStatus === "downloading" && existing.status === "wanted") ||
-                    (targetStatus === "owned" &&
-                      (existing.status === "wanted" || existing.status === "downloading"))
-                  ) {
-                    await storage.updateGameStatus(existing.id, { status: targetStatus });
-                  }
+        } else {
+          // Avoid duplicates: reuse an existing library entry for the same IGDB game
+          if (newGame!.igdbId != null) {
+            const existing = await storage.getGameByIgdbId(newGame!.igdbId);
+            if (existing && existing.userId === userId) {
+              resolvedGameId = existing.id;
+              if (category === "main") {
+                const targetStatus = downloadStatus === "completed" ? "owned" : "downloading";
+                if (
+                  (targetStatus === "downloading" && existing.status === "wanted") ||
+                  (targetStatus === "owned" &&
+                    (existing.status === "wanted" || existing.status === "downloading"))
+                ) {
+                  await storage.updateGameStatus(existing.id, { status: targetStatus });
                 }
               }
             }
           }
+
           if (!resolvedGameId) {
-            const initialStatus =
-              item.category === "main"
+            // Determine initial game status
+            const initialGameStatus =
+              category === "main"
                 ? downloadStatus === "completed"
                   ? "owned"
                   : "downloading"
                 : "wanted";
+
             const game = await storage.addGame(
               normalizeInitialReleaseStatus(
-                insertGameSchema.parse({ ...item.newGame, userId, status: initialStatus })
+                insertGameSchema.parse({
+                  ...newGame,
+                  userId,
+                  status: initialGameStatus,
+                })
               )
             );
             resolvedGameId = game.id;
-            if (item.newGame.igdbId != null) {
-              igdbIdToGameId.set(item.newGame.igdbId, game.id);
-            }
           }
         }
 
-        if (!resolvedGameId) {
-          taskItemsToInsert.push({
-            taskId: task.id,
-            itemName: item.downloadTitle,
-            result: "failed",
-            errorMessage: "Could not resolve game",
-          });
-          failedCount++;
-          continue;
-        }
-
-        const downloader = await storage.getDownloader(item.downloaderId);
+        const downloader = await storage.getDownloader(downloaderId);
         if (!downloader) {
-          taskItemsToInsert.push({
-            taskId: task.id,
-            itemName: item.downloadTitle,
-            result: "failed",
-            errorMessage: "Downloader not found",
-          });
-          failedCount++;
-          continue;
+          return res.status(404).json({ error: "Downloader not found" });
         }
 
         await storage.addGameDownload(
           insertGameDownloadSchema.parse({
-            gameId: resolvedGameId,
-            downloaderId: item.downloaderId,
-            downloadHash: normalizeDownloadHash(item.downloadHash),
-            downloadTitle: item.downloadTitle,
+            gameId: resolvedGameId!,
+            downloaderId,
+            downloadHash: normalizeDownloadHash(downloadHash),
+            downloadTitle,
             downloadType: isUsenetDownloaderType(downloader.type) ? "usenet" : "torrent",
             status: downloadStatus,
-            category: item.category,
+            category,
           })
         );
-        shouldPostProcessClaim ||= shouldPostProcessItem;
+
+        if (shouldPostProcessClaim) {
+          // Run the regular completion check promptly; don't make the user wait for the next cron
+          // interval, and don't hold the claim response open on downloader I/O or extraction.
+          void checkDownloadStatus().catch((error) => {
+            routesLogger.error(
+              { error, gameId: resolvedGameId },
+              "Failed to process claimed download"
+            );
+          });
+        }
+
+        // Clear stale "search results available" flag now that the game has a linked download
         await storage.updateGameSearchResultsAvailable(resolvedGameId, false);
 
-        trackedKeys.add(key);
-        taskItemsToInsert.push({
-          taskId: task.id,
-          itemName: item.downloadTitle,
-          result: "added",
-          gameId: resolvedGameId,
-        });
-        addedCount++;
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : "Unknown error";
-        taskItemsToInsert.push({
-          taskId: task.id,
-          itemName: item.downloadTitle,
-          result: "failed",
-          errorMessage: errMsg,
-        });
-        failedCount++;
+        return res.json({ success: true, gameId: resolvedGameId });
+      } catch (error) {
+        routesLogger.error({ error }, "error claiming download");
+        return res.status(500).json({ error: "Failed to claim download" });
       }
     }
+  );
 
-    await storage.addImportTaskItemsBatch(taskItemsToInsert);
-    const skippedCount = parsedItems.length - addedCount - failedCount;
-    const finalStatus = failedCount > 0 ? "completed_with_errors" : "completed";
-    await storage.updateImportTask(task.id, {
-      status: finalStatus,
-      completedAt: new Date(),
-      totalItems: parsedItems.length,
-      addedItems: addedCount,
-      skippedItems: skippedCount,
-      failedItems: failedCount,
-    });
-    (await import("./socket.js")).notifyUser(
-      "importTaskUpdate",
-      {
-        taskId: task.id,
-        status: finalStatus,
-      },
-      userId
-    );
+  // Batch-claim multiple unlinked downloads in a single tracked import task
+  app.post(
+    "/api/downloads/claim-batch",
+    authenticateToken,
+    validate(z.object({ items: z.array(claimDownloadRequestSchema).min(1) }).passthrough()),
+    async (req, res) => {
+      const userId = req.user!.id;
+      const rawItems = req.body?.items;
+      if (!Array.isArray(rawItems) || rawItems.length === 0) {
+        return res.status(400).json({ error: "items must be a non-empty array" });
+      }
 
-    if (shouldPostProcessClaim) {
-      void checkDownloadStatus().catch((error) => {
-        routesLogger.error({ error, taskId: task.id }, "Failed to process claimed downloads");
+      const parsedItems: (typeof claimDownloadRequestSchema._output)[] = [];
+      for (const raw of rawItems) {
+        const parsed = claimDownloadRequestSchema.safeParse(raw);
+        if (!parsed.success) {
+          return respondWithZodError(res, parsed.error, "Invalid item in batch");
+        }
+        parsedItems.push(parsed.data);
+      }
+
+      const hasCompletedItems = parsedItems.some(
+        (item) => item.currentStatus === "completed" || item.currentStatus === "seeding"
+      );
+      const importConfig = hasCompletedItems ? await storage.getImportConfig(userId) : undefined;
+      let shouldPostProcessClaim = false;
+
+      const task = await storage.createImportTask({
+        userId,
+        taskType: "bulk_add",
+        triggeredBy: "manual",
       });
-    }
+      await storage.startImportTask(task.id);
+      (await import("./socket.js")).notifyUser(
+        "importTaskUpdate",
+        {
+          taskId: task.id,
+          status: "in_progress",
+        },
+        userId
+      );
 
-    return res.json({ success: true, taskId: task.id, addedCount, failedCount, skippedCount });
-  });
+      const trackedKeys = new Set(
+        Array.from(await storage.getTrackedDownloadKeys()).map(normalizeTrackedKey)
+      );
+      let addedCount = 0;
+      let failedCount = 0;
+      const taskItemsToInsert: InsertImportTaskItem[] = [];
+      const igdbIdToGameId = new Map<number, string>();
+
+      for (const item of parsedItems) {
+        const key = `${item.downloaderId}:${normalizeDownloadHash(item.downloadHash)}`;
+        if (trackedKeys.has(key)) {
+          taskItemsToInsert.push({
+            taskId: task.id,
+            itemName: item.downloadTitle,
+            result: "skipped",
+            errorMessage: "Already linked",
+          });
+          continue;
+        }
+        try {
+          const isAlreadyComplete =
+            item.currentStatus === "completed" || item.currentStatus === "seeding";
+          const shouldPostProcessItem = Boolean(
+            isAlreadyComplete && importConfig?.enablePostProcessing
+          );
+          const downloadStatus = shouldPostProcessItem
+            ? "downloading"
+            : isAlreadyComplete
+              ? "completed"
+              : item.currentStatus === "downloading"
+                ? "downloading"
+                : item.currentStatus === "paused"
+                  ? "paused"
+                  : "downloading";
+
+          let resolvedGameId: string | undefined;
+
+          if (item.gameId) {
+            const existing = await storage.getGame(item.gameId);
+            if (!existing || existing.userId !== userId) {
+              taskItemsToInsert.push({
+                taskId: task.id,
+                itemName: item.downloadTitle,
+                result: "failed",
+                errorMessage: "Game not found",
+              });
+              failedCount++;
+              continue;
+            }
+            resolvedGameId = item.gameId;
+            if (item.category === "main") {
+              const targetStatus = downloadStatus === "completed" ? "owned" : "downloading";
+              if (
+                (targetStatus === "downloading" && existing.status === "wanted") ||
+                (targetStatus === "owned" &&
+                  (existing.status === "wanted" || existing.status === "downloading"))
+              ) {
+                await storage.updateGameStatus(existing.id, { status: targetStatus });
+              }
+            }
+          } else if (item.newGame) {
+            if (item.newGame.igdbId != null) {
+              const cached = igdbIdToGameId.get(item.newGame.igdbId);
+              if (cached) {
+                resolvedGameId = cached;
+              } else {
+                const existing = await storage.getGameByIgdbId(item.newGame.igdbId);
+                if (existing && existing.userId === userId) {
+                  resolvedGameId = existing.id;
+                  igdbIdToGameId.set(item.newGame.igdbId, existing.id);
+                  if (item.category === "main") {
+                    const targetStatus = downloadStatus === "completed" ? "owned" : "downloading";
+                    if (
+                      (targetStatus === "downloading" && existing.status === "wanted") ||
+                      (targetStatus === "owned" &&
+                        (existing.status === "wanted" || existing.status === "downloading"))
+                    ) {
+                      await storage.updateGameStatus(existing.id, { status: targetStatus });
+                    }
+                  }
+                }
+              }
+            }
+            if (!resolvedGameId) {
+              const initialStatus =
+                item.category === "main"
+                  ? downloadStatus === "completed"
+                    ? "owned"
+                    : "downloading"
+                  : "wanted";
+              const game = await storage.addGame(
+                normalizeInitialReleaseStatus(
+                  insertGameSchema.parse({ ...item.newGame, userId, status: initialStatus })
+                )
+              );
+              resolvedGameId = game.id;
+              if (item.newGame.igdbId != null) {
+                igdbIdToGameId.set(item.newGame.igdbId, game.id);
+              }
+            }
+          }
+
+          if (!resolvedGameId) {
+            taskItemsToInsert.push({
+              taskId: task.id,
+              itemName: item.downloadTitle,
+              result: "failed",
+              errorMessage: "Could not resolve game",
+            });
+            failedCount++;
+            continue;
+          }
+
+          const downloader = await storage.getDownloader(item.downloaderId);
+          if (!downloader) {
+            taskItemsToInsert.push({
+              taskId: task.id,
+              itemName: item.downloadTitle,
+              result: "failed",
+              errorMessage: "Downloader not found",
+            });
+            failedCount++;
+            continue;
+          }
+
+          await storage.addGameDownload(
+            insertGameDownloadSchema.parse({
+              gameId: resolvedGameId,
+              downloaderId: item.downloaderId,
+              downloadHash: normalizeDownloadHash(item.downloadHash),
+              downloadTitle: item.downloadTitle,
+              downloadType: isUsenetDownloaderType(downloader.type) ? "usenet" : "torrent",
+              status: downloadStatus,
+              category: item.category,
+            })
+          );
+          shouldPostProcessClaim ||= shouldPostProcessItem;
+          await storage.updateGameSearchResultsAvailable(resolvedGameId, false);
+
+          trackedKeys.add(key);
+          taskItemsToInsert.push({
+            taskId: task.id,
+            itemName: item.downloadTitle,
+            result: "added",
+            gameId: resolvedGameId,
+          });
+          addedCount++;
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : "Unknown error";
+          taskItemsToInsert.push({
+            taskId: task.id,
+            itemName: item.downloadTitle,
+            result: "failed",
+            errorMessage: errMsg,
+          });
+          failedCount++;
+        }
+      }
+
+      await storage.addImportTaskItemsBatch(taskItemsToInsert);
+      const skippedCount = parsedItems.length - addedCount - failedCount;
+      const finalStatus = failedCount > 0 ? "completed_with_errors" : "completed";
+      await storage.updateImportTask(task.id, {
+        status: finalStatus,
+        completedAt: new Date(),
+        totalItems: parsedItems.length,
+        addedItems: addedCount,
+        skippedItems: skippedCount,
+        failedItems: failedCount,
+      });
+      (await import("./socket.js")).notifyUser(
+        "importTaskUpdate",
+        {
+          taskId: task.id,
+          status: finalStatus,
+        },
+        userId
+      );
+
+      if (shouldPostProcessClaim) {
+        void checkDownloadStatus().catch((error) => {
+          routesLogger.error({ error, taskId: task.id }, "Failed to process claimed downloads");
+        });
+      }
+
+      return res.json({ success: true, taskId: task.id, addedCount, failedCount, skippedCount });
+    }
+  );
 
   // Remove a linked download record from a game
   app.delete(
@@ -5070,79 +5206,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Download bundle of downloads as ZIP
-  app.post("/api/downloads/bundle", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const { downloads } = req.body;
-      if (!downloads || !Array.isArray(downloads)) {
-        return res.status(400).json({ error: "No downloads provided" });
-      }
+  app.post(
+    "/api/downloads/bundle",
+    sensitiveEndpointLimiter,
+    validate(
+      z
+        .object({
+          downloads: z.array(
+            z
+              .object({
+                link: z.string().min(1),
+                title: z.string().min(1),
+                downloadType: z.string().optional(),
+              })
+              .passthrough()
+          ),
+        })
+        .passthrough()
+    ),
+    async (req, res) => {
+      try {
+        const { downloads } = req.body;
+        if (!downloads || !Array.isArray(downloads)) {
+          return res.status(400).json({ error: "No downloads provided" });
+        }
 
-      // Bundle links may come from a private Prowlarr or indexer service. Only
-      // those exact configured origins get private-network access; arbitrary
-      // client-supplied URLs and redirect targets remain public-only.
-      const allowedPrivateOrigins = [
-        ...new Set(
-          (await storage.getAllIndexers()).flatMap((indexer) => {
-            try {
-              const url = new URL(indexer.url);
-              return url.protocol === "http:" || url.protocol === "https:" ? [url.origin] : [];
-            } catch {
-              return [];
-            }
-          })
-        ),
-      ];
-      const bundleFetchPolicy = { allowPrivate: false, allowedPrivateOrigins } as const;
-
-      const archive = new ZipArchive({ zlib: { level: 9 } });
-
-      res.attachment("download-bundle.zip");
-      archive.pipe(res);
-
-      // ⚡ Bolt: Fetch all downloads in parallel to significantly reduce wait time
-      // for the user compared to sequential processing.
-      // We process in chunks to prevent overwhelming external servers or our own network.
-      const CONCURRENCY_LIMIT = 5;
-      for (let i = 0; i < downloads.length; i += CONCURRENCY_LIMIT) {
-        const chunk = downloads.slice(i, i + CONCURRENCY_LIMIT);
-        await Promise.all(
-          chunk.map(async (download: { link: string; title: string; downloadType?: string }) => {
-            try {
-              if (!(await isSafeUrl(download.link, bundleFetchPolicy))) {
-                routesLogger.warn("Skipping unsafe URL in bundle");
-                return;
+        // Bundle links may come from a private Prowlarr or indexer service. Only
+        // those exact configured origins get private-network access; arbitrary
+        // client-supplied URLs and redirect targets remain public-only.
+        const allowedPrivateOrigins = [
+          ...new Set(
+            (await storage.getAllIndexers()).flatMap((indexer) => {
+              try {
+                const url = new URL(indexer.url);
+                return url.protocol === "http:" || url.protocol === "https:" ? [url.origin] : [];
+              } catch {
+                return [];
               }
+            })
+          ),
+        ];
+        const bundleFetchPolicy = { allowPrivate: false, allowedPrivateOrigins } as const;
 
-              const response = await safeFetch(download.link, bundleFetchPolicy);
-              if (response.ok) {
-                const buffer = await response.arrayBuffer();
-                // Try to detect if it's a usenet item based on title or link if downloadType not present
-                const isUsenet =
-                  download.downloadType === "usenet" ||
-                  download.link.includes("newznab") ||
-                  download.title.toLowerCase().includes(".nzb");
-                const extension = isUsenet ? "nzb" : "torrent";
-                const filename = `${download.title.replace(/[<>:"/\\|?*]/g, "_")}.${extension}`;
-                archive.append(Buffer.from(buffer), { name: filename });
+        const archive = new ZipArchive({ zlib: { level: 9 } });
+
+        res.attachment("download-bundle.zip");
+        archive.pipe(res);
+
+        // ⚡ Bolt: Fetch all downloads in parallel to significantly reduce wait time
+        // for the user compared to sequential processing.
+        // We process in chunks to prevent overwhelming external servers or our own network.
+        const CONCURRENCY_LIMIT = 5;
+        for (let i = 0; i < downloads.length; i += CONCURRENCY_LIMIT) {
+          const chunk = downloads.slice(i, i + CONCURRENCY_LIMIT);
+          await Promise.all(
+            chunk.map(async (download: { link: string; title: string; downloadType?: string }) => {
+              try {
+                if (!(await isSafeUrl(download.link, bundleFetchPolicy))) {
+                  routesLogger.warn("Skipping unsafe URL in bundle");
+                  return;
+                }
+
+                const response = await safeFetch(download.link, bundleFetchPolicy);
+                if (response.ok) {
+                  const buffer = await response.arrayBuffer();
+                  // Try to detect if it's a usenet item based on title or link if downloadType not present
+                  const isUsenet =
+                    download.downloadType === "usenet" ||
+                    download.link.includes("newznab") ||
+                    download.title.toLowerCase().includes(".nzb");
+                  const extension = isUsenet ? "nzb" : "torrent";
+                  const filename = `${download.title.replace(/[<>:"/\\|?*]/g, "_")}.${extension}`;
+                  archive.append(Buffer.from(buffer), { name: filename });
+                }
+              } catch (error) {
+                routesLogger.error(
+                  { error, title: download.title },
+                  "Error adding download to bundle"
+                );
               }
-            } catch (error) {
-              routesLogger.error(
-                { error, title: download.title },
-                "Error adding download to bundle"
-              );
-            }
-          })
-        );
+            })
+          );
+        }
+
+        await archive.finalize();
+
+        return;
+      } catch (error) {
+        routesLogger.error({ error }, "Error creating bundle");
+        return res.status(500).json({ error: "Failed to create bundle" });
       }
-
-      await archive.finalize();
-
-      return;
-    } catch (error) {
-      routesLogger.error({ error }, "Error creating bundle");
-      return res.status(500).json({ error: "Failed to create bundle" });
     }
-  });
+  );
 
   // Notification routes
   app.get("/api/notifications", authenticateToken, async (req, res) => {
@@ -5166,31 +5321,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/notifications", authenticateToken, validateRequest, async (req, res) => {
-    try {
-      const notificationData = insertNotificationSchema.parse({
-        ...req.body,
-        userId: req.user!.id,
-      });
-      const notification = await storage.addNotification(notificationData);
+  app.post(
+    "/api/notifications",
+    authenticateToken,
+    validate(insertNotificationSchema.omit({ userId: true })),
+    validateRequest,
+    async (req, res) => {
+      try {
+        const notificationData = insertNotificationSchema.parse({
+          ...req.body,
+          userId: req.user!.id,
+        });
+        const notification = await storage.addNotification(notificationData);
 
-      // Notify via WebSocket
-      // dynamic import to avoid circular dependency issues if they exist,
-      // or just import it at top if safe.
-      // Ideally notifications are triggered by events, not by API, but this is good for testing.
-      const { notifyUser } = await import("./socket.js");
-      notifyUser("notification", notification, notification.userId);
-      void appriseClient.send(notification);
+        // Notify via WebSocket
+        // dynamic import to avoid circular dependency issues if they exist,
+        // or just import it at top if safe.
+        // Ideally notifications are triggered by events, not by API, but this is good for testing.
+        const { notifyUser } = await import("./socket.js");
+        notifyUser("notification", notification, notification.userId);
+        void appriseClient.send(notification);
 
-      return res.status(201).json(notification);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return respondWithZodError(res, error, "Invalid notification data");
+        return res.status(201).json(notification);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return respondWithZodError(res, error, "Invalid notification data");
+        }
+        routesLogger.error({ error }, "error adding notification");
+        return res.status(500).json({ error: "Failed to add notification" });
       }
-      routesLogger.error({ error }, "error adding notification");
-      return res.status(500).json({ error: "Failed to add notification" });
     }
-  });
+  );
 
   app.put("/api/notifications/:id/read", authenticateToken, async (req, res) => {
     try {
@@ -5304,93 +5465,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/settings/igdb", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const { clientId, clientSecret } = req.body;
+  app.post(
+    "/api/settings/igdb",
+    sensitiveEndpointLimiter,
+    validate(z.object({ clientId: z.string(), clientSecret: z.string().optional() }).passthrough()),
+    async (req, res) => {
+      try {
+        const { clientId, clientSecret } = req.body;
 
-      if (typeof clientId !== "string" || !clientId.trim()) {
-        return res.status(400).json({ error: "Client ID is required" });
+        if (typeof clientId !== "string" || !clientId.trim()) {
+          return res.status(400).json({ error: "Client ID is required" });
+        }
+        if (clientSecret !== undefined && typeof clientSecret !== "string") {
+          return res.status(400).json({ error: "Client Secret must be a string" });
+        }
+
+        // Whether it's safe to omit clientSecret and keep the existing one: only when a DB
+        // secret already exists to pair with the (possibly updated) DB clientId. An
+        // env-only-configured instance has no DB secret to pair with, so saving just a new
+        // clientId here would leave a DB clientId with no DB secret -- getCredentials() only
+        // uses DB creds when BOTH are present together, so it would silently fall back to the
+        // full env pair (including the old env clientId), making this update a silent no-op.
+        const dbSecret = await storage.getSystemConfig("igdb.clientSecret");
+        const canOmitSecret = !!dbSecret;
+
+        const isMaskedValue = isUnchangedSentinel(clientSecret);
+        const hasNewSecret = !!clientSecret && !isMaskedValue;
+
+        if (!canOmitSecret && !hasNewSecret) {
+          return res.status(400).json({ error: "Client Secret is required" });
+        }
+
+        const trimmedClientId = clientId.trim();
+        const formatError = validateIgdbCredentialFormat(
+          trimmedClientId,
+          hasNewSecret ? clientSecret.trim() : "x".repeat(30) // skip re-checking an unchanged stored secret
+        );
+        if (formatError) {
+          return res.status(400).json(formatError);
+        }
+
+        await storage.setSystemConfig("igdb.clientId", trimmedClientId);
+
+        if (hasNewSecret) {
+          await storage.setSystemConfig("igdb.clientSecret", clientSecret.trim());
+        }
+
+        routesLogger.info("IGDB credentials updated via settings");
+        return res.json({ success: true });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to update IGDB credentials");
+        return res.status(500).json({ error: "Failed to update IGDB credentials" });
       }
-      if (clientSecret !== undefined && typeof clientSecret !== "string") {
-        return res.status(400).json({ error: "Client Secret must be a string" });
-      }
-
-      // Whether it's safe to omit clientSecret and keep the existing one: only when a DB
-      // secret already exists to pair with the (possibly updated) DB clientId. An
-      // env-only-configured instance has no DB secret to pair with, so saving just a new
-      // clientId here would leave a DB clientId with no DB secret -- getCredentials() only
-      // uses DB creds when BOTH are present together, so it would silently fall back to the
-      // full env pair (including the old env clientId), making this update a silent no-op.
-      const dbSecret = await storage.getSystemConfig("igdb.clientSecret");
-      const canOmitSecret = !!dbSecret;
-
-      const isMaskedValue = isUnchangedSentinel(clientSecret);
-      const hasNewSecret = !!clientSecret && !isMaskedValue;
-
-      if (!canOmitSecret && !hasNewSecret) {
-        return res.status(400).json({ error: "Client Secret is required" });
-      }
-
-      const trimmedClientId = clientId.trim();
-      const formatError = validateIgdbCredentialFormat(
-        trimmedClientId,
-        hasNewSecret ? clientSecret.trim() : "x".repeat(30) // skip re-checking an unchanged stored secret
-      );
-      if (formatError) {
-        return res.status(400).json(formatError);
-      }
-
-      await storage.setSystemConfig("igdb.clientId", trimmedClientId);
-
-      if (hasNewSecret) {
-        await storage.setSystemConfig("igdb.clientSecret", clientSecret.trim());
-      }
-
-      routesLogger.info("IGDB credentials updated via settings");
-      return res.json({ success: true });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to update IGDB credentials");
-      return res.status(500).json({ error: "Failed to update IGDB credentials" });
     }
-  });
+  );
 
   // Verifies a Client ID/Secret pair against Twitch/IGDB before the user saves it, so a typo
   // or expired secret is caught immediately instead of surfacing later as a failed search.
   // clientSecret may be the masked placeholder, meaning "use the already-saved secret".
-  app.post("/api/settings/igdb/test", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const { clientId, clientSecret } = req.body;
+  app.post(
+    "/api/settings/igdb/test",
+    sensitiveEndpointLimiter,
+    validate(z.object({ clientId: z.string(), clientSecret: z.string().optional() }).passthrough()),
+    async (req, res) => {
+      try {
+        const { clientId, clientSecret } = req.body;
 
-      if (typeof clientId !== "string" || !clientId.trim()) {
-        return res.status(400).json({ success: false, error: "Client ID is required" });
-      }
+        if (typeof clientId !== "string" || !clientId.trim()) {
+          return res.status(400).json({ success: false, error: "Client ID is required" });
+        }
 
-      let secretToTest: string;
-      if (isUnchangedSentinel(clientSecret)) {
-        const dbSecret = await storage.getSystemConfig("igdb.clientSecret");
-        secretToTest = dbSecret ?? appConfig.igdb.clientSecret ?? "";
-        if (!secretToTest) {
+        let secretToTest: string;
+        if (isUnchangedSentinel(clientSecret)) {
+          const dbSecret = await storage.getSystemConfig("igdb.clientSecret");
+          secretToTest = dbSecret ?? appConfig.igdb.clientSecret ?? "";
+          if (!secretToTest) {
+            return res.status(400).json({ success: false, error: "Client Secret is required" });
+          }
+        } else if (typeof clientSecret === "string" && clientSecret.trim()) {
+          secretToTest = clientSecret.trim();
+        } else {
           return res.status(400).json({ success: false, error: "Client Secret is required" });
         }
-      } else if (typeof clientSecret === "string" && clientSecret.trim()) {
-        secretToTest = clientSecret.trim();
-      } else {
-        return res.status(400).json({ success: false, error: "Client Secret is required" });
-      }
 
-      const trimmedClientId = clientId.trim();
-      const formatError = validateIgdbCredentialFormat(trimmedClientId, secretToTest);
-      if (formatError) {
-        return res.status(400).json({ success: false, ...formatError });
-      }
+        const trimmedClientId = clientId.trim();
+        const formatError = validateIgdbCredentialFormat(trimmedClientId, secretToTest);
+        if (formatError) {
+          return res.status(400).json({ success: false, ...formatError });
+        }
 
-      const result = await igdbClient.testCredentials(trimmedClientId, secretToTest);
-      return res.status(result.success ? 200 : 400).json(result);
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to test IGDB credentials");
-      return res.status(500).json({ success: false, error: "Failed to test IGDB credentials" });
+        const result = await igdbClient.testCredentials(trimmedClientId, secretToTest);
+        return res.status(result.success ? 200 : 400).json(result);
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to test IGDB credentials");
+        return res.status(500).json({ success: false, error: "Failed to test IGDB credentials" });
+      }
     }
-  });
+  );
 
   // RAWG is an optional, additive metadata provider. Its API key is stored
   // encrypted and is never returned to the browser.
@@ -5405,26 +5576,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/settings/rawg", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const apiKey = req.body?.apiKey;
-      if (typeof apiKey !== "string" || apiKey.trim().length > 512) {
-        return res.status(400).json({ error: "A valid RAWG API key is required" });
-      }
-      const stored = await storage.getSystemConfig("rawg.apiKey");
-      const value = apiKey.trim();
-      if (!value || isUnchangedSentinel(value)) {
-        if (!stored) return res.status(400).json({ error: "RAWG API key is required" });
+  app.post(
+    "/api/settings/rawg",
+    sensitiveEndpointLimiter,
+    validate(z.object({ apiKey: z.string().max(512) }).passthrough()),
+    async (req, res) => {
+      try {
+        const apiKey = req.body?.apiKey;
+        if (typeof apiKey !== "string" || apiKey.trim().length > 512) {
+          return res.status(400).json({ error: "A valid RAWG API key is required" });
+        }
+        const stored = await storage.getSystemConfig("rawg.apiKey");
+        const value = apiKey.trim();
+        if (!value || isUnchangedSentinel(value)) {
+          if (!stored) return res.status(400).json({ error: "RAWG API key is required" });
+          return res.json({ success: true, configured: true });
+        }
+        await storage.setSystemConfig("rawg.apiKey", await encryptCredential(value));
+        rawgClient.clearCache();
         return res.json({ success: true, configured: true });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to save RAWG settings");
+        return res.status(500).json({ error: "Failed to save RAWG settings" });
       }
-      await storage.setSystemConfig("rawg.apiKey", await encryptCredential(value));
-      rawgClient.clearCache();
-      return res.json({ success: true, configured: true });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to save RAWG settings");
-      return res.status(500).json({ error: "Failed to save RAWG settings" });
     }
-  });
+  );
 
   app.delete("/api/settings/rawg", sensitiveEndpointLimiter, async (_req, res) => {
     try {
@@ -5437,27 +5613,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/settings/rawg/test", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const submitted = req.body?.apiKey;
-      if (submitted !== undefined && typeof submitted !== "string") {
-        return res.status(400).json({ success: false, error: "API key must be a string" });
+  app.post(
+    "/api/settings/rawg/test",
+    sensitiveEndpointLimiter,
+    validate(z.object({ apiKey: z.string().optional() }).passthrough()),
+    async (req, res) => {
+      try {
+        const submitted = req.body?.apiKey;
+        if (submitted !== undefined && typeof submitted !== "string") {
+          return res.status(400).json({ success: false, error: "API key must be a string" });
+        }
+        const stored = await storage.getSystemConfig("rawg.apiKey");
+        const apiKey =
+          typeof submitted === "string" &&
+          submitted.trim() &&
+          !isUnchangedSentinel(submitted.trim())
+            ? submitted.trim()
+            : await decryptCredential(stored ?? "");
+        if (!apiKey) {
+          return res.status(400).json({ success: false, error: "RAWG API key is required" });
+        }
+        const result = await rawgClient.testCredentials(apiKey);
+        return res.status(result.success ? 200 : 400).json(result);
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to test RAWG settings");
+        return res.status(500).json({ success: false, error: "Failed to test RAWG API key" });
       }
-      const stored = await storage.getSystemConfig("rawg.apiKey");
-      const apiKey =
-        typeof submitted === "string" && submitted.trim() && !isUnchangedSentinel(submitted.trim())
-          ? submitted.trim()
-          : await decryptCredential(stored ?? "");
-      if (!apiKey) {
-        return res.status(400).json({ success: false, error: "RAWG API key is required" });
-      }
-      const result = await rawgClient.testCredentials(apiKey);
-      return res.status(result.success ? 200 : 400).json(result);
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to test RAWG settings");
-      return res.status(500).json({ success: false, error: "Failed to test RAWG API key" });
     }
-  });
+  );
 
   app.get("/api/settings/discord", sensitiveEndpointLimiter, async (_req, res) => {
     try {
@@ -5480,25 +5663,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ apiKeyConfigured: appConfig.steam.isConfigured });
   });
 
-  app.post("/api/settings/discord", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const { webhookUrl } = req.body as { webhookUrl?: string };
+  app.post(
+    "/api/settings/discord",
+    sensitiveEndpointLimiter,
+    validate(z.object({ webhookUrl: z.string().optional() }).passthrough()),
+    async (req, res) => {
+      try {
+        const { webhookUrl } = req.body as { webhookUrl?: string };
 
-      // A masked sentinel means "keep the existing webhook URL unchanged".
-      if (isUnchangedSentinel(webhookUrl)) {
+        // A masked sentinel means "keep the existing webhook URL unchanged".
+        if (isUnchangedSentinel(webhookUrl)) {
+          return res.json({ success: true });
+        }
+
+        if (webhookUrl && !isValidDiscordWebhook(webhookUrl)) {
+          return res.status(400).json({ error: "Invalid Discord webhook URL" });
+        }
+        await storage.setSystemConfig("discord.webhookUrl", webhookUrl?.trim() ?? "");
         return res.json({ success: true });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to update Discord settings");
+        return res.status(500).json({ error: "Failed to update Discord settings" });
       }
-
-      if (webhookUrl && !isValidDiscordWebhook(webhookUrl)) {
-        return res.status(400).json({ error: "Invalid Discord webhook URL" });
-      }
-      await storage.setSystemConfig("discord.webhookUrl", webhookUrl?.trim() ?? "");
-      return res.json({ success: true });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to update Discord settings");
-      return res.status(500).json({ error: "Failed to update Discord settings" });
     }
-  });
+  );
 
   // Apprise settings
   app.get("/api/settings/apprise", async (_req, res) => {
@@ -5521,88 +5709,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/settings/apprise", async (req, res) => {
-    try {
-      const { apiUrl, key, urls, username, password } = req.body as {
-        mode?: string;
-        apiUrl?: string;
-        key?: string;
-        urls?: string;
-        username?: string;
-        password?: string;
-      };
-      const mode = normalizeAppriseMode(
-        typeof req.body?.mode === "string" ? req.body.mode : undefined
-      );
+  app.post(
+    "/api/settings/apprise",
+    validate(
+      z
+        .object({
+          mode: z.enum(["api", "cli"]).optional(),
+          apiUrl: z.string().optional(),
+          key: z.string().optional(),
+          urls: z.string().optional(),
+          username: z.string().optional(),
+          password: z.string().optional(),
+        })
+        .passthrough()
+    ),
+    async (req, res) => {
+      try {
+        const { apiUrl, key, urls, username, password } = req.body as {
+          mode?: string;
+          apiUrl?: string;
+          key?: string;
+          urls?: string;
+          username?: string;
+          password?: string;
+        };
+        const mode = normalizeAppriseMode(
+          typeof req.body?.mode === "string" ? req.body.mode : undefined
+        );
 
-      if (
-        typeof req.body?.mode === "string" &&
-        req.body.mode !== "api" &&
-        req.body.mode !== "cli"
-      ) {
-        return res.status(400).json({ error: "Invalid Apprise mode" });
-      }
-
-      if (
-        (apiUrl !== undefined && typeof apiUrl !== "string") ||
-        (key !== undefined && typeof key !== "string") ||
-        (urls !== undefined && typeof urls !== "string") ||
-        (username !== undefined && typeof username !== "string") ||
-        (password !== undefined && typeof password !== "string")
-      ) {
-        return res.status(400).json({ error: "Invalid request payload types" });
-      }
-
-      // HTTP Basic Auth splits on the first colon, and apprise-api rejects one in APPRISE_USER.
-      if (username?.includes(":")) {
-        return res.status(400).json({ error: "Username cannot contain a colon" });
-      }
-
-      if (mode === "api") {
-        if (!apiUrl || apiUrl.trim().length === 0) {
-          return res.status(400).json({ error: "API URL is required in API mode" });
+        if (
+          typeof req.body?.mode === "string" &&
+          req.body.mode !== "api" &&
+          req.body.mode !== "cli"
+        ) {
+          return res.status(400).json({ error: "Invalid Apprise mode" });
         }
-        if (!key?.trim() && !urls?.trim()) {
-          return res.status(400).json({ error: "Provide a config key or notification URLs" });
-        }
-      } else if (!urls || urls.trim().length === 0) {
-        return res.status(400).json({ error: "Notification URLs are required in CLI mode" });
-      }
 
-      if (apiUrl?.trim()) {
-        try {
-          const parsed = new URL(apiUrl.trim());
-          if (!["http:", "https:"].includes(parsed.protocol)) {
-            return res.status(400).json({ error: "API URL must use http:// or https://" });
+        if (
+          (apiUrl !== undefined && typeof apiUrl !== "string") ||
+          (key !== undefined && typeof key !== "string") ||
+          (urls !== undefined && typeof urls !== "string") ||
+          (username !== undefined && typeof username !== "string") ||
+          (password !== undefined && typeof password !== "string")
+        ) {
+          return res.status(400).json({ error: "Invalid request payload types" });
+        }
+
+        // HTTP Basic Auth splits on the first colon, and apprise-api rejects one in APPRISE_USER.
+        if (username?.includes(":")) {
+          return res.status(400).json({ error: "Username cannot contain a colon" });
+        }
+
+        if (mode === "api") {
+          if (!apiUrl || apiUrl.trim().length === 0) {
+            return res.status(400).json({ error: "API URL is required in API mode" });
           }
-        } catch {
-          return res.status(400).json({ error: "API URL is not a valid URL" });
+          if (!key?.trim() && !urls?.trim()) {
+            return res.status(400).json({ error: "Provide a config key or notification URLs" });
+          }
+        } else if (!urls || urls.trim().length === 0) {
+          return res.status(400).json({ error: "Notification URLs are required in CLI mode" });
         }
-      }
-      await storage.setSystemConfig("apprise.mode", mode);
-      if (apiUrl !== undefined) {
-        await storage.setSystemConfig("apprise.apiUrl", apiUrl.trim());
-      }
-      if (key !== undefined) {
-        await storage.setSystemConfig("apprise.key", key.trim());
-      }
-      if (urls !== undefined) {
-        await storage.setSystemConfig("apprise.urls", urls.trim());
-      }
-      if (username !== undefined) {
-        await storage.setSystemConfig("apprise.username", username.trim());
-      }
-      if (password !== undefined && !isUnchangedSentinel(password)) {
-        await storage.setSystemConfig("apprise.password", await encryptCredential(password));
-      }
 
-      appriseClient.configure(await readAppriseSettings(storage));
-      return res.json({ success: true });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to update Apprise settings");
-      return res.status(500).json({ error: "Failed to update Apprise settings" });
+        if (apiUrl?.trim()) {
+          try {
+            const parsed = new URL(apiUrl.trim());
+            if (!["http:", "https:"].includes(parsed.protocol)) {
+              return res.status(400).json({ error: "API URL must use http:// or https://" });
+            }
+          } catch {
+            return res.status(400).json({ error: "API URL is not a valid URL" });
+          }
+        }
+        await storage.setSystemConfig("apprise.mode", mode);
+        if (apiUrl !== undefined) {
+          await storage.setSystemConfig("apprise.apiUrl", apiUrl.trim());
+        }
+        if (key !== undefined) {
+          await storage.setSystemConfig("apprise.key", key.trim());
+        }
+        if (urls !== undefined) {
+          await storage.setSystemConfig("apprise.urls", urls.trim());
+        }
+        if (username !== undefined) {
+          await storage.setSystemConfig("apprise.username", username.trim());
+        }
+        if (password !== undefined && !isUnchangedSentinel(password)) {
+          await storage.setSystemConfig("apprise.password", await encryptCredential(password));
+        }
+
+        appriseClient.configure(await readAppriseSettings(storage));
+        return res.json({ success: true });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to update Apprise settings");
+        return res.status(500).json({ error: "Failed to update Apprise settings" });
+      }
     }
-  });
+  );
 
   app.post("/api/settings/apprise/test", async (_req, res) => {
     try {
@@ -5644,76 +5847,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/settings/security-scan", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const body = req.body as {
-        virusTotal?: {
-          enabled?: boolean;
-          apiKey?: string;
-          threshold?: number;
-          blockUnknownHashes?: boolean;
+  app.post(
+    "/api/settings/security-scan",
+    sensitiveEndpointLimiter,
+    validate(
+      z
+        .object({
+          virusTotal: z
+            .object({
+              enabled: z.boolean().optional(),
+              apiKey: z.string().optional(),
+              threshold: z.number().optional(),
+              blockUnknownHashes: z.boolean().optional(),
+            })
+            .passthrough()
+            .optional(),
+          clamav: z
+            .object({
+              enabled: z.boolean().optional(),
+              host: z.string().optional(),
+              port: z.number().optional(),
+            })
+            .passthrough()
+            .optional(),
+        })
+        .passthrough()
+    ),
+    async (req, res) => {
+      try {
+        const body = req.body as {
+          virusTotal?: {
+            enabled?: boolean;
+            apiKey?: string;
+            threshold?: number;
+            blockUnknownHashes?: boolean;
+          };
+          clamav?: { enabled?: boolean; host?: string; port?: number };
         };
-        clamav?: { enabled?: boolean; host?: string; port?: number };
-      };
 
-      const vtError = await applyVirusTotalSettingsUpdate(body.virusTotal, storage);
-      if (vtError) {
-        return res.status(400).json({ error: vtError });
-      }
-
-      const clamAvError = await applyClamAvSettingsUpdate(body.clamav, storage);
-      if (clamAvError) {
-        return res.status(400).json({ error: clamAvError });
-      }
-
-      return res.json({ success: true });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to update security scan settings");
-      return res.status(500).json({ error: "Failed to update security scan settings" });
-    }
-  });
-
-  app.post("/api/settings/security-scan/test", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const { provider } = req.body as { provider?: string };
-
-      if (provider === "virustotal") {
-        const vt = await readVirusTotalSettings(storage);
-        if (!vt.apiKey) {
-          return res.status(400).json({ error: "No VirusTotal API key configured" });
+        const vtError = await applyVirusTotalSettingsUpdate(body.virusTotal, storage);
+        if (vtError) {
+          return res.status(400).json({ error: vtError });
         }
-        // Looks up a fixed, publicly known hash rather than an account-info
-        // endpoint keyed by the API key itself — that would put the secret in
-        // the URL path, where it can end up in proxy or access logs.
-        const verdict = await checkVirusTotalHash(EICAR_TEST_FILE_SHA256, vt.apiKey);
-        if (verdict.status === "error") {
-          return res.status(502).json({ error: verdict.error });
+
+        const clamAvError = await applyClamAvSettingsUpdate(body.clamav, storage);
+        if (clamAvError) {
+          return res.status(400).json({ error: clamAvError });
         }
+
         return res.json({ success: true });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to update security scan settings");
+        return res.status(500).json({ error: "Failed to update security scan settings" });
       }
-
-      if (provider === "clamav") {
-        const clamav = await readClamAvSettings(storage);
-        if (!clamav.host) {
-          return res.status(400).json({ error: "No ClamAV host configured" });
-        }
-        try {
-          const { address } = await resolveSafeAddress(normalizeHostname(clamav.host), true);
-          const result = await testClamAvConnectivity(address, clamav.port);
-          if (result.success) return res.json({ success: true });
-          return res.status(502).json({ error: result.error ?? "ClamAV test failed" });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          return res.status(502).json({ error: message });
-        }
-      }
-
-      return res.status(400).json({ error: "Unknown provider" });
-    } catch (error) {
-      routesLogger.error({ error }, "Security scan provider test failed");
-      return res.status(500).json({ error: "Security scan provider test failed" });
     }
-  });
+  );
+
+  app.post(
+    "/api/settings/security-scan/test",
+    sensitiveEndpointLimiter,
+    validate(z.object({ provider: z.enum(["virustotal", "clamav"]).optional() }).passthrough()),
+    async (req, res) => {
+      try {
+        const { provider } = req.body as { provider?: string };
+
+        if (provider === "virustotal") {
+          const vt = await readVirusTotalSettings(storage);
+          if (!vt.apiKey) {
+            return res.status(400).json({ error: "No VirusTotal API key configured" });
+          }
+          // Looks up a fixed, publicly known hash rather than an account-info
+          // endpoint keyed by the API key itself — that would put the secret in
+          // the URL path, where it can end up in proxy or access logs.
+          const verdict = await checkVirusTotalHash(EICAR_TEST_FILE_SHA256, vt.apiKey);
+          if (verdict.status === "error") {
+            return res.status(502).json({ error: verdict.error });
+          }
+          return res.json({ success: true });
+        }
+
+        if (provider === "clamav") {
+          const clamav = await readClamAvSettings(storage);
+          if (!clamav.host) {
+            return res.status(400).json({ error: "No ClamAV host configured" });
+          }
+          try {
+            const { address } = await resolveSafeAddress(normalizeHostname(clamav.host), true);
+            const result = await testClamAvConnectivity(address, clamav.port);
+            if (result.success) return res.json({ success: true });
+            return res.status(502).json({ error: result.error ?? "ClamAV test failed" });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return res.status(502).json({ error: message });
+          }
+        }
+
+        return res.status(400).json({ error: "Unknown provider" });
+      } catch (error) {
+        routesLogger.error({ error }, "Security scan provider test failed");
+        return res.status(500).json({ error: "Security scan provider test failed" });
+      }
+    }
+  );
 
   // User Settings routes
   app.get("/api/settings", async (req, res) => {
@@ -5733,7 +5968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/settings", async (req, res, next) => {
+  app.patch("/api/settings", validate(updateUserSettingsSchema), async (req, res, next) => {
     try {
       const userId = req.user!.id;
 
@@ -5764,81 +5999,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // xREL.to settings (API base URL in system config; scene/p2p in user settings)
-  app.patch("/api/settings/xrel", async (req, res, next) => {
-    try {
-      const userId = req.user!.id;
-      const body = req.body as {
-        apiBase?: string;
-        xrelSceneReleases?: boolean;
-        xrelP2pReleases?: boolean;
-      };
+  app.patch(
+    "/api/settings/xrel",
+    validate(
+      z
+        .object({
+          apiBase: z.string().optional(),
+          xrelSceneReleases: z.boolean().optional(),
+          xrelP2pReleases: z.boolean().optional(),
+        })
+        .passthrough()
+    ),
+    async (req, res, next) => {
+      try {
+        const userId = req.user!.id;
+        const body = req.body as {
+          apiBase?: string;
+          xrelSceneReleases?: boolean;
+          xrelP2pReleases?: boolean;
+        };
 
-      if (typeof body.apiBase !== "undefined") {
-        const v = typeof body.apiBase === "string" ? body.apiBase.trim() : "";
-        if (v !== "") {
-          if (!/^https?:\/\/[^\s]+$/i.test(v)) {
-            return res.status(400).json({
-              error: "Invalid API base URL",
-              message: "Must be a valid URL (e.g. https://xrel-api.nfos.to or https://api.xrel.to)",
-            });
-          }
-
-          if (!(await isSafeUrl(v))) {
-            return res.status(400).json({
-              error: "Unsafe API base URL",
-              message: "The provided URL is not allowed for security reasons.",
-            });
-          }
-
-          try {
-            const url = new URL(v);
-            if (!ALLOWED_XREL_DOMAINS.includes(url.hostname)) {
+        if (typeof body.apiBase !== "undefined") {
+          const v = typeof body.apiBase === "string" ? body.apiBase.trim() : "";
+          if (v !== "") {
+            if (!/^https?:\/\/[^\s]+$/i.test(v)) {
               return res.status(400).json({
-                error: "Unauthorized xREL API domain",
-                message: `The provided domain is not in the allowed list: ${ALLOWED_XREL_DOMAINS.join(", ")}`,
+                error: "Invalid API base URL",
+                message:
+                  "Must be a valid URL (e.g. https://xrel-api.nfos.to or https://api.xrel.to)",
               });
             }
-          } catch {
-            return res.status(400).json({
-              error: "Invalid API base URL",
-              message: "The provided string is not a valid URL.",
-            });
-          }
-        }
-        await storage.setSystemConfig("xrel_api_base", v);
-      }
 
-      if (
-        typeof body.xrelSceneReleases === "boolean" ||
-        typeof body.xrelP2pReleases === "boolean"
-      ) {
-        const updates: Record<string, boolean> = {};
-        if (typeof body.xrelSceneReleases === "boolean")
-          updates.xrelSceneReleases = body.xrelSceneReleases;
-        if (typeof body.xrelP2pReleases === "boolean")
-          updates.xrelP2pReleases = body.xrelP2pReleases;
-        await storage.updateUserSettings(userId, updates);
-      }
-
-      const apiBase =
-        (await storage.getSystemConfig("xrel_api_base"))?.trim() ||
-        process.env.XREL_API_BASE ||
-        DEFAULT_XREL_BASE;
-      const settings = await storage.getUserSettings(userId);
-      return res.json({
-        success: true,
-        xrel: { apiBase },
-        settings: settings
-          ? {
-              xrelSceneReleases: settings.xrelSceneReleases,
-              xrelP2pReleases: settings.xrelP2pReleases,
+            if (!(await isSafeUrl(v))) {
+              return res.status(400).json({
+                error: "Unsafe API base URL",
+                message: "The provided URL is not allowed for security reasons.",
+              });
             }
-          : undefined,
-      });
-    } catch (error) {
-      return next(error);
+
+            try {
+              const url = new URL(v);
+              if (!ALLOWED_XREL_DOMAINS.includes(url.hostname)) {
+                return res.status(400).json({
+                  error: "Unauthorized xREL API domain",
+                  message: `The provided domain is not in the allowed list: ${ALLOWED_XREL_DOMAINS.join(", ")}`,
+                });
+              }
+            } catch {
+              return res.status(400).json({
+                error: "Invalid API base URL",
+                message: "The provided string is not a valid URL.",
+              });
+            }
+          }
+          await storage.setSystemConfig("xrel_api_base", v);
+        }
+
+        if (
+          typeof body.xrelSceneReleases === "boolean" ||
+          typeof body.xrelP2pReleases === "boolean"
+        ) {
+          const updates: Record<string, boolean> = {};
+          if (typeof body.xrelSceneReleases === "boolean")
+            updates.xrelSceneReleases = body.xrelSceneReleases;
+          if (typeof body.xrelP2pReleases === "boolean")
+            updates.xrelP2pReleases = body.xrelP2pReleases;
+          await storage.updateUserSettings(userId, updates);
+        }
+
+        const apiBase =
+          (await storage.getSystemConfig("xrel_api_base"))?.trim() ||
+          process.env.XREL_API_BASE ||
+          DEFAULT_XREL_BASE;
+        const settings = await storage.getUserSettings(userId);
+        return res.json({
+          success: true,
+          xrel: { apiBase },
+          settings: settings
+            ? {
+                xrelSceneReleases: settings.xrelSceneReleases,
+                xrelP2pReleases: settings.xrelP2pReleases,
+              }
+            : undefined,
+        });
+      } catch (error) {
+        return next(error);
+      }
     }
-  });
+  );
 
   // xREL.to API proxy (rate-limited on xREL side; base URL from app settings)
   app.get("/api/xrel/latest", async (req, res, next) => {
@@ -6087,7 +6335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/rss/feeds", async (req, res) => {
+  app.post("/api/rss/feeds", validate(insertRssFeedSchema), async (req, res) => {
     try {
       const feedData = insertRssFeedSchema.parse(req.body);
 
@@ -6121,7 +6369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/rss/feeds/:id", async (req, res) => {
+  app.put("/api/rss/feeds/:id", validate(insertRssFeedSchema.partial()), async (req, res) => {
     try {
       const updates = insertRssFeedSchema.partial().parse(req.body);
 
@@ -6129,7 +6377,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid or unsafe URL" });
       }
 
-      const feed = await storage.updateRssFeed(req.params.id, stripUndefined(updates));
+      const feedId = typeof req.params.id === "string" ? req.params.id : "";
+      const feed = await storage.updateRssFeed(feedId, stripUndefined(updates));
       if (!feed) {
         return res.status(404).json({ error: "Feed not found" });
       }
@@ -6174,60 +6423,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/stats/discord-share", async (req, res) => {
-    try {
-      const webhookUrl = await storage.getSystemConfig("discord.webhookUrl");
-      if (!webhookUrl) {
-        return res.status(400).json({
-          error: "Discord webhook not configured. Go to Settings → Services to set it up.",
+  app.post(
+    "/api/stats/discord-share",
+    validate(
+      z.object({ image: z.string().optional(), message: z.string().optional() }).passthrough()
+    ),
+    async (req, res) => {
+      try {
+        const webhookUrl = await storage.getSystemConfig("discord.webhookUrl");
+        if (!webhookUrl) {
+          return res.status(400).json({
+            error: "Discord webhook not configured. Go to Settings → Services to set it up.",
+          });
+        }
+
+        if (!isValidDiscordWebhook(webhookUrl)) {
+          routesLogger.error(
+            { webhookUrl },
+            "Attempted to use an invalid Discord webhook URL for sharing."
+          );
+          return res.status(400).json({ error: "Invalid Discord webhook URL configured." });
+        }
+
+        const { image, message } = req.body as { image?: string; message?: string };
+        if (!image) return res.status(400).json({ error: "No image data provided" });
+
+        if (!/^data:image\/(png|jpeg|gif|webp);base64,/.test(image)) {
+          return res
+            .status(400)
+            .json({ error: "Invalid image format. Only PNG, JPEG, GIF, and WebP are supported." });
+        }
+
+        const base64Data = image.split(",")[1];
+        if (!base64Data) return res.status(400).json({ error: "Invalid image data" });
+
+        const imageBuffer = Buffer.from(base64Data, "base64");
+        const formData = new FormData();
+        if (message) formData.append("content", message);
+        formData.append(
+          "file",
+          new Blob([imageBuffer], { type: "image/png" }),
+          "questarr-stats.png"
+        );
+
+        const discordRes = await safeFetch(webhookUrl, {
+          method: "POST",
+          body: formData,
+          allowPrivate: false,
         });
+        if (!discordRes.ok) {
+          const errorText = await discordRes.text().catch(() => "Unknown Discord error");
+          routesLogger.error(
+            { status: discordRes.status, error: errorText },
+            "Discord webhook request failed"
+          );
+          return res.status(502).json({ error: "Failed to post to Discord" });
+        }
+
+        return res.json({ success: true });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to share stats to Discord");
+        return res.status(500).json({ error: "Failed to share stats to Discord" });
       }
-
-      if (!isValidDiscordWebhook(webhookUrl)) {
-        routesLogger.error(
-          { webhookUrl },
-          "Attempted to use an invalid Discord webhook URL for sharing."
-        );
-        return res.status(400).json({ error: "Invalid Discord webhook URL configured." });
-      }
-
-      const { image, message } = req.body as { image?: string; message?: string };
-      if (!image) return res.status(400).json({ error: "No image data provided" });
-
-      if (!/^data:image\/(png|jpeg|gif|webp);base64,/.test(image)) {
-        return res
-          .status(400)
-          .json({ error: "Invalid image format. Only PNG, JPEG, GIF, and WebP are supported." });
-      }
-
-      const base64Data = image.split(",")[1];
-      if (!base64Data) return res.status(400).json({ error: "Invalid image data" });
-
-      const imageBuffer = Buffer.from(base64Data, "base64");
-      const formData = new FormData();
-      if (message) formData.append("content", message);
-      formData.append("file", new Blob([imageBuffer], { type: "image/png" }), "questarr-stats.png");
-
-      const discordRes = await safeFetch(webhookUrl, {
-        method: "POST",
-        body: formData,
-        allowPrivate: false,
-      });
-      if (!discordRes.ok) {
-        const errorText = await discordRes.text().catch(() => "Unknown Discord error");
-        routesLogger.error(
-          { status: discordRes.status, error: errorText },
-          "Discord webhook request failed"
-        );
-        return res.status(502).json({ error: "Failed to post to Discord" });
-      }
-
-      return res.json({ success: true });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to share stats to Discord");
-      return res.status(500).json({ error: "Failed to share stats to Discord" });
     }
-  });
+  );
 
   // ── NexusMods settings ───────────────────────────────────────────────────────
 
@@ -6248,21 +6507,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/settings/nexusmods", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const { apiKey } = req.body as { apiKey?: string };
-      if (!apiKey || apiKey.trim().length === 0) {
-        return res.status(400).json({ error: "API key is required" });
+  app.post(
+    "/api/settings/nexusmods",
+    sensitiveEndpointLimiter,
+    validate(z.object({ apiKey: z.string().min(1) }).passthrough()),
+    async (req, res) => {
+      try {
+        const { apiKey } = req.body as { apiKey?: string };
+        if (!apiKey || apiKey.trim().length === 0) {
+          return res.status(400).json({ error: "API key is required" });
+        }
+        await storage.setSystemConfig("nexusmods.apiKey", apiKey.trim());
+        nexusmodsClient.configure(apiKey.trim());
+        routesLogger.info("NexusMods API key updated via settings");
+        return res.json({ success: true });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to update NexusMods settings");
+        return res.status(500).json({ error: "Failed to update NexusMods settings" });
       }
-      await storage.setSystemConfig("nexusmods.apiKey", apiKey.trim());
-      nexusmodsClient.configure(apiKey.trim());
-      routesLogger.info("NexusMods API key updated via settings");
-      return res.json({ success: true });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to update NexusMods settings");
-      return res.status(500).json({ error: "Failed to update NexusMods settings" });
     }
-  });
+  );
 
   // ── TypeSafe (Jev) AI settings ────────────────────────────────────────────────
 
@@ -6285,70 +6549,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/settings/typesafe", sensitiveEndpointLimiter, async (req, res) => {
-    try {
-      const { apiUrl, apiKey, model } = req.body as {
-        apiUrl?: unknown;
-        apiKey?: unknown;
-        model?: unknown;
-      };
-      // apiKey is optional on an update: omitting it (e.g. to change only the URL or model)
-      // reuses the already-stored encrypted key rather than forcing it to be re-entered.
-      if (apiKey !== undefined && typeof apiKey !== "string") {
-        return res.status(400).json({ error: "Invalid API key" });
-      }
-      if (apiUrl !== undefined && typeof apiUrl !== "string") {
-        return res.status(400).json({ error: "Invalid API URL" });
-      }
-      if (model !== undefined && typeof model !== "string") {
-        return res.status(400).json({ error: "Invalid model" });
-      }
-
-      const trimmedUrl = apiUrl?.trim() ?? "";
-      if (trimmedUrl) {
-        // TypeSafeClient always calls safeFetch with requireHttps -- reject anything that
-        // would fail that check at save time rather than let every analysis call fail later.
-        let parsed: URL;
-        try {
-          parsed = new URL(trimmedUrl);
-        } catch {
-          return res.status(400).json({ error: "Invalid or unsafe URL" });
+  app.post(
+    "/api/settings/typesafe",
+    sensitiveEndpointLimiter,
+    validate(
+      z
+        .object({
+          apiUrl: z.string().optional(),
+          apiKey: z.string().optional(),
+          model: z.string().optional(),
+        })
+        .passthrough()
+    ),
+    async (req, res) => {
+      try {
+        const { apiUrl, apiKey, model } = req.body as {
+          apiUrl?: unknown;
+          apiKey?: unknown;
+          model?: unknown;
+        };
+        // apiKey is optional on an update: omitting it (e.g. to change only the URL or model)
+        // reuses the already-stored encrypted key rather than forcing it to be re-entered.
+        if (apiKey !== undefined && typeof apiKey !== "string") {
+          return res.status(400).json({ error: "Invalid API key" });
         }
-        if (parsed.protocol !== "https:" || !(await isSafeUrl(trimmedUrl))) {
-          return res.status(400).json({ error: "API URL must be a safe HTTPS URL" });
+        if (apiUrl !== undefined && typeof apiUrl !== "string") {
+          return res.status(400).json({ error: "Invalid API URL" });
         }
-      }
+        if (model !== undefined && typeof model !== "string") {
+          return res.status(400).json({ error: "Invalid model" });
+        }
 
-      const resolvedKey = await resolveTypesafeApiKey(apiKey?.trim() ?? "");
-      if (!resolvedKey) {
-        return res.status(400).json({ error: "API key is required" });
-      }
+        const trimmedUrl = apiUrl?.trim() ?? "";
+        if (trimmedUrl) {
+          // TypeSafeClient always calls safeFetch with requireHttps -- reject anything that
+          // would fail that check at save time rather than let every analysis call fail later.
+          let parsed: URL;
+          try {
+            parsed = new URL(trimmedUrl);
+          } catch {
+            return res.status(400).json({ error: "Invalid or unsafe URL" });
+          }
+          if (parsed.protocol !== "https:" || !(await isSafeUrl(trimmedUrl))) {
+            return res.status(400).json({ error: "API URL must be a safe HTTPS URL" });
+          }
+        }
 
-      const trimmedModel = model?.trim() ?? "";
-      await storage.setSystemConfigBatch([
-        { key: TYPESAFE_URL_CONFIG_KEY, value: trimmedUrl },
-        { key: TYPESAFE_KEY_CONFIG_KEY, value: resolvedKey.encryptedKey },
-        { key: TYPESAFE_MODEL_CONFIG_KEY, value: trimmedModel },
-      ]);
-      if (resolvedKey.trimmedNewKey) {
-        typesafeClient.configure(
-          trimmedUrl || null,
-          resolvedKey.trimmedNewKey,
-          trimmedModel || null
-        );
-      } else {
-        // Reusing the stored key -- invalidate the in-memory cache so the next call reloads
-        // and decrypts it (and picks up the new URL/model) from storage instead of retaining
-        // stale values from before this save.
-        typesafeClient.invalidate();
+        const resolvedKey = await resolveTypesafeApiKey(apiKey?.trim() ?? "");
+        if (!resolvedKey) {
+          return res.status(400).json({ error: "API key is required" });
+        }
+
+        const trimmedModel = model?.trim() ?? "";
+        await storage.setSystemConfigBatch([
+          { key: TYPESAFE_URL_CONFIG_KEY, value: trimmedUrl },
+          { key: TYPESAFE_KEY_CONFIG_KEY, value: resolvedKey.encryptedKey },
+          { key: TYPESAFE_MODEL_CONFIG_KEY, value: trimmedModel },
+        ]);
+        if (resolvedKey.trimmedNewKey) {
+          typesafeClient.configure(
+            trimmedUrl || null,
+            resolvedKey.trimmedNewKey,
+            trimmedModel || null
+          );
+        } else {
+          // Reusing the stored key -- invalidate the in-memory cache so the next call reloads
+          // and decrypts it (and picks up the new URL/model) from storage instead of retaining
+          // stale values from before this save.
+          typesafeClient.invalidate();
+        }
+        routesLogger.info("TypeSafe API settings updated");
+        return res.json({ success: true });
+      } catch (error) {
+        routesLogger.error({ error }, "Failed to update TypeSafe settings");
+        return res.status(500).json({ error: "Failed to update TypeSafe settings" });
       }
-      routesLogger.info("TypeSafe API settings updated");
-      return res.json({ success: true });
-    } catch (error) {
-      routesLogger.error({ error }, "Failed to update TypeSafe settings");
-      return res.status(500).json({ error: "Failed to update TypeSafe settings" });
     }
-  });
+  );
 
   app.delete("/api/settings/typesafe", sensitiveEndpointLimiter, async (_req, res) => {
     try {

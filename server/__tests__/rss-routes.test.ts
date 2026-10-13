@@ -71,6 +71,7 @@ vi.mock("../middleware.js", () => ({
   scanRateLimiter: (req: any, res: any, next: any) => next(),
   integrationRateLimiter: (req: any, res: any, next: any) => next(),
   validateRequest: (req: any, res: any, next: any) => next(),
+  validate: () => (req: any, res: any, next: any) => next(),
   sanitizeSearchQuery: [],
   sanitizeGameId: [],
   sanitizeIgdbId: [],

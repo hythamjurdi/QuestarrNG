@@ -18,27 +18,27 @@ behavior when implementing upstream requests.
 
 ## Current ledger snapshot
 
-The ledger records a source snapshot captured on **October 13, 2026 at
-05:20:58 UTC**. Review status is independent of GitHub's open, closed, or merged
-state:
+The saved source exports were collected on **October 13, 2026 at 05:20:58
+UTC**. The ledger and inventory were regenerated from those exports at
+**10:34:42 UTC**; this update did not refresh upstream sources. Review status
+is independent of GitHub's open, closed, or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       444 |
+| `verified`               |       445 |
 | `superseded`             |        78 |
 | `not-applicable`         |         9 |
 | `implemented-unverified` |         1 |
-| `needs-implementation`   |         1 |
+| `needs-implementation`   |         0 |
 | `unreviewed`             |       614 |
 | **Total**                | **1,147** |
 
-That snapshot gives 531 items a completed evidence-backed disposition. One
-implemented item still needs verification, one actionable item still needs
+The ledger now gives 532 items a completed evidence-backed disposition. One
+implemented item still needs verification, no currently identified item needs
 implementation, and 614 have not been reviewed. These numbers describe the
-ledger, not completion of the campaign. Batch 49 is the latest completed
+ledger, not completion of the campaign. Batch 50 is the latest completed
 implementation batch; its results are in
-[validation evidence](evidence/validation-batch-49.txt), and its commit is
-`bc16a5be` on `codex/upstream-resolution`.
+[validation evidence](evidence/validation-batch-50.txt).
 
 ## Project records
 
@@ -1313,3 +1313,27 @@ scanning, release-note validation, and diff checks are recorded in
 **420 verified**, **71 superseded**, **646 unreviewed**, **8 not-applicable**,
 **1 implemented-unverified**, and 1 needs-implementation record. Issue #37
 remains outstanding.
+
+## Batch 50 — October 13, 2026
+
+Issue [#37](https://github.com/Doezer/Questarr/issues/37) asked for shared Zod
+validation across mutation routes. The server now uses a reusable `validate`
+middleware to parse request bodies, apply normalized parsed data before route
+handlers, and return a consistent 400 response with structured validation
+details. Submitted values are excluded from error responses and logs. Body
+validation now covers the mutation routes for authentication and settings,
+games and libraries, downloads, imports, integrations, API keys, Steam, game
+journals, and RSS. Query and parameter validation remains on its existing
+path.
+
+An AST contract test checks every body-consuming POST, PATCH, and PUT route in
+the six route modules for Zod validation middleware. Focused invalid/happy-path
+tests and the full regression suite pass. The full Vitest run passed 4,140
+tests across 256 files (7 skipped); typecheck, lint, formatting, production
+build, and all 49 Playwright E2E tests passed. The build retains Vite's existing
+large-chunk advisory. See [batch 50 validation](evidence/validation-batch-50.txt).
+
+Issue #37 is now verified in the ledger. The review status totals are 445
+verified, 78 superseded, 9 not-applicable, 1 implemented-unverified, 0
+needs-implementation, and 614 unreviewed. The campaign still has substantial
+historical review work remaining.

@@ -8,6 +8,7 @@ import {
 import { ArchivePasswordRequiredError } from "../services/ArchiveService.js";
 import { routesLogger as logger } from "../logger.js";
 import { rescanAllEnabledRootFolders } from "../library-scanner.js";
+import { validate } from "../middleware.js";
 
 import z from "zod";
 import {
@@ -76,6 +77,23 @@ const rommConfigPatchSchema = z.preprocess((value: unknown) => {
   delete normalized.multiFilePlacement;
   return normalized;
 }, rommConfigSchema.partial().strict());
+
+const linkGameDownloadBodySchema = z.object({ gameId: z.string().min(1) }).strict();
+
+const confirmImportBodySchema = z
+  .object({
+    strategy: z.enum(["pc", "romm"] as const),
+    proposedPath: z.string(),
+    originalPath: z.string().optional(),
+    transferMode: z.enum(IMPORT_TRANSFER_MODES).optional(),
+    unpack: z.boolean().optional(),
+    password: z
+      .string()
+      .max(1024)
+      .refine((value) => !value.includes("\0"), "Password must not contain null characters")
+      .optional(),
+  })
+  .strict();
 
 function isPathInside(root: string, candidate: string): boolean {
   const resolvedRoot = path.resolve(root);
@@ -228,34 +246,45 @@ importRouter.get("/mappings/platforms", async (_req, res) => {
   }
 });
 
-importRouter.post("/mappings/platforms", async (req, res) => {
-  try {
-    const mapping = insertPlatformMappingSchema.parse(req.body);
-    const created = await storage.addPlatformMapping(mapping);
-    return res.json(created);
-  } catch (error) {
-    if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
-    return res.status(500).json({ error: "Failed to create platform mapping" });
-  }
-});
-
-importRouter.patch("/mappings/platforms/:id", async (req, res) => {
-  try {
-    const parsedUpdates = platformMappingPatchSchema.parse(req.body);
-    const updates = Object.fromEntries(
-      Object.entries(parsedUpdates).filter(([, value]) => value !== undefined)
-    ) as Partial<InsertPlatformMapping>;
-    const updated = await platformMappingService.updateMapping(req.params.id, updates);
-    if (updated) {
-      return res.json(updated);
-    } else {
-      return res.status(404).json({ error: "Mapping not found" });
+importRouter.post(
+  "/mappings/platforms",
+  validate(insertPlatformMappingSchema),
+  async (req, res) => {
+    try {
+      const mapping = insertPlatformMappingSchema.parse(req.body);
+      const created = await storage.addPlatformMapping(mapping);
+      return res.json(created);
+    } catch (error) {
+      if (error instanceof z.ZodError)
+        return res.status(400).json({ error: zodErrorMessage(error) });
+      return res.status(500).json({ error: "Failed to create platform mapping" });
     }
-  } catch (error) {
-    if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
-    return res.status(500).json({ error: "Failed to update platform mapping" });
   }
-});
+);
+
+importRouter.patch(
+  "/mappings/platforms/:id",
+  validate(platformMappingPatchSchema),
+  async (req, res) => {
+    try {
+      const id = typeof req.params.id === "string" ? req.params.id : "";
+      const parsedUpdates = platformMappingPatchSchema.parse(req.body);
+      const updates = Object.fromEntries(
+        Object.entries(parsedUpdates).filter(([, value]) => value !== undefined)
+      ) as Partial<InsertPlatformMapping>;
+      const updated = await platformMappingService.updateMapping(id, updates);
+      if (updated) {
+        return res.json(updated);
+      } else {
+        return res.status(404).json({ error: "Mapping not found" });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError)
+        return res.status(400).json({ error: zodErrorMessage(error) });
+      return res.status(500).json({ error: "Failed to update platform mapping" });
+    }
+  }
+);
 
 importRouter.delete("/mappings/platforms/:id", async (req, res) => {
   try {
@@ -290,7 +319,7 @@ importRouter.get("/mappings/paths", async (_req, res) => {
   }
 });
 
-importRouter.post("/mappings/paths", async (req, res) => {
+importRouter.post("/mappings/paths", validate(insertPathMappingSchema), async (req, res) => {
   try {
     const mapping = insertPathMappingSchema.parse(req.body);
     const created = await storage.addPathMapping(mapping);
@@ -301,10 +330,11 @@ importRouter.post("/mappings/paths", async (req, res) => {
   }
 });
 
-importRouter.patch("/mappings/paths/:id", async (req, res) => {
+importRouter.patch("/mappings/paths/:id", validate(updatePathMappingSchema), async (req, res) => {
   try {
+    const id = typeof req.params.id === "string" ? req.params.id : "";
     const updates = updatePathMappingSchema.parse(req.body);
-    const updated = await storage.updatePathMapping(req.params.id, updates);
+    const updated = await storage.updatePathMapping(id, updates);
     if (updated) {
       return res.json(updated);
     } else {
@@ -341,7 +371,7 @@ importRouter.get("/config", async (_req, res) => {
   }
 });
 
-importRouter.patch("/config", async (req, res) => {
+importRouter.patch("/config", validate(importConfigPatchSchema), async (req, res) => {
   try {
     const userId = res.locals.userId as string;
 
@@ -395,7 +425,7 @@ importRouter.get("/romm", async (_req, res) => {
   }
 });
 
-importRouter.patch("/romm", async (req, res) => {
+importRouter.patch("/romm", validate(rommConfigPatchSchema), async (req, res) => {
   try {
     const userId = res.locals.userId as string;
     const patch = rommConfigPatchSchema.parse(req.body);
@@ -588,11 +618,10 @@ importRouter.delete("/:id", async (req, res) => {
 // Links a "game_link_required" download to the given game, then drops it back
 // into the normal manual_review_required path-review flow (GET /:id/plan,
 // POST /:id/confirm) so the rest of the import pipeline is reused unchanged.
-importRouter.post("/:id/link", async (req, res) => {
-  const { id } = req.params;
+importRouter.post("/:id/link", validate(linkGameDownloadBodySchema), async (req, res) => {
+  const id = typeof req.params.id === "string" ? req.params.id : "";
   try {
-    const schema = z.object({ gameId: z.string().min(1) });
-    const { gameId } = schema.parse(req.body);
+    const { gameId } = linkGameDownloadBodySchema.parse(req.body);
 
     const download = await storage.getGameDownload(id);
     if (!download) {
@@ -648,29 +677,12 @@ importRouter.get("/:id/plan", async (req, res) => {
   }
 });
 
-importRouter.post("/:id/confirm", async (req, res) => {
-  const { id } = req.params;
+importRouter.post("/:id/confirm", validate(confirmImportBodySchema), async (req, res) => {
+  const id = typeof req.params.id === "string" ? req.params.id : "";
   try {
     const userId = res.locals.userId as string;
 
-    const schema = z.object({
-      strategy: z.enum(["pc", "romm"] as const),
-      proposedPath: z.string(),
-      originalPath: z.string().optional(),
-      transferMode: z.enum(IMPORT_TRANSFER_MODES).optional(),
-      unpack: z.boolean().optional(),
-      // Only meaningful when unpack is true and the archive is encrypted. Never persisted —
-      // consumed once by confirmImport() to try extraction, then dropped. A NUL byte would
-      // reach execFile's args array unchanged and throw ERR_INVALID_ARG_VALUE deep inside
-      // ArchiveService rather than failing here with a clean validation error.
-      password: z
-        .string()
-        .max(1024)
-        .refine((value) => !value.includes("\0"), "Password must not contain null characters")
-        .optional(),
-    });
-
-    const body = schema.parse(req.body);
+    const body = confirmImportBodySchema.parse(req.body);
     const config = await storage.getImportConfig(userId);
     const rommConfig = await storage.getRomMConfig(userId);
     if (body.strategy === "romm" && !rommConfig.enabled) {

@@ -394,7 +394,8 @@ describe("importRouter additional coverage", () => {
     const response = await request(app).post("/api/imports/dl-1/confirm").send({});
 
     expect(response.status).toBe(400);
-    expect(Array.isArray(response.body.error)).toBe(true);
+    expect(response.body.error).toBe("Validation failed");
+    expect(Array.isArray(response.body.details)).toBe(true);
   });
 
   // --- GET /api/imports/pending — empty array ---

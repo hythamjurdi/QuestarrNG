@@ -37,7 +37,12 @@ const mocks = vi.hoisted(() => ({
     getTimeToBeats: vi.fn(),
   },
   getSteamOwnership: vi.fn(),
-  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn(() => mocks.logger),
+  },
   checkAutoSearch: vi.fn(),
   removeDownload: vi.fn(),
   quickAddGameByTitle: vi.fn(),
@@ -68,7 +73,12 @@ vi.mock("../downloaders/manager.js", () => ({
   DownloaderManager: { removeDownload: mocks.removeDownload },
 }));
 vi.mock("../game-quick-add.js", () => ({ quickAddGameByTitle: mocks.quickAddGameByTitle }));
-vi.mock("../logger.js", () => ({ routesLogger: mocks.logger }));
+vi.mock("../logger.js", () => ({
+  logger: mocks.logger,
+  routesLogger: mocks.logger,
+  expressLogger: mocks.logger,
+  middlewareLogger: mocks.logger,
+}));
 vi.mock("../steam.js", () => ({
   steamService: { getOwnedGameAppIds: mocks.getSteamOwnership },
 }));

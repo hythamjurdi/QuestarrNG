@@ -703,7 +703,13 @@ describe("Middleware - Input Sanitization", () => {
       const passwordError = body.details.find(
         (detail: { path?: string }) => detail.path === "password"
       );
-      expect(passwordError?.value).toBe("[REDACTED]");
+      expect(passwordError).toEqual(
+        expect.objectContaining({
+          path: "password",
+          msg: "Password must be at most 200 characters",
+        })
+      );
+      expect(JSON.stringify(body)).not.toContain("p".repeat(201));
     });
 
     it("should allow a password at the 200-character limit", async () => {

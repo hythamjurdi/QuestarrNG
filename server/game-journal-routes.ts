@@ -15,6 +15,7 @@ import {
   sanitizeJournalEntryId,
   sanitizeMilestoneId,
   sanitizeScreenshotId,
+  validate,
   validateRequest,
 } from "./middleware.js";
 import {
@@ -116,6 +117,7 @@ router.post(
   authenticateToken,
   sensitiveEndpointLimiter,
   sanitizeGameId,
+  validate(insertGameJournalEntrySchema.pick({ note: true })),
   validateRequest,
   async (req: Request, res: Response) => {
     try {
@@ -185,6 +187,7 @@ router.post(
   authenticateToken,
   sensitiveEndpointLimiter,
   sanitizeGameId,
+  validate(insertGameMilestoneSchema.pick({ label: true })),
   validateRequest,
   async (req: Request, res: Response) => {
     try {
@@ -211,6 +214,7 @@ router.patch(
   sensitiveEndpointLimiter,
   sanitizeGameId,
   sanitizeMilestoneId,
+  validate(updateGameMilestoneSchema),
   validateRequest,
   async (req: Request, res: Response) => {
     try {
@@ -296,6 +300,7 @@ router.post(
       }
       return next();
     }),
+  validate(z.object({ caption: z.string().max(300).nullable().optional() }).passthrough()),
   async (req: Request, res: Response) => {
     try {
       const gameId = await requireOwnedGame(req, res);
@@ -391,6 +396,7 @@ router.patch(
   sensitiveEndpointLimiter,
   sanitizeGameId,
   sanitizeScreenshotId,
+  validate(updateGameScreenshotSchema),
   validateRequest,
   async (req: Request, res: Response) => {
     try {

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { storage } from "../storage.js";
 import { generateApiKey } from "../auth.js";
 import { routesLogger as logger } from "../logger.js";
-import { sensitiveEndpointLimiter, validateRequest } from "../middleware.js";
+import { sensitiveEndpointLimiter, validate, validateRequest } from "../middleware.js";
 import { API_KEY_SCOPES } from "../../shared/schema.js";
 
 // Same shape as sanitizeGameId/sanitizeDownloadId in middleware.ts: api_keys.id
@@ -52,53 +52,58 @@ apiKeysRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-apiKeysRouter.post("/", sensitiveEndpointLimiter, async (req: Request, res: Response) => {
-  try {
-    const parsed = createKeySchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid name" });
-    }
-
-    const userId = req.user!.id;
-    const { rawKey, keyHash, prefix } = generateApiKey();
-    const expiresAt = new Date(Date.now() + parsed.data.expiresInDays * 24 * 60 * 60 * 1000);
-
-    let created;
+apiKeysRouter.post(
+  "/",
+  sensitiveEndpointLimiter,
+  validate(createKeySchema),
+  async (req: Request, res: Response) => {
     try {
-      // Count-then-insert happens atomically inside storage.addApiKey, so two
-      // concurrent requests from the same user can't both slip past the cap.
-      created = await storage.addApiKey(
-        {
-          userId,
-          name: parsed.data.name,
-          keyHash,
-          prefix,
-          scope: parsed.data.scope,
-          expiresAt,
-        },
-        MAX_KEYS_PER_USER
-      );
-    } catch (error) {
-      if (error instanceof Error && error.message === "API key limit reached") {
-        return res
-          .status(409)
-          .json({ error: `You can have at most ${MAX_KEYS_PER_USER} API keys. Revoke one first.` });
+      const parsed = createKeySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid name" });
       }
-      throw error;
+
+      const userId = req.user!.id;
+      const { rawKey, keyHash, prefix } = generateApiKey();
+      const expiresAt = new Date(Date.now() + parsed.data.expiresInDays * 24 * 60 * 60 * 1000);
+
+      let created;
+      try {
+        // Count-then-insert happens atomically inside storage.addApiKey, so two
+        // concurrent requests from the same user can't both slip past the cap.
+        created = await storage.addApiKey(
+          {
+            userId,
+            name: parsed.data.name,
+            keyHash,
+            prefix,
+            scope: parsed.data.scope,
+            expiresAt,
+          },
+          MAX_KEYS_PER_USER
+        );
+      } catch (error) {
+        if (error instanceof Error && error.message === "API key limit reached") {
+          return res.status(409).json({
+            error: `You can have at most ${MAX_KEYS_PER_USER} API keys. Revoke one first.`,
+          });
+        }
+        throw error;
+      }
+
+      logger.info(
+        { userId, apiKeyId: created.id, name: created.name },
+        "Integration API key created"
+      );
+
+      // The only time the raw key is ever returned: it is not recoverable later.
+      return res.status(201).json({ ...created, key: rawKey });
+    } catch (error) {
+      logger.error({ error }, "Failed to create API key");
+      return res.status(500).json({ error: "Failed to create API key" });
     }
-
-    logger.info(
-      { userId, apiKeyId: created.id, name: created.name },
-      "Integration API key created"
-    );
-
-    // The only time the raw key is ever returned: it is not recoverable later.
-    return res.status(201).json({ ...created, key: rawKey });
-  } catch (error) {
-    logger.error({ error }, "Failed to create API key");
-    return res.status(500).json({ error: "Failed to create API key" });
   }
-});
+);
 
 apiKeysRouter.delete(
   "/:id",
