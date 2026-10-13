@@ -1,0 +1,29 @@
+# Batch 61 validation evidence — October 13, 2026
+
+## Reviewed inventory
+
+The batch reviewed 20 records: issues #705–710, #715, and #717; PRs #712–714, #716, and #718–725. It added 17 `verified`, two `superseded`, and one `not-applicable` dispositions. The ledger contains 1,163 records and no outstanding `sourceChangedSinceReview` flags.
+
+The upstream source head remained `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` during the batch. The audit checked GitHub again at 17:41 UTC; it still matched the captured source head.
+
+## Tests and checks
+
+- `npm run test:run`: passed, 4,192 tests across 265 files; 7 tests skipped and one test file skipped.
+- `npm run check` (TypeScript): passed.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run secretlint`: passed.
+- `npm run build`: passed. Vite retained its existing large-chunk advisory; the largest generated JavaScript chunk was 868.69 kB.
+- `node --check scripts/audit-upstream.mjs` and `node --check scripts/upstream-source-redaction.mjs`: passed.
+- Offline audit round-trip from the sanitized 232-issue/931-PR snapshot regenerated all 1,163 inventory rows, preserved the batch dispositions, and left zero source-change flags.
+- Sanitized source scan: zero unredacted sensitive query values, zero JWT-like values, and zero PostgreSQL connection strings.
+
+The full Vitest run includes the four source-snapshot redaction and stable-serialization regression tests. The checked-in snapshot rows for issue #237 and PRs #1192, #1195, #1196, #1198, #1199, #1201, #1202, and #1203 matched their previously reviewed rows and digests; their stale change flags were cleared. No `client/src/**` files changed in this batch.
+
+## SBOM workflow evidence
+
+QuestarrNG deploy run [38349306862](https://github.com/snapetech/QuestarrNG/actions/runs/38349306862) completed successfully on `main`. Both **Generate SBOM** and **Upload SBOM artifact** passed. The artifact `sbom-questarr-1.10.0-dev` parsed as SPDX-2.3 and contained 555 packages and 2,955 files. The downloaded check copy was removed after inspection.
+
+## Temporary data
+
+The SBOM check used a task-scoped local `/tmp` directory, which was removed immediately afterward. No NFS scratch space was used. The production build directory was removed after validation; pre-existing test artifacts were left untouched.

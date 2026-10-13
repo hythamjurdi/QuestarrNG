@@ -7,6 +7,7 @@ import { fileURLToPath, URL } from "node:url";
 import process from "node:process";
 import console from "node:console";
 import path from "node:path";
+import { redactSnapshot, stableSnapshotStringify } from "./upstream-source-redaction.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const destination = path.join(root, "docs/upstream-resolution");
@@ -19,21 +20,12 @@ const fields = {
   pr: "number,title,state,mergedAt,closedAt,createdAt,updatedAt,url,body,headRefOid,baseRefName,mergeCommit",
 };
 const sourceDirectory = process.argv[2];
-// Public issue bodies can contain credentials copied into support reports.
-// Keep the upstream link for review, but never republish connection strings.
-function redactSnapshot(value) {
-  if (typeof value === "string")
-    return value.replace(
-      /\bpostgres(?:ql)?:\/\/[^\s"`<>]+/gi,
-      "[redacted database connection string]"
-    );
-  if (Array.isArray(value)) return value.map(redactSnapshot);
-  if (value && typeof value === "object")
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, redactSnapshot(item)])
-    );
-  return value;
-}
+// Keep source context for review, but never persist copied credentials or
+// signed guest-share tokens from public issue discussions.
+const previousSourcesPath = path.join(destination, "sources.json");
+const previousSources = existsSync(previousSourcesPath)
+  ? JSON.parse(readFileSync(previousSourcesPath, "utf8"))
+  : null;
 const sources = Object.fromEntries(
   Object.entries(fields).map(([kind, json]) => {
     const filename = kind === "issue" ? "issues" : "prs";
@@ -73,8 +65,27 @@ const items = Object.entries(sources)
   .flatMap(([kind, rows]) =>
     rows.map((row) => {
       const key = `${kind}:${row.number}`;
-      const sourceDigest = createHash("sha256").update(JSON.stringify(row)).digest("hex");
       const old = reviews.get(key);
+      const previousSource = previousSources?.[kind]?.find(
+        (previousRow) => previousRow.number === row.number
+      );
+      // Preserve the existing digest when the only difference is newly
+      // redacted secret material. This keeps privacy cleanup from being
+      // mistaken for an upstream source edit that requires renewed triage.
+      const unchangedAfterRedaction =
+        old &&
+        previousSource &&
+        stableSnapshotStringify(redactSnapshot(previousSource)).replaceAll(
+          "[redacted database connection string]\x60",
+          "[redacted database connection string]"
+        ) ===
+          stableSnapshotStringify(row).replaceAll(
+            "[redacted database connection string]\x60",
+            "[redacted database connection string]"
+          );
+      const sourceDigest = unchangedAfterRedaction
+        ? old.sourceDigest
+        : createHash("sha256").update(stableSnapshotStringify(row)).digest("hex");
       const mergeOid = row.mergeCommit?.oid;
       return {
         key,

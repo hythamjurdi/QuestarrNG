@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T17:13:04.910Z",
-  "forkHead": "7def63e4a09c75cd2ed4b93bb95129f2b5830936",
+  "capturedAt": "2026-10-13T17:47:37.646Z",
+  "forkHead": "d344ec819e61966624255b49ed88c8615c8c0210",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -20334,10 +20334,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "qBittorrent v5 async URL-add responses with HTTP 202 and pending_count are treated as accepted queued downloads. The downloader waits for the asynchronously created torrent and does not interpret the success response as a reason to fetch the torrent file from Prowlarr. API-level regression coverage checks that the accepted download is tracked."
+        ],
+        "acceptance": [
+          "A successful pending_count response is accepted without a spurious Prowlarr fallback or 500 response, and the download remains tracked for status polling."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/api_routes_async_download.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20354,10 +20362,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "qBittorrent stoppedDL is mapped to the paused download status, with regression coverage for the v5 state."
+        ],
+        "acceptance": [
+          "The downloader recognizes stoppedDL without an unknown-state warning and reports the paused status."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20374,11 +20389,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The Activity → Import History page lists durable import tasks and details; storage and migration persist the task and item records, while cron removes records after the documented retention period."
+        ],
+        "acceptance": [
+          "Users can inspect import-task history for the supported task flows, and old records are purged after the 30-day retention period."
+        ],
+        "evidence": [
+          "client/src/pages/import-history.tsx",
+          "server/routes/import-tasks.ts",
+          "server/storage.ts",
+          "server/cron.ts",
+          "migrations/0020_import_history.sql",
+          "client/__tests__/ImportHistoryPage.test.tsx",
+          "server/__tests__/import_tasks_router.test.ts"
+        ],
+        "dependencies": [
+          "pr:714"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -20394,10 +20423,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The source has no issue body or acceptance details; its only discussion entry is a migration link to a Huly task. The generic “Post Processing grooming” title does not identify a behavior, defect, or bounded maintenance request that can be implemented and verified safely."
+        ],
+        "acceptance": [
+          "No product change is justified until the request provides an observable behavior or acceptance criteria."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/708",
+          "docs/upstream-resolution/sources.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20414,11 +20450,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The import review plan returns a bounded list of source file names, marks archives, and tells the user when an archive is present so they can choose unpacking before confirming."
+        ],
+        "acceptance": [
+          "The review dialog shows detected source files and archive status before the import action is confirmed."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "client/src/components/ImportReviewModal.tsx",
+          "server/__tests__/import_manager_additional.test.ts",
+          "client/__tests__/ImportReviewModal.test.tsx"
+        ],
+        "dependencies": [
+          "pr:716"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -20434,10 +20481,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Archive handling recognizes classic .rNN and modern .partN.rar volumes, selects the primary archive, keeps each volume family together during relocation, and passes the first part to the extractor. Regression tests cover sibling matching and multi-volume import behavior."
+        ],
+        "acceptance": [
+          "A multi-volume archive is discovered, moved or copied as a complete set, and extracted from its primary volume without importing continuation files as loose files."
+        ],
+        "evidence": [
+          "server/services/ArchiveService.ts",
+          "server/services/ImportManager.ts",
+          "server/__tests__/archive_service.test.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20454,10 +20510,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "29c0cbddccf4a73833e372ea26ce60274ca95cde",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The grouped dev-dependency request targeted older releases. The current manifest and lockfile contain later versions, including Playwright 1.63.0, Vite 8.3.1, Prettier 3.9.9, and TypeScript ESLint 8.71.0, so reapplying the July 2026 update would move dependencies backward."
+        ],
+        "acceptance": [
+          "Keep the current newer locked dependencies; do not reapply the older group update."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/712"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20474,10 +20538,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "adcb96cc580dd02f4ad44c5b62af5b599e55f86e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The grouped production-dependency request is behind the current manifest and lockfile, which use later releases of TanStack Query, js-yaml, and nanoid. Reapplying the grouped update would downgrade the current dependency set."
+        ],
+        "acceptance": [
+          "Keep the current newer locked dependencies; do not reapply the older group update."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/713"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20494,11 +20566,26 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "378ea5a5c906bbe3b8c3e52c0e7d90d0d9dbff53",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The merged import-history implementation is present in the fork: it records claim, post-processing, and Steam-sync tasks, exposes authenticated task list/detail routes, adds the Activity page and navigation entry, and runs a 30-day cleanup job."
+        ],
+        "acceptance": [
+          "Import tasks and task items persist and are visible to their owner; expired rows are deleted by the scheduled cleanup."
+        ],
+        "evidence": [
+          "client/src/pages/import-history.tsx",
+          "server/routes/import-tasks.ts",
+          "server/storage.ts",
+          "server/cron.ts",
+          "migrations/0020_import_history.sql",
+          "client/__tests__/ImportHistoryPage.test.tsx",
+          "server/__tests__/import_tasks_router.test.ts",
+          "https://github.com/Doezer/Questarr/pull/714"
+        ],
+        "dependencies": [
+          "issue:707"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -20514,10 +20601,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The unlinked-download dialog gives the candidate list a bounded height and its own vertical scroll container, matching the upstream fix noted in the issue discussion."
+        ],
+        "acceptance": [
+          "Long candidate lists remain reachable by scrolling inside the dialog instead of extending beyond the viewport."
+        ],
+        "evidence": [
+          "client/src/components/ClaimBatchModal.tsx",
+          "https://github.com/Doezer/Questarr/issues/715"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20534,11 +20628,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4b20e36f265406297ab207396ae96fec4b642516",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The import plan supplies source-file metadata and archive presence; the review dialog renders a scrollable file list, distinguishes archive files, and warns before confirmation when unpacking may be needed. The backend tests include traversal-safe enumeration."
+        ],
+        "acceptance": [
+          "The file preview and archive warning appear before import confirmation, with the source listing constrained to the validated import root."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "client/src/components/ImportReviewModal.tsx",
+          "server/__tests__/import_manager_additional.test.ts",
+          "client/__tests__/ImportReviewModal.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/716"
+        ],
+        "dependencies": [
+          "issue:709"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -20554,10 +20660,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The repository README already displays a Code Scanning badge linked to the GitHub security dashboard, and the SAST workflow supplies the security status the badge exposes. The issue body contains no additional badge specification."
+        ],
+        "acceptance": [
+          "A visible repository security badge links readers to the security findings dashboard."
+        ],
+        "evidence": [
+          "README.md",
+          ".github/workflows/sast.yml",
+          "https://github.com/Doezer/Questarr/issues/717"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20574,10 +20688,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c8977963add0e191ad8051117e20b4a752b701f0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Secretlint is configured for the repository and runs in CI and the pre-commit hook. The B61 full secret scan passes with the current sanitized upstream snapshot."
+        ],
+        "acceptance": [
+          "Credential-pattern scans run before commit and in CI, and the repository scan completes cleanly."
+        ],
+        "evidence": [
+          ".secretlintrc.json",
+          ".secretlintignore",
+          ".github/workflows/ci.yml",
+          "package.json",
+          ".husky/pre-commit",
+          "server/__tests__/igdb.test.ts",
+          "server/__tests__/igdb_error.test.ts",
+          "npm run secretlint"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20594,10 +20721,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "77fadd780950a77043b8bf58f6451028df838e59",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The slash-command workflow validates the target environment against an allowlist, applies a bounded safe Docker-tag pattern, and accepts only literal true/false for the ARM64 flag before dispatching."
+        ],
+        "acceptance": [
+          "Invalid comment-supplied deployment inputs are rejected before workflow_dispatch; valid inputs are passed only after validation."
+        ],
+        "evidence": [
+          ".github/workflows/slash-command-listener.yml",
+          ".github/workflows/deploy.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20614,10 +20748,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "fb9892fdf835b2fa8cb8a6b4a496f75f7419b500",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The secrets guide covers environment configuration, authentication and key rotation, masked API responses, encryption of indexer/downloader credentials at rest, legacy plaintext migration behavior, and operator backup/key-loss risks. It is linked from the README and security documentation."
+        ],
+        "acceptance": [
+          "Credential storage and exposure behavior in the guide matches the current server implementation and gives operators concrete rotation and backup guidance."
+        ],
+        "evidence": [
+          "docs/SECRETS.md",
+          "README.md",
+          "docs/SECURITY.md",
+          "server/storage.ts",
+          "server/config.ts",
+          "server/auth.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20634,10 +20779,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "718a462bc2926a957d93c4963b428a9ff496bce0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The contribution guide describes the Vitest and Playwright suites, their local commands and CI entry points, and a test policy for major behavior, API, storage, integration, security, cron, and user-flow changes."
+        ],
+        "acceptance": [
+          "Contributors can run the supported suites locally and know which changes require regression coverage."
+        ],
+        "evidence": [
+          ".github/CONTRIBUTING.md",
+          "package.json",
+          ".github/workflows/ci.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20654,10 +20807,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d616189871d1cb67b8fafa934a09c467057f05fa",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The deployment workflow attaches Buildx SBOM attestations and separately generates and uploads an SPDX JSON artifact. Recent scheduled run 38349306862 completed both SBOM steps successfully; its artifact parsed as SPDX-2.3 with 555 packages and 2,955 files."
+        ],
+        "acceptance": [
+          "The release workflow completes image build, SBOM generation, and artifact upload, and the emitted file is valid SPDX JSON."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          "docs/SBOM.md",
+          "https://github.com/snapetech/QuestarrNG/actions/runs/38349306862"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20674,10 +20835,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "bcef066527a39dc55d674ae9ae3ea96b4f80d284",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The security policy defines elevated access, requires approval by a different maintainer, sets least-privilege and identity-vetting expectations, and describes periodic review, revocation, and incident response. Contributor guidance links to the policy."
+        ],
+        "acceptance": [
+          "Requests for repository, secret, and infrastructure access follow a documented non-self-approved review and revocation process."
+        ],
+        "evidence": [
+          "docs/SECURITY.md",
+          "docs/MAINTAINERS.md",
+          ".github/CONTRIBUTING.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20694,10 +20863,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG uses a shared tag editor whose Add button has the more specific accessible name “Add preferred release group”; the download-history remove button includes the download title. Existing component tests assert the named controls."
+        ],
+        "acceptance": [
+          "Icon-only Add and remove controls expose useful, contextual accessible names."
+        ],
+        "evidence": [
+          "client/src/components/TagListEditor.tsx",
+          "client/src/components/PreferredReleaseGroupsSettings.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/__tests__/ReleaseFilterSettings.test.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20714,10 +20893,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork’s Library component applies all active filters in one Array.filter pass, while Wishlist classifies filtered games in a single traversal and compares ISO release strings against the current timestamp. This achieves the requested allocation and repeated-traversal reduction in the fork’s current component structure."
+        ],
+        "acceptance": [
+          "Library and Wishlist derived lists remain filtered and sorted correctly without chained intermediate filter arrays or per-game Date allocations."
+        ],
+        "evidence": [
+          "client/src/components/Library.tsx",
+          "client/src/pages/wishlist.tsx",
+          "client/__tests__/Library.defaultFilters.test.tsx",
+          "client/__tests__/WishlistPage.mobile.test.tsx",
+          "tests/e2e/library.spec.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -29851,7 +30040,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": true
+      "sourceChangedSinceReview": false
     },
     {
       "key": "pr:1193",
@@ -29911,7 +30100,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": true
+      "sourceChangedSinceReview": false
     },
     {
       "key": "pr:1196",
@@ -29931,7 +30120,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": true
+      "sourceChangedSinceReview": false
     },
     {
       "key": "pr:1197",
@@ -29971,7 +30160,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": true
+      "sourceChangedSinceReview": false
     },
     {
       "key": "pr:1199",
@@ -29991,7 +30180,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": true
+      "sourceChangedSinceReview": false
     },
     {
       "key": "pr:1200",
@@ -30031,7 +30220,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": true
+      "sourceChangedSinceReview": false
     },
     {
       "key": "pr:1202",
@@ -30051,7 +30240,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": true
+      "sourceChangedSinceReview": false
     },
     {
       "key": "pr:1203",
@@ -30071,7 +30260,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": true
+      "sourceChangedSinceReview": false
     }
   ]
 }

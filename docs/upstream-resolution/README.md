@@ -18,30 +18,30 @@ behavior when implementing upstream requests.
 
 ## Current ledger snapshot
 
-The issue and PR lists were refreshed in a live GitHub audit against upstream
-main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 17:08
-UTC**. The live export was collected then; the ledger and inventory were
-regenerated from that export at **17:13 UTC**. The capturedAt field records
-generation time, not an individual GitHub request timestamp. Review status is
-independent of GitHub's open, closed, or merged state:
+The latest live GitHub audit checked upstream main
+`0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 17:28
+UTC**. The refreshed inventory contains 232 issues and 931 pull requests. The
+ledger's `capturedAt` records audit generation time, not an individual GitHub
+request timestamp. Review status is independent of GitHub's open, closed, or
+merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       532 |
-| `superseded`             |       148 |
-| `not-applicable`         |        11 |
+| `verified`               |       549 |
+| `superseded`             |       150 |
+| `not-applicable`         |        12 |
 | `implemented-unverified` |         4 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       468 |
+| `unreviewed`             |       448 |
 | **Total**                | **1,163** |
 
-The ledger now gives 695 items an assigned disposition. Four implemented
+The ledger now gives 715 items an assigned disposition. Four implemented
 integrations still need live-service verification, no currently identified
-item needs implementation, and 468 are unreviewed. Eight previously reviewed
-PRs (#1192, #1195, #1196, #1198, #1199, #1201, #1202, and #1203) changed in the
-refreshed source export and remain flagged for renewed triage. These numbers
-describe the ledger, not completion of the campaign. Batch 60 is the latest completed review; its results
-are in [validation evidence](evidence/validation-batch-60.txt).
+item needs implementation, and 448 are unreviewed. The eight carried PR flags
+and the issue #237 flag were cleared in batch 61 after their reviewed source
+rows and digests were confirmed unchanged. These numbers describe the ledger,
+not completion of the campaign. Batch 61 is the latest completed review; its
+results are in [validation evidence](evidence/validation-batch-61.txt).
 
 ## Project records
 
@@ -1793,3 +1793,54 @@ assertion, Compose interpolation smoke checks, and full validation outcomes are
 recorded in [Batch 60 evidence](evidence/validation-batch-60.txt). Eight source
 records remain flagged for renewed triage. This campaign is still in progress
 and has not passed the merge gate.
+
+## Batch 61 — October 13, 2026
+
+Batch 61 reviewed issues [#705](https://github.com/Doezer/Questarr/issues/705)–
+[#710](https://github.com/Doezer/Questarr/issues/710),
+[#715](https://github.com/Doezer/Questarr/issues/715), and
+[#717](https://github.com/Doezer/Questarr/issues/717), plus PRs
+[#712](https://github.com/Doezer/Questarr/pull/712)–
+[#714](https://github.com/Doezer/Questarr/pull/714),
+[#716](https://github.com/Doezer/Questarr/pull/716), and
+[#718](https://github.com/Doezer/Questarr/pull/718)–
+[#725](https://github.com/Doezer/Questarr/pull/725). It added 17 verified
+dispositions, two superseded dependency updates, and one not-applicable
+planning issue.
+
+The qBittorrent async-add response and `stoppedDL` status are covered by the
+existing downloader implementation and regression tests. Import History,
+retention cleanup, the import review file list, archive warnings, and
+multi-volume archive handling are implemented and covered by route, component,
+and archive tests. The unlinked-download picker has its scroll container, and
+the README already exposes the Code Scanning badge requested by issue #717.
+Secret scanning, slash-command argument validation, credential documentation,
+test policy, SBOM publication, and collaborator-access policy are present in
+the current CI, deployment, and documentation paths.
+
+PR #724's accessible names are already supplied by QuestarrNG's shared tag
+editor and the game-download history button. PR #725's library and wishlist
+filters already use a single pass in the fork's current component structure;
+the wishlist also compares ISO release dates without allocating a `Date` for
+each game. PRs #712 and #713 are superseded because the locked dependency
+versions now exceed their requested versions. Issue #708 has no body or
+actionable acceptance details, so no product change can be tied to its generic
+“Post Processing grooming” title.
+
+The live QuestarrNG deployment run `38349306862` completed successfully with
+both **Generate SBOM** and **Upload SBOM artifact** steps passing. Its retained
+`sbom-questarr-1.10.0-dev` artifact parsed as SPDX 2.3 and contains 555 package
+records and 2,955 file records.
+
+Batch 61 also hardened the upstream inventory tooling. Source snapshots redact
+credential-bearing query values, and source-row digests now use stable object
+key ordering. The prior source-change flags on issue #237 and PRs #1192, #1195,
+#1196, #1198, #1199, #1201, #1202, and #1203 were cleared after verifying that
+their current sanitized rows and digests match the reviewed snapshot.
+
+Validation results and the sanitized-source scan are recorded in
+[Batch 61 evidence](evidence/validation-batch-61.txt). The ledger now records
+549 verified, 150 superseded, 12 not-applicable, four implemented-unverified,
+zero needs-implementation, and 448 unreviewed items. No source-change flags
+remain, but the full audit is still in progress and has not passed the merge
+gate.
