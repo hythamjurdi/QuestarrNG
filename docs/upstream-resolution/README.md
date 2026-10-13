@@ -26,21 +26,21 @@ record. Review status is independent of GitHub's open, closed, or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       495 |
-| `superseded`             |       128 |
+| `verified`               |       506 |
+| `superseded`             |       134 |
 | `not-applicable`         |         9 |
-| `implemented-unverified` |         4 |
+| `implemented-unverified` |         3 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       527 |
+| `unreviewed`             |       511 |
 | **Total**                | **1,163** |
 
-The ledger now gives 632 items an assigned disposition. Four implemented
+The ledger now gives 652 items an assigned disposition. Three implemented
 integrations still need live-service verification, no currently identified
-item needs implementation, and 527 are unreviewed. Four previously reviewed
+item needs implementation, and 511 are unreviewed. Four previously reviewed
 PRs (#1195, #1196, #1198, and #1202) changed in the refreshed source export and
 remain flagged for renewed triage. These numbers describe the ledger, not
-completion of the campaign. Batch 57 is the latest completed review; its results
-are in [validation evidence](evidence/validation-batch-57.txt).
+completion of the campaign. Batch 58 is the latest completed review; its results
+are in [validation evidence](evidence/validation-batch-58.txt).
 
 ## Project records
 
@@ -1644,4 +1644,73 @@ environment details, and cleanup.
 After batch 57, the ledger records 495 verified, 128 superseded, 9
 not-applicable, 4 implemented-unverified, 0 needs-implementation, and 527
 unreviewed items. The four refreshed-source flags noted above remain open for
+renewed triage, and the full audit remains in progress.
+
+
+## Batch 58 — October 13, 2026
+
+Batch 58 reviewed issue [#646](https://github.com/Doezer/Questarr/issues/646)
+and PRs [#647](https://github.com/Doezer/Questarr/pull/647)–
+[#661](https://github.com/Doezer/Questarr/pull/661), along with the live
+verification gap for issue [#568](https://github.com/Doezer/Questarr/issues/568).
+Issue #646 and PR #647 are verified: Torznab/Prowlarr URL rewriting recognizes
+host aliases such as `localhost` and `127.0.0.1`, so a proxied download URL is
+not wrapped twice. Tests also cover container IPs, reverse-proxy scheme/port
+and base paths, and external raw URLs.
+
+PR #648's Send Logs flow was exercised in the running application. The dialog
+shows what will be shared and where the report is stored; its redaction,
+IPv6, timestamp, malformed-response, clipboard, rate-limit, and failure cases
+are covered by tests. The transport was tested with mocked responses. No real
+logs were sent to the support collector. PR #649's periodic downloader and
+indexer version checks and normalized Torznab/Newznab paths are covered by
+focused tests and use the safe outbound-fetch path.
+
+PRs #650–655 are superseded by the dependency roll-up in #656 and newer current
+versions. The requested workflow action revisions are pinned immutably at later
+versions, and the requested package targets are present or exceeded in the
+manifest and lockfile. PR #656 is verified against that current dependency
+state. The GitHub Actions Dependabot wildcard group in #660 parses and matches
+its intended configuration.
+
+PR #657 and issue #568 are verified against a live Deluge 2.2.0 daemon in an
+isolated Docker network. The run covered authentication and WebUI auto-connect,
+the Label plugin, adding and listing a synthetic magnet, applying and reading
+back Questarr's label, an empty file list, pause/resume, and removal. No tracker
+was contacted. The disposable service and network were removed afterward; the
+test port was confirmed free. The Add Downloader form is shown in the running
+UI evidence.
+
+PR #658's collection check uses a Set and ignores missing IGDB IDs, avoiding a
+false “already added” match when both records have no ID. A regression test
+covers that case, and a stable empty query result keeps the memoized lookup
+stable before data loads. PR #659's preferred-release-group action has a
+meaningful accessible name, checked by a role-based test and shown in the
+running Settings capture. PR #661 keeps polling after qBittorrent accepts a URL
+but has not listed it yet; transient lookup errors do not trigger a duplicate
+upload, and the retry path is bounded by regression tests.
+
+During full UI smoke testing, two adjacent UX gaps were fixed: the icon-only
+mobile Add Game action now has the accessible name “Add Game,” and the empty
+Downloader state lists Deluge among supported clients. The Add Game drawer was
+checked at 390×844 with no horizontal overflow. Those changes, the Deluge form,
+the Send Logs preview, and the preferred-release-group settings view are
+captured in [the batch UI evidence](evidence/). The user-facing changes are
+listed in the [batch 58 release note](../../release-notes/2026-10-13-add-game-accessibility-and-igdb-matching.md).
+
+The full Vitest run passed 4,174 tests across 262 files, with 7 tests skipped.
+The full Playwright E2E run passed 50 tests on a disposable SQLite database.
+Focused downloader and client regressions, type checking, lint, formatting,
+secret scanning, production build, production dependency audit, license and
+override checks, and Dependabot YAML validation passed. The build showed the
+existing large-chunk advisory. The standard production audit wrapper was also
+fixed to ignore scripts and remove the inherited npm `allow-scripts` setting
+from its child environment, so it runs reliably under this npm 11 setup.
+Commands, service details, limitations, screenshots, and task scratch cleanup
+are recorded in [batch 58 validation evidence](evidence/validation-batch-58.txt).
+
+After batch 58, the ledger records **506 verified**, **134 superseded**, **9
+not-applicable**, **3 implemented-unverified**, **0 needs-implementation**, and
+**511 unreviewed** items. Issue #568 is no longer awaiting live-service
+verification. The four refreshed-source flags noted above remain open for
 renewed triage, and the full audit remains in progress.

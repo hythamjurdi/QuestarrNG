@@ -751,8 +751,8 @@ export default function DownloadersPage() {
               <CardTitle>No Downloaders Configured</CardTitle>
               <CardDescription>
                 Add your first downloader client to enable automated downloads. Supported clients
-                include Transmission, rTorrent, qBittorrent, Synology Download Station, Real-Debrid,
-                SABnzbd, and NZBGet.
+                include Transmission, rTorrent, qBittorrent, Synology Download Station, Deluge,
+                Real-Debrid, SABnzbd, and NZBGet.
               </CardDescription>
             </CardHeader>
             <CardContent>

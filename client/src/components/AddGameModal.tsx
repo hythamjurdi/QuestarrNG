@@ -55,6 +55,8 @@ interface IGDBPlatform {
   name: string;
 }
 
+const EMPTY_GAMES: Game[] = [];
+
 export default function AddGameModal({ children, initialQuery }: AddGameModalProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -159,7 +161,7 @@ export default function AddGameModal({ children, initialQuery }: AddGameModalPro
   });
 
   // Get user's collection to check if games are already added
-  const { data: userGames = [] } = useQuery<Game[]>({
+  const { data: userGames = EMPTY_GAMES } = useQuery<Game[]>({
     queryKey: ["/api/games"],
   });
 

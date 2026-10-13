@@ -555,7 +555,7 @@ Snapshot: 2026-10-13T14:05:15.670Z. 1163 items. All ancestry observations requir
 | [pr #564](https://github.com/Doezer/Questarr/pull/564) | Merge 1.3.0 into main | MERGED | merge-commit-in-fork-history | verified |
 | [issue #566](https://github.com/Doezer/Questarr/issues/566) | UI Bug: Download/Action buttons hidden when release titles are long | CLOSED | no-merge-commit | superseded |
 | [issue #567](https://github.com/Doezer/Questarr/issues/567) | Add support for Synology Download Station | CLOSED | no-merge-commit | implemented-unverified |
-| [issue #568](https://github.com/Doezer/Questarr/issues/568) | Add support for Deluge downloader | CLOSED | no-merge-commit | implemented-unverified |
+| [issue #568](https://github.com/Doezer/Questarr/issues/568) | Add support for Deluge downloader | CLOSED | no-merge-commit | verified |
 | [pr #569](https://github.com/Doezer/Questarr/pull/569) | chore(deps): bump step-security/setup-qemu-action from 3.7.0 to 4.0.0 | CLOSED | no-merge-commit | superseded |
 | [pr #570](https://github.com/Doezer/Questarr/pull/570) | chore(deps): bump step-security/harden-runner from 2.17.0 to 2.19.0 | CLOSED | no-merge-commit | superseded |
 | [pr #571](https://github.com/Doezer/Questarr/pull/571) | chore(deps): bump step-security/docker-login-action from 3.7.0 to 4.1.0 | CLOSED | no-merge-commit | superseded |
@@ -631,22 +631,22 @@ Snapshot: 2026-10-13T14:05:15.670Z. 1163 items. All ancestry observations requir
 | [pr #643](https://github.com/Doezer/Questarr/pull/643) | Handle qBittorrent accepted-but-unverified adds to avoid false 500 failures | CLOSED | no-merge-commit | verified |
 | [pr #644](https://github.com/Doezer/Questarr/pull/644) | Enhance mobile layout and navigation | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #645](https://github.com/Doezer/Questarr/pull/645) | Add shelved status feature | MERGED | merge-commit-not-in-either-main-history | verified |
-| [issue #646](https://github.com/Doezer/Questarr/issues/646) | torznab client double-wraps Prowlarr download URLs when host names alias (e.g. localhost vs 127.0.0.1) | CLOSED | no-merge-commit | unreviewed |
-| [pr #647](https://github.com/Doezer/Questarr/pull/647) | Fix Torznab/Prowlarr download URL rewrite to avoid proxy double-wrapping on host aliases | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #648](https://github.com/Doezer/Questarr/pull/648) | Add send logs | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #649](https://github.com/Doezer/Questarr/pull/649) | Add periodic downloader and indexer version logging | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #650](https://github.com/Doezer/Questarr/pull/650) | chore(deps): bump docker/setup-qemu-action from 4.0.0 to 4.1.0 | CLOSED | no-merge-commit | unreviewed |
-| [pr #651](https://github.com/Doezer/Questarr/pull/651) | chore(deps): bump docker/metadata-action from 6.0.0 to 6.1.0 | CLOSED | no-merge-commit | unreviewed |
-| [pr #652](https://github.com/Doezer/Questarr/pull/652) | chore(deps): bump react-hook-form from 7.76.1 to 7.77.0 in the react group | CLOSED | no-merge-commit | unreviewed |
-| [pr #653](https://github.com/Doezer/Questarr/pull/653) | chore(deps-dev): bump the dev-dependencies group with 6 updates | CLOSED | no-merge-commit | unreviewed |
-| [pr #654](https://github.com/Doezer/Questarr/pull/654) | chore(deps): bump js-yaml from 4.1.1 to 4.2.0 | CLOSED | no-merge-commit | unreviewed |
-| [pr #655](https://github.com/Doezer/Questarr/pull/655) | chore(deps): bump parse-torrent from 11.0.19 to 11.0.21 | CLOSED | no-merge-commit | unreviewed |
-| [pr #656](https://github.com/Doezer/Questarr/pull/656) | chore(deps): combine dependabot updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #657](https://github.com/Doezer/Questarr/pull/657) | feat: Add Deluge downloader support | CLOSED | no-merge-commit | unreviewed |
-| [pr #658](https://github.com/Doezer/Questarr/pull/658) | ⚡ Bolt: Optimize AddGameModal collection status lookup | CLOSED | no-merge-commit | unreviewed |
-| [pr #659](https://github.com/Doezer/Questarr/pull/659) | 🎨 Palette: Add ARIA label to Add Release Group button | CLOSED | no-merge-commit | unreviewed |
-| [pr #660](https://github.com/Doezer/Questarr/pull/660) | Chore: dependabot grouping config | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #661](https://github.com/Doezer/Questarr/pull/661) | Fix: retry verification when qBittorrent accepts URL but is pending | CLOSED | no-merge-commit | unreviewed |
+| [issue #646](https://github.com/Doezer/Questarr/issues/646) | torznab client double-wraps Prowlarr download URLs when host names alias (e.g. localhost vs 127.0.0.1) | CLOSED | no-merge-commit | verified |
+| [pr #647](https://github.com/Doezer/Questarr/pull/647) | Fix Torznab/Prowlarr download URL rewrite to avoid proxy double-wrapping on host aliases | MERGED | merge-commit-in-fork-history | verified |
+| [pr #648](https://github.com/Doezer/Questarr/pull/648) | Add send logs | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #649](https://github.com/Doezer/Questarr/pull/649) | Add periodic downloader and indexer version logging | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #650](https://github.com/Doezer/Questarr/pull/650) | chore(deps): bump docker/setup-qemu-action from 4.0.0 to 4.1.0 | CLOSED | no-merge-commit | superseded |
+| [pr #651](https://github.com/Doezer/Questarr/pull/651) | chore(deps): bump docker/metadata-action from 6.0.0 to 6.1.0 | CLOSED | no-merge-commit | superseded |
+| [pr #652](https://github.com/Doezer/Questarr/pull/652) | chore(deps): bump react-hook-form from 7.76.1 to 7.77.0 in the react group | CLOSED | no-merge-commit | superseded |
+| [pr #653](https://github.com/Doezer/Questarr/pull/653) | chore(deps-dev): bump the dev-dependencies group with 6 updates | CLOSED | no-merge-commit | superseded |
+| [pr #654](https://github.com/Doezer/Questarr/pull/654) | chore(deps): bump js-yaml from 4.1.1 to 4.2.0 | CLOSED | no-merge-commit | superseded |
+| [pr #655](https://github.com/Doezer/Questarr/pull/655) | chore(deps): bump parse-torrent from 11.0.19 to 11.0.21 | CLOSED | no-merge-commit | superseded |
+| [pr #656](https://github.com/Doezer/Questarr/pull/656) | chore(deps): combine dependabot updates | MERGED | merge-commit-in-fork-history | verified |
+| [pr #657](https://github.com/Doezer/Questarr/pull/657) | feat: Add Deluge downloader support | CLOSED | no-merge-commit | verified |
+| [pr #658](https://github.com/Doezer/Questarr/pull/658) | ⚡ Bolt: Optimize AddGameModal collection status lookup | CLOSED | no-merge-commit | verified |
+| [pr #659](https://github.com/Doezer/Questarr/pull/659) | 🎨 Palette: Add ARIA label to Add Release Group button | CLOSED | no-merge-commit | verified |
+| [pr #660](https://github.com/Doezer/Questarr/pull/660) | Chore: dependabot grouping config | MERGED | merge-commit-in-fork-history | verified |
+| [pr #661](https://github.com/Doezer/Questarr/pull/661) | Fix: retry verification when qBittorrent accepts URL but is pending | CLOSED | no-merge-commit | verified |
 | [pr #662](https://github.com/Doezer/Questarr/pull/662) | chore(deps): bump actions/checkout from 6.0.2 to 6.0.3 in the all-actions group | MERGED | merge-commit-in-fork-history | unreviewed |
 | [pr #663](https://github.com/Doezer/Questarr/pull/663) | Chore: move wiki submodule to .github/wiki | CLOSED | no-merge-commit | unreviewed |
 | [pr #664](https://github.com/Doezer/Questarr/pull/664) | chore(deps-dev): bump @types/node from 20.19.41 to 20.19.42 in the dev-dependencies group | MERGED | merge-commit-in-fork-history | unreviewed |

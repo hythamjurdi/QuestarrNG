@@ -361,6 +361,19 @@ describe("AddGameModal", () => {
     expect(screen.getByText("2024")).toBeInTheDocument();
   });
 
+  it("does not treat games without an IGDB ID as already in the collection", async () => {
+    setupFetch({
+      searchResults: [{ ...makeSearchResult("No ID Game"), igdbId: null }],
+      userGames: [{ ...makeSearchResult("Manually Added Game"), igdbId: null }],
+    });
+    renderModal({ initialQuery: "No ID Game" });
+    fireEvent.click(screen.getByTestId("open-btn"));
+
+    expect(
+      await screen.findByRole("button", { name: "Add No ID Game to collection" })
+    ).toBeVisible();
+  });
+
   it("shows the mobile add spinner while a game is being added", async () => {
     mockIsMobile = true;
 

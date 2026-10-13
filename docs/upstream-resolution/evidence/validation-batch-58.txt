@@ -1,0 +1,99 @@
+# Batch 58 validation — October 13, 2026
+
+Snapshot: upstream `main` `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`; 1,163
+source records (232 issues and 931 pull requests). This batch reviewed issue
+#646, PRs #647–661, and the outstanding live-verification step for issue #568.
+The full findings and per-item acceptance evidence are in `ledger.json`.
+
+## Focused tests
+
+- Torznab/Prowlarr URL alias regressions, including proxy and raw URL cases,
+  passed in the focused server group.
+- Send Logs redaction and transport behavior, downloader/indexer version
+  probes, Deluge and qBittorrent retry paths, and related async routes passed in
+  the focused server group: 11 files, 286 tests.
+- Add Game collection matching, release-group accessibility, Send Logs dialog,
+  and related client behavior passed in the focused client group: 7 files, 54
+  tests including the new Header accessible-name regression.
+- `npm run test -- client/__tests__/DownloadersPage.test.tsx`: 1 file, 18 tests
+  passed after the Deluge empty-state text was added.
+- `npm test -- --reporter=dot`: 262 files passed, 1 skipped; 4,174 tests passed,
+  7 skipped (4,181 total).
+- `npm run test:e2e`: 50 passed against a disposable SQLite database on a
+  task-owned port. Temporary E2E screenshots, auth state, and database files
+  were restored or removed after the run.
+- Dependabot YAML was parsed with the project YAML parser and an assertion
+  confirmed the `github-actions` `all-actions` group contains the `*` pattern.
+
+## Running UI checks
+
+`npm run dev:test` ran in a temporary worktree at port 51996 with its own
+SQLite test database. The temporary worktree used the reviewed Add Game,
+Header, and Downloader UI files; its test-only port override stayed outside the
+campaign checkout. The unrelated service on port 5100 was left untouched.
+
+The Add Game drawer was opened at 390×844 and rendered without horizontal
+overflow. The Send Logs dialog, Deluge configuration form, and preferred
+release-group settings were also opened and visually inspected. Evidence:
+
+- [Mobile Add Game drawer](batch-58-mobile-add-game-drawer.png)
+- [Send Logs privacy preview](batch-58-send-logs-dialog.png)
+- [Deluge downloader settings](batch-58-deluge-settings.png)
+- [Preferred release-group settings](batch-58-release-group-accessibility.png)
+
+The Send Logs screen was not submitted; all collector requests were mocked in
+tests. No private support logs were uploaded. The development browser showed a
+non-fatal React script-tag console warning, with no page exception or mobile
+width overflow.
+
+## Live Deluge integration
+
+Deluge 2.2.0 ran in an isolated Docker network. Questarr authenticated, used
+WebUI auto-connect, recognized the enabled Label plugin, added and listed a
+synthetic magnet, applied and read back the `questarr-batch58` label, accepted
+an empty `files: []` response, and paused, resumed, and removed the torrent.
+The test magnet did not contact any tracker. The test container, network, and
+configuration were removed, and host port 58112 was confirmed free. This live
+protocol evidence upgrades issue #568 and verifies PR #657; the UI screenshot
+shows how users configure the Deluge client.
+
+## Repository checks
+
+The following checks passed after the final code changes:
+
+- `npm run check` (TypeScript)
+- `npm run lint`
+- `npm run format:check`
+- `npm run secretlint`
+- `npm run build` (Vite's existing large-chunk advisory remains)
+- `npm run check:overrides` (all current overrides remain needed)
+- `npm run check:licenses` (418 production package versions allowed)
+- `npm run check:deprecated` (exit 0; reports three inherited deprecated
+  transitive packages: `@esbuild-kit/core-utils@3.3.2`,
+  `@esbuild-kit/esm-loader@2.6.5`, and `node-domexception@1.0.0`)
+- `npm run audit:prod` (no high-or-higher advisories outside the VEX feed)
+- `node scripts/check-release-notes.mjs` (the new user-facing fragment validated
+  after commit)
+- `git diff --check`
+
+The production audit wrapper now runs `npm audit --omit=dev --ignore-scripts`
+and removes the inherited user-level npm `allow-scripts` variables from its
+child environment. This avoids npm 11's `EALLOWSCRIPTS` rejection while keeping
+lifecycle scripts disabled for the audit subprocess. The audit reported zero
+production advisories in the current report.
+
+## Scratch and limits
+
+Task scratch was scoped to
+`/home/keith/Documents/code/questarr-batch58-scratch` on local storage; the
+LVM-backed NFS share was not used for this batch. The temporary UI worktree,
+test database, browser profile and outputs, review exports, audit output, and
+E2E artifacts were removed after final validation. The task scratch directory
+was also removed. Existing user files and the unrelated port-5100 service were
+preserved.
+
+The Send Logs collector was not exercised with real logs or a real support
+account. Its payload safety and error behavior are verified with tests, and its
+reviewable privacy explanation was checked in the running UI. The live Deluge
+coverage used an isolated daemon and synthetic magnet; it did not test a user's
+production daemon or external tracker connectivity.

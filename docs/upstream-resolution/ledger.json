@@ -16231,18 +16231,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "implemented-unverified",
+        "status": "verified",
         "findings": [
-          "The Deluge adapter and status mapping are present, including regression coverage for a benign tracker message of OK; the fork has no live Deluge daemon configured for protocol-level verification."
+          "Deluge authentication and WebUI auto-connection work against a live Deluge 2.2.0 daemon; the Label plugin, torrent lifecycle, and Questarr category label were exercised end to end."
         ],
         "acceptance": [
-          "Mocked tests cover authentication, adding a torrent, status mapping, and the benign OK tracker message.",
-          "Still required: connect to a supported Deluge daemon and verify authentication, a download request, and status updates end to end."
+          "Connect and authenticate to a supported Deluge service, add and list a synthetic magnet, apply and read back its Questarr label, handle an empty file list, pause and resume it, and remove it.",
+          "The live test must not contact external trackers and must clean up its service and port."
         ],
         "evidence": [
-          "server/downloaders/deluge.ts; server/__tests__/downloaders_deluge.test.ts; server/__tests__/downloaders_deluge_remaining.test.ts; docs/upstream-resolution/evidence/validation-batch-52.txt"
+          "server/downloaders/deluge.ts; server/__tests__/downloaders_deluge.test.ts; server/__tests__/downloaders_deluge_remaining.test.ts; docs/upstream-resolution/evidence/validation-batch-58.txt"
         ],
-        "dependencies": []
+        "dependencies": [
+          "pr:657"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18594,10 +18596,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Torznab proxy URL rewriting now recognizes equivalent host aliases and avoids wrapping a Prowlarr proxy URL twice."
+        ],
+        "acceptance": [
+          "Cover localhost versus 127.0.0.1, container IP aliases, proxy scheme and port, UrlBase, reverse-proxy paths, and external raw URLs."
+        ],
+        "evidence": [
+          "server/torznab.ts; server/__tests__/torznab.test.ts; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18614,11 +18622,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "34b3276c83975af92e0e2cb5a36f05a46d90c4b8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The Prowlarr/Torznab rewrite uses normalized URL identity so host aliases do not produce a double-wrapped download URL."
+        ],
+        "acceptance": [
+          "Regression tests cover host aliases and preserve expected reverse-proxy and external raw URL behavior."
+        ],
+        "evidence": [
+          "server/torznab.ts; server/__tests__/torznab.test.ts; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
+        "dependencies": [
+          "issue:646"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18634,10 +18650,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "91f3511f9bf5942e595d23af25334c263b14532b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Send Logs flow previews the upload scope, scrubs sensitive values, and submits through the support collector client with bounded failure handling and a restrictive CSP allowlist. The UI was exercised, but no actual logs were sent."
+        ],
+        "acceptance": [
+          "Tests cover redaction boundaries, timestamps, IPv6 and malformed response cases, clipboard absence, collector errors and rate limits; the dialog explains what is shared and where it is stored."
+        ],
+        "evidence": [
+          "client/src/components/SendLogsDialog.tsx; client/src/lib/send-logs.ts; client/__tests__/SendLogsDialog.test.tsx; client/__tests__/send-logs.test.ts; docs/upstream-resolution/evidence/batch-58-send-logs-dialog.png; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18654,10 +18676,16 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "0cd8da1192a26cbafc6c9a41b194b66f08a018d1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Periodic version checks record downloader and indexer versions; API paths are normalized for Torznab and Newznab, and outbound requests use the safe-fetch boundary."
+        ],
+        "acceptance": [
+          "Focused version-probe tests cover supported clients, descriptor responses, URL paths, and safe outbound requests."
+        ],
+        "evidence": [
+          "server/cron.ts; server/downloaders/manager.ts; server/torznab.ts; server/newznab.ts; server/__tests__/torznab.test.ts; server/__tests__/newznab.test.ts; server/__tests__/downloaders.test.ts; server/__tests__/downloaders_deluge_remaining.test.ts; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18674,11 +18702,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested setup-qemu-action update is included in merged roll-up PR #656; the current workflow pins a newer v4.2.0 action revision."
+        ],
+        "acceptance": [
+          "Confirm the active workflow uses an immutable action SHA at a version newer than the requested v4.1.0."
+        ],
+        "evidence": [
+          ".github/workflows; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
+        "dependencies": [
+          "pr:656"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18694,11 +18730,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested metadata-action update is included in merged roll-up PR #656; the current workflow pins v6.2.0 by immutable SHA."
+        ],
+        "acceptance": [
+          "Confirm the active workflow uses an immutable action SHA at a version newer than the requested v6.1.0."
+        ],
+        "evidence": [
+          ".github/workflows; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
+        "dependencies": [
+          "pr:656"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18714,11 +18758,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested react-hook-form bump is included in merged roll-up PR #656; the current manifest and lockfile resolve to a later 7.89.0 release."
+        ],
+        "acceptance": [
+          "Confirm the declared and locked versions exceed the requested 7.77.0 target."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
+        "dependencies": [
+          "pr:656"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18734,11 +18786,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested development dependency group is included in merged roll-up PR #656 and the current lockfile contains later resolved versions."
+        ],
+        "acceptance": [
+          "Confirm the requested development dependency updates are represented by the current dependency state."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
+        "dependencies": [
+          "pr:656"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18754,11 +18814,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested js-yaml 4.2.0 bump is included in merged roll-up PR #656; current package metadata targets a later 5.4.2 release."
+        ],
+        "acceptance": [
+          "Confirm the current declared and locked js-yaml versions exceed the requested 4.2.0 target."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
+        "dependencies": [
+          "pr:656"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18774,11 +18842,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested parse-torrent 11.0.21 bump is included in merged roll-up PR #656; current package metadata targets 11.0.24."
+        ],
+        "acceptance": [
+          "Confirm the current declared and locked parse-torrent versions exceed the requested 11.0.21 target."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
+        "dependencies": [
+          "pr:656"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18794,10 +18870,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3b5628951ae31cfc6fa2d01a19b492d9fda5cbfe",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The dependency roll-up is reflected in current package manifests, lockfile resolutions, and immutable workflow action pins; the requested targets are present or superseded by later versions."
+        ],
+        "acceptance": [
+          "Validate the listed dependency and workflow changes against current declarations, lockfile state, and action revisions."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; .github/workflows; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18814,11 +18896,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Deluge 2.2.0 was tested live inside an isolated Docker network: authentication, WebUI auto-connection, the Label plugin, synthetic magnet add/list, Questarr label application/read-back, empty files, pause/resume, and removal all worked. No tracker was contacted."
+        ],
+        "acceptance": [
+          "Authenticate to a supported Deluge daemon, add and inspect a synthetic torrent, apply and read back a category label, handle empty files, pause/resume/remove, and clean up the test service."
+        ],
+        "evidence": [
+          "server/downloaders/deluge.ts; server/__tests__/downloaders_deluge.test.ts; server/__tests__/downloaders_deluge_remaining.test.ts; docs/upstream-resolution/evidence/validation-batch-58.txt; docs/upstream-resolution/evidence/batch-58-deluge-settings.png"
+        ],
+        "dependencies": [
+          "issue:568"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -18834,10 +18924,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "AddGameModal builds a Set for collection membership checks rather than repeatedly scanning the collection, and filters missing IGDB identifiers so unrelated null IDs do not count as a match. A stable empty-array default preserves memoization before query data arrives."
+        ],
+        "acceptance": [
+          "Regression tests verify collection matching and that search results with a null IGDB ID remain addable when existing games also have null IDs."
+        ],
+        "evidence": [
+          "client/src/components/AddGameModal.tsx; client/__tests__/AddGameModal.test.tsx; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18854,10 +18950,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Add preferred release group control has the accessible name requested by the PR and is covered by a role-based assertion. The settings view was captured while running."
+        ],
+        "acceptance": [
+          "Verify the add-group control exposes a descriptive accessible name and is reachable through the rendered Settings view."
+        ],
+        "evidence": [
+          "client/src/components/PreferredReleaseGroupsSettings.tsx; client/__tests__/ReleaseFilterSettings.test.tsx; docs/upstream-resolution/evidence/batch-58-release-group-accessibility.png; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18874,10 +18976,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0d254c893e5392f918c38bd16ebdd38e9d3a478b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Dependabot groups GitHub Actions updates under an all-actions group with a wildcard package pattern."
+        ],
+        "acceptance": [
+          "Parse the YAML and assert the github-actions update group contains the all-actions wildcard pattern."
+        ],
+        "evidence": [
+          ".github/dependabot.yml; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -18894,10 +19002,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "When qBittorrent accepts a URL but the torrent is not immediately visible, status polling continues through transient lookup errors and does not upload the same torrent again."
+        ],
+        "acceptance": [
+          "Regression test confirms the pending accepted request retries verification, returns the accepted-but-unconfirmed result after its bounded polling attempts, and never falls back to a duplicate upload."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts; server/__tests__/downloaders_qbittorrent_remaining.test.ts; server/__tests__/downloaders_qbittorrent_regression.test.ts; docs/upstream-resolution/evidence/validation-batch-58.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
