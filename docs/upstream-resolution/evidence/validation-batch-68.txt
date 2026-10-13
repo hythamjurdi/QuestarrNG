@@ -102,7 +102,7 @@ bundle check passed. The HTML and JSON reports were kept in task scratch for
 triage and removed during cleanup.
 
 The corresponding GitHub-hosted workflow was also dispatched against the same
-commit: [run 38472863000](https://github.com/snapetech/QuestarrNG/actions/runs/38472863000).
+commit: [run 38472863000](https://github.com/snapetech-org/QuestarrNG/actions/runs/38472863000).
 As of `2026-10-13T21:55:01Z`, GitHub reported it as `queued` with no job yet
 assigned. This is recorded as pending remote confirmation, not as a successful
 hosted workflow run. The local production scan above completed successfully.

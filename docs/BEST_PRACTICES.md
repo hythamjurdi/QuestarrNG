@@ -107,7 +107,7 @@ For Batch 68, a local ZAP 2.17.0 baseline scan of the production build on
 campaign commit `8e393aa3` used the checked-in rules and returned zero new
 WARN/FAIL alerts (62 PASS, 5 IGNORE). The production-bundle syntax check also
 passed. The matching GitHub-hosted follow-up run
-[38472863000](https://github.com/snapetech/QuestarrNG/actions/runs/38472863000)
+[38472863000](https://github.com/snapetech-org/QuestarrNG/actions/runs/38472863000)
 was queued at the time of recording; the prior linked workflow remains the
 latest successful hosted scan. Full details are in the
 [Batch 68 validation record](upstream-resolution/evidence/validation-batch-68.txt).
