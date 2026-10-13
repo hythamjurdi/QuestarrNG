@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import CalendarPage from "../src/pages/calendar";
 import { createTestQueryClient, getRequestUrl } from "./test-utils";
+import { setInterfaceLanguage } from "@/lib/interface-locale";
+import { setRegionalPreference } from "@/lib/regional-format";
 
 vi.mock("@/components/GameDownloadDialog", () => ({
   default: ({ open, game }: { open: boolean; game: { title: string } | null }) =>
@@ -93,10 +95,18 @@ describe("CalendarPage", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-05-29T12:00:00Z"));
     vi.clearAllMocks();
+    act(() => {
+      setInterfaceLanguage("en");
+      setRegionalPreference("system");
+    });
     mockGamesFetch([]);
   });
 
   afterEach(() => {
+    act(() => {
+      setInterfaceLanguage("en");
+      setRegionalPreference("system");
+    });
     vi.useRealTimers();
   });
 
@@ -195,5 +205,32 @@ describe("CalendarPage", () => {
       expect(dayCell?.className).not.toContain("border-primary/60");
       expect(dayCell?.className).not.toContain("bg-primary/5");
     });
+  });
+
+  it("keeps regional date and interface language metadata separate in month day labels", async () => {
+    act(() => {
+      setInterfaceLanguage("ar");
+      setRegionalPreference("ja");
+    });
+    mockGamesFetch([
+      { ...baseGame, id: "game-1", releaseDate: "2026-05-29" },
+      { ...baseGame, id: "game-2", title: "Space Quest II", releaseDate: "2026-05-29" },
+    ]);
+
+    renderPage();
+    fireEvent.change(await screen.findByRole("combobox", { name: "Calendar view" }), {
+      target: { value: "month" },
+    });
+
+    const dayButton = await screen.findByRole("button", { name: /إصداران/u });
+    const labelledByIds = dayButton.getAttribute("aria-labelledby")?.split(" ") ?? [];
+    expect(dayButton).not.toHaveAttribute("aria-label");
+    expect(labelledByIds).toHaveLength(2);
+
+    const [dateLabel, releaseLabel] = labelledByIds.map((id) => document.getElementById(id));
+    expect(dateLabel).toHaveAttribute("lang", "ja");
+    expect(dateLabel).toHaveAttribute("dir", "ltr");
+    expect(releaseLabel).toHaveAttribute("lang", "ar");
+    expect(releaseLabel).toHaveAttribute("dir", "rtl");
   });
 });

@@ -919,7 +919,6 @@ export default function Downloads() {
                         },
                         regionalPreference
                       )}
-                      %
                     </span>
                   </div>
                   <Progress

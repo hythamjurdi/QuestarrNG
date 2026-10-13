@@ -1,13 +1,14 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 /** @vitest-environment jsdom */
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Downloads from "../src/pages/downloads";
 import { createTestQueryClient, getRequestUrl } from "./test-utils";
+import { formatRegionalPercent, setRegionalPreference } from "@/lib/regional-format";
 
 const toastSpy = vi.fn();
 
@@ -86,7 +87,12 @@ describe("Downloads page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     toastSpy.mockReset();
+    act(() => setRegionalPreference("system"));
     mockDownloadsFetch({ downloads: [], errors: [] });
+  });
+
+  afterEach(() => {
+    act(() => setRegionalPreference("system"));
   });
 
   const renderPage = () =>
@@ -199,6 +205,33 @@ describe("Downloads page", () => {
         "No downloads match the current filters"
       );
     });
+  });
+
+  it("renders one locale-formatted percent sign for download progress", async () => {
+    act(() => setRegionalPreference("es"));
+    mockDownloadsFetch({
+      downloads: [
+        {
+          id: "dl-progress",
+          name: "Localized progress",
+          status: "downloading",
+          progress: 55,
+          downloaderId: "downloader-1",
+          downloaderName: "qBittorrent",
+          trackedByQuestarr: true,
+          downloaderCategory: "questarr",
+          downloadType: "torrent",
+        },
+      ],
+      errors: [],
+    });
+
+    renderPage();
+
+    const progressValue = await screen.findByTestId("text-progress-value-dl-progress");
+    expect(progressValue.textContent).toBe(
+      formatRegionalPercent(55, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, "es")
+    );
   });
 
   it("shows the loading skeleton before downloads resolve", async () => {

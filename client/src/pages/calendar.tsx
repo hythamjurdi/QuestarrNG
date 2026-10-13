@@ -6,7 +6,7 @@ import {
   useRegionalPreference,
 } from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
-import { useState, useMemo, useEffect } from "react";
+import { useId, useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -478,6 +478,7 @@ function MonthView({
   today: Date;
 }) {
   const { t, languageFor, directionFor } = useInterfaceLanguage();
+  const labelIdPrefix = useId();
   const regionalLocale = getRegionalLanguage();
   const regionalDirection = getRegionalDirection(regionalLocale);
   const year = currentDate.getFullYear();
@@ -541,8 +542,10 @@ function MonthView({
             gamesOnDay.length === 2
               ? t(releaseCountSource)
               : `${formatRegionalNumber(gamesOnDay.length)} ${t(releaseCountSource)}`;
-          const mobileButtonLabel =
-            gamesOnDay.length > 0 ? formattedDayLabel + ", " + releaseLabel : formattedDayLabel;
+          const dateLabelId = `${labelIdPrefix}-${dateKey}-date`;
+          const releaseLabelId = `${labelIdPrefix}-${dateKey}-releases`;
+          const mobileLabelledBy =
+            gamesOnDay.length > 0 ? `${dateLabelId} ${releaseLabelId}` : dateLabelId;
 
           return (
             <div
@@ -562,10 +565,28 @@ function MonthView({
                   "w-full text-start md:pointer-events-none",
                   gamesOnDay.length > 0 ? "cursor-pointer" : "cursor-default"
                 )}
-                aria-label={mobileButtonLabel}
-                lang={gamesOnDay.length > 0 ? languageFor(releaseCountSource) : regionalLocale}
-                dir={gamesOnDay.length > 0 ? directionFor(releaseCountSource) : regionalDirection}
+                aria-labelledby={mobileLabelledBy}
+                lang={regionalLocale}
+                dir={regionalDirection}
               >
+                <span
+                  id={dateLabelId}
+                  className="sr-only"
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {formattedDayLabel}
+                </span>
+                {gamesOnDay.length > 0 && (
+                  <span
+                    id={releaseLabelId}
+                    className="sr-only"
+                    lang={languageFor(releaseCountSource)}
+                    dir={directionFor(releaseCountSource)}
+                  >
+                    {releaseLabel}
+                  </span>
+                )}
                 <div
                   className={cn(
                     "text-xs md:text-sm font-medium mb-0.5 md:mb-2",
