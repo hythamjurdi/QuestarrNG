@@ -1,4 +1,4 @@
-import { getRegionalCollator } from "@/lib/regional-format";
+import { getRegionalCollator, useRegionalPreference } from "@/lib/regional-format";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Gamepad2 } from "lucide-react";
@@ -23,8 +23,14 @@ const SORT_OPTIONS = [
   { value: "title-asc", label: "Title (A-Z)" },
 ];
 
-function sortGames(gameList: Game[], currentSortBy: SortOption): Game[] {
+function sortGames(
+  gameList: Game[],
+  currentSortBy: SortOption,
+  regionalPreference: string
+): Game[] {
   const sorted = [...gameList];
+  const titleCollator =
+    currentSortBy === "title-asc" ? getRegionalCollator(undefined, regionalPreference) : null;
   return sorted.sort((a, b) => {
     switch (currentSortBy) {
       case "added-desc":
@@ -32,7 +38,7 @@ function sortGames(gameList: Game[], currentSortBy: SortOption): Game[] {
       case "added-asc":
         return compareDates(a.addedAt, b.addedAt, true);
       case "title-asc":
-        return getRegionalCollator().compare(a.title, b.title);
+        return titleCollator!.compare(a.title, b.title);
       default:
         return 0;
     }
@@ -40,6 +46,7 @@ function sortGames(gameList: Game[], currentSortBy: SortOption): Game[] {
 }
 
 export default function PlayingPage() {
+  const regionalPreference = useRegionalPreference();
   const [sortBy, setSortBy] = useState<SortOption>("added-desc");
   const { viewMode, setViewMode, listDensity, setListDensity } = useViewControls("playing");
   const [showDownloadsOnly, setShowDownloadsOnly] = useState(false);
@@ -68,7 +75,10 @@ export default function PlayingPage() {
     return { filteredGames: filtered, filteredCount: filtered.length };
   }, [games, showSearchResultsOnly, showDownloadsOnly, downloadSummaries, searchQuery]);
 
-  const sortedGames = useMemo(() => sortGames(filteredGames, sortBy), [filteredGames, sortBy]);
+  const sortedGames = useMemo(
+    () => sortGames(filteredGames, sortBy, regionalPreference),
+    [filteredGames, sortBy, regionalPreference]
+  );
 
   const emptyStateContent = useMemo(() => {
     if (searchQuery) {

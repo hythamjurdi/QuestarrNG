@@ -162,8 +162,8 @@ function getRegionWeekStartsOn(locale: string): number | undefined {
   return 1;
 }
 
-function getCurrentLocale(): string {
-  const regionalLocale = getRegionalLocale();
+function getCurrentLocale(preference = getRegionalPreference()): string {
+  const regionalLocale = getRegionalLocale(preference);
   if (regionalLocale) return regionalLocale;
 
   try {
@@ -185,16 +185,51 @@ function getDateFnsLocale(locale: string): RegionalDateFnsLocale | undefined {
   return dateFnsLocales[language as keyof typeof dateFnsLocales];
 }
 
-export function getRegionalLocale(): string | undefined {
-  return activeRegionalPreference === "system" ? undefined : activeRegionalPreference;
+export function getRegionalLocale(preference = getRegionalPreference()): string | undefined {
+  return preference === "system" ? undefined : preference;
 }
 
-export function getRegionalCollator(options?: Intl.CollatorOptions): Intl.Collator {
-  return new Intl.Collator(getCurrentLocale(), { sensitivity: "base", ...options });
+const rightToLeftScripts = new Set([
+  "Adlm",
+  "Arab",
+  "Hebr",
+  "Mand",
+  "Mend",
+  "Nkoo",
+  "Rohg",
+  "Samr",
+  "Syrc",
+  "Thaa",
+  "Yezi",
+]);
+
+const rightToLeftLanguages = new Set(["ar", "ckb", "fa", "he", "ks", "ps", "sd", "ug", "ur", "yi"]);
+
+export function getRegionalDirection(locale: string): "ltr" | "rtl" {
+  try {
+    if (rightToLeftScripts.has(new Intl.Locale(locale).maximize().script ?? "")) return "rtl";
+  } catch {
+    // Fall back to the language subtag for older runtimes or malformed locales.
+  }
+
+  return rightToLeftLanguages.has(locale.replaceAll("_", "-").split("-")[0]?.toLowerCase() ?? "")
+    ? "rtl"
+    : "ltr";
 }
 
-export function formatRegionalNumber(value: number, options?: Intl.NumberFormatOptions): string {
-  return new Intl.NumberFormat(getCurrentLocale(), options).format(value);
+export function getRegionalCollator(
+  options?: Intl.CollatorOptions,
+  preference = getRegionalPreference()
+): Intl.Collator {
+  return new Intl.Collator(getCurrentLocale(preference), { sensitivity: "base", ...options });
+}
+
+export function formatRegionalNumber(
+  value: number,
+  options?: Intl.NumberFormatOptions,
+  preference = getRegionalPreference()
+): string {
+  return new Intl.NumberFormat(getCurrentLocale(preference), options).format(value);
 }
 
 export function getRegionalDateFnsLocale(): RegionalDateFnsLocale | undefined {

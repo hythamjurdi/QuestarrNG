@@ -29,6 +29,8 @@ interface PageToolbarProps {
   search?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+  searchLang?: string;
+  searchDir?: "ltr" | "rtl";
   /** Content rendered in the filter row (filter pills, custom toggles). */
   filterPills?: React.ReactNode;
   /** Sort select. Rendered when sortOptions is non-empty. */
@@ -47,6 +49,8 @@ export default function PageToolbar({
   search,
   onSearchChange,
   searchPlaceholder = "Search...",
+  searchLang,
+  searchDir,
   filterPills,
   sortValue,
   onSortChange,
@@ -73,6 +77,8 @@ export default function PageToolbar({
               placeholder={searchPlaceholder}
               className="h-10 pl-9 pr-8 text-sm sm:h-8"
               aria-label={searchPlaceholder}
+              lang={searchLang}
+              dir={searchDir}
             />
             {search && (
               <Button

@@ -61,8 +61,14 @@ const compareNumbers = (
   return 0;
 };
 
-export function sortLibraryGames(gameList: Game[], sortBy: LibrarySortOption): Game[] {
+export function sortLibraryGames(
+  gameList: Game[],
+  sortBy: LibrarySortOption,
+  regionalPreference?: string
+): Game[] {
   const sorted = [...gameList];
+  const titleCollator =
+    sortBy === "title-asc" ? getRegionalCollator(undefined, regionalPreference) : undefined;
 
   return sorted.sort((a, b) => {
     switch (sortBy) {
@@ -77,7 +83,7 @@ export function sortLibraryGames(gameList: Game[], sortBy: LibrarySortOption): G
       case "rating-desc":
         return compareNumbers(a.userRating, b.userRating, false);
       case "title-asc":
-        return getRegionalCollator().compare(a.title, b.title);
+        return titleCollator!.compare(a.title, b.title);
       default:
         return 0;
     }

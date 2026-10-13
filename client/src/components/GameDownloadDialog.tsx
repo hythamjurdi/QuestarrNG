@@ -246,6 +246,20 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       {translateText(source, values)}
     </span>
   );
+  const localizedMultiSelectProps = (placeholderSource: string) => ({
+    placeholder: t(placeholderSource),
+    lang: languageFor(placeholderSource),
+    dir: directionFor(placeholderSource),
+    searchPlaceholder: translateText("Search..."),
+    searchLang: languageFor("Search..."),
+    searchDir: directionFor("Search..."),
+    emptyMessage: translateText("No items found."),
+    emptyLang: languageFor("No items found."),
+    emptyDir: directionFor("No items found."),
+    removeLabel: (label: string) => translateText("Remove {name}", { name: label }),
+    removeLang: languageFor("Remove {name}"),
+    removeDir: directionFor("Remove {name}"),
+  });
   const categoryLabel = (category: DownloadCategory) => localizedText(getCategoryLabel(category));
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -861,10 +875,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       <div className="space-y-2">
         <Label className="text-sm">{localizedText("Release Groups")}</Label>
         <MultiSelect
+          {...localizedMultiSelectProps("Select groups...")}
           options={availableGroups.map((g) => ({ label: g as string, value: g as string }))}
           selected={selectedGroups}
           onChange={setSelectedGroups}
-          placeholder={t("Select groups...")}
           className="w-full"
         />
       </div>
@@ -872,12 +886,12 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       <div className="space-y-2">
         <Label className="text-sm">{localizedText("Platform")}</Label>
         <MultiSelect
+          {...localizedMultiSelectProps(
+            availablePlatforms.length === 0 ? "No platforms detected" : "All platforms"
+          )}
           options={availablePlatforms}
           selected={selectedPlatforms}
           onChange={setSelectedPlatforms}
-          placeholder={t(
-            availablePlatforms.length === 0 ? "No platforms detected" : "All platforms"
-          )}
           className="w-full"
           disabled={availablePlatforms.length === 0}
         />
@@ -976,10 +990,14 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
             <CardTitle>{localizedText("No Results Found")}</CardTitle>
             <CardDescription>
               {searchResults.blacklistedCount
-                ? localizedText(
-                    "All {count} results are blacklisted. Review the blacklist in game settings.",
-                    { count: searchResults.blacklistedCount }
-                  )
+                ? searchResults.blacklistedCount === 1
+                  ? localizedText(
+                      "This result is blacklisted. Review the blacklist in game settings."
+                    )
+                  : localizedText(
+                      "All {count} results are blacklisted. Review the blacklist in game settings.",
+                      { count: searchResults.blacklistedCount }
+                    )
                 : localizedText(
                     "No downloads found for this game. Try configuring indexers in settings."
                   )}
@@ -1264,6 +1282,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                         }
                                         className="h-9 w-9 hover:bg-primary hover:text-primary-foreground transition-all"
                                         aria-label={`${translateText("Download")} ${download.title.replace(/[._]/g, " ")}`}
+                                        lang={languageFor("Download")}
+                                        dir={directionFor("Download")}
                                       >
                                         {downloadingGuid === (download.guid || download.link) ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -1448,6 +1468,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                     disabled={downloadingGuid === (download.guid || download.link)}
                                     className="h-9 w-9 hover:bg-primary hover:text-primary-foreground transition-all"
                                     aria-label={`${translateText("Download")} ${download.title.replace(/[._]/g, " ")}`}
+                                    lang={languageFor("Download")}
+                                    dir={directionFor("Download")}
                                   >
                                     {downloadingGuid === (download.guid || download.link) ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1495,14 +1517,22 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
 
   const bundleDialog = (
     <AlertDialog open={showBundleDialog} onOpenChange={setShowBundleDialog}>
-      <AlertDialogContent className="max-w-2xl">
+      <AlertDialogContent className="max-w-2xl" dir={directionFor("Download")}>
         <AlertDialogHeader>
           <AlertDialogTitle>{localizedText("Download with Updates?")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {localizedText(
-              "{count} updates are available for this game. Select which ones to download with the main game.",
-              { count: filteredCategorizedDownloads.update.length }
-            )}
+            {filteredCategorizedDownloads.update.length === 1
+              ? localizedText(
+                  "One update is available for this game. Select whether to download it with the main game."
+                )
+              : filteredCategorizedDownloads.update.length === 2
+                ? localizedText(
+                    "Two updates are available for this game. Select whether to download them with the main game."
+                  )
+                : localizedText(
+                    "{count} updates are available for this game. Select which ones to download with the main game.",
+                    { count: filteredCategorizedDownloads.update.length }
+                  )}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -1563,7 +1593,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
               </ScrollArea>
             </div>
             <div className="text-xs text-muted-foreground mt-2">
-              {localizedText("{count} of {total} updates selected", {
+              {localizedText("Selection: {count}/{total}", {
                 count: selectedUpdateIndices.size,
                 total: filteredCategorizedDownloads.update.length,
               })}
@@ -1590,7 +1620,13 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
             disabled={selectedUpdateIndices.size === 0}
           >
             <PackagePlus className="w-4 h-4 mr-2" />
-            {localizedText("Download with {count} updates", { count: selectedUpdateIndices.size })}
+            {selectedUpdateIndices.size === 1
+              ? localizedText("Download with one update")
+              : selectedUpdateIndices.size === 2
+                ? localizedText("Download with two updates")
+                : localizedText("Download with {count} updates", {
+                    count: selectedUpdateIndices.size,
+                  })}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -1603,7 +1639,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     return (
       <>
         <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
-          <DrawerContent className="h-[95vh] flex flex-col">
+          <DrawerContent className="h-[95vh] flex flex-col" dir={directionFor("Download")}>
             <DrawerHeader className="pt-2 pb-0 px-4 flex-shrink-0">
               <DrawerTitle className="text-base font-bold truncate">
                 {localizedText("Download")} {game.title}
@@ -1632,7 +1668,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col ">
+        <DialogContent
+          className="max-w-6xl max-h-[90vh] flex flex-col"
+          dir={directionFor("Download")}
+        >
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               {localizedText("Download")} {game.title}

@@ -1,7 +1,9 @@
 import {
   formatRegionalNumber,
+  getRegionalDirection as getLocaleDirection,
   getRegionalLocale,
   getRegionalWeekStartsOn,
+  useRegionalPreference,
 } from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
 import { useState, useMemo, useEffect } from "react";
@@ -40,6 +42,25 @@ export function formatDate(date: Date): string {
 
 function getMonthName(month: number): string {
   return new Date(2000, month, 1).toLocaleDateString(getRegionalLocale(), { month: "long" });
+}
+
+function getRegionalLanguage(): string {
+  return (
+    getRegionalLocale() ?? (typeof navigator === "undefined" ? "en" : navigator.language || "en")
+  );
+}
+
+function getRegionalDirection(locale = getRegionalLanguage()): "ltr" | "rtl" {
+  return getLocaleDirection(locale);
+}
+
+function LocalizedText({ source }: { source: string }) {
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
+  return (
+    <span lang={languageFor(source)} dir={directionFor(source)}>
+      {t(source)}
+    </span>
+  );
 }
 
 export function getWeekDays(date: Date, weekStartsOn: number = getRegionalWeekStartsOn()): Date[] {
@@ -86,7 +107,10 @@ export function getDaysInMonth(
 }
 
 export default function CalendarPage() {
-  const { language, t } = useInterfaceLanguage();
+  const { language, t, languageFor, directionFor } = useInterfaceLanguage();
+  useRegionalPreference();
+  const regionalLocale = getRegionalLanguage();
+  const regionalDirection = getRegionalDirection(regionalLocale);
   const [viewMode, setViewMode] = useState<ViewMode>("year");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
@@ -203,6 +227,7 @@ export default function CalendarPage() {
     });
     return formatter.format(weekDays[0]!) + " – " + formatter.format(weekDays[6]!);
   };
+  const viewModeLabel = viewMode === "year" ? "Year" : viewMode === "month" ? "Month" : "Week";
 
   if (config && !config.igdb.configured) {
     return (
@@ -210,14 +235,16 @@ export default function CalendarPage() {
         <div className="bg-muted p-4 rounded-full">
           <AlertCircle className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h2 className="text-2xl font-bold">{t("IGDB Configuration Required")}</h2>
+        <h2 className="text-2xl font-bold">
+          <LocalizedText source="IGDB Configuration Required" />
+        </h2>
         <p className="text-muted-foreground max-w-md">
-          {t(
-            "To track game release dates and view the calendar, you need to configure your IGDB credentials in the settings."
-          )}
+          <LocalizedText source="To track game release dates and view the calendar, you need to configure your IGDB credentials in the settings." />
         </p>
         <Link href="/settings">
-          <Button>{t("Go to Settings")}</Button>
+          <Button>
+            <LocalizedText source="Go to Settings" />
+          </Button>
         </Link>
       </div>
     );
@@ -227,16 +254,24 @@ export default function CalendarPage() {
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="space-y-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("Release Calendar")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            <LocalizedText source="Release Calendar" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {t("Track upcoming game releases.")}
+            <LocalizedText source="Track upcoming game releases." />
           </p>
         </div>
         <PageToolbar
           search={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder={t("Filter games...")}
-          filterPills={<span className="text-base font-semibold">{getTitle()}</span>}
+          searchLang={languageFor("Filter games...")}
+          searchDir={directionFor("Filter games...")}
+          filterPills={
+            <span className="text-base font-semibold" lang={regionalLocale} dir={regionalDirection}>
+              {getTitle()}
+            </span>
+          }
           actions={
             <>
               <Button
@@ -244,6 +279,8 @@ export default function CalendarPage() {
                 size="icon"
                 onClick={navigatePrevious}
                 aria-label={t("Previous period")}
+                lang={languageFor("Previous period")}
+                dir={directionFor("Previous period")}
               >
                 {language === "ar" ? (
                   <ChevronRight className="h-5 w-5" />
@@ -256,6 +293,8 @@ export default function CalendarPage() {
                 size="icon"
                 onClick={navigateNext}
                 aria-label={t("Next period")}
+                lang={languageFor("Next period")}
+                dir={directionFor("Next period")}
               >
                 {language === "ar" ? (
                   <ChevronLeft className="h-5 w-5" />
@@ -265,16 +304,26 @@ export default function CalendarPage() {
               </Button>
               <div className="w-px h-5 bg-border" />
               <Button variant="outline" size="sm" onClick={goToToday}>
-                {t("Today")}
+                <LocalizedText source="Today" />
               </Button>
               <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
-                <SelectTrigger className="w-[110px] h-8 text-sm">
+                <SelectTrigger
+                  className="w-[110px] h-8 text-sm"
+                  lang={languageFor(viewModeLabel)}
+                  dir={directionFor(viewModeLabel)}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="year">{t("Year")}</SelectItem>
-                  <SelectItem value="month">{t("Month")}</SelectItem>
-                  <SelectItem value="week">{t("Week")}</SelectItem>
+                  <SelectItem value="year">
+                    <LocalizedText source="Year" />
+                  </SelectItem>
+                  <SelectItem value="month">
+                    <LocalizedText source="Month" />
+                  </SelectItem>
+                  <SelectItem value="week">
+                    <LocalizedText source="Week" />
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </>
@@ -283,10 +332,12 @@ export default function CalendarPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">{t("Loading calendar...")}</div>
+        <div className="text-center py-12 text-muted-foreground">
+          <LocalizedText source="Loading calendar..." />
+        </div>
       ) : wantedGames.length === 0 && undatedGames.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          {t("No games in your wishlist. Add games to track their release dates.")}
+          <LocalizedText source="No games in your wishlist. Add games to track their release dates." />
         </div>
       ) : (
         <div className="space-y-6">
@@ -345,7 +396,6 @@ function YearView({
   gamesByDate: GamesByDate;
   onGameClick: (game: Game) => void;
 }) {
-  const { t } = useInterfaceLanguage();
   const year = currentDate.getFullYear();
   const months = Array.from({ length: 12 }, (_, i) => i);
 
@@ -371,7 +421,13 @@ function YearView({
         return (
           <div key={month} className="bg-card border rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">{getMonthName(month)}</h3>
+              <h3
+                className="font-semibold"
+                lang={getRegionalLanguage()}
+                dir={getRegionalDirection()}
+              >
+                {getMonthName(month)}
+              </h3>
               {gameCount > 0 && (
                 <Badge variant="secondary" className="text-xs">
                   {formatRegionalNumber(gameCount)}
@@ -382,7 +438,11 @@ function YearView({
               {gamesInMonth.length > 0 ? (
                 gamesInMonth.map(([date, games]) => (
                   <div key={date} className="text-sm">
-                    <div className="text-muted-foreground mb-1">
+                    <div
+                      className="text-muted-foreground mb-1"
+                      lang={getRegionalLanguage()}
+                      dir={getRegionalDirection()}
+                    >
                       {new Date(date).toLocaleDateString(getRegionalLocale(), {
                         month: "short",
                         day: "numeric",
@@ -394,7 +454,9 @@ function YearView({
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-muted-foreground">{t("No releases")}</p>
+                <p className="text-xs text-muted-foreground">
+                  <LocalizedText source="No releases" />
+                </p>
               )}
             </div>
           </div>
@@ -415,7 +477,9 @@ function MonthView({
   onGameClick: (game: Game) => void;
   today: Date;
 }) {
-  const { t } = useInterfaceLanguage();
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
+  const regionalLocale = getRegionalLanguage();
+  const regionalDirection = getRegionalDirection(regionalLocale);
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const weekStartsOn = getRegionalWeekStartsOn();
@@ -446,6 +510,8 @@ function MonthView({
           <div
             key={day.short}
             className="text-center font-semibold text-xs md:text-sm text-muted-foreground py-1 md:py-2"
+            lang={regionalLocale}
+            dir={regionalDirection}
           >
             <span className="md:hidden">{day.narrow}</span>
             <span className="hidden md:inline">{day.short}</span>
@@ -465,10 +531,16 @@ function MonthView({
             month: "long",
             day: "numeric",
           });
-          const releaseLabel =
+          const releaseCountSource =
             gamesOnDay.length === 1
-              ? "1 " + t("release")
-              : formatRegionalNumber(gamesOnDay.length) + " " + t("releases");
+              ? "release"
+              : gamesOnDay.length === 2
+                ? "two releases"
+                : "releases";
+          const releaseLabel =
+            gamesOnDay.length === 2
+              ? t(releaseCountSource)
+              : `${formatRegionalNumber(gamesOnDay.length)} ${t(releaseCountSource)}`;
           const mobileButtonLabel =
             gamesOnDay.length > 0 ? formattedDayLabel + ", " + releaseLabel : formattedDayLabel;
 
@@ -491,6 +563,8 @@ function MonthView({
                   gamesOnDay.length > 0 ? "cursor-pointer" : "cursor-default"
                 )}
                 aria-label={mobileButtonLabel}
+                lang={gamesOnDay.length > 0 ? languageFor(releaseCountSource) : regionalLocale}
+                dir={gamesOnDay.length > 0 ? directionFor(releaseCountSource) : regionalDirection}
               >
                 <div
                   className={cn(
@@ -498,6 +572,8 @@ function MonthView({
                     !isCurrentMonth && "text-muted-foreground",
                     isToday && "text-primary font-bold"
                   )}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
                 >
                   {formatRegionalNumber(day.getDate(), { useGrouping: false })}
                 </div>
@@ -542,7 +618,11 @@ function MonthView({
       {/* Mobile day detail — shown below grid when a day with games is tapped */}
       {selectedDayKey && selectedGames.length > 0 && (
         <div className="mt-3 p-3 bg-muted/50 rounded-lg md:hidden">
-          <p className="text-xs font-semibold text-muted-foreground mb-2">
+          <p
+            className="text-xs font-semibold text-muted-foreground mb-2"
+            lang={regionalLocale}
+            dir={regionalDirection}
+          >
             {new Date(selectedDayKey).toLocaleDateString(getRegionalLocale(), {
               weekday: "long",
               month: "long",
@@ -576,7 +656,8 @@ function WeekView({
   onGameClick: (game: Game) => void;
   today: Date;
 }) {
-  const { t } = useInterfaceLanguage();
+  const regionalLocale = getRegionalLanguage();
+  const regionalDirection = getRegionalDirection(regionalLocale);
   const weekDays = getWeekDays(new Date(currentDate));
   const todayKey = formatDate(today);
 
@@ -609,13 +690,25 @@ function WeekView({
                     "text-xs font-semibold uppercase tracking-wide",
                     isToday ? "text-primary" : "text-muted-foreground"
                   )}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
                 >
                   {dayName}
                 </span>
-                <span className={cn("text-xl font-bold leading-tight", isToday && "text-primary")}>
+                <span
+                  className={cn("text-xl font-bold leading-tight", isToday && "text-primary")}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
                   {formatRegionalNumber(day.getDate(), { useGrouping: false })}
                 </span>
-                <span className="text-xs text-muted-foreground">{monthName}</span>
+                <span
+                  className="text-xs text-muted-foreground"
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {monthName}
+                </span>
               </div>
               <div className="w-px shrink-0 bg-border" />
               {/* Games column */}
@@ -632,7 +725,9 @@ function WeekView({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">{t("No releases")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    <LocalizedText source="No releases" />
+                  </p>
                 )}
               </div>
             </div>
@@ -659,11 +754,25 @@ function WeekView({
               )}
             >
               <div className="text-center mb-3">
-                <div className={cn("font-semibold", isToday && "text-primary")}>{dayName}</div>
-                <div className={cn("text-2xl font-bold", isToday && "text-primary")}>
+                <div
+                  className={cn("font-semibold", isToday && "text-primary")}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {dayName}
+                </div>
+                <div
+                  className={cn("text-2xl font-bold", isToday && "text-primary")}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
                   {formatRegionalNumber(day.getDate(), { useGrouping: false })}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div
+                  className="text-xs text-muted-foreground"
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
                   {day.toLocaleDateString(getRegionalLocale(), { month: "short" })}
                 </div>
               </div>
@@ -678,7 +787,9 @@ function WeekView({
                     />
                   ))
                 ) : (
-                  <p className="text-xs text-muted-foreground text-center">{t("No releases")}</p>
+                  <p className="text-xs text-muted-foreground text-center">
+                    <LocalizedText source="No releases" />
+                  </p>
                 )}
               </div>
             </div>
@@ -698,14 +809,16 @@ function UndatedSection({
   games: Game[];
   onGameClick: (game: Game) => void;
 }) {
-  const { t } = useInterfaceLanguage();
   if (games.length === 0) return null;
 
   return (
     <div>
       <div className="flex items-center gap-3 mb-3">
         <h2 className="text-base font-semibold text-muted-foreground">
-          {t("No Release Date")} — {formatRegionalNumber(year)}
+          <LocalizedText source="No Release Date" /> —{" "}
+          <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
+            {formatRegionalNumber(year)}
+          </span>
         </h2>
         <Badge variant="secondary" className="text-xs">
           {formatRegionalNumber(games.length)}
@@ -734,7 +847,6 @@ function GameBadge({
   muted?: boolean;
   onClick?: () => void;
 }) {
-  const { t } = useInterfaceLanguage();
   const isDelayed = game.releaseStatus === "delayed";
 
   if (compact) {
@@ -759,7 +871,13 @@ function GameBadge({
               className={cn("text-xs truncate flex-1", isDelayed && "text-destructive font-medium")}
             >
               {game.title}
-              {isDelayed && " (Delayed)"}
+              {isDelayed && (
+                <>
+                  {" ("}
+                  <LocalizedText source="Delayed" />
+                  {")"}
+                </>
+              )}
             </span>
           </button>
         </TooltipTrigger>
@@ -768,10 +886,14 @@ function GameBadge({
             <p className="font-semibold">{game.title}</p>
             {isDelayed && (
               <Badge variant="destructive" className="mt-1 text-xs h-4">
-                Delayed
+                <LocalizedText source="Delayed" />
               </Badge>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
+            <p
+              className="text-xs text-muted-foreground mt-1"
+              lang={getRegionalLanguage()}
+              dir={getRegionalDirection()}
+            >
               {game.releaseDate &&
                 new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                   year: "numeric",
@@ -781,11 +903,13 @@ function GameBadge({
             </p>
             {isDelayed && game.originalReleaseDate && (
               <p className="text-xs text-muted-foreground">
-                Original:{" "}
-                {new Date(game.originalReleaseDate).toLocaleDateString(getRegionalLocale(), {
-                  month: "short",
-                  day: "numeric",
-                })}
+                <LocalizedText source="Was originally scheduled for:" />{" "}
+                <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
+                  {new Date(game.originalReleaseDate).toLocaleDateString(getRegionalLocale(), {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
               </p>
             )}
           </div>
@@ -818,12 +942,16 @@ function GameBadge({
               </p>
               {isDelayed && (
                 <Badge variant="destructive" className="text-xs h-4 px-1">
-                  Delayed
+                  <LocalizedText source="Delayed" />
                 </Badge>
               )}
             </div>
             {!hideDate && (
-              <p className="text-xs text-muted-foreground">
+              <p
+                className="text-xs text-muted-foreground"
+                lang={getRegionalLanguage()}
+                dir={getRegionalDirection()}
+              >
                 {game.releaseDate &&
                   new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                     month: "short",
@@ -838,30 +966,36 @@ function GameBadge({
       <TooltipContent>
         <div className="max-w-xs">
           <p className="font-semibold">{game.title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {hideDate
-              ? t("Release date TBD")
-              : game.releaseDate
-                ? new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : null}
+          <p
+            className="text-xs text-muted-foreground mt-0.5"
+            lang={getRegionalLanguage()}
+            dir={getRegionalDirection()}
+          >
+            {hideDate ? (
+              <LocalizedText source="Release date TBD" />
+            ) : game.releaseDate ? (
+              new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })
+            ) : null}
           </p>
           {isDelayed && (
             <div className="flex flex-col gap-0.5 mt-1">
               <Badge variant="destructive" className="w-fit text-xs h-4">
-                Delayed
+                <LocalizedText source="Delayed" />
               </Badge>
               {game.originalReleaseDate && (
                 <p className="text-xs text-muted-foreground">
-                  Was originally scheduled for:{" "}
-                  {new Date(game.originalReleaseDate).toLocaleDateString(getRegionalLocale(), {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  <LocalizedText source="Was originally scheduled for:" />{" "}
+                  <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
+                    {new Date(game.originalReleaseDate).toLocaleDateString(getRegionalLocale(), {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
                 </p>
               )}
             </div>

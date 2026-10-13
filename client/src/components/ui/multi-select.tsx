@@ -24,6 +24,16 @@ interface MultiSelectProps {
   onChange: (selected: string[]) => void;
   placeholder?: string;
   emptyMessage?: string;
+  searchPlaceholder?: string;
+  lang?: string;
+  dir?: "ltr" | "rtl";
+  emptyLang?: string;
+  emptyDir?: "ltr" | "rtl";
+  searchLang?: string;
+  searchDir?: "ltr" | "rtl";
+  removeLabel?: (label: string) => string;
+  removeLang?: string;
+  removeDir?: "ltr" | "rtl";
   className?: string;
   disabled?: boolean;
   // Support additional HTML attributes like data-testid
@@ -36,6 +46,16 @@ export function MultiSelect({
   onChange,
   placeholder = "Select items...",
   emptyMessage = "No items found.",
+  searchPlaceholder = "Search...",
+  lang,
+  dir,
+  emptyLang = lang,
+  emptyDir = dir,
+  searchLang = lang,
+  searchDir = dir,
+  removeLabel = (label) => `Remove ${label}`,
+  removeLang = lang,
+  removeDir = dir,
   className,
   disabled = false,
   ...rest
@@ -66,6 +86,8 @@ export function MultiSelect({
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
           disabled={disabled}
+          lang={lang}
+          dir={dir}
         >
           <div className="flex gap-1 flex-wrap">
             {selectedOptions.length > 0 ? (
@@ -78,25 +100,35 @@ export function MultiSelect({
                       e.stopPropagation();
                       handleRemove(option.value);
                     }}
-                    aria-label={`Remove ${option.label}`}
+                    aria-label={removeLabel(option.label)}
                     className="ml-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                    lang={removeLang}
+                    dir={removeDir}
                   >
                     <X className="h-3 w-3 cursor-pointer" />
                   </button>
                 </Badge>
               ))
             ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
+              <span className="text-muted-foreground" lang={lang} dir={dir}>
+                {placeholder}
+              </span>
             )}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search..." />
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0"
+        align="start"
+        dir={dir}
+      >
+        <Command dir={dir}>
+          <CommandInput placeholder={searchPlaceholder} lang={searchLang} dir={searchDir} />
           <CommandList>
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandEmpty lang={emptyLang} dir={emptyDir}>
+              {emptyMessage}
+            </CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
                 const isSelected = selected.includes(option.value);

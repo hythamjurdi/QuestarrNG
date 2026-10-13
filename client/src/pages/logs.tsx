@@ -1,4 +1,4 @@
-import { getRegionalLocale } from "@/lib/regional-format";
+import { getRegionalLocale, useRegionalPreference } from "@/lib/regional-format";
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, PauseCircle, PlayCircle, ScrollText, Search, Send, Trash2 } from "lucide-react";
@@ -225,6 +225,7 @@ const LogLineRow = memo(function LogLineRow({
   isSelected: boolean;
   onSelect: (line: ParsedLogLine) => void;
 }>) {
+  useRegionalPreference();
   const timeStr = formatTime(line.time);
   const summaryText = buildSummaryText(line.summaryFields);
 
@@ -265,6 +266,7 @@ const LogLineCard = memo(function LogLineCard({
   isSelected: boolean;
   onSelect: (line: ParsedLogLine) => void;
 }>) {
+  useRegionalPreference();
   const timeStr = formatTime(line.time);
   const summaryText = buildSummaryText(line.summaryFields);
 

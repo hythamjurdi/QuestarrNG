@@ -1,4 +1,8 @@
-import { getRegionalCollator, formatRegionalNumber } from "@/lib/regional-format";
+import {
+  getRegionalCollator,
+  formatRegionalNumber,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiFetch } from "@/lib/queryClient";
@@ -129,6 +133,7 @@ const STATUS_COLORS: Record<DownloadStatusType, string> = {
 };
 
 export default function Downloads() {
+  const regionalPreference = useRegionalPreference();
   const { toast } = useToast();
   const hasShownErrorsRef = useRef<Set<string>>(new Set());
   const [selectedDownload, setSelectedDownload] = useState<DownloadStatus | null>(null);
@@ -358,8 +363,9 @@ export default function Downloads() {
       const entry = map.get(d.downloaderId)!;
       entry.counts[d.status] = (entry.counts[d.status] ?? 0) + 1;
     }
-    return Array.from(map.values()).sort((a, b) => getRegionalCollator().compare(a.name, b.name));
-  }, [filteredDownloads]);
+    const collator = getRegionalCollator(undefined, regionalPreference);
+    return Array.from(map.values()).sort((a, b) => collator.compare(a.name, b.name));
+  }, [filteredDownloads, regionalPreference]);
 
   if (isLoading) {
     return (

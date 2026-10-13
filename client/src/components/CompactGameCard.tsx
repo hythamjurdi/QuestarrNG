@@ -1,4 +1,4 @@
-import { formatRegionalNumber } from "@/lib/regional-format";
+import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
 import React, { memo, useState, useEffect, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ const CompactGameCard = ({
   useSubgrid = false,
   mobileLayout = false,
 }: CompactGameCardProps) => {
+  useRegionalPreference();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [detailsOpen, setDetailsOpen] = useState(false);

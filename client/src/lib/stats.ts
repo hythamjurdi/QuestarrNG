@@ -22,7 +22,7 @@ export interface LibraryStats {
   completionRate: number;
 }
 
-export function calculateLibraryStats(games: Game[]): LibraryStats {
+export function calculateLibraryStats(games: Game[], regionalPreference?: string): LibraryStats {
   const totalGames = games.length;
 
   if (totalGames === 0) {
@@ -134,23 +134,32 @@ export function calculateLibraryStats(games: Game[]): LibraryStats {
 
   const avgRating =
     ratedCount > 0
-      ? formatRegionalNumber(ratingSum / ratedCount, {
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
-        })
+      ? formatRegionalNumber(
+          ratingSum / ratedCount,
+          {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          },
+          regionalPreference
+        )
       : "N/A";
   const avgUserRating =
     userRatedCount > 0
-      ? formatRegionalNumber(userRatingSum / userRatedCount, {
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
-        })
+      ? formatRegionalNumber(
+          userRatingSum / userRatedCount,
+          {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          },
+          regionalPreference
+        )
       : "N/A";
 
   const getTopItemFromCounts = (counts: Record<string, number>) => {
     const entries = Object.entries(counts);
     if (entries.length === 0) return null;
-    entries.sort((a, b) => b[1] - a[1] || getRegionalCollator().compare(a[0], b[0]));
+    const collator = getRegionalCollator(undefined, regionalPreference);
+    entries.sort((a, b) => b[1] - a[1] || collator.compare(a[0], b[0]));
     const [name, count] = entries[0]!;
     return { name, count };
   };

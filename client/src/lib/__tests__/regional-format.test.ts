@@ -1,14 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, render, screen } from "@testing-library/react";
+import { createElement } from "react";
 import {
   formatRegionalDistanceToNow,
   getRegionalDateFnsLocale,
+  getRegionalDirection,
   getRegionalWeekStartsOn,
-  REGIONAL_FORMAT_KEY,
+  setRegionalPreference,
+  useRegionalPreference,
 } from "../regional-format";
 
 describe("regional formatting locale", () => {
   beforeEach(() => {
     localStorage.clear();
+    setRegionalPreference("system");
   });
 
   it.each([
@@ -25,20 +30,32 @@ describe("regional formatting locale", () => {
     ["vi", 1],
     ["id", 0],
   ])("uses the locale's first weekday for %s", (locale, expected) => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, locale);
+    setRegionalPreference(locale);
 
     expect(getRegionalWeekStartsOn()).toBe(expected);
   });
 
   it("uses the selected locale for relative time", () => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, "es");
+    setRegionalPreference("es");
 
     expect(getRegionalDateFnsLocale()?.code).toBe("es");
     expect(formatRegionalDistanceToNow(new Date(Date.now() - 60 * 60 * 1000))).toContain("hace");
   });
 
+  it.each([
+    ["ar", "rtl"],
+    ["fa-IR", "rtl"],
+    ["he-IL", "rtl"],
+    ["ur-PK", "rtl"],
+    ["ps-AF", "rtl"],
+    ["en-US", "ltr"],
+    ["ku-Latn", "ltr"],
+  ] as const)("detects the text direction for %s", (locale, direction) => {
+    expect(getRegionalDirection(locale)).toBe(direction);
+  });
+
   it("uses the browser locale when the preference is set to system", () => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, "system");
+    setRegionalPreference("system");
 
     expect(getRegionalDateFnsLocale()).toBeDefined();
     expect(getRegionalWeekStartsOn()).toBe(
@@ -47,7 +64,7 @@ describe("regional formatting locale", () => {
   });
 
   it("uses Intl relative-time formatting for an unlisted browser locale", () => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, "system");
+    setRegionalPreference("system");
     const resolvedOptions = vi
       .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
       .mockReturnValue({ locale: "ru-RU" } as Intl.ResolvedDateTimeFormatOptions);
@@ -65,7 +82,7 @@ describe("regional formatting locale", () => {
   });
 
   it("uses the Hong Kong Traditional Chinese locale and Sunday-first fallback", () => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, "system");
+    setRegionalPreference("system");
     const resolvedOptions = vi
       .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
       .mockReturnValue({ locale: "zh-HK" } as Intl.ResolvedDateTimeFormatOptions);
@@ -83,7 +100,7 @@ describe("regional formatting locale", () => {
   });
 
   it("uses a region-specific first weekday when Intl week data is unavailable", () => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, "system");
+    setRegionalPreference("system");
     const resolvedOptions = vi
       .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
       .mockReturnValue({ locale: "en-NZ" } as Intl.ResolvedDateTimeFormatOptions);
@@ -98,5 +115,18 @@ describe("regional formatting locale", () => {
       weekInfo.mockRestore();
       resolvedOptions.mockRestore();
     }
+  });
+
+  it("rerenders subscribers when the active regional preference changes", () => {
+    function PreferenceProbe() {
+      return createElement("span", null, useRegionalPreference());
+    }
+
+    render(createElement(PreferenceProbe));
+    expect(screen.getByText("system")).toBeInTheDocument();
+
+    act(() => setRegionalPreference("de"));
+
+    expect(screen.getByText("de")).toBeInTheDocument();
   });
 });
