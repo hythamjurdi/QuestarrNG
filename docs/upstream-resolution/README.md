@@ -556,3 +556,28 @@ continues to report its existing large-chunk advisory. The ledger now records
 **188 verified**, **10 superseded**, **943 unreviewed**, **4 not-applicable**,
 **1 implemented-but-unverified**, and **1 needs-implementation** record. Issue
 #37 remains outstanding. See [batch 21 evidence](evidence/validation-batch-21.txt).
+
+## Follow-up: downloader and query refinements (#190–196)
+
+PR [#190](https://github.com/Doezer/Questarr/pull/190) is superseded by newer
+versions of all nine proposed development dependencies already declared and
+locked in QuestarrNG. Issue [#191](https://github.com/Doezer/Questarr/issues/191)
+is verified: Prowlarr indexer sync, Torznab/Newznab mapping, diagnostics, saved
+sync settings, and feed integration are present, with explicit consent required
+for insecure LAN HTTP. PR [#192](https://github.com/Doezer/Questarr/pull/192) is
+not applicable as written because TanStack Query v5 removed per-query `onError`
+callbacks; Discover keeps its supported error handling. PR #193 duplicates the
+verified GameCard tooltip work from PR #185, and PR #194 is covered by the
+verified path-traversal protections from PRs #171, #174, #177, #181, and #187.
+
+Issue [#195](https://github.com/Doezer/Questarr/issues/195) is verified: the
+Downloads API filters each downloader’s results to its configured category,
+case-insensitively, and excludes uncategorized entries while filtering. Issue
+[#196](https://github.com/Doezer/Questarr/issues/196) is also verified: each
+GameDownloadDialog result offers a Copy Torrent Link action, tested against the
+actual result URL. Five focused suites passed (122 tests, one skipped); see
+[batch 22 evidence](evidence/validation-batch-22.txt).
+
+The ledger now records 192 verified, 12 superseded, 936 unreviewed,
+5 not-applicable, 1 implemented-but-unverified, and 1 needs-implementation
+records. Issue #37 remains outstanding.

@@ -194,13 +194,13 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #187](https://github.com/Doezer/Questarr/pull/187) | 🛡️ Sentinel: [CRITICAL] Fix Path Traversal | CLOSED | no-merge-commit | superseded |
 | [issue #188](https://github.com/Doezer/Questarr/issues/188) | Library page not displayed or doesn't exist | CLOSED | no-merge-commit | verified |
 | [issue #189](https://github.com/Doezer/Questarr/issues/189) | Hide low priority pages | CLOSED | no-merge-commit | verified |
-| [pr #190](https://github.com/Doezer/Questarr/pull/190) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 9 updates | CLOSED | no-merge-commit | unreviewed |
-| [issue #191](https://github.com/Doezer/Questarr/issues/191) | Support Prowlarr | CLOSED | no-merge-commit | unreviewed |
-| [pr #192](https://github.com/Doezer/Questarr/pull/192) | ⚡ Bolt: Use onError in useQuery for more efficient error handling | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #193](https://github.com/Doezer/Questarr/pull/193) | 🎨 Palette: Add tooltips to GameCard icon buttons | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #194](https://github.com/Doezer/Questarr/pull/194) | 🛡️ Sentinel: [CRITICAL] Fix Path Traversal Vulnerability | CLOSED | no-merge-commit | unreviewed |
-| [issue #195](https://github.com/Doezer/Questarr/issues/195) | Downloads page | CLOSED | no-merge-commit | unreviewed |
-| [issue #196](https://github.com/Doezer/Questarr/issues/196) | Add the torrent URL to the list | CLOSED | no-merge-commit | unreviewed |
+| [pr #190](https://github.com/Doezer/Questarr/pull/190) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 9 updates | CLOSED | no-merge-commit | superseded |
+| [issue #191](https://github.com/Doezer/Questarr/issues/191) | Support Prowlarr | CLOSED | no-merge-commit | verified |
+| [pr #192](https://github.com/Doezer/Questarr/pull/192) | ⚡ Bolt: Use onError in useQuery for more efficient error handling | MERGED | merge-commit-not-in-either-main-history | not-applicable |
+| [pr #193](https://github.com/Doezer/Questarr/pull/193) | 🎨 Palette: Add tooltips to GameCard icon buttons | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #194](https://github.com/Doezer/Questarr/pull/194) | 🛡️ Sentinel: [CRITICAL] Fix Path Traversal Vulnerability | CLOSED | no-merge-commit | superseded |
+| [issue #195](https://github.com/Doezer/Questarr/issues/195) | Downloads page | CLOSED | no-merge-commit | verified |
+| [issue #196](https://github.com/Doezer/Questarr/issues/196) | Add the torrent URL to the list | CLOSED | no-merge-commit | verified |
 | [issue #198](https://github.com/Doezer/Questarr/issues/198) | Allow hiding a game from the carousels | CLOSED | no-merge-commit | unreviewed |
 | [issue #199](https://github.com/Doezer/Questarr/issues/199) | fix genre default selection to "Action" | CLOSED | no-merge-commit | unreviewed |
 | [issue #201](https://github.com/Doezer/Questarr/issues/201) | remove launch game button from game card | CLOSED | no-merge-commit | unreviewed |

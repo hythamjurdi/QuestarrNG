@@ -5448,10 +5448,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All nine development dependency targets in this closed Dependabot PR have since been exceeded by the versions declared and locked in QuestarrNG."
+        ],
+        "acceptance": [
+          "Retain the newer dependency versions already present in package.json and package-lock.json instead of replaying the obsolete grouped bump."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/190",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5468,10 +5476,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Prowlarr is supported through indexer sync, diagnostics, saved sync settings, compatible Torznab/Newznab mapping, and proxied feed handling. The management API and feed checks are separated, with explicit opt-in required for insecure LAN HTTP."
+        ],
+        "acceptance": [
+          "Operators can sync supported Prowlarr indexers, diagnose management/feed failures, and use the synced indexers through Questarr search."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/191",
+          "client/src/pages/indexers.tsx",
+          "server/prowlarr.ts",
+          "server/prowlarr-settings.ts",
+          "server/routes.ts",
+          "server/torznab.ts",
+          "server/__tests__/prowlarr.test.ts",
+          "server/__tests__/prowlarr-settings.test.ts",
+          "server/__tests__/prowlarr-credentials.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-22.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5488,10 +5511,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "a2b1c132d1fec467f23c1bb2aea68546ca567aca",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The PR asks for per-query onError callbacks, but this fork uses @tanstack/react-query v5, which removed onSuccess/onError/onSettled from useQuery. The existing Discover error effect uses the supported v5 query result and toast flow; adding the removed option would not type-check."
+        ],
+        "acceptance": [
+          "Keep Discover query failures visible using APIs supported by the installed TanStack Query major version."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/192",
+          "https://tanstack.com/query/latest/docs/framework/react/guides/migrating-to-v5",
+          "package.json",
+          "client/src/pages/discover.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5508,11 +5540,23 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "66e7a7469f04258f0b3a57d374c27a984897f6a3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "This repeats PR #185’s GameCard tooltip request. The Download icon has a tooltip and View Details is a clearly labeled text action, so the requested actions are understandable without duplicating the upstream patch."
+        ],
+        "acceptance": [
+          "Icon-only GameCard actions have descriptive tooltips and the details action has a visible label."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/193",
+          "https://github.com/Doezer/Questarr/pull/185",
+          "client/src/components/GameCard.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
+        "dependencies": [
+          "pr:185"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -5528,11 +5572,29 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This closed critical path-traversal request is covered by the verified middleware and downloader path-safety checks already tracked for PRs #171, #174, #177, #181, and #187."
+        ],
+        "acceptance": [
+          "Reject absolute and parent-traversing download overrides while preserving configured absolute downloader roots."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/194",
+          "server/middleware.ts",
+          "server/downloaders/path-safety.ts",
+          "server/__tests__/middleware.test.ts",
+          "server/__tests__/downloaders.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-19.txt",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
+        "dependencies": [
+          "pr:171",
+          "pr:174",
+          "pr:177",
+          "pr:181",
+          "pr:187"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -5548,10 +5610,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "DownloaderManager.getAllDownloads filters returned items to the downloader’s configured category case-insensitively and excludes uncategorized items when a category is set. The aggregated /api/downloads route uses that method, and the downloader form exposes the category setting."
+        ],
+        "acceptance": [
+          "The Downloads page receives only items in each downloader’s configured category; no category means the downloader’s results remain unfiltered."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/195",
+          "server/downloaders/manager.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts",
+          "server/routes.ts",
+          "client/src/pages/downloaders.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-22.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5568,10 +5641,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Each GameDownloadDialog result exposes its source URL through the row’s Copy Torrent Link action; the same action labels Usenet results as Copy NZB Link. The test confirms the torrent link copied is the result’s actual link."
+        ],
+        "acceptance": [
+          "Users can retrieve a result’s torrent URL directly from the results list, with copy success/failure feedback."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/196",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-22.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
