@@ -1,4 +1,4 @@
-import { formatRegionalNumber } from "@/lib/regional-format";
+import { formatRegionalDate, formatRegionalNumber } from "@/lib/regional-format";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type Game, type InsertGame } from "@shared/schema";
@@ -178,9 +178,12 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 /**
  * Parses an ISO release date string into a display year and an optional full date.
  * IGDB represents year-only known dates as YYYY-12-31; fullDate is null in that case.
- * fullDate is formatted as dd/mm/yyyy using UTC to avoid timezone shifts.
+ * fullDate uses the selected regional format and UTC to avoid timezone shifts.
  */
-export function parseReleaseDate(isoDate: string | null | undefined): {
+export function parseReleaseDate(
+  isoDate: string | null | undefined,
+  preference?: string
+): {
   year: string;
   fullDate: string | null;
 } {
@@ -189,7 +192,12 @@ export function parseReleaseDate(isoDate: string | null | undefined): {
   if (isoDate.endsWith("-12-31")) return { year, fullDate: null };
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return { year, fullDate: null };
-  const dd = String(date.getUTCDate()).padStart(2, "0");
-  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  return { year, fullDate: `${dd}/${mm}/${date.getUTCFullYear()}` };
+  return {
+    year,
+    fullDate: formatRegionalDate(
+      date,
+      { year: "numeric", month: "2-digit", day: "2-digit" },
+      preference
+    ),
+  };
 }

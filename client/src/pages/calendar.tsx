@@ -566,8 +566,7 @@ function MonthView({
                   gamesOnDay.length > 0 ? "cursor-pointer" : "cursor-default"
                 )}
                 aria-labelledby={mobileLabelledBy}
-                lang={regionalLocale}
-                dir={regionalDirection}
+                dir="auto"
               >
                 <span
                   id={dateLabelId}

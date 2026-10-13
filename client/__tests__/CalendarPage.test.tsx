@@ -225,6 +225,8 @@ describe("CalendarPage", () => {
     const dayButton = await screen.findByRole("button", { name: /إصداران/u });
     const labelledByIds = dayButton.getAttribute("aria-labelledby")?.split(" ") ?? [];
     expect(dayButton).not.toHaveAttribute("aria-label");
+    expect(dayButton).not.toHaveAttribute("lang");
+    expect(dayButton).toHaveAttribute("dir", "auto");
     expect(labelledByIds).toHaveLength(2);
 
     const [dateLabel, releaseLabel] = labelledByIds.map((id) => document.getElementById(id));

@@ -232,6 +232,17 @@ export function formatRegionalNumber(
   return new Intl.NumberFormat(getCurrentLocale(preference), options).format(value);
 }
 
+export function formatRegionalDate(
+  date: Date,
+  options?: Intl.DateTimeFormatOptions,
+  preference = getRegionalPreference()
+): string {
+  return new Intl.DateTimeFormat(getCurrentLocale(preference), {
+    ...options,
+    timeZone: "UTC",
+  }).format(date);
+}
+
 export function formatRegionalPercent(
   percent: number,
   options?: Omit<Intl.NumberFormatOptions, "style">,

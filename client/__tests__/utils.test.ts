@@ -151,10 +151,10 @@ describe("parseReleaseDate", () => {
     expect(parseReleaseDate("2024-not-a-date")).toEqual({ year: "2024", fullDate: null });
   });
 
-  it("formats a valid full date in UTC", () => {
-    expect(parseReleaseDate("2024-02-03T00:00:00.000Z")).toEqual({
+  it("formats a valid full date with the selected regional locale in UTC", () => {
+    expect(parseReleaseDate("2024-02-03T00:00:00.000Z", "ja")).toEqual({
       year: "2024",
-      fullDate: "03/02/2024",
+      fullDate: "2024/02/03",
     });
   });
 });

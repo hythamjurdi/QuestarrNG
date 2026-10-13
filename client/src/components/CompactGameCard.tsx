@@ -1,4 +1,9 @@
-import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
+import {
+  formatRegionalNumber,
+  getRegionalDirection,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
 import React, { memo, useState, useEffect, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,7 +60,10 @@ const CompactGameCard = ({
   useSubgrid = false,
   mobileLayout = false,
 }: CompactGameCardProps) => {
-  useRegionalPreference();
+  const regionalPreference = useRegionalPreference();
+  const regionalLocale =
+    getRegionalLocale(regionalPreference) ?? Intl.DateTimeFormat().resolvedOptions().locale;
+  const regionalDirection = getRegionalDirection(regionalLocale);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -122,7 +130,10 @@ const CompactGameCard = ({
     }
   };
   const handleToggleHidden = () => onToggleHidden?.(game.id, !game.hidden);
-  const { year: releaseYear, fullDate: releaseFullDate } = parseReleaseDate(game.releaseDate);
+  const { year: releaseYear, fullDate: releaseFullDate } = parseReleaseDate(
+    game.releaseDate,
+    regionalPreference
+  );
   const ratingDisplay =
     game.rating === null
       ? null
@@ -509,7 +520,9 @@ const CompactGameCard = ({
                 <span className="text-xs text-muted-foreground cursor-default">{releaseYear}</span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{releaseFullDate}</p>
+                <p lang={regionalLocale} dir={regionalDirection}>
+                  {releaseFullDate}
+                </p>
               </TooltipContent>
             </Tooltip>
           ) : (

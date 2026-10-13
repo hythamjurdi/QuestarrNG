@@ -18,6 +18,11 @@ import { useToast } from "@/hooks/use-toast";
 import LazyModalFallback from "./LazyModalFallback";
 import { getReleaseStatus } from "@/lib/game-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  getRegionalDirection,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 
 // ⚡ Bolt: Lazy load heavy modal components to reduce initial bundle size.
 // These are only needed when the user interacts with the card.
@@ -53,6 +58,10 @@ const GameCard = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const releaseStatus = getReleaseStatus(game);
   const isMobile = useIsMobile();
+  const regionalPreference = useRegionalPreference();
+  const regionalLocale =
+    getRegionalLocale(regionalPreference) ?? Intl.DateTimeFormat().resolvedOptions().locale;
+  const regionalDirection = getRegionalDirection(regionalLocale);
 
   // Keep track of the resolved game object (either original or newly added)
   const [resolvedGame, setResolvedGame] = useState<Game>(game);
@@ -124,7 +133,10 @@ const GameCard = ({
     onToggleHidden?.(game.id, !game.hidden);
   };
 
-  const { year: releaseYear, fullDate: releaseFullDate } = parseReleaseDate(game.releaseDate);
+  const { year: releaseYear, fullDate: releaseFullDate } = parseReleaseDate(
+    game.releaseDate,
+    regionalPreference
+  );
   const mobileActionButtonClass = "h-9 w-9";
 
   return (
@@ -281,7 +293,13 @@ const GameCard = ({
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{releaseFullDate ?? "Release Date"}</p>
+              {releaseFullDate ? (
+                <p lang={regionalLocale} dir={regionalDirection}>
+                  {releaseFullDate}
+                </p>
+              ) : (
+                <p>Release Date</p>
+              )}
             </TooltipContent>
           </Tooltip>
         </div>

@@ -19,6 +19,11 @@ import { type DownloadCategory } from "@shared/download-categorizer";
 import { apiRequest } from "@/lib/queryClient";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { parseReleaseDate } from "@/lib/utils";
+import {
+  getRegionalDirection,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 
 interface ScanDownload {
   downloaderId: string;
@@ -301,6 +306,10 @@ function GroupRow({
   state: GroupState;
   onUpdate: (patch: Partial<GroupState>) => void;
 }) {
+  const regionalPreference = useRegionalPreference();
+  const regionalLocale =
+    getRegionalLocale(regionalPreference) ?? Intl.DateTimeFormat().resolvedOptions().locale;
+  const regionalDirection = getRegionalDirection(regionalLocale);
   const [igdbDebouncedQuery, setIgdbDebouncedQuery] = useState("");
 
   useEffect(() => {
@@ -456,7 +465,10 @@ function GroupRow({
                         <span className="truncate">{g.title}</span>
                         {g.releaseDate &&
                           (() => {
-                            const { year, fullDate } = parseReleaseDate(g.releaseDate);
+                            const { year, fullDate } = parseReleaseDate(
+                              g.releaseDate,
+                              regionalPreference
+                            );
                             return fullDate ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -465,7 +477,9 @@ function GroupRow({
                                   </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>{fullDate}</p>
+                                  <p lang={regionalLocale} dir={regionalDirection}>
+                                    {fullDate}
+                                  </p>
                                 </TooltipContent>
                               </Tooltip>
                             ) : (

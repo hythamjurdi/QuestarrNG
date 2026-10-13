@@ -290,6 +290,13 @@ describe("GameDownloadDialog", () => {
     );
   });
 
+  it("uses automatic direction for the typed download search", async () => {
+    renderComponent();
+
+    const searchInput = await screen.findByPlaceholderText("Search for downloads...");
+    expect(searchInput).toHaveAttribute("dir", "auto");
+  });
+
   it.each([false, true])(
     "links release titles to their indexer source when mobile is %s",
     async (isMobile) => {
