@@ -662,14 +662,16 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
-[validation evidence](docs/upstream-resolution/evidence/). After Batch 72, the
-ledger records 624 verified, 191 superseded, 13 not applicable, five
-implemented-unverified, zero needing implementation, and 330 unreviewed
-records. Batch 72 reviewed issues #836 and #843 and PRs #837–842 and #844–845.
-It verified NZBGet success-status handling, retryable imports, accessible
-download controls, and reverse-proxy paths, and bounded qBittorrent add
-resolution to 15 seconds. The full suite passed 4,255 tests with 7 skipped.
-See [the Batch 72 validation record](docs/upstream-resolution/evidence/validation-batch-72.txt)
+[validation evidence](docs/upstream-resolution/evidence/). After Batch 73, the
+ledger records 634 verified, 191 superseded, 13 not applicable, five
+implemented-unverified, zero needing implementation, and 320 unreviewed
+records. Batch 73 reviewed PRs #846–848, #850–853, #855–856, and issue #849.
+It added regression coverage for idle download-status logging and clarified
+Unraid 6.10+ local user-template installation and path mapping. Existing
+archive-password, NZBGet, GHCR-pruning, and single-file import behavior was
+verified. The full suite passed 4,256 tests with 7 skipped. See [the Batch 73
+validation record](docs/upstream-resolution/evidence/validation-batch-73.txt),
+[the Batch 72 validation record](docs/upstream-resolution/evidence/validation-batch-72.txt),
 and the [Batch 71 mobile screenshot](docs/upstream-resolution/evidence/validation-batch-71-mobile-download-card.png).
 The DCO sign-off policy is implemented in the campaign branch, but its
 rollout still needs a maintainer decision because the campaign history includes

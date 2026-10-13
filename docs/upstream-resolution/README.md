@@ -21,30 +21,30 @@ behavior when implementing upstream requests.
 The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. Its source list was refreshed on October 13, 2026 at 23:22:52
-UTC; after Batch 72, the ledger and generated inventory were regenerated from
-that snapshot at 23:36:57 UTC. The ledger's `capturedAt` records generation
+UTC; after Batch 73, the ledger and generated inventory were regenerated from
+that snapshot at 23:46:27 UTC. The ledger's `capturedAt` records generation
 time, not an individual GitHub request timestamp. Review status is independent
 of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       624 |
+| `verified`               |       634 |
 | `superseded`             |       191 |
 | `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       330 |
+| `unreviewed`             |       320 |
 | **Total**                | **1,163** |
 
-The ledger gives 833 items an assigned disposition. Four implemented
+The ledger gives 843 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 330 are unreviewed. The
+currently identified item needs implementation, and 320 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. The ten Batch 72 records were unchanged
+its snapshot and still needs review. The ten Batch 73 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 72 is the latest completed
-review; see [validation evidence](evidence/validation-batch-72.txt).
+ledger, not completion of the campaign. Batch 73 is the latest completed
+review; see [validation evidence](evidence/validation-batch-73.txt).
 
 ## Project records
 
@@ -2244,3 +2244,13 @@ The ledger now records 624 verified, 191 superseded, 13 not applicable, 5
 implemented-unverified, 0 needs-implementation, and 330 unreviewed items. PR
 #1194 remains the only source-changed record. The campaign remains incomplete
 and must not be merged to `main`.
+
+## Batch 73 — October 13, 2026
+
+Batch 73 reviewed PRs [#846](https://github.com/Doezer/Questarr/pull/846)–[#848](https://github.com/Doezer/Questarr/pull/848), issue [#849](https://github.com/Doezer/Questarr/issues/849), and PRs [#850](https://github.com/Doezer/Questarr/pull/850)–[#853](https://github.com/Doezer/Questarr/pull/853), [#855](https://github.com/Doezer/Questarr/pull/855), and [#856](https://github.com/Doezer/Questarr/pull/856). All ten records were unchanged from the refreshed source snapshot.
+
+The review verified the fork's HTTPS-safe clone configuration, recognized PR template filename, Usenet archive-password flow, NZBGet category fallback and success states, README legal disclaimer, safe GHCR pruning rules, and single-file torrent import handling. A new cron regression test confirms idle download-status ticks do not emit the info-level heartbeat. The Unraid template already had its category and `/data` library mapping, but its guide still implied use of the removed Template repositories field. The README now explains Unraid 6.10+ local user-template installation and maps `/data` as the Local Path to the exact downloader-reported Remote Path. XML parsing passed.
+
+Focused validation passed 117 tests across five files, with 32 cron-status tests passing after formatting. The full suite passed 4,256 tests with 7 skipped. TypeScript, lint, format, release-note, XML, and diff checks passed. The GHCR pruning workflow was reviewed statically and not triggered because it deletes remote image versions. No production build was repeated because no production source changed; no `client/src/**` files changed. See [Batch 73 validation evidence](evidence/validation-batch-73.txt).
+
+The ledger now records 634 verified, 191 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 320 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.

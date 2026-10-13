@@ -1,0 +1,34 @@
+# Batch 73 validation — 2026-10-13
+
+Batch 73 reviewed PRs [#846](https://github.com/Doezer/Questarr/pull/846)–[#848](https://github.com/Doezer/Questarr/pull/848), issue [#849](https://github.com/Doezer/Questarr/issues/849), and PRs [#850](https://github.com/Doezer/Questarr/pull/850)–[#853](https://github.com/Doezer/Questarr/pull/853), [#855](https://github.com/Doezer/Questarr/pull/855), and [#856](https://github.com/Doezer/Questarr/pull/856). All ten source digests match the refreshed snapshot. Review covered the issue discussion and timeline, PR descriptions, commits and diffs, available review threads and replies, linked requests, and checks.
+
+## Findings and behavior evidence
+
+- PR #846 is satisfied in this fork: neither `.gitmodules` nor a `.github/wiki` gitlink is tracked, so an HTTPS recursive clone does not need SSH credentials for a wiki submodule.
+- PR #847 is satisfied by the existing `.github/PULL_REQUEST_TEMPLATE.md`; the unsupported `.github/PR_TEMPLATE.md` path is absent.
+- PR #848 asked to stop idle download-status ticks from crowding useful logs. `checkDownloadStatus` already returns before the info-level heartbeat when no downloads are tracked. A regression test now asserts the idle tick emits no `Checking download status` message; active-download coverage remains in the same suite.
+- Issue #849 is covered by the existing optional per-download archive password in the Usenet search dialog and per-downloader defaults. SABnzbd and NZBGet pass the selected password with the job, reject sending it over plain HTTP, and redact configured values. Existing client and downloader tests cover the flow; no `client/src/**` source changed in this batch.
+- PR #850’s XML already exposes the `Downloaders:MediaApp:Other` category and an optional library mount at `/data`, with `ca_profile.xml` available for submission metadata. The README had become misleading: Unraid 6.10+ no longer has the Template repositories field. It now gives the supported local user-template download command, destination, selection steps, and exact path-mapping relationship (`/data` as Local Path and the downloader-reported path as Remote Path). `unraid/questarr.xml` passes XML parsing.
+- PR #851 is covered by NZBGet category selection: explicit request category, then configured category, then `games`; tests cover configured and omitted categories.
+- PR #852 is satisfied by the README’s legal disclaimer and operator responsibility clarification.
+- PR #853 was reviewed statically as a destructive GHCR cleanup workflow and was not triggered. It serializes deployments without cancelling an active run, fails closed when tagged-manifest inspection fails, preserves manifests reachable from live tags and any human/release-tagged version, and removes only stale versions whose tags are all generated `test-sha-*` tags. Workflow temporary digest data is removed after pruning. Upstream noted the CI-only workflow has no test harness; no remote image cleanup was run.
+- PR #855 is covered by NZBGet `SUCCESS/` history parsing, including `GOOD`, `UNPACK`, `HEALTH`, `COPY`, `MARK`, and `ALL`; non-success statuses retain failure handling.
+- PR #856 is covered by single-file torrent import path resolution using the actual client-reported filename in automatic and manual imports. Unexpected import-plan or confirmation failures return generic client-safe errors; expected classified errors remain descriptive.
+
+## Test and check results
+
+- Focused validation: **117 tests passed across five files**, covering cron status, SABnzbd, NZBGet, import management, and import routes. The focused cron status suite also passed **32 tests** after formatting.
+- Full Vitest suite: **4,256 passed, 7 skipped; 271 files passed and 1 skipped (272 total)**.
+- `npm run check` (TypeScript): passed.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- Prettier checks for the README and release note: passed.
+- `xmllint --noout unraid/questarr.xml`: passed.
+- `git diff --check`: passed.
+- The production build was not repeated: this batch changed a test, README and release-note metadata only, with no production source changes. No files under `client/src/**` changed, so no new running-UI capture was required.
+
+## Scratch and campaign state
+
+No NFS or other task scratch space was used, and no temporary artifacts were created. The existing task-owned scratch cleanup from prior batches remains recorded in their evidence; no unrelated or ambiguous files were touched. The campaign branch remains separate from `main`.
+
+After Batch 73, the ledger records 634 verified, 191 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 320 unreviewed items (1,163 total). PR #1194 remains the only source-changed record. The merge gate remains closed.

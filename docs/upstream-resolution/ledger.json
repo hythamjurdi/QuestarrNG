@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T23:36:57.432Z",
-  "forkHead": "288fb7b9706d07ceb2812be248e4f821e5444983",
+  "capturedAt": "2026-10-13T23:46:27.758Z",
+  "forkHead": "7ac4bf9c85a622e601915ec25b3c1f524e59200d",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -24541,11 +24541,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6cff5b181f85c83690ad243dbefe31d072dddbff",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The upstream SSH-based .github/wiki submodule and its .gitmodules entry are absent from QuestarrNG, so recursive HTTPS clones do not require SSH credentials for the wiki."
+        ],
+        "acceptance": [
+          "The fork has no .github/wiki gitlink or .gitmodules entry that can block Home Assistant or other HTTPS-only clone consumers."
+        ],
+        "evidence": [
+          ".gitmodules and .github/wiki are absent from the fork",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
+        "dependencies": [
+          "issue:843"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24561,10 +24570,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d34dc5efad57587da92e0e277cfa84081f91c053",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The contributor template is stored at GitHub-recognized path .github/PULL_REQUEST_TEMPLATE.md; the obsolete .github/PR_TEMPLATE.md path is absent."
+        ],
+        "acceptance": [
+          "New pull requests discover the repository template automatically using a supported GitHub filename."
+        ],
+        "evidence": [
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24581,11 +24597,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a1eea5baf6d08bcb9466aafc3959eba8033c37da",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "checkDownloadStatus returns before its info-level heartbeat when the tracked-download list is empty. A regression test now asserts that idle ticks do not emit the log line that can crowd older support evidence out of the bounded log window."
+        ],
+        "acceptance": [
+          "With no active downloads, a scheduler tick does not log Checking download status; active download checks remain logged."
+        ],
+        "evidence": [
+          "server/cron.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
+        "dependencies": [
+          "issue:802"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24601,11 +24627,27 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Questarr supports both an optional per-download archive password in the Usenet download dialog and a per-downloader default. SABnzbd and NZBGet send the selected password with the job, reject password transmission over plain HTTP, and redact configured values."
+        ],
+        "acceptance": [
+          "A user can provide the archive password when starting a Usenet release; it reaches SABnzbd or NZBGet safely, with the downloader default used when no per-download value is supplied."
+        ],
+        "evidence": [
+          "client/src/pages/search.tsx",
+          "client/src/pages/downloaders.tsx",
+          "server/downloaders/sabnzbd.ts",
+          "server/downloaders/nzbget.ts",
+          "shared/archive-password.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
+          "server/__tests__/downloaders_nzbget_remaining.test.ts",
+          "client/__tests__/SearchPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
+        "dependencies": [
+          "pr:962"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24621,11 +24663,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a9a246bfce7d8ef157d161766a8f4732fa03a3d1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The Unraid XML uses the non-empty Downloaders:MediaApp:Other category and exposes an optional Game Library mount at /data. The README now explains Unraid 6.10+ local user-template installation, the templates-user destination, and the exact /data Local Path plus downloader-reported Remote Path. The repository also contains ca_profile.xml for submission metadata."
+        ],
+        "acceptance": [
+          "The template parses as XML, exposes the intended category and library path, and the install guide matches the supported local user-template workflow and container path mapping."
+        ],
+        "evidence": [
+          "unraid/questarr.xml",
+          "ca_profile.xml",
+          "README.md",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
+        "dependencies": [
+          "issue:466"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24641,11 +24694,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f612f46358eb8514af8c5116b5fa21839dc32b64",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "NZBGet addDownload chooses the request category, configured downloader category, or games fallback; tests cover configured-category and omitted-category behavior."
+        ],
+        "acceptance": [
+          "A download uses the explicit request category when supplied and otherwise applies the saved NZBGet category."
+        ],
+        "evidence": [
+          "server/downloaders/nzbget.ts",
+          "server/__tests__/downloaders_nzbget_remaining.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
+        "dependencies": [
+          "issue:832"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24661,10 +24724,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "52d97b8587762b51f74e202965085401d43088f7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "README contains a Legal Disclaimer describing QuestarrNG as a self-hosted library organizer, clarifying that it does not provide copyrighted game content, and placing responsibility for third-party services and legal compliance on the operator."
+        ],
+        "acceptance": [
+          "The repository README contains the requested legal and responsibility clarification."
+        ],
+        "evidence": [
+          "README.md",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24681,10 +24751,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0734b2c1d619014521591b5aea350d2b6f13d548",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The deployment workflow serializes runs without cancelling an active deploy, fails closed if tagged-manifest digest inspection fails, and skips deletion of untagged versions referenced by any live tag. It separately removes only stale versions whose tags are all generated test-sha values, preserving human or release tags; the digest scratch file is removed after pruning."
+        ],
+        "acceptance": [
+          "Scheduled cleanup does not delete GHCR manifests reachable from tagged images or human-tagged versions, and inspection errors stop cleanup rather than using an incomplete digest set."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24701,11 +24778,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1b4913202667bda2b118fcf9ab154e44c58445b8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "NZBGet history completion accepts SUCCESS/GOOD, SUCCESS/UNPACK, SUCCESS/HEALTH, SUCCESS/COPY, SUCCESS/MARK, and SUCCESS/ALL via the SUCCESS/ prefix; non-success statuses retain the error path. The tests cover representative successes and failures."
+        ],
+        "acceptance": [
+          "Any successful NZBGet history detail reports completed progress, while non-success states are not promoted to completed."
+        ],
+        "evidence": [
+          "server/downloaders/nzbget.ts",
+          "server/__tests__/downloaders_nzbget_remaining.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
+        "dependencies": [
+          "issue:836"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24721,11 +24808,25 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d05bc1b24c42aa14f4714a0040d669e4d384aa77",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Single-file torrent imports resolve the actual file name from the client file list for both automatic import and manual confirmation. Unexpected import-plan and confirmation failures return a generic client-safe 500 response; expected classified errors remain descriptive."
+        ],
+        "acceptance": [
+          "A single-file torrent stored directly in the category folder imports using its real file name, and unexpected errors do not expose internal exception messages."
+        ],
+        "evidence": [
+          "server/downloaders/utils.ts",
+          "server/cron.ts",
+          "server/services/ImportManager.ts",
+          "server/routes/import.ts",
+          "server/__tests__/import_manager_additional.test.ts",
+          "server/__tests__/import_routes_additional.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-73.txt"
+        ],
+        "dependencies": [
+          "issue:833"
+        ]
       },
       "sourceChangedSinceReview": false
     },
