@@ -1,4 +1,8 @@
-import { getRegionalLocale, useRegionalPreference } from "@/lib/regional-format";
+import {
+  formatRegionalNumber,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { getInterfaceCollator } from "@/lib/interface-locale";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -236,12 +240,19 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { t, language, languageFor, directionFor } = useInterfaceLanguage();
-  useRegionalPreference();
+  const regionalPreference = useRegionalPreference();
+  const formatNumber = (value: number) =>
+    formatRegionalNumber(value, undefined, regionalPreference);
+  const formatOptionalNumber = (value: number | undefined) =>
+    value === undefined ? "—" : formatNumber(value);
   const interfaceCollator = useMemo(() => getInterfaceCollator(language), [language]);
   const translateText = (source: string, values: Record<string, string | number> = {}) => {
     let message = t(source);
     for (const [key, value] of Object.entries(values))
-      message = message.replace(`{${key}}`, String(value));
+      message = message.replace(
+        `{${key}}`,
+        String(typeof value === "number" ? formatNumber(value) : value)
+      );
     return message;
   };
   const localizedText = (source: string, values?: Record<string, string | number>) => (
@@ -254,7 +265,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     if (days === 0) return localizedText("Today");
     return (
       <span lang={languageFor("Today")} dir={directionFor("Today")}>
-        {formatAge(days, language)}
+        {formatAge(days, language, regionalPreference)}
       </span>
     );
   };
@@ -610,13 +621,15 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       );
       const titleSuffix = downloaderNames.length === 1 ? ` to ${downloaderNames[0]}` : "";
       toast({
-        title: `${successCount} download(s) sent${titleSuffix}`,
+        title: `${formatNumber(successCount)} download(s) sent${titleSuffix}`,
         description:
-          results.length > 1 ? `Added ${successCount} of ${results.length} downloads` : undefined,
+          results.length > 1
+            ? `Added ${formatNumber(successCount)} of ${formatNumber(results.length)} downloads`
+            : undefined,
       });
       if (failedResults.length > 0) {
         toast({
-          title: `${failedResults.length} download(s) failed`,
+          title: `${formatNumber(failedResults.length)} download(s) failed`,
           description: failedResults.map(({ download }) => download.title).join(", "),
           variant: "destructive",
         });
@@ -761,7 +774,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         window.URL.revokeObjectURL(url);
         toast({
           title: `Bundle downloaded`,
-          description: `ZIP file with ${downloads.length} item(s)`,
+          description: `ZIP file with ${formatNumber(downloads.length)} item(s)`,
         });
       } catch (error) {
         toast({
@@ -968,7 +981,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         </Button>
         {minSeeders > 0 && (
           <Badge variant="secondary" className="text-xs">
-            {localizedText("Min Seeders")}: {minSeeders}
+            {localizedText("Min Seeders")}: {formatNumber(minSeeders)}
           </Badge>
         )}
         <Badge variant="outline" className="text-xs capitalize">
@@ -1088,7 +1101,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                         {categoryLabel(category)}
                       </h3>
                       <Badge variant="secondary" className="text-xs font-semibold">
-                        {downloadsInCategory.length}
+                        {formatNumber(downloadsInCategory.length)}
                       </Badge>
                     </div>
 
@@ -1335,8 +1348,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                     <span className={cn("flex items-center gap-0.5", healthColor)}>
                                       <Activity className="h-3 w-3" />
                                       {isUsenet
-                                        ? (download.grabs ?? 0)
-                                        : (download.seeders ?? 0)}{" "}
+                                        ? formatNumber(download.grabs ?? 0)
+                                        : formatNumber(download.seeders ?? 0)}{" "}
                                       {localizedText(isUsenet ? "grabs" : "seeders")}
                                     </span>
                                     <span>•</span>
@@ -1435,7 +1448,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                               <div className="flex items-center gap-6 md:gap-10 flex-shrink-0">
                                 {resultIndexerNames.length > 1 && (
                                   <div className="min-w-[70px] text-right font-mono text-xs font-bold">
-                                    {indexerPriorityMap.get(download.indexerName ?? "") ?? "—"}
+                                    {formatOptionalNumber(
+                                      indexerPriorityMap.get(download.indexerName ?? "")
+                                    )}
                                   </div>
                                 )}
 
@@ -1460,14 +1475,16 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                 >
                                   <div className="flex items-center gap-1 font-bold">
                                     <Activity className="h-3 w-3" />
-                                    {isUsenet ? (download.grabs ?? 0) : (download.seeders ?? 0)}
+                                    {isUsenet
+                                      ? formatNumber(download.grabs ?? 0)
+                                      : formatNumber(download.seeders ?? 0)}
                                   </div>
                                   <div className="text-xs uppercase font-bold opacity-70">
                                     {localizedText(isUsenet ? "grabs" : "seeders")}
                                   </div>
                                   {!isUsenet && download.leechers != null && (
                                     <div className="text-[10px] text-muted-foreground/60">
-                                      {download.leechers}L
+                                      {formatNumber(download.leechers)}L
                                     </div>
                                   )}
                                 </div>
@@ -1593,7 +1610,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                             <>
                               <span>•</span>
                               <span className="text-green-600">
-                                {update.seeders} {localizedText("seeders")}
+                                {formatNumber(update.seeders)} {localizedText("seeders")}
                               </span>
                             </>
                           )}

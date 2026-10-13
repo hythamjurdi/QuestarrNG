@@ -16,4 +16,14 @@ describe("formatAge", () => {
     expect(formatAge(2, "ja")).toBe("2 日前");
     expect(formatAge(2, "ar")).toBe("قبل يومين");
   });
+
+  it("formats relative-time numbers with the separate regional preference", () => {
+    const interfaceNumber = new Intl.NumberFormat("ar").format(12345);
+    const regionalNumber = new Intl.NumberFormat("es").format(12345);
+    const expected = new Intl.RelativeTimeFormat("ar", { numeric: "always" })
+      .format(-12345, "day")
+      .replace(interfaceNumber, regionalNumber);
+
+    expect(formatAge(12345, "ar", "es")).toBe(expected);
+  });
 });

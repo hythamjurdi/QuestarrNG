@@ -12,10 +12,21 @@ const game = {
   hidden: false,
 };
 
-async function openLocalizedBundle(page: Page, updateCount: number) {
-  await page.addInitScript(() => {
+async function openLocalizedBundle(
+  page: Page,
+  updateCount: number,
+  regionalFormat?: string,
+  ageDays?: number
+) {
+  const pubDate =
+    ageDays === undefined
+      ? "2026-10-01T00:00:00.000Z"
+      : new Date(Date.now() - ageDays * 24 * 60 * 60 * 1000).toISOString();
+
+  await page.addInitScript((format) => {
     localStorage.setItem("questarr.interface-language", "ar");
-  });
+    if (format) localStorage.setItem("questarrng.regional-format", format);
+  }, regionalFormat);
 
   await page.route("/api/games*", async (route) => {
     await route.fulfill({ json: [game] });
@@ -30,7 +41,7 @@ async function openLocalizedBundle(page: Page, updateCount: number) {
     const updates = Array.from({ length: updateCount }, (_, index) => ({
       title: `Localization Demo Update ${index + 1}`,
       link: `magnet:?xt=urn:btih:UPDATE${index + 1}`,
-      pubDate: "2026-10-01T00:00:00.000Z",
+      pubDate,
       seeders: 10,
       group: "Example Group",
       indexerName: "Example Indexer",
@@ -41,8 +52,9 @@ async function openLocalizedBundle(page: Page, updateCount: number) {
           {
             title: "Localization Demo Full",
             link: "magnet:?xt=urn:btih:MAIN",
-            pubDate: "2026-10-01T00:00:00.000Z",
-            seeders: 20,
+            pubDate,
+            seeders: 12345,
+            age: ageDays,
             group: "Example Group",
             indexerName: "Example Indexer",
           },
@@ -67,6 +79,20 @@ async function openLocalizedBundle(page: Page, updateCount: number) {
 }
 
 test.describe("Game download interface language", () => {
+  test("keeps English when it is the highest-priority browser language", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.removeItem("questarr.interface-language");
+      Object.defineProperty(navigator, "languages", {
+        configurable: true,
+        value: ["en-US", "es"],
+      });
+    });
+
+    await page.goto("/");
+
+    await expect(page.getByTestId("nav-library")).toContainText("Library");
+  });
+
   test("marks translated calendar labels and release counts with their language", async ({
     page,
   }) => {
@@ -143,7 +169,7 @@ test.describe("Game download interface language", () => {
   });
 
   test("localizes category headings, metrics, and relative ages", async ({ page }) => {
-    await openLocalizedBundle(page, 1);
+    await openLocalizedBundle(page, 1, "ar");
 
     const updateHeading = page.getByRole("heading", {
       name: "التحديثات والتصحيحات",
@@ -157,13 +183,17 @@ test.describe("Game download interface language", () => {
     await expect(seedersLabel).toBeVisible();
     await expect(seedersLabel).toHaveAttribute("lang", "ar");
     await expect(seedersLabel).toHaveAttribute("dir", "rtl");
+    const regionalSeeders = await page.evaluate(() => new Intl.NumberFormat("ar").format(12345));
+    const regionalOne = await page.evaluate(() => new Intl.NumberFormat("ar").format(1));
+    await expect(page.getByText(regionalSeeders, { exact: true })).toBeVisible();
+    await expect(updateHeading.locator("..").getByText(regionalOne, { exact: true })).toBeVisible();
 
     const relativeAge = page.locator('span[lang="ar"][dir="rtl"]').filter({ hasText: "قبل" });
     await expect(relativeAge.first()).toBeVisible();
   });
 
   test("uses the dual form when two updates are available and selected", async ({ page }) => {
-    const downloadButton = await openLocalizedBundle(page, 2);
+    const downloadButton = await openLocalizedBundle(page, 2, "ar");
     await expect(downloadButton).toBeVisible();
     await downloadButton.click();
 
@@ -172,18 +202,132 @@ test.describe("Game download interface language", () => {
     await expect(bundleDialog).toContainText(
       "يتوفر تحديثان لهذه اللعبة. اختر ما إذا كنت تريد تنزيلهما مع اللعبة الأساسية."
     );
-    await expect(bundleDialog.getByText("التحديد: 2/2")).toBeVisible();
+    const regionalTwo = await page.evaluate(() => new Intl.NumberFormat("ar").format(2));
+    await expect(bundleDialog.getByText(`التحديد: ${regionalTwo}/${regionalTwo}`)).toBeVisible();
     await expect(bundleDialog.getByRole("button", { name: "تنزيل مع تحديثين" })).toBeVisible();
   });
 
   test("sets RTL direction on the mobile download drawer", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await openLocalizedBundle(page, 1);
+    await openLocalizedBundle(page, 1, "ar");
 
     const downloadDrawer = page.getByRole("dialog", {
       name: "تنزيل Localization Demo",
       exact: true,
     });
     await expect(downloadDrawer).toHaveAttribute("dir", "rtl");
+    const regionalSeeders = await page.evaluate(() => new Intl.NumberFormat("ar").format(12345));
+    await expect(downloadDrawer.getByText(regionalSeeders, { exact: false })).toBeVisible();
+  });
+
+  test("keeps numeric formatting tied to the regional preference", async ({ page }) => {
+    await openLocalizedBundle(page, 1, "es", 12345);
+
+    const downloadDialog = page.getByRole("dialog", {
+      name: "تنزيل Localization Demo",
+      exact: true,
+    });
+    await expect(downloadDialog.getByText("بذور", { exact: true }).first()).toBeVisible();
+    const regionalSeeders = await page.evaluate(() => new Intl.NumberFormat("es").format(12345));
+    await expect(downloadDialog.getByText(regionalSeeders, { exact: true })).toBeVisible();
+    await expect(downloadDialog.getByText("12345", { exact: true })).toHaveCount(0);
+    const regionalAge = await page.evaluate(() =>
+      new Intl.RelativeTimeFormat("ar", { numeric: "always" })
+        .format(-12345, "day")
+        .replace(
+          new Intl.NumberFormat("ar").format(12345),
+          new Intl.NumberFormat("es").format(12345)
+        )
+    );
+    await expect(downloadDialog.getByText(regionalAge, { exact: true }).first()).toBeVisible();
+  });
+
+  test("formats interpolated result counts with the regional preference", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("questarr.interface-language", "ar");
+      localStorage.setItem("questarrng.regional-format", "es");
+    });
+    await page.route("/api/games*", async (route) => route.fulfill({ json: [game] }));
+    await page.route("**/api/indexers/enabled", async (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/downloaders/enabled", async (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/search?*", async (route) =>
+      route.fulfill({
+        json: {
+          items: [],
+          total: 12345,
+          offset: 0,
+          blacklistedCount: 12345,
+        },
+      })
+    );
+
+    await page.goto("/");
+    await page.getByTestId(`card-game-${game.id}`).click();
+    await page.getByTestId("button-download-game").click();
+
+    const dialog = page.getByRole("dialog", {
+      name: "تنزيل Localization Demo",
+      exact: true,
+    });
+    const regionalCount = await page.evaluate(() => new Intl.NumberFormat("es").format(12345));
+    await expect(dialog.getByText(regionalCount, { exact: false })).toBeVisible();
+    await expect(dialog.getByText("12345", { exact: false })).toHaveCount(0);
+  });
+
+  test("formats successful download toast counts regionally", async ({ page }) => {
+    const downloadButton = await openLocalizedBundle(page, 2, "es");
+    await page.route("**/api/downloads", async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fulfill({ json: [] });
+        return;
+      }
+
+      await route.fulfill({
+        json: {
+          success: true,
+          downloaderName: "Example Downloader",
+        },
+      });
+    });
+
+    await downloadButton.click();
+    const bundleDialog = page.getByRole("alertdialog");
+    await bundleDialog.getByRole("button", { name: "تنزيل مع تحديثين" }).click();
+
+    const regionalThree = await page.evaluate(() => new Intl.NumberFormat("es").format(3));
+    const successToast = page.getByText(`${regionalThree} download(s) sent to Example Downloader`, {
+      exact: true,
+    });
+    await expect(successToast).toBeVisible();
+    await expect(
+      page.getByText(`Added ${regionalThree} of ${regionalThree} downloads`, { exact: true })
+    ).toBeVisible();
+  });
+
+  test("formats failed download toast counts regionally", async ({ page }) => {
+    const downloadButton = await openLocalizedBundle(page, 2, "es");
+    let requestIndex = 0;
+    await page.route("**/api/downloads", async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fulfill({ json: [] });
+        return;
+      }
+
+      requestIndex += 1;
+      await route.fulfill({
+        json: {
+          success: requestIndex === 1,
+          downloaderName: "Example Downloader",
+        },
+      });
+    });
+
+    await downloadButton.click();
+    const bundleDialog = page.getByRole("alertdialog");
+    await bundleDialog.getByRole("button", { name: "تنزيل مع تحديثين" }).click();
+
+    const regionalTwo = await page.evaluate(() => new Intl.NumberFormat("es").format(2));
+    const failureToast = page.getByText(`${regionalTwo} download(s) failed`, { exact: true });
+    await expect(failureToast).toBeVisible();
   });
 });

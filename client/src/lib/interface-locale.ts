@@ -39,6 +39,7 @@ function browserLanguage(): InterfaceLanguage {
     : [navigator.language]) {
     const normalized = candidate.toLowerCase();
     const base = normalized.split(/[-_]/)[0];
+    if (base === "en") return "en";
     if (base === "zh") return /(?:hant|tw|hk|mo)/.test(normalized) ? "zh-Hant" : "zh-Hans";
     if (base === "pt") return "pt-BR";
     if (
