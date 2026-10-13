@@ -1,4 +1,4 @@
-import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
+import { formatRegionalPercent, useRegionalPreference } from "@/lib/regional-format";
 import { useInterfaceLanguage } from "@/lib/interface-locale";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -136,13 +136,21 @@ export default function StatsPage() {
         />
         <StatsCard
           title="Completion Rate"
-          value={`${stats.completionRate}%`}
+          value={formatRegionalPercent(
+            stats.completionRate,
+            { maximumFractionDigits: 0 },
+            regionalPreference
+          )}
           subtitle="of acquired games"
           icon={CheckCircle2}
         />
         <StatsCard
           title="Metadata Health"
-          value={`${stats.metadataHealth}%`}
+          value={formatRegionalPercent(
+            stats.metadataHealth,
+            { maximumFractionDigits: 0 },
+            regionalPreference
+          )}
           subtitle="complete metadata"
           icon={Filter}
         />
@@ -171,7 +179,11 @@ export default function StatsPage() {
                     ? {}
                     : {
                         label: ({ name, percent }: PieLabelRenderProps) =>
-                          `${name} ${formatRegionalNumber((percent ?? 0) * 100, { maximumFractionDigits: 0 })}%`,
+                          `${name} ${formatRegionalPercent(
+                            (percent ?? 0) * 100,
+                            { maximumFractionDigits: 0 },
+                            regionalPreference
+                          )}`,
                       })}
                 >
                   {pieData.map((entry, index) => (

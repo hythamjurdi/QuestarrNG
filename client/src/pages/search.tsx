@@ -1,4 +1,8 @@
-import { getRegionalLocale } from "@/lib/regional-format";
+import {
+  formatRegionalPercent,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
 import { useQuery, useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
@@ -114,6 +118,7 @@ const AI_LEGITIMACY_WARNING_THRESHOLD = 0.5;
  */
 export default function SearchPage() {
   const { toast } = useToast();
+  const regionalPreference = useRegionalPreference();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [selectedDownload, setSelectedDownload] = useState<DownloadItem | null>(null);
@@ -603,7 +608,12 @@ export default function SearchPage() {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   AI flagged this file size as unusual for this type of release (
-                                  {Math.round(download.aiLegitimacyScore * 100)}% plausible)
+                                  {formatRegionalPercent(
+                                    download.aiLegitimacyScore * 100,
+                                    { maximumFractionDigits: 0 },
+                                    regionalPreference
+                                  )}{" "}
+                                  plausible)
                                 </TooltipContent>
                               </Tooltip>
                             )}

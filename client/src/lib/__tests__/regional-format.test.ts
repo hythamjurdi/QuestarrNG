@@ -3,6 +3,7 @@ import { act, render, screen } from "@testing-library/react";
 import { createElement } from "react";
 import {
   formatRegionalDistanceToNow,
+  formatRegionalPercent,
   getRegionalDateFnsLocale,
   getRegionalDirection,
   getRegionalWeekStartsOn,
@@ -41,6 +42,17 @@ describe("regional formatting locale", () => {
     expect(getRegionalDateFnsLocale()?.code).toBe("es");
     expect(formatRegionalDistanceToNow(new Date(Date.now() - 60 * 60 * 1000))).toContain("hace");
   });
+
+  it.each(["fr", "de", "ar"])(
+    "formats percentages with the locale's percent conventions for %s",
+    (locale) => {
+      setRegionalPreference(locale);
+
+      expect(formatRegionalPercent(25, { maximumFractionDigits: 0 })).toBe(
+        new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(0.25)
+      );
+    }
+  );
 
   it.each([
     ["ar", "rtl"],

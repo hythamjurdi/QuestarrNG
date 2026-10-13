@@ -1475,7 +1475,13 @@ export default function SettingsPage() {
                   <SelectContent>
                     {REGIONAL_FORMAT_OPTIONS.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        {option.value === "system" ? (
+                          <span lang={languageFor(option.label)} dir={directionFor(option.label)}>
+                            {t(option.label)}
+                          </span>
+                        ) : (
+                          option.label
+                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>

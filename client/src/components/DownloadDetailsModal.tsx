@@ -1,4 +1,8 @@
-import { formatRegionalNumber, getRegionalLocale } from "@/lib/regional-format";
+import {
+  formatRegionalPercent,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -90,6 +94,7 @@ export default function DownloadDetailsModal({
   onOpenChange,
 }: DownloadDetailsModalProps) {
   const isMobile = useIsMobile();
+  const regionalPreference = useRegionalPreference();
 
   const {
     data: details,
@@ -241,11 +246,11 @@ export default function DownloadDetailsModal({
                         <div className="flex justify-between text-sm mb-2">
                           <span>Progress</span>
                           <span data-testid="detail-progress">
-                            {formatRegionalNumber(details.progress, {
-                              minimumFractionDigits: 1,
-                              maximumFractionDigits: 1,
-                            })}
-                            %
+                            {formatRegionalPercent(
+                              details.progress,
+                              { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+                              regionalPreference
+                            )}
                           </span>
                         </div>
                         <Progress value={details.progress} className="h-2" />
@@ -330,11 +335,11 @@ export default function DownloadDetailsModal({
                             <div className="flex items-center gap-2">
                               <Progress value={file.progress} className="h-1 flex-1" />
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {formatRegionalNumber(file.progress, {
-                                  minimumFractionDigits: 1,
-                                  maximumFractionDigits: 1,
-                                })}
-                                %
+                                {formatRegionalPercent(
+                                  file.progress,
+                                  { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+                                  regionalPreference
+                                )}
                               </span>
                             </div>
                             {!file.wanted && (

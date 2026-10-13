@@ -232,6 +232,17 @@ export function formatRegionalNumber(
   return new Intl.NumberFormat(getCurrentLocale(preference), options).format(value);
 }
 
+export function formatRegionalPercent(
+  percent: number,
+  options?: Omit<Intl.NumberFormatOptions, "style">,
+  preference = getRegionalPreference()
+): string {
+  return new Intl.NumberFormat(getCurrentLocale(preference), {
+    style: "percent",
+    ...options,
+  }).format(percent / 100);
+}
+
 export function getRegionalDateFnsLocale(): RegionalDateFnsLocale | undefined {
   return getDateFnsLocale(getCurrentLocale());
 }

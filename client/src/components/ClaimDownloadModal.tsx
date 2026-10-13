@@ -25,6 +25,7 @@ import { type Game } from "@shared/schema";
 import { categorizeDownload, type DownloadCategory } from "@shared/download-categorizer";
 import { releaseMatchesGame } from "@shared/title-utils";
 import { apiRequest } from "@/lib/queryClient";
+import { formatRegionalPercent, useRegionalPreference } from "@/lib/regional-format";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { parseReleaseDate } from "@/lib/utils";
 
@@ -54,6 +55,7 @@ export default function ClaimDownloadModal({
 }: ClaimDownloadModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const regionalPreference = useRegionalPreference();
 
   const detected = categorizeDownload(download.name);
   const [category, setCategory] = useState<DownloadCategory>(detected.category);
@@ -194,7 +196,12 @@ export default function ClaimDownloadModal({
             </SelectContent>
           </Select>
           <Badge variant="outline" className="text-xs">
-            {Math.round(detected.confidence * 100)}% confidence
+            {formatRegionalPercent(
+              detected.confidence * 100,
+              { maximumFractionDigits: 0 },
+              regionalPreference
+            )}{" "}
+            confidence
           </Badge>
         </div>
 

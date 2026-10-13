@@ -5,6 +5,8 @@ import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SettingsPage from "../src/pages/settings";
+import { setInterfaceLanguage } from "../src/lib/interface-locale";
+import { setRegionalPreference } from "../src/lib/regional-format";
 import { createTestQueryClient } from "./test-utils";
 
 vi.mock("@/components/ui/select", () => {
@@ -91,6 +93,8 @@ const defaultUserSettings = {
 describe("SettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setInterfaceLanguage("en");
+    setRegionalPreference("system");
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url.includes("/api/config")) {
@@ -117,6 +121,22 @@ describe("SettingsPage", () => {
     );
 
     expect(await screen.findByText("Settings")).toBeInTheDocument();
+  });
+
+  it("translates the selected browser-default regional format", async () => {
+    setInterfaceLanguage("ar");
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    const translatedOptions = await screen.findAllByRole("button", {
+      name: "استخدام إعدادات المتصفح",
+    });
+    expect(translatedOptions.length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Use browser settings" })).not.toBeInTheDocument();
   });
 
   it("reveals interval, unreleased, and auto-download controls when auto-search is enabled", async () => {

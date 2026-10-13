@@ -1,4 +1,8 @@
-import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
+import {
+  formatRegionalNumber,
+  formatRegionalPercent,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -907,7 +911,7 @@ export default function Downloads() {
                   <div className="flex justify-between text-sm">
                     <span data-testid={`text-progress-label-${download.id}`}>Progress</span>
                     <span data-testid={`text-progress-value-${download.id}`}>
-                      {formatRegionalNumber(
+                      {formatRegionalPercent(
                         download.progress,
                         {
                           minimumFractionDigits: 1,
@@ -921,7 +925,7 @@ export default function Downloads() {
                   <Progress
                     value={download.progress}
                     className="h-2"
-                    aria-label={`Download progress: ${formatRegionalNumber(download.progress, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, regionalPreference)}%`}
+                    aria-label={`Download progress: ${formatRegionalPercent(download.progress, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, regionalPreference)}`}
                     data-testid={`progress-bar-${download.id}`}
                   />
                   {download.error && (
