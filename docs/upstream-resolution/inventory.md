@@ -259,13 +259,13 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #264](https://github.com/Doezer/Questarr/pull/264) | GitHub sidepanel link | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #265](https://github.com/Doezer/Questarr/pull/265) | ⚡ Bolt: Implement route-based code splitting | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #266](https://github.com/Doezer/Questarr/pull/266) | 🛡️ Sentinel: [security improvement] Harden server with Helmet and DB pool settings | MERGED | merge-commit-not-in-either-main-history | verified |
-| [pr #267](https://github.com/Doezer/Questarr/pull/267) | 🛡️ Sentinel: [HIGH] Fix SSRF in bundle download | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #268](https://github.com/Doezer/Questarr/pull/268) | 🎨 Palette: [UX improvement] | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #269](https://github.com/Doezer/Questarr/issues/269) | Error on attempting download? | CLOSED | no-merge-commit | unreviewed |
-| [issue #270](https://github.com/Doezer/Questarr/issues/270) | Can't update indexers | CLOSED | no-merge-commit | unreviewed |
-| [issue #271](https://github.com/Doezer/Questarr/issues/271) | Add ROM Support | CLOSED | no-merge-commit | unreviewed |
-| [pr #272](https://github.com/Doezer/Questarr/pull/272) | ⚡ Bolt: Parallelize download bundle fetching | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #273](https://github.com/Doezer/Questarr/pull/273) | 🛡️ Sentinel: [CRITICAL] Fix SSRF in download bundle endpoint | CLOSED | no-merge-commit | unreviewed |
+| [pr #267](https://github.com/Doezer/Questarr/pull/267) | 🛡️ Sentinel: [HIGH] Fix SSRF in bundle download | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #268](https://github.com/Doezer/Questarr/pull/268) | 🎨 Palette: [UX improvement] | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #269](https://github.com/Doezer/Questarr/issues/269) | Error on attempting download? | CLOSED | no-merge-commit | verified |
+| [issue #270](https://github.com/Doezer/Questarr/issues/270) | Can't update indexers | CLOSED | no-merge-commit | verified |
+| [issue #271](https://github.com/Doezer/Questarr/issues/271) | Add ROM Support | CLOSED | no-merge-commit | verified |
+| [pr #272](https://github.com/Doezer/Questarr/pull/272) | ⚡ Bolt: Parallelize download bundle fetching | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #273](https://github.com/Doezer/Questarr/pull/273) | 🛡️ Sentinel: [CRITICAL] Fix SSRF in download bundle endpoint | CLOSED | no-merge-commit | superseded |
 | [pr #274](https://github.com/Doezer/Questarr/pull/274) | ⚡ Bolt: Cache storage info for 30s | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [issue #275](https://github.com/Doezer/Questarr/issues/275) | Can't find torrents for download, even though the are available and well-seeded on the tracker. | CLOSED | no-merge-commit | unreviewed |
 | [pr #276](https://github.com/Doezer/Questarr/pull/276) | Qbittorrent behind vpn fix | MERGED | merge-commit-not-in-either-main-history | unreviewed |

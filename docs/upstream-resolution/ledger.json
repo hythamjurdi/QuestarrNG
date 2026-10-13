@@ -7417,10 +7417,24 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ad83b0243577842e97561300995d5e63d126b039",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged upstream check was present, but the fork intentionally allows private addresses by default for self-hosted integrations, so that check alone still allowed arbitrary internal bundle targets. The bundle endpoint now defaults to public targets and permits private access only for an exact configured indexer origin; safeFetch applies the same policy to every redirect."
+        ],
+        "acceptance": [
+          "An authenticated bundle request cannot fetch arbitrary private or loopback URLs; configured private indexer origins continue to work, and redirects cannot pivot to another internal host."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/267",
+          "server/ssrf.ts",
+          "server/routes.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/ssrf_routes.test.ts",
+          "docs/THREAT_MODEL.md",
+          "docs/SECURITY_ASSESSMENT.md",
+          "release-notes/2026-10-12-private-indexer-bundle-allowlist.md",
+          "docs/upstream-resolution/evidence/validation-batch-30.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7437,10 +7451,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "04f99f32e6e724e2101d89474b50bbc43aa31d0e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The carousel refresh control already has the requested accessible name; a role-based test now locks in the exact name for assistive technology."
+        ],
+        "acceptance": [
+          "The icon-only refresh action is exposed as a button named Refresh games."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/268",
+          "client/src/components/GameCarouselSection.tsx",
+          "client/__tests__/GameCarouselSection.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-30.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7457,10 +7480,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The report began with the download endpoint receiving a temporary igdb-* discovery ID where it requires a library UUID. The dialog now creates or reuses the library game before dispatching the download, and the reporter later confirmed the issue was resolved after rebuilding and correcting the deployment setup."
+        ],
+        "acceptance": [
+          "A download started from Discover sends a real library UUID and does not fail validation on the temporary metadata ID."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/269",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-30.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7477,10 +7509,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer URL validation accepts configured localhost and internal HTTP(S) services. Prowlarr sync leaves per-indexer categories out when no global override is selected, storage preserves existing values, and Newznab search sends and filters by the saved categories. The reporter confirmed the category results were corrected."
+        ],
+        "acceptance": [
+          "Users can update a local Prowlarr-backed indexer and retain category choices through sync; those categories constrain both Torznab and Newznab game results."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/270",
+          "https://github.com/Doezer/Questarr/pull/280",
+          "server/middleware.ts",
+          "server/prowlarr.ts",
+          "server/storage.ts",
+          "server/newznab.ts",
+          "server/torznab.ts",
+          "server/__tests__/prowlarr.test.ts",
+          "server/__tests__/newznab.test.ts",
+          "server/__tests__/torznab.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-30.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7497,10 +7545,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork supports retro discovery and ROM workflows: Discover can search the optional RAWG catalog, platform mappings cover common console generations, and completed files can be routed to a configured RomM ROM library with conflict and destination review."
+        ],
+        "acceptance": [
+          "Users can discover older titles through the available catalog provider, track their platform, and import a matched ROM release into the configured RomM platform folder."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/271",
+          "client/src/pages/discover.tsx",
+          "server/rawg.ts",
+          "server/services/PlatformMappingService.ts",
+          "server/services/ImportManager.ts",
+          "client/src/components/ImportReviewModal.tsx",
+          "docs/IMPORTS.md",
+          "client/__tests__/ImportSettings.test.tsx",
+          "client/__tests__/ImportReviewModal.test.tsx",
+          "server/__tests__/import_manager.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-30.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7517,10 +7581,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "4391c9b78db928be6745167ebaaf6add0674d9eb",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Bundle downloads fetch results in chunks of five with Promise.all, so independent files are fetched concurrently without an unbounded request fan-out. Individual failures are logged and do not discard successful files."
+        ],
+        "acceptance": [
+          "Bundle response time benefits from bounded parallel fetching and a failed file does not abort the remaining bundle."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/272",
+          "server/routes.ts",
+          "server/__tests__/ssrf_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-30.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7537,10 +7610,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "This closed unmerged PR repeats PR #267's isSafeUrl guard, which permits private IPs by default in this self-hosted fork. The stronger bundle-specific private-origin policy and redirect checks now resolve the vulnerability without blocking configured LAN indexers."
+        ],
+        "acceptance": [
+          "Prevent arbitrary internal bundle fetches while retaining the legitimate configured-indexer path; the superseding policy must also validate redirects."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/273",
+          "https://github.com/Doezer/Questarr/pull/267",
+          "server/ssrf.ts",
+          "server/routes.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/ssrf_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-30.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

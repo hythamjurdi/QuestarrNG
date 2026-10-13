@@ -716,3 +716,39 @@ splitting without claiming a measured initial-load reduction. See
 
 The ledger now records **231 verified**, **28 superseded**, **881 unreviewed**,
 **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
+
+## Follow-up: bundle security, indexers, accessibility and ROM support (#267–273)
+
+PR [#267](https://github.com/Doezer/Questarr/pull/267) is verified with a
+stronger bundle-specific SSRF boundary. The shared URL checker allows private
+addresses for configured self-hosted integrations, so it was too permissive for
+arbitrary bundle links. The ZIP endpoint now allows public downloads plus exact
+configured indexer origins, and `safeFetch` checks every redirect under that
+policy. The SSRF protections and LAN Prowlarr exception are covered by tests and
+documented in the [threat model](../THREAT_MODEL.md) and
+[security assessment](../SECURITY_ASSESSMENT.md).
+
+PR [#268](https://github.com/Doezer/Questarr/pull/268) is verified: the
+carousel refresh button has the accessible name “Refresh games,” now asserted
+through its button role. Issue [#269](https://github.com/Doezer/Questarr/issues/269)
+is verified: Discover downloads create or reuse the library game first, so the
+request uses a UUID instead of a temporary `igdb-*` ID.
+
+Issue [#270](https://github.com/Doezer/Questarr/issues/270) is verified: local
+Prowlarr URLs pass indexer validation, category choices survive syncs, and
+Newznab search applies the saved category filter. Issue
+[#271](https://github.com/Doezer/Questarr/issues/271) is verified against the
+fork's retro workflow: optional RAWG discovery, console-to-RomM platform
+mappings, and reviewed ROM imports into RomM folders. PR
+[#272](https://github.com/Doezer/Questarr/pull/272) is verified: bundle files
+are fetched in parallel with a limit of five and individual failures do not
+abort the ZIP. PR [#273](https://github.com/Doezer/Questarr/pull/273) is
+superseded by the stricter #267 implementation: its duplicate `isSafeUrl`
+check still inherited the self-hosted private-network allowance.
+
+Twelve focused suites passed (322 tests, one skipped; 323 total), TypeScript checking and
+server lint passed, and Prettier passed for the changed source files. The new
+security release note validates. See [batch 30 evidence](evidence/validation-batch-30.txt).
+
+The ledger now records **237 verified**, **29 superseded**, **874 unreviewed**,
+**5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.

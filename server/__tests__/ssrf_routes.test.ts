@@ -122,6 +122,7 @@ vi.mock("../steam-routes.js", () => ({
 import { registerRoutes } from "../routes.js";
 import { storage } from "../storage.js";
 import { prowlarrClient } from "../prowlarr.js";
+import * as ssrf from "../ssrf.js";
 import type { Indexer } from "../../shared/schema.js";
 
 describe("SSRF Vulnerability in Routes", () => {
@@ -279,6 +280,39 @@ describe("SSRF Vulnerability in Routes", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error).toMatch(/Invalid or unsafe URL/);
+  });
+
+  it("blocks arbitrary private bundle URLs while allowing configured indexer origins", async () => {
+    vi.mocked(storage.getAllIndexers).mockResolvedValue([
+      { id: "prowlarr", url: "http://prowlarr:9696/5/api" },
+    ] as Indexer[]);
+    const validation = vi.spyOn(ssrf, "isSafeUrl").mockResolvedValue(false);
+    const fetch = vi.spyOn(ssrf, "safeFetch").mockResolvedValue(new Response("file"));
+    const app = await createApp();
+
+    const blocked = await request(app)
+      .post("/api/downloads/bundle")
+      .send({ downloads: [{ link: "http://127.0.0.1:9696/private", title: "Internal" }] });
+
+    expect(blocked.status).toBe(200);
+    expect(validation).toHaveBeenCalledWith("http://127.0.0.1:9696/private", {
+      allowPrivate: false,
+      allowedPrivateOrigins: ["http://prowlarr:9696"],
+    });
+    expect(fetch).not.toHaveBeenCalled();
+
+    validation.mockResolvedValue(true);
+    const allowed = await request(app)
+      .post("/api/downloads/bundle")
+      .send({
+        downloads: [{ link: "http://prowlarr:9696/5/download?file=game", title: "Game" }],
+      });
+
+    expect(allowed.status).toBe(200);
+    expect(fetch).toHaveBeenCalledWith("http://prowlarr:9696/5/download?file=game", {
+      allowPrivate: false,
+      allowedPrivateOrigins: ["http://prowlarr:9696"],
+    });
   });
 
   it.each([

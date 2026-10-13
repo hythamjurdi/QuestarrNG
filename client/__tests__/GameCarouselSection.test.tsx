@@ -76,6 +76,7 @@ describe("GameCarouselSection", () => {
 
     render(<GameCarouselSection title="Popular Games" queryKey={["popular"]} queryFn={vi.fn()} />);
 
+    expect(screen.getByRole("button", { name: "Refresh games" })).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Updating Popular Games…");
     expect(screen.getByRole("status").closest("[aria-busy]")).toBeNull();
     expect(

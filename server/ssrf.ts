@@ -7,6 +7,8 @@ const DEFAULT_SAFE_FETCH_MAX_REDIRECTS = 5;
 
 type SafeFetchOptions = RequestInit & {
   allowPrivate?: boolean;
+  /** Private network access may be limited to exact, explicitly configured origins. */
+  allowedPrivateOrigins?: readonly string[];
   timeoutMs?: number;
   maxRedirects?: number;
   // Reject the initial URL and every redirect hop that isn't HTTPS. Set this
@@ -140,13 +142,18 @@ function getRedirectOptions(
 }
 
 /** Resolves and validates the network target used for one safe-fetch request. */
-async function resolveSafeFetchTarget(url: URL, allowPrivate = true): Promise<SafeFetchTarget> {
+async function resolveSafeFetchTarget(
+  url: URL,
+  allowPrivate = true,
+  allowedPrivateOrigins: readonly string[] = []
+): Promise<SafeFetchTarget> {
+  const permitPrivate = allowPrivate || allowedPrivateOrigins.includes(url.origin);
   const hostname = normalizeHostname(url.hostname);
   const isHttps = url.protocol === "https:";
   const ipVersion = isIP(hostname);
 
   if (ipVersion !== 0) {
-    if (!isSafeIp(hostname, allowPrivate)) {
+    if (!isSafeIp(hostname, permitPrivate)) {
       throw new Error("Invalid or unsafe URL");
     }
 
@@ -166,7 +173,7 @@ async function resolveSafeFetchTarget(url: URL, allowPrivate = true): Promise<Sa
     }
 
     for (const { address } of addresses) {
-      if (!isSafeIp(address, allowPrivate)) {
+      if (!isSafeIp(address, permitPrivate)) {
         throw new Error("Invalid or unsafe URL");
       }
     }
@@ -193,9 +200,10 @@ async function resolveSafeFetchTarget(url: URL, allowPrivate = true): Promise<Sa
 async function fetchValidatedOnce(
   url: URL,
   fetchOptions: RequestInit,
-  allowPrivate = true
+  allowPrivate = true,
+  allowedPrivateOrigins: readonly string[] = []
 ): Promise<Response> {
-  const target = await resolveSafeFetchTarget(url, allowPrivate);
+  const target = await resolveSafeFetchTarget(url, allowPrivate, allowedPrivateOrigins);
 
   // Pin the TCP connection to the already-validated address for both HTTP and HTTPS
   // instead of rewriting the URL/Host to the IP. The original hostname remains available
@@ -215,6 +223,8 @@ async function fetchValidatedOnce(
 /**
  * Validates if a URL is safe to connect to, preventing SSRF attacks against
  * cloud metadata services and other sensitive internal endpoints.
+ * When private access is disabled, only exact origins in
+ * `allowedPrivateOrigins` may resolve to private addresses.
  *
  * Always blocks (regardless of allowPrivate):
  * - 169.254.0.0/16 (IPv4 Link-Local / Cloud Metadata)
@@ -229,7 +239,9 @@ async function fetchValidatedOnce(
  */
 export async function isSafeUrl(
   urlStr: string,
-  options: { allowPrivate?: boolean } = { allowPrivate: true }
+  options: { allowPrivate?: boolean; allowedPrivateOrigins?: readonly string[] } = {
+    allowPrivate: true,
+  }
 ): Promise<boolean> {
   // Magnet links are not HTTP(S) URLs and do not cause any server-side network connection.
   // They are passed directly to the download client, so they pose no SSRF risk.
@@ -250,6 +262,9 @@ export async function isSafeUrl(
     return false;
   }
 
+  const permitPrivate =
+    (options.allowPrivate ?? true) || options.allowedPrivateOrigins?.includes(url.origin) === true;
+
   let hostname = url.hostname;
 
   // Handle IPv6 brackets in hostname (e.g. [::1]) which URL.hostname might preserve
@@ -261,7 +276,7 @@ export async function isSafeUrl(
   // Check if hostname is an IP
   const ipVersion = isIP(hostname);
   if (ipVersion !== 0) {
-    return isSafeIp(hostname, options.allowPrivate);
+    return isSafeIp(hostname, permitPrivate);
   }
 
   // Resolve hostname
@@ -272,7 +287,7 @@ export async function isSafeUrl(
     }
     // Check all resolved addresses to prevent DNS rebinding attacks
     for (const { address } of addresses) {
-      if (!isSafeIp(address, options.allowPrivate)) {
+      if (!isSafeIp(address, permitPrivate)) {
         return false;
       }
     }
@@ -414,6 +429,7 @@ export function isPrivateNetworkAddress(hostname: string): boolean {
 export async function safeFetch(urlStr: string, options: SafeFetchOptions = {}): Promise<Response> {
   const {
     allowPrivate,
+    allowedPrivateOrigins,
     maxRedirects = DEFAULT_SAFE_FETCH_MAX_REDIRECTS,
     redirect = "follow",
     requireHttps = false,
@@ -447,7 +463,8 @@ export async function safeFetch(urlStr: string, options: SafeFetchOptions = {}):
         ...currentOptions,
         redirect: redirect === "follow" ? "manual" : redirect,
       },
-      allowPrivate
+      allowPrivate,
+      allowedPrivateOrigins
     );
 
     if (redirect !== "follow" || !isRedirectStatus(response.status)) {

@@ -4863,6 +4863,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No downloads provided" });
       }
 
+      // Bundle links may come from a private Prowlarr or indexer service. Only
+      // those exact configured origins get private-network access; arbitrary
+      // client-supplied URLs and redirect targets remain public-only.
+      const allowedPrivateOrigins = [
+        ...new Set(
+          (await storage.getAllIndexers()).flatMap((indexer) => {
+            try {
+              const url = new URL(indexer.url);
+              return url.protocol === "http:" || url.protocol === "https:" ? [url.origin] : [];
+            } catch {
+              return [];
+            }
+          })
+        ),
+      ];
+      const bundleFetchPolicy = { allowPrivate: false, allowedPrivateOrigins } as const;
+
       const archive = new ZipArchive({ zlib: { level: 9 } });
 
       res.attachment("download-bundle.zip");
@@ -4877,12 +4894,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await Promise.all(
           chunk.map(async (download: { link: string; title: string; downloadType?: string }) => {
             try {
-              if (!(await isSafeUrl(download.link))) {
+              if (!(await isSafeUrl(download.link, bundleFetchPolicy))) {
                 routesLogger.warn("Skipping unsafe URL in bundle");
                 return;
               }
 
-              const response = await safeFetch(download.link);
+              const response = await safeFetch(download.link, bundleFetchPolicy);
               if (response.ok) {
                 const buffer = await response.arrayBuffer();
                 // Try to detect if it's a usenet item based on title or link if downloadType not present

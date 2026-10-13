@@ -75,6 +75,41 @@ describe("isSafeUrl Security Check", () => {
     expect(await isSafeUrl("http://[::1]", { allowPrivate: true })).toBe(true);
   });
 
+  it("allows private addresses only for explicitly listed origins in public-only mode", async () => {
+    expect(await isSafeUrl("http://127.0.0.1:9696", { allowPrivate: false })).toBe(false);
+    expect(
+      await isSafeUrl("http://127.0.0.1:9696/5/download", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://127.0.0.1:9696"],
+      })
+    ).toBe(true);
+    expect(
+      await isSafeUrl("http://127.0.0.1:8080/metadata", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://127.0.0.1:9696"],
+      })
+    ).toBe(false);
+  });
+
+  it("allows a configured hostname only when its resolved private address is explicitly trusted", async () => {
+    vi.mocked(dns.lookup as unknown as import("node:dns").LookupAddress[])
+      .mockResolvedValueOnce([{ address: "10.0.0.8", family: 4 }])
+      .mockResolvedValueOnce([{ address: "10.0.0.8", family: 4 }]);
+
+    expect(
+      await isSafeUrl("http://prowlarr:9696/5/download", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://prowlarr:9696"],
+      })
+    ).toBe(true);
+    expect(
+      await isSafeUrl("http://prowlarr:9696/5/download", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://other:9696"],
+      })
+    ).toBe(false);
+  });
+
   it("should block IPv4 metadata service", async () => {
     const isSafe = await isSafeUrl("http://169.254.169.254/latest/meta-data/");
     expect(isSafe).toBe(false);
@@ -211,6 +246,24 @@ describe("safeFetch", () => {
     await expect(safeFetch("https://example.com/download")).rejects.toThrow(
       "Invalid or unsafe URL"
     );
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not follow a private redirect outside the configured origin allowlist", async () => {
+    mockDnsResolvesOnce("10.0.0.8");
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { location: "http://10.0.0.9:9696/latest/meta-data" },
+      })
+    );
+
+    await expect(
+      safeFetch("http://prowlarr:9696/5/download", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://prowlarr:9696"],
+      })
+    ).rejects.toThrow("Invalid or unsafe URL");
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 

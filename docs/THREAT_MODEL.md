@@ -215,6 +215,16 @@ applies. A compromised SeerrNG credential can retrieve files available to its
 QuestarrNG account, so operators should keep that scoped key private and
 dedicated to SeerrNG.
 
+### 4.7 User-selected download bundle URLs
+
+The authenticated `/api/downloads/bundle` endpoint packages selected indexer
+results into a ZIP. It allows public HTTP(S) download targets and blocks private
+network targets unless the exact origin is present in the configured indexer
+list. `safeFetch` applies the same allowlist to each redirect, so a public URL
+cannot redirect the server to an unrelated internal service. Configured private
+indexer origins remain trusted integration endpoints, which preserves LAN
+Prowlarr links.
+
 ---
 
 ## 5. External Integration Trust Table
