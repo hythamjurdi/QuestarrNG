@@ -1,0 +1,47 @@
+Batch 23 review and validation
+==============================
+
+Items reviewed
+--------------
+
+- Issue #198 verified: Discover hides persist through create/PATCH behavior and
+  hidden games are filtered from subsequent carousels.
+- Issue #199 verified against its final upstream commits: despite the issue
+  title saying Action, the commits set Adventure as the default, matching the
+  current Discover implementation and test.
+- Issue #201 verified: GameCards have Download and View Details actions, with
+  no Launch Game control.
+- Issue #202 verified: the root route is Library; status, genre and platform
+  filters are present and covered by focused tests.
+- Issue #203 verified in the browser: the theme toggle changed the root class
+  from `dark` to `light`, `--background` from `210 24% 16%` to `210 20% 98%`,
+  and the body background from `rgb(31, 41, 51)` to `rgb(249, 250, 251)`. The
+  later commit linked to the issue only adds workflow permissions.
+- Issue #205 implemented and verified: updates remain checked by default;
+  extras no larger than 25% of the main release are optional, unchecked
+  suggestions. Larger extras and unknown-size results are omitted. Tests verify
+  that selected updates and extras are both sent with the main game.
+- PR #207 superseded: each proposed version is older than the version declared
+  and locked in package.json/package-lock.json. Current versions are
+  @tailwindcss/vite 4.3.3, @types/express-session 1.19.0, @types/node 26.6.4,
+  @vitest/ui 5.0.2, autoprefixer 10.6.1, esbuild 0.28.2, eslint 10.11.0,
+  tsx 4.23.15, and typescript-eslint 8.71.0.
+
+Validation
+----------
+
+- Focused tests:
+  `npm test -- --run client/__tests__/GameCarouselSection.test.tsx client/__tests__/discover-hidden-mutation.test.ts client/__tests__/DiscoverPage.test.tsx client/__tests__/GameCard.test.tsx client/__tests__/Library.defaultFilters.test.tsx client/__tests__/Library.platform-filter.test.tsx client/__tests__/GameDownloadDialog.test.tsx`
+  — 7 files passed; 76 tests passed, 1 skipped.
+- `npm run check` — passed.
+- `npm run format:check` — passed.
+- `npx eslint client/src/components/GameDownloadDialog.tsx --max-warnings 0` — passed.
+- Headless browser against `npm run dev:test` exercised the add-updates-and-extras
+  dialog using representative search results (20 GB main, 1 GB update, 5 GB
+  extra, 6 GB extra). The 5 GB item appeared unchecked; the larger 6 GB item did
+  not appear in the suggestion list. Desktop and mobile screenshots:
+  `docs/pr-evidence/upstream-smart-add.png` and
+  `docs/pr-evidence/upstream-smart-add-mobile.png`.
+- A test run initially failed because Vitest could not create a temp file under
+  the full `/tmp`; rerunning with task-scoped `TMPDIR` on `/dev/shm` passed.
+- `git diff --check` and ledger JSON parsing passed after documentation updates.

@@ -731,6 +731,141 @@ describe("GameDownloadDialog", () => {
     });
   });
 
+  it("suggests optional extras at or below a quarter of the main release size", async () => {
+    const fetchMock = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({
+          guid: "main-large",
+          title: "Test Game Full Release",
+          link: "http://test.com/main-large",
+          size: 400 * 1024 * 1024,
+        }),
+        makeTorrentItem({
+          guid: "small-update",
+          title: "Test Game Update 1.1",
+          link: "http://test.com/small-update",
+          size: 10 * 1024 * 1024,
+        }),
+        makeTorrentItem({
+          guid: "extra-small",
+          title: "Test Game Bonus Soundtrack",
+          link: "http://test.com/extra-small",
+          size: 100 * 1024 * 1024,
+        }),
+        makeTorrentItem({
+          guid: "extra-large",
+          title: "Test Game Extra Soundtrack",
+          link: "http://test.com/extra-large",
+          size: 101 * 1024 * 1024,
+        }),
+        {
+          ...makeTorrentItem({
+            guid: "extra-unknown",
+            title: "Test Game Bonus Artbook",
+            link: "http://test.com/extra-unknown",
+          }),
+          size: undefined,
+        },
+      ]),
+    });
+    globalThis.fetch = fetchMock;
+
+    renderComponent();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Download Test Game Full Release" }));
+
+    expect(await screen.findByText("Add updates and extras?")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Updates are selected by default; small extras are optional and start unchecked/
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Each suggested extra is 25% or less of the 400 MB main release/)
+    ).toBeInTheDocument();
+    const smallExtra = screen.getByRole("checkbox", { name: /Test Game Bonus Soundtrack/ });
+    expect(smallExtra).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("checkbox", { name: /Test Game Update 1\.1/ })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(
+      screen.queryByRole("checkbox", { name: /Test Game Extra Soundtrack/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /Test Game Bonus Artbook/ })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(smallExtra);
+    fireEvent.click(screen.getByRole("button", { name: "Download with 2 add-ons" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/downloads",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("http://test.com/extra-small"),
+        })
+      );
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/downloads",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("http://test.com/main-large"),
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/downloads",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("http://test.com/small-update"),
+      })
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/downloads",
+      expect.objectContaining({ body: expect.stringContaining("http://test.com/extra-large") })
+    );
+  });
+
+  it("opens the optional-extra choice when no updates are available", async () => {
+    const fetchMock = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({
+          guid: "main-only",
+          title: "Test Game Full Release",
+          link: "http://test.com/main-only",
+          size: 400 * 1024 * 1024,
+        }),
+        makeTorrentItem({
+          guid: "extra-only",
+          title: "Test Game Bonus Soundtrack",
+          link: "http://test.com/extra-only",
+          size: 80 * 1024 * 1024,
+        }),
+      ]),
+    });
+    globalThis.fetch = fetchMock;
+
+    renderComponent();
+    fireEvent.click(await screen.findByRole("button", { name: "Download Test Game Full Release" }));
+
+    expect(await screen.findByText("Add small extras?")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download with 0 updates" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Test Game Bonus Soundtrack/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Download with 1 extra" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/downloads",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("http://test.com/extra-only"),
+        })
+      );
+    });
+  });
+
   const skidrowItem = makeTorrentItem({
     guid: "skidrow-1",
     title: "Test Game SKIDROW",
@@ -1275,7 +1410,7 @@ describe("GameDownloadDialog", () => {
     fireEvent.click(screen.getByText("Select All"));
     expect(screen.getByText("1 of 1 updates selected")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Only the main game"));
+    fireEvent.click(screen.getByText("Download game only"));
 
     await waitFor(() => {
       expect(globalThis.fetch).toHaveBeenCalledWith(

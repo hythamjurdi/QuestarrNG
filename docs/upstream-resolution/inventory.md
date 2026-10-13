@@ -201,13 +201,13 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #194](https://github.com/Doezer/Questarr/pull/194) | 🛡️ Sentinel: [CRITICAL] Fix Path Traversal Vulnerability | CLOSED | no-merge-commit | superseded |
 | [issue #195](https://github.com/Doezer/Questarr/issues/195) | Downloads page | CLOSED | no-merge-commit | verified |
 | [issue #196](https://github.com/Doezer/Questarr/issues/196) | Add the torrent URL to the list | CLOSED | no-merge-commit | verified |
-| [issue #198](https://github.com/Doezer/Questarr/issues/198) | Allow hiding a game from the carousels | CLOSED | no-merge-commit | unreviewed |
-| [issue #199](https://github.com/Doezer/Questarr/issues/199) | fix genre default selection to "Action" | CLOSED | no-merge-commit | unreviewed |
-| [issue #201](https://github.com/Doezer/Questarr/issues/201) | remove launch game button from game card | CLOSED | no-merge-commit | unreviewed |
-| [issue #202](https://github.com/Doezer/Questarr/issues/202) | filter games in dashboard is not functioning and doesn't exist in library | CLOSED | no-merge-commit | unreviewed |
-| [issue #203](https://github.com/Doezer/Questarr/issues/203) | dark/light mode button doesn't switch styling | CLOSED | no-merge-commit | unreviewed |
-| [issue #205](https://github.com/Doezer/Questarr/issues/205) | Support smart adding of game | CLOSED | no-merge-commit | unreviewed |
-| [pr #207](https://github.com/Doezer/Questarr/pull/207) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 11 updates | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [issue #198](https://github.com/Doezer/Questarr/issues/198) | Allow hiding a game from the carousels | CLOSED | no-merge-commit | verified |
+| [issue #199](https://github.com/Doezer/Questarr/issues/199) | fix genre default selection to "Action" | CLOSED | no-merge-commit | verified |
+| [issue #201](https://github.com/Doezer/Questarr/issues/201) | remove launch game button from game card | CLOSED | no-merge-commit | verified |
+| [issue #202](https://github.com/Doezer/Questarr/issues/202) | filter games in dashboard is not functioning and doesn't exist in library | CLOSED | no-merge-commit | verified |
+| [issue #203](https://github.com/Doezer/Questarr/issues/203) | dark/light mode button doesn't switch styling | CLOSED | no-merge-commit | verified |
+| [issue #205](https://github.com/Doezer/Questarr/issues/205) | Support smart adding of game | CLOSED | no-merge-commit | verified |
+| [pr #207](https://github.com/Doezer/Questarr/pull/207) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 11 updates | MERGED | merge-commit-not-in-either-main-history | superseded |
 | [issue #208](https://github.com/Doezer/Questarr/issues/208) | Allow scrolling when list of torrents is longer than modal | CLOSED | no-merge-commit | unreviewed |
 | [issue #209](https://github.com/Doezer/Questarr/issues/209) | Allow extended search | CLOSED | no-merge-commit | unreviewed |
 | [issue #210](https://github.com/Doezer/Questarr/issues/210) | Add issue templates | CLOSED | no-merge-commit | unreviewed |

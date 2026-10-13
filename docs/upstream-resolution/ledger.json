@@ -5670,10 +5670,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Discover games can be hidden from carousels. The action persists an existing game with PATCH or creates a hidden library row, and hidden IDs are filtered from subsequent carousel results."
+        ],
+        "acceptance": [
+          "Hide a Discover game and ensure it no longer appears in carousels after the library query refreshes."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/198",
+          "client/src/lib/discover-hidden-mutation.ts",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/discover-hidden-mutation.test.ts",
+          "client/__tests__/DiscoverPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5690,10 +5700,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The issue title asks for Action, but the final upstream issue timeline records two commits setting the default genre to Adventure. QuestarrNG defaults to Adventure and its Discover test asserts the Adventure carousel initially."
+        ],
+        "acceptance": [
+          "Use the final upstream commit intent rather than the stale issue title; verify the initial Discover selection is Adventure."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/199",
+          "https://github.com/Doezer/Questarr/commit/24bd289",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5710,10 +5729,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Game cards expose Download and View Details actions; there is no Launch Game control on the card."
+        ],
+        "acceptance": [
+          "Inspect both compact and standard cards to confirm no launch action is offered."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/201",
+          "client/src/components/GameCard.tsx",
+          "client/src/components/CompactGameCard.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5730,10 +5757,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The root page is the Library and it exposes working status, genre, and platform filters. Focused tests cover library defaults and platform-filter behavior."
+        ],
+        "acceptance": [
+          "Confirm the Library route renders the filter controls and that status/genre/platform selections narrow the displayed games."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/202",
+          "client/src/App.tsx",
+          "client/src/components/Library.tsx",
+          "client/__tests__/Library.defaultFilters.test.tsx",
+          "client/__tests__/Library.platform-filter.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5750,10 +5787,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The theme toggle switches the root document between dark and light classes, and the page background changes with the theme variables. Browser verification changed --background from 210 24% 16% to 210 20% 98%. The later upstream commit linked to this issue only adds permissions to a GitHub workflow."
+        ],
+        "acceptance": [
+          "Click the theme toggle in the running app and verify both the root theme class and computed background change."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/203",
+          "https://github.com/Doezer/Questarr/commit/34cdef1",
+          "client/src/components/Header.tsx",
+          "client/src/App.tsx",
+          "client/src/index.css",
+          "docs/upstream-resolution/evidence/validation-batch-23.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5770,10 +5818,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Implemented a combined selection step for main releases with updates or size-qualified extras. Updates remain selected by default; extras no larger than 25% of the main release are suggested unchecked, with sizes shown. Larger or unmeasured extras are not suggested. Selected updates and extras are sent with the main game."
+        ],
+        "acceptance": [
+          "Show the bundle choice when a main release has updates or qualifying extras. Keep updates selected by default; keep extras opt-in. Include selected items together and allow downloading only the main game."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/205",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/pr-evidence/upstream-smart-add.png",
+          "docs/upstream-resolution/evidence/validation-batch-23.txt",
+          "docs/pr-evidence/upstream-smart-add-mobile.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5790,10 +5849,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "bc555cc16ba17667f3bcd86479ca21102fcafc8e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All nine dependency bumps listed in this grouped PR are already exceeded by the versions declared and locked in QuestarrNG. Replaying the older grouped bump would roll dependencies backward."
+        ],
+        "acceptance": [
+          "Compare each proposed version with package.json and package-lock.json; all current versions must be newer."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/207",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-23.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

@@ -581,3 +581,40 @@ actual result URL. Five focused suites passed (122 tests, one skipped); see
 The ledger now records 192 verified, 12 superseded, 936 unreviewed,
 5 not-applicable, 1 implemented-but-unverified, and 1 needs-implementation
 records. Issue #37 remains outstanding.
+
+## Follow-up: discovery, library, theme and smart-add items (#198–207)
+
+Issues [#198](https://github.com/Doezer/Questarr/issues/198),
+[#199](https://github.com/Doezer/Questarr/issues/199),
+[#201](https://github.com/Doezer/Questarr/issues/201),
+[#202](https://github.com/Doezer/Questarr/issues/202), and
+[#203](https://github.com/Doezer/Questarr/issues/203) are verified against the
+current app. Discover hides are persisted; the final #199 commits explicitly
+choose Adventure despite the stale Action title; GameCards have no Launch
+control; the root Library has working filters; and the theme toggle changes the
+page styling. The workflow-permissions commit later linked to #203 does not
+implement the theme behavior.
+
+Issue [#205](https://github.com/Doezer/Questarr/issues/205) is implemented. When
+the user picks a main release, the add-on dialog keeps updates selected by
+default and offers extras up to 25% of the main release size as unchecked
+suggestions. Larger extras and results with unknown sizes are left out. The
+dialog shows item sizes, supports combining selected updates and extras, and
+keeps a clear main-game-only action. The 25% cutoff is our conservative reading
+of “a lot smaller,” chosen to make the suggestion predictable and transparent.
+
+PR [#207](https://github.com/Doezer/Questarr/pull/207) is superseded: all nine
+dependency updates in that PR are older than the versions declared and locked
+in the fork.
+
+Seven focused UI suites passed (76 tests, one skipped). TypeScript checking and
+format checking passed. Headless-browser verification covered the theme class
+and computed background change, and the smart-add flow was captured from
+`npm run dev:test` with representative search results in
+[desktop](../pr-evidence/upstream-smart-add.png) and
+[mobile](../pr-evidence/upstream-smart-add-mobile.png) screenshots.
+See [batch 23 validation](evidence/validation-batch-23.txt).
+
+The ledger now records **198 verified**, **13 superseded**, **929 unreviewed**,
+**5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**.
+Issue #37 remains outstanding.
