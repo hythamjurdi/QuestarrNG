@@ -912,3 +912,61 @@ retains its existing large-chunk advisory. The ledger now records **266
 verified**, **30 superseded**, **842 unreviewed**, **7 not-applicable**,
 **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37
 remains outstanding.
+
+## Follow-up: RomM, IGDB, downloads and hardening (#306–319)
+
+PRs [#306](https://github.com/Doezer/Questarr/pull/306),
+[#314](https://github.com/Doezer/Questarr/pull/314), and
+[#319](https://github.com/Doezer/Questarr/pull/319) are verified against the
+fork's lint, type-check, format, and build gates. The fork has contributor and
+operations guidance; its source-bound CI build plan runs those checks. PR #306's
+maintainer-requested removal of `TASKS.md` and `PR_TEMPLATE.md` is reflected in
+the fork's checked-in artifacts.
+
+PR [#307](https://github.com/Doezer/Questarr/pull/307) is verified: SQLite
+migrations use a journal-aware idempotent runner with schema repair, while
+Postgres uses Drizzle migrations under an advisory lock. PR
+[#308](https://github.com/Doezer/Questarr/pull/308)'s search labels and
+keyboard-accessible storage tooltip are present. PR
+[#309](https://github.com/Doezer/Questarr/pull/309)'s bundle download validates
+URLs and fetches through the SSRF-safe client, allowing only configured private
+indexer origins. PRs [#310](https://github.com/Doezer/Questarr/pull/310) and
+[#317](https://github.com/Doezer/Questarr/pull/317) are verified: IGDB ID
+lookups batch requests in parallel within the configured rate limit, and the
+regular request queue spaces other API calls.
+
+Issue [#311](https://github.com/Doezer/Questarr/issues/311)'s ROM-management
+request is implemented through RomM platform routing, library imports, and
+post-processing. Removing a game with file deletion enabled now also permits
+paths strictly inside that user's enabled RomM root, after canonical path
+validation. A regression test confirms disabled RomM roots remain protected.
+RAR extraction support is installed in the production image and covered by the
+archive-import suite. SteamGridDB was mentioned as an optional artwork idea;
+this fork continues to use its existing IGDB artwork integration. The linked
+implementation PR [#363](https://github.com/Doezer/Questarr/pull/363) remains
+scheduled for its separate ledger review. PR
+[#312](https://github.com/Doezer/Questarr/pull/312)'s separator is present in
+both download layouts. Issue
+[#313](https://github.com/Doezer/Questarr/issues/313) is verified against
+[#322](https://github.com/Doezer/Questarr/pull/322): qBittorrent detects magnet
+redirects and reports actionable download errors.
+
+PR [#315](https://github.com/Doezer/Questarr/pull/315) is verified: initial
+setup accepts IGDB credentials when neither the database nor environment is
+configured, and existing installations can manage credentials in Settings. PR
+[#316](https://github.com/Doezer/Questarr/pull/316) is verified: auto-search
+timestamps persist in user settings across restarts. PR
+[#318](https://github.com/Doezer/Questarr/pull/318) is verified with a small
+follow-up fix: selected categories now filter scheduled results, with DLC and
+extras routed into the existing packs/add-ons availability channel. This also
+closes the remaining scheduled-category gap shared with PR #301.
+
+See [batch 35 validation](evidence/validation-batch-35.txt) and the release
+notes for [RomM file removal](../../release-notes/2026-10-12-romm-library-file-deletion.md)
+and [scheduled download categories](../../release-notes/2026-10-12-auto-search-selected-categories.md).
+
+Fifteen backend suites passed (718 tests). The AddGameModal suite passed 15
+tests separately, and GameDownloadDialog passed 49 tests (one skipped). The
+ledger now records **280 verified**, **30 superseded**, **828 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** records. Issue #37 remains outstanding.

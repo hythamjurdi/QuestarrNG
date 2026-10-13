@@ -81,9 +81,17 @@ vi.mock("../apprise.js", async () => createAppriseMock());
 vi.mock("../downloaders.js", () => ({ DownloaderManager: createDownloaderManagerMock() }));
 vi.mock("../steam-routes.js", () => ({ steamRoutes: createSteamRoutesMock() }));
 vi.mock("../search.js", () => createSearchMock());
-vi.mock("fs-extra", () => ({
-  default: { remove: vi.fn(), pathExists: vi.fn(), readdir: vi.fn() },
-}));
+vi.mock("fs-extra", async () => {
+  const actual = await vi.importActual<typeof import("fs-extra")>("fs-extra");
+  return {
+    default: {
+      remove: vi.fn(),
+      pathExists: vi.fn(),
+      readdir: vi.fn(),
+      realpath: actual.realpath,
+    },
+  };
+});
 // Only the new /api/settings/security-scan/test ClamAV-ping route touches
 // node:net anywhere in routes.ts, so mocking it file-wide here is safe.
 const netTestState = vi.hoisted(() => ({ nextReply: "PONG\0" as string | null }));
@@ -1239,6 +1247,60 @@ describe("API Routes - Extended Coverage", () => {
         fileDeletion: { deleted: true, path: "/data/library/MyGame" },
       });
       expect(fsExtra.remove).toHaveBeenCalledWith(path.resolve("/data/library/MyGame"));
+    });
+
+    it("should delete RomM files inside the enabled RomM library root", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      const gamePath = "/data/romm/library/roms/ps2/Burnout 3";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "user-1",
+        libraryPath: gamePath,
+      } as unknown as Game);
+      vi.mocked(storage.getImportConfig).mockResolvedValue({
+        libraryRoot: "/data/library",
+      } as any);
+      vi.mocked(storage.getRomMConfig).mockResolvedValue({
+        enabled: true,
+        libraryRoot: "/data/romm/library/roms",
+      } as any);
+      vi.mocked(storage.removeGame).mockResolvedValue(true);
+      vi.mocked(fsExtra.remove).mockResolvedValue(undefined as never);
+
+      const response = await request(app).delete(`/api/games/${gameId}?deleteFiles=true`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.fileDeletion).toEqual({ deleted: true, path: gamePath });
+      expect(fsExtra.remove).toHaveBeenCalledWith(path.resolve(gamePath));
+    });
+
+    it("should not treat a disabled RomM library as an authorized delete root", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      const gamePath = "/data/romm/library/roms/ps2/Burnout 3";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "user-1",
+        libraryPath: gamePath,
+      } as unknown as Game);
+      vi.mocked(storage.getImportConfig).mockResolvedValue({
+        libraryRoot: "/data/library",
+      } as any);
+      vi.mocked(storage.getRomMConfig).mockResolvedValue({
+        enabled: false,
+        libraryRoot: "/data/romm/library/roms",
+      } as any);
+      vi.mocked(storage.getAllRootFolders).mockResolvedValue([]);
+      vi.mocked(storage.removeGame).mockResolvedValue(true);
+
+      const response = await request(app).delete(`/api/games/${gameId}?deleteFiles=true`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.fileDeletion).toEqual({
+        deleted: false,
+        reason: "outside-library-root",
+        path: gamePath,
+      });
+      expect(fsExtra.remove).not.toHaveBeenCalled();
     });
 
     it("should skip deleting library files when path is outside the library root", async () => {

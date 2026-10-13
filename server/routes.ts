@@ -2568,22 +2568,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (deleteFiles) {
           if (game.libraryPath) {
-            const config = await storage.getImportConfig(game.userId ?? undefined);
-            const resolvedRoot = path.resolve(config.libraryRoot);
+            const ownerId = game.userId ?? userId;
+            const [config, rommConfig] = await Promise.all([
+              storage.getImportConfig(ownerId),
+              storage.getRomMConfig(ownerId),
+            ]);
             const resolvedTarget = path.resolve(game.libraryPath);
-            // Strictly inside: a libraryPath that IS the library root (e.g. a
-            // manual import confirmed straight into it) must never let one
-            // game's deletion wipe every other game's files with it.
-            const insideRoot = isStrictlyInside(resolvedRoot, resolvedTarget);
+            const configuredRoots = [config.libraryRoot];
+            if (rommConfig.enabled) configuredRoots.push(rommConfig.libraryRoot);
+
+            // Require the target to be strictly below one of this user's active
+            // library roots, then canonicalize it so a symlink cannot redirect
+            // deletion outside that root. Never let a game path delete the root
+            // itself. RomM has its own library root, separate from PC imports.
+            let safeConfiguredTarget: string | null = null;
+            for (const root of configuredRoots) {
+              if (!isStrictlyInside(path.resolve(root), resolvedTarget)) continue;
+              try {
+                safeConfiguredTarget = await assertWithinRoots(
+                  resolvedTarget,
+                  [root],
+                  "Game file path is outside the configured library root"
+                );
+                break;
+              } catch {
+                // A symlinked target may look contained lexically but resolve
+                // outside this root; try other explicitly configured roots.
+              }
+            }
             // Games discovered by the root-folder scanner live outside the
             // configured library root by design. Allow deleting their files
             // too, but only when the user has explicitly opted that specific
             // root folder in to deletion — discovery itself never does.
-            const canDelete = insideRoot || (await isWithinDeletableRootFolder(resolvedTarget));
+            const canDelete =
+              safeConfiguredTarget !== null || (await isWithinDeletableRootFolder(resolvedTarget));
 
             if (canDelete) {
               try {
-                await fsExtra.remove(resolvedTarget);
+                await fsExtra.remove(safeConfiguredTarget ?? resolvedTarget);
                 fileDeletion = { deleted: true, path: game.libraryPath };
               } catch (fileError) {
                 routesLogger.warn(

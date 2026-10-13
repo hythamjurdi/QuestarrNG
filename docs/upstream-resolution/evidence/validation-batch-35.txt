@@ -1,0 +1,75 @@
+Batch 35 validation — upstream items #306–319
+================================================
+
+Disposition
+-----------
+Reviewed the 14 upstream items #306 through #319. All 14 are verified against
+the current fork. Counts after this batch: 280 verified, 30 superseded, 828
+unreviewed, 7 not-applicable, 1 implemented-unverified, and 1
+needs-implementation.
+
+Upstream findings and current behavior
+--------------------------------------
+- PR #306's owner explicitly asked Jules not to add TASKS.md or PR_TEMPLATE.md;
+  Jules confirmed those files were reverted. The closed PR's code-quality
+  changes are covered by current lint/type checks. PRs #314 and #319 are
+  overlapping hardening passes; this fork has contributor and operations
+  guidance, and its CI source-bound build plan owns lint, formatting, type
+  checking, and the build. Several upstream Node 20 checks failed.
+- PR #307's migration runner is represented by the fork's journal-aware
+  SQLite runner and Postgres Drizzle runner with an advisory lock. Both avoid
+  the original Docker path-resolution and concurrent-startup problems while
+  retaining dialect-specific migration behavior.
+- PR #308's search fields carry accessible labels. The storage tooltip is
+  focusable and responds to Enter and Space.
+- PR #309's bundle route validates every URL, then uses safeFetch with only
+  configured indexer origins allowed for private-network downloads. The SSRF
+  route tests verify arbitrary private URLs are not fetched.
+- PR #310 batches IGDB ID requests in parallel using the configured
+  igdbRateLimitPerSecond setting. PR #317 queues ordinary requests and spaces
+  them to avoid 429 responses.
+- Issue #311's core ROM request is implemented through RomM settings, platform
+  mapping, acquisition, routing, and post-processing. Its later tester reports
+  prompted fixes for archive extraction and file deletion. The production
+  Docker image installs UnRAR; removing a game can now delete files inside the
+  enabled RomM root after strict and canonical containment checks. The optional
+  SteamGridDB artwork suggestion is not included; game artwork still comes
+  from the existing IGDB integration. PR #363 is recorded as a dependency for
+  the linked implementation and will receive its own inventory review.
+- PR #312's bullet separator appears with the indexer name in both mobile and
+  desktop layouts.
+- Issue #313 was closed by PR #322. The current downloader handles redirects
+  to magnet URLs; regression tests cover the redirect path and error handling.
+- PR #315's first-run UI requests IGDB credentials only when not configured
+  from the environment or database. Settings API and UI allow later updates.
+- PR #316 persists lastAutoSearch in user settings and updates it after each
+  scheduled search.
+- PR #318's review threads covered category filtering, settings persistence,
+  callback stability, and type safety. The current settings mutation persists
+  the rules and uses DownloadCategory typing. Review also exposed a scheduled
+  search gap: DLC and extra results passed the visible-category filter but were
+  discarded by the three-bucket cron output. They now join the existing
+  packs/add-ons notification bucket. Regression coverage verifies update, DLC,
+  extras, and packs are included only when selected; the shared issue in PR
+  #301 is also covered.
+
+Validation
+----------
+- Fifteen backend suites passed: 718 tests. This includes migration, SSRF
+  routes, IGDB batching/queueing/configuration, qBittorrent magnet handling,
+  auto-search categories, RomM routing/import, archive extraction, and API
+  routes including RomM file deletion.
+- AddGameModal passed separately: 15 tests.
+- GameDownloadDialog passed separately: 49 tests, 1 skipped.
+- A combined UI/server invocation passed all 731 assertions but reported one
+  late JSDOM/Radix focus-timer error. The UI suite passed alone, and the backend
+  suites passed together; no product assertions failed.
+- npm run check, npm run lint, npm run format:check, npm run build, and
+  docker compose config --quiet passed. Vite retains its existing large-chunk
+  advisory.
+- The LVM share was confirmed on kspls0 with 32 TB free. A test process blocked
+  in an NFS call, so its empty task-specific directory was removed. Tests then
+  passed using a task-specific workspace temp directory. The NFS share contains
+  no files from this batch.
+- Test-created postgresql:/ SQLite files and the workspace scratch directory
+  were removed after validation.

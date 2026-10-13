@@ -298,20 +298,20 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #303](https://github.com/Doezer/Questarr/pull/303) | 🎨 Palette: [UX improvement] Add contributors list and shorten readme | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #304](https://github.com/Doezer/Questarr/issues/304) | Discord Server | CLOSED | no-merge-commit | verified |
 | [issue #305](https://github.com/Doezer/Questarr/issues/305) | Update Package Release Pattern | CLOSED | no-merge-commit | verified |
-| [pr #306](https://github.com/Doezer/Questarr/pull/306) | chore: iterative hardening and lint fixes | CLOSED | no-merge-commit | unreviewed |
-| [pr #307](https://github.com/Doezer/Questarr/pull/307) | Refactor migration runner for Docker and db:push compatibility | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #308](https://github.com/Doezer/Questarr/pull/308) | 🎨 Palette: Add accessibility attributes to search and header components | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #309](https://github.com/Doezer/Questarr/pull/309) | 🛡️ Sentinel: [CRITICAL] Fix SSRF in bundle download | CLOSED | no-merge-commit | unreviewed |
-| [pr #310](https://github.com/Doezer/Questarr/pull/310) | ⚡ Bolt: Optimize IGDB batch fetching | CLOSED | no-merge-commit | unreviewed |
-| [issue #311](https://github.com/Doezer/Questarr/issues/311) | Feature Request: Emulator's ROMs support | CLOSED | no-merge-commit | unreviewed |
-| [pr #312](https://github.com/Doezer/Questarr/pull/312) | fix: added missing seperator to download modal | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #313](https://github.com/Doezer/Questarr/issues/313) | failed to start download | CLOSED | no-merge-commit | unreviewed |
-| [pr #314](https://github.com/Doezer/Questarr/pull/314) | chore: iterative hardening and operational docs | CLOSED | no-merge-commit | unreviewed |
-| [pr #315](https://github.com/Doezer/Questarr/pull/315) | Allow IGDB configuration during initial setup | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #316](https://github.com/Doezer/Questarr/pull/316) | Optimize server startup by persisting auto-search timestamp | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #317](https://github.com/Doezer/Questarr/pull/317) | fix(igdb): implement request queueing to prevent 429 errors | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #318](https://github.com/Doezer/Questarr/pull/318) | feat: implement auto-download rules and default manual download filters | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #319](https://github.com/Doezer/Questarr/pull/319) | feat: Hardening pass - fix linting, add operational docs, enhance CI | CLOSED | no-merge-commit | unreviewed |
+| [pr #306](https://github.com/Doezer/Questarr/pull/306) | chore: iterative hardening and lint fixes | CLOSED | no-merge-commit | verified |
+| [pr #307](https://github.com/Doezer/Questarr/pull/307) | Refactor migration runner for Docker and db:push compatibility | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #308](https://github.com/Doezer/Questarr/pull/308) | 🎨 Palette: Add accessibility attributes to search and header components | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #309](https://github.com/Doezer/Questarr/pull/309) | 🛡️ Sentinel: [CRITICAL] Fix SSRF in bundle download | CLOSED | no-merge-commit | verified |
+| [pr #310](https://github.com/Doezer/Questarr/pull/310) | ⚡ Bolt: Optimize IGDB batch fetching | CLOSED | no-merge-commit | verified |
+| [issue #311](https://github.com/Doezer/Questarr/issues/311) | Feature Request: Emulator's ROMs support | CLOSED | no-merge-commit | verified |
+| [pr #312](https://github.com/Doezer/Questarr/pull/312) | fix: added missing seperator to download modal | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #313](https://github.com/Doezer/Questarr/issues/313) | failed to start download | CLOSED | no-merge-commit | verified |
+| [pr #314](https://github.com/Doezer/Questarr/pull/314) | chore: iterative hardening and operational docs | CLOSED | no-merge-commit | verified |
+| [pr #315](https://github.com/Doezer/Questarr/pull/315) | Allow IGDB configuration during initial setup | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #316](https://github.com/Doezer/Questarr/pull/316) | Optimize server startup by persisting auto-search timestamp | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #317](https://github.com/Doezer/Questarr/pull/317) | fix(igdb): implement request queueing to prevent 429 errors | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #318](https://github.com/Doezer/Questarr/pull/318) | feat: implement auto-download rules and default manual download filters | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #319](https://github.com/Doezer/Questarr/pull/319) | feat: Hardening pass - fix linting, add operational docs, enhance CI | CLOSED | no-merge-commit | verified |
 | [pr #320](https://github.com/Doezer/Questarr/pull/320) | fix: manual download performance | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #321](https://github.com/Doezer/Questarr/pull/321) | fix: fixed qBittorrent behind VPN download handling | CLOSED | no-merge-commit | unreviewed |
 | [pr #322](https://github.com/Doezer/Questarr/pull/322) | fix: fixed qBittorrent behind VPN download handling | MERGED | merge-commit-in-fork-history | unreviewed |

@@ -1719,20 +1719,22 @@ describe("Cron - checkAutoSearch", () => {
       );
     });
 
-    it("respects the selected visible categories when grouping auto-search results", () => {
+    it("respects selected categories and groups DLC and extras as auto-search packs", () => {
       const mainGame = { ...ITEM_HIGH_SEEDERS, title: "Test Game-CODEX" };
       const update = { ...ITEM_HIGH_SEEDERS, title: "Test Game.Update.v1.2-GROUP" };
+      const dlc = { ...ITEM_HIGH_SEEDERS, title: "Test Game.DLC.Expansion.v1-GROUP" };
+      const extra = { ...ITEM_HIGH_SEEDERS, title: "Test Game.Original.Soundtrack-GROUP" };
       const packs = { ...ITEM_HIGH_SEEDERS, title: "Test Game.Content.Pack-GROUP" };
 
-      const result = categorizeSearchItems([mainGame, update, packs], {
+      const result = categorizeSearchItems([mainGame, update, dlc, extra, packs], {
         minSeeders: 0,
         sortBy: "seeders",
-        visibleCategoriesSet: new Set(["update", "packs"]),
+        visibleCategoriesSet: new Set(["update", "dlc", "extra", "packs"]),
       });
 
       expect(result.mainItems).toEqual([]);
       expect(result.updateItems).toEqual([update]);
-      expect(result.packsItems).toEqual([packs]);
+      expect(result.packsItems).toEqual([dlc, extra, packs]);
     });
 
     it("should fall back to default rules when downloadRules JSON is malformed", async () => {

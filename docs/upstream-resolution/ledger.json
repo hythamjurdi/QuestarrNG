@@ -4,11 +4,15 @@
   "forkHead": "d66a3e6df3441b6cbed31a15bd87ff83562cb649",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
-    "issue:CLOSED": 228,
-    "pr:MERGED": 705,
-    "pr:CLOSED": 208,
-    "issue:OPEN": 4,
-    "pr:OPEN": 2
+    "total": 1147,
+    "byStatus": {
+      "verified": 280,
+      "needs-implementation": 1,
+      "superseded": 30,
+      "not-applicable": 7,
+      "unreviewed": 828,
+      "implemented-unverified": 1
+    }
   },
   "limitations": [
     "Ancestry is not behavioral verification: changes can be reverted, superseded or ported with different hashes.",
@@ -8469,10 +8473,10 @@
       "review": {
         "status": "verified",
         "findings": [
-          "Download Rules are implemented in settings, manual search defaults, and scheduled searches. Auto-search filters through visibleCategoriesSet and applies seeder/sort rules; malformed settings fall back safely. Upstream reviews flagged category filtering, settings-error feedback, migration registration, and type errors; the fork has category filtering, actionable recovery guidance, managed migrations, and passing checks."
+          "Download Rules are implemented in settings, manual search defaults, and scheduled searches. Auto-search filters through visibleCategoriesSet and applies seeder/sort rules; malformed settings fall back safely. Upstream reviews flagged category filtering, settings-error feedback, migration registration, and type errors; the fork has category filtering, actionable recovery guidance, managed migrations, and passing checks. A follow-up closes the scheduled DLC/extra category gap by grouping those results with packs."
         ],
         "acceptance": [
-          "Auto-search rules control minimum seeders, ordering, and selected categories; a regression test verifies unselected categories are excluded.",
+          "Auto-search rules control minimum seeders, ordering, and selected categories; a regression test verifies unselected categories are excluded. Selected DLC and extras are retained in the existing packs/add-ons channel.",
           "The current settings UI and migration path pass focused tests, typecheck, and build."
         ],
         "evidence": [
@@ -8483,7 +8487,8 @@
           "server/cron.ts",
           "server/__tests__/cron_autosearch.test.ts",
           "gh pr view 301 --repo Doezer/Questarr --json reviews,comments,statusCheckRollup",
-          "docs/upstream-resolution/evidence/validation-batch-34.txt"
+          "docs/upstream-resolution/evidence/validation-batch-34.txt",
+          "docs/upstream-resolution/evidence/validation-batch-35.txt"
         ],
         "dependencies": []
       },
@@ -8626,10 +8631,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The maintainer asked for TASKS.md and PR_TEMPLATE.md to be removed, and those files are absent. The remaining hardening intent is covered by the maintained contributor/operations guidance and passing repository checks."
+        ],
+        "acceptance": [
+          "The requested artifacts match the maintainer's final direction; current lint, type, format, and production-build gates pass."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          ".github/CONTRIBUTING.md",
+          "docs/OPERATIONS.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8646,10 +8659,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d682e007e4156bf70265ebc3f1e58665efb3786a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SQLite uses a journal-aware idempotent migration runner with schema repair; Postgres runs Drizzle migrations under an advisory lock."
+        ],
+        "acceptance": [
+          "Migration tests pass for the fork's supported database paths."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "server/db/migrate-sqlite.ts",
+          "server/db/migrate-pg.ts",
+          "server/__tests__/migrate.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8666,10 +8688,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "99486a7c6f30a9f499781518f4d8b75739a97235",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Search controls have accessible labels; the storage tooltip can receive keyboard focus and opens on Enter and Space."
+        ],
+        "acceptance": [
+          "Current header components pass type checking, lint, formatting, and production build."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "client/src/components/Header.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8686,10 +8715,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The bundle-download route validates URLs and uses the SSRF-safe fetcher with configured indexer origins; arbitrary private URLs are rejected."
+        ],
+        "acceptance": [
+          "SSRF route tests pass, including private-target rejection and configured-origin allowance."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "server/routes.ts",
+          "server/__tests__/ssrf_routes.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8706,10 +8743,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "IGDB lookups batch IDs and run within the configured per-second request limit; ordinary requests use the paced request queue."
+        ],
+        "acceptance": [
+          "IGDB batching, queue, and error-handling suites pass."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "server/igdb.ts",
+          "server/__tests__/igdb.test.ts",
+          "server/__tests__/igdb_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8726,11 +8772,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "RomM platform mapping, acquisition, routing, and post-processing support ROM libraries. File deletion now includes strictly contained paths under that user's enabled RomM root after canonical containment checks; disabled roots remain protected. The production image includes UnRAR. SteamGridDB artwork was an optional comment suggestion and is not required for the core ROM request."
+        ],
+        "acceptance": [
+          "RomM import/routing and archive extraction suites pass; API route tests verify deletion under an enabled RomM root and suppression for a disabled root."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "server/services/ImportManager.ts",
+          "server/RommRouting.ts",
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts"
+        ],
+        "dependencies": [
+          "pr:363"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -8746,10 +8805,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "5bf070a4f8ad2df2ac7cc24ae9d5f4f67adb64ff",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The indexer name and release title are separated by the requested bullet in desktop and mobile download layouts."
+        ],
+        "acceptance": [
+          "The current download dialog passes type checking, lint, formatting, and production build."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "client/src/components/GameDownloadDialog.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8766,11 +8832,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The qBittorrent downloader detects magnet redirects and returns actionable handling for downloads behind a VPN; upstream closed the report through PR #322."
+        ],
+        "acceptance": [
+          "Magnet redirect and qBittorrent regression suites pass."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "server/downloaders.ts",
+          "server/__tests__/magnet_detection.test.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts"
+        ],
+        "dependencies": [
+          "pr:322"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -8786,10 +8863,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork maintains contributor and operational guidance and uses a source-bound CI build plan with repository checks."
+        ],
+        "acceptance": [
+          "TypeScript, ESLint, Prettier, production client/server build, and Compose configuration checks pass."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          ".github/CONTRIBUTING.md",
+          "docs/OPERATIONS.md",
+          ".github/workflows/ci.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8806,10 +8892,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "29442d75c34b5d31c0afd4bb18b61ef04ca4e037",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "First-run setup accepts IGDB credentials when neither environment nor database settings provide them; existing users can update credentials through Settings."
+        ],
+        "acceptance": [
+          "Setup UI tests and current build/type checks pass."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "client/src/components/AddGameModal.tsx",
+          "server/routes.ts",
+          "client/__tests__/AddGameModal.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8826,10 +8921,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "1b8bb4bfbab0ca4c719161cdf22ea1f6c44be2f7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Auto-search timestamps persist in user settings and are updated after scheduled searches."
+        ],
+        "acceptance": [
+          "Auto-search regression suite passes."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "shared/schema.ts",
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8846,10 +8950,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c92bee0a6eef7a4e8e1db5c0833e7f573aab70c0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Ordinary IGDB calls use the paced request queue to limit rate spikes; ID batch lookups separately parallelize within the configured limit."
+        ],
+        "acceptance": [
+          "IGDB queue and batch suites pass."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "server/igdb.ts",
+          "server/__tests__/igdb.test.ts",
+          "server/__tests__/igdb_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8866,11 +8979,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "2b38f972a406d91646a01246d946af1089e4e7c8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Download-rule settings persist with typed categories and filter scheduled results. Review exposed that selected DLC and extra categories were discarded before notification; these now use the existing packs/add-ons bucket. This also completes the related scheduled-category behavior in PR #301."
+        ],
+        "acceptance": [
+          "The cron regression covers update, DLC, extra, and packs results and excludes unselected main-game results; the full auto-search suite passes."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "shared/schema.ts",
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts"
+        ],
+        "dependencies": [
+          "pr:301"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -8886,10 +9010,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork's hardening and CI intent is covered by source-bound CI build validation, maintained contributor/operations documentation, and passing repository quality gates."
+        ],
+        "acceptance": [
+          "TypeScript, ESLint, Prettier, production client/server build, and Compose configuration checks pass."
+        ],
+        "evidence": [
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          ".github/workflows/ci.yml",
+          ".github/CONTRIBUTING.md",
+          "docs/OPERATIONS.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

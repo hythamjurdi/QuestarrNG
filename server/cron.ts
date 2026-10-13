@@ -292,7 +292,9 @@ export function categorizeSearchItems(
         acc.mainItems.push(item);
       } else if (category === "update") {
         acc.updateItems.push(item);
-      } else if (category === "packs") {
+      } else if (category === "packs" || category === "dlc" || category === "extra") {
+        // Auto-search stores one broad packs/add-ons availability flag, so
+        // DLC and extras share that existing notification channel.
         acc.packsItems.push(item);
       }
 
