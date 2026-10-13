@@ -19,27 +19,28 @@ behavior when implementing upstream requests.
 ## Current ledger snapshot
 
 The saved issue and PR exports were refreshed against upstream main
-`0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 12:43
-UTC**. The ledger and generated inventory are regenerated from this export when
-review statuses change. Review status is independent of GitHub's open, closed,
-or merged state:
+`0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 12:59
+UTC**. The ledger was regenerated from that saved export at **13:30 UTC**; the
+source capture time and ledger generation time are kept distinct in the audit
+record. Review status is independent of GitHub's open, closed, or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       481 |
-| `superseded`             |       112 |
+| `verified`               |       489 |
+| `superseded`             |       119 |
 | `not-applicable`         |         9 |
 | `implemented-unverified` |         4 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       557 |
+| `unreviewed`             |       542 |
 | **Total**                | **1,163** |
 
-The ledger now gives 602 items a completed evidence-backed disposition. Four
-implemented integrations still need live-service verification, no currently
-identified item needs implementation, and 557 have not been reviewed. These
-numbers describe the ledger, not completion of the campaign. Batch 55 is the
-latest completed review; its results are in
-[validation evidence](evidence/validation-batch-55.txt).
+The ledger now gives 617 items an assigned disposition. Four implemented
+integrations still need live-service verification, no currently identified
+item needs implementation, and 542 are unreviewed. Four previously reviewed
+PRs (#1195, #1196, #1198, and #1202) changed in the refreshed source export and
+remain flagged for renewed triage. These numbers describe the ledger, not
+completion of the campaign. Batch 56 is the latest completed review; its results
+are in [validation evidence](evidence/validation-batch-56.txt).
 
 ## Project records
 
@@ -1565,3 +1566,46 @@ After batch 55, the ledger records 481 verified, 112 superseded, 9
 not-applicable, 4 implemented-unverified, 0 needs-implementation, and 557
 unreviewed items. The upstream snapshot contains 1,163 records, and the full
 audit remains in progress.
+
+## Batch 56 — October 13, 2026
+
+Batch 56 reviewed PRs [#616](https://github.com/Doezer/Questarr/pull/616)–
+[#625](https://github.com/Doezer/Questarr/pull/625), issue
+[#626](https://github.com/Doezer/Questarr/issues/626), PRs
+[#627](https://github.com/Doezer/Questarr/pull/627) and
+[#628](https://github.com/Doezer/Questarr/pull/628), issue
+[#629](https://github.com/Doezer/Questarr/issues/629), and PR
+[#630](https://github.com/Doezer/Questarr/pull/630). The dependency-only bumps
+#616–620 and #624 are superseded by newer current versions; #625's 1.4.0
+backport is superseded by the current 1.10.0 line.
+
+The qBittorrent error view now shows the reported `error_string`, with a safe
+fallback when the client omits it. Duplicate qBittorrent submissions resolve to
+the existing download, and an accepted but unconfirmed request does not upload a
+second copy. Downloader modules and reviewed safety feedback are present in the
+current code. The security header and preferred-release-group accessibility
+requests are verified with regression tests.
+
+The mobile logs view now caps rendered cards at the latest 200 matching entries
+and tells users that Copy still includes all matches. A headless Chromium run at
+390×844 returned 205 mock lines, rendered exactly 200, excluded the oldest item,
+showed the newest item and cap explanation, and confirmed the copy toast said
+all 205 lines were copied. The screenshot is
+[batch-56-mobile-logs.png](evidence/batch-56-mobile-logs.png).
+
+Reverse-proxy subpath behavior was checked in production at `/Questarr`: all 14
+JavaScript, CSS, and font assets and all 9 observed API calls returned 200, with
+no browser errors or failed requests. Unknown nested paths without a runtime
+asset hint now fail closed instead of guessing a mount prefix.
+
+Focused regression checks passed 152 tests across 12 files; the path, API, and
+reverse-proxy test group passed 426 tests across 4 files. The full suite passed
+4,171 tests across 261 files, with 7 skipped. Type checking, lint, formatting,
+and the production build passed; Vite reported its existing large-chunk
+advisory. Exact outcomes and scratch cleanup are in
+[batch 56 validation evidence](evidence/validation-batch-56.txt).
+
+After batch 56, the ledger records 489 verified, 119 superseded, 9
+not-applicable, 4 implemented-unverified, 0 needs-implementation, and 542
+unreviewed items. The four refreshed-source flags noted above remain open for
+renewed triage, and the full audit remains in progress.

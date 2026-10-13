@@ -91,10 +91,18 @@ describe("resolveBasePathFrom — relative base (./)", () => {
     expect(resolveBasePathFrom(BASE, "http://localhost/questarr/downloads")).toBe("/questarr/");
   });
 
-  // fallback: lastSlashIndex > 0 branch (lines 76-78)
-  it("falls back to parent path when URL pathname matches no route and has a parent", () => {
-    // "/questarr/typo" → lastSlashIndex at 9 → parentPath = "/questarr"
-    expect(resolveBasePathFrom(BASE, "http://localhost/questarr/typo")).toBe("/questarr/");
+  it("does not infer a deployment prefix from an unknown nested route", () => {
+    expect(resolveBasePathFrom(BASE, "http://localhost/questarr/typo/deep")).toBe("/");
+  });
+
+  it("uses a loaded runtime asset to resolve an unknown route under a subpath", () => {
+    expect(
+      resolveBasePathFrom(
+        BASE,
+        "http://localhost/questarr/typo/deep",
+        "http://localhost/questarr/assets/index-abc.js"
+      )
+    ).toBe("/questarr/");
   });
 
   // fallback: lastSlashIndex === 0 branch — no meaningful parent

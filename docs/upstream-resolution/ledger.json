@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T12:55:10.953Z",
-  "forkHead": "e375646a164d62d2934de677a9083d168e2c9e48",
+  "capturedAt": "2026-10-13T13:30:13.031Z",
+  "forkHead": "159f5a707b786c2cf84a63d67ca70c235304cc9e",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -17628,11 +17628,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested react-hook-form 7.76.0 bump is superseded by the current ^7.89.0 dependency and later dependency roll-ups."
+        ],
+        "acceptance": [
+          "The current manifest and lockfile resolve a version newer than the requested 7.76.0."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/616"
+        ],
+        "dependencies": [
+          "pr:624"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17648,11 +17658,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The development dependency group is superseded by later dependency roll-ups and the current lockfile."
+        ],
+        "acceptance": [
+          "Current dependency resolution remains installable and the full test suite passes."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/617"
+        ],
+        "dependencies": [
+          "pr:624"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17668,11 +17688,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested Express 4.22.2 update is superseded by the current Express 5.2.1 line."
+        ],
+        "acceptance": [
+          "The current manifest and lockfile resolve Express 5.2.1, and the complete suite passes."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/618"
+        ],
+        "dependencies": [
+          "pr:624"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17688,11 +17718,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested React Query 5.100.10 update is superseded by the current 5.104.0 line."
+        ],
+        "acceptance": [
+          "The current manifest and lockfile resolve a version newer than 5.100.10, and the complete suite passes."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/619"
+        ],
+        "dependencies": [
+          "pr:624"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17708,11 +17748,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested express-rate-limit 8.5.2 update is superseded by the current 8.7.0 line."
+        ],
+        "acceptance": [
+          "The current manifest and lockfile resolve a version newer than 8.5.2, and the complete suite passes."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/620"
+        ],
+        "dependencies": [
+          "pr:624"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17728,10 +17778,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "qBittorrent error-state results now preserve and display the API error_string, with “Torrent error” retained as the fallback when the API omits a usable message."
+        ],
+        "acceptance": [
+          "Specific qBittorrent error detail reaches the failure result; a missing detail retains the safe fallback."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_remaining.test.ts",
+          "https://github.com/Doezer/Questarr/pull/621",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17748,10 +17807,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Express app disables the identifying x-powered-by response header at creation time."
+        ],
+        "acceptance": [
+          "HTTP responses from the app do not include x-powered-by."
+        ],
+        "evidence": [
+          "server/app.ts",
+          "server/__tests__/security.test.ts",
+          "https://github.com/Doezer/Questarr/pull/622",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17768,10 +17836,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The preferred-release-group add control has an explicit accessible name and its icon is hidden from assistive technology."
+        ],
+        "acceptance": [
+          "The icon-only control exposes an accessible action name, while the decorative icon is aria-hidden."
+        ],
+        "evidence": [
+          "client/src/components/PreferredReleaseGroupsSettings.tsx",
+          "client/__tests__/ReleaseFilterSettings.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/623",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17788,11 +17865,26 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4418d690a90580977a12f643eb0315420849b985",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The merged dependency roll-up has been overtaken by the current manifest and lockfile versions; its dependency work is no longer an outstanding change request."
+        ],
+        "acceptance": [
+          "The current resolved dependency set builds and the full Vitest suite passes without the review-reported stall."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/624",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt"
+        ],
+        "dependencies": [
+          "pr:616",
+          "pr:617",
+          "pr:618",
+          "pr:619",
+          "pr:620"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17808,11 +17900,24 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "00559d6da5c23f3b98c0176311a441bce010b4b1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The release/1.4.0 backport is superseded by the current 1.10.0 line, which includes the security and accessibility behavior from PRs #622 and #623."
+        ],
+        "acceptance": [
+          "The current mainline contains the header and accessible-name behavior with regression coverage."
+        ],
+        "evidence": [
+          "server/app.ts",
+          "server/__tests__/security.test.ts",
+          "client/src/components/PreferredReleaseGroupsSettings.tsx",
+          "client/__tests__/ReleaseFilterSettings.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/625"
+        ],
+        "dependencies": [
+          "pr:622",
+          "pr:623"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17828,11 +17933,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "qBittorrent duplicate responses resolve to the existing download and return a successful result instead of reporting a false conflict; accepted-but-unconfirmed requests do not trigger a second upload."
+        ],
+        "acceptance": [
+          "A duplicate hash is reconciled to the existing qBittorrent item; when acceptance cannot be confirmed, the user is told to check the client before retrying."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_remaining.test.ts",
+          "server/__tests__/downloaders.test.ts",
+          "https://github.com/Doezer/Questarr/issues/626",
+          "https://github.com/Doezer/Questarr/pull/643",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt"
+        ],
+        "dependencies": [
+          "pr:643"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17848,10 +17966,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "71b3eaa7c4d4e5f453924816e645d12b099591ea",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Downloader implementations are separated into focused modules; reviewed feedback is addressed with positional rTorrent arguments, structured XML-RPC parsing, UTF-8 Basic Auth, and downloader-scoped logging."
+        ],
+        "acceptance": [
+          "Downloader behavior has focused regression coverage, including hostile paths passed as positional arguments rather than shell commands."
+        ],
+        "evidence": [
+          "server/downloaders/",
+          "server/downloaders/rtorrent.ts",
+          "server/downloaders/utils.ts",
+          "server/__tests__/downloaders_rtorrent_remaining.test.ts",
+          "https://github.com/Doezer/Questarr/pull/627",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17868,10 +17997,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "6b2ccf8252c0153172b2830cd6eaffdb8318a04c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The mobile navigation and log-card layout are present. Mobile rendering caps the visible cards at the latest 200 and states clearly that Copy retains all matches."
+        ],
+        "acceptance": [
+          "At 205 matching lines, mobile renders only the newest 200, explains the cap, and copies all 205; the running page was checked at a 390×844 viewport."
+        ],
+        "evidence": [
+          "client/src/pages/logs.tsx",
+          "client/__tests__/LogsPage.remaining.test.tsx",
+          "docs/upstream-resolution/evidence/batch-56-mobile-logs.png",
+          "https://github.com/Doezer/Questarr/pull/628",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17888,11 +18027,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The production server supports mounting the SPA and API under a configured reverse-proxy path; runtime base injection and client URL resolution work at /Questarr."
+        ],
+        "acceptance": [
+          "Authenticated pages, API calls, JavaScript, CSS, and font assets load beneath /Questarr in a production run with no failed requests or browser errors."
+        ],
+        "evidence": [
+          "server/vite.ts",
+          "server/__tests__/vite_base_href.test.ts",
+          "client/src/lib/app-path.ts",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt",
+          "https://github.com/Doezer/Questarr/issues/629"
+        ],
+        "dependencies": [
+          "pr:630"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17908,11 +18059,26 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "916882db2d53eb43dcd3b924d4e45dfdb2d5b2e4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Base-path handling shares canonical route definitions, keeps Headers immutable, sets the /search title, and fails closed for unknown nested routes when no runtime asset hint identifies a mount path."
+        ],
+        "acceptance": [
+          "Relative production assets and API paths resolve under /Questarr; the production smoke loads 14 assets and the logs API successfully. Unknown nested paths without an asset hint return /, while an asset hint still recovers /questarr/."
+        ],
+        "evidence": [
+          "client/src/lib/app-path.ts",
+          "client/src/lib/routes.ts",
+          "client/__tests__/app-path.test.ts",
+          "client/src/lib/__tests__/app-path.test.ts",
+          "server/vite.ts",
+          "server/__tests__/vite_base_href.test.ts",
+          "https://github.com/Doezer/Questarr/pull/630",
+          "docs/upstream-resolution/evidence/validation-batch-56.txt"
+        ],
+        "dependencies": [
+          "issue:629"
+        ]
       },
       "sourceChangedSinceReview": false
     },

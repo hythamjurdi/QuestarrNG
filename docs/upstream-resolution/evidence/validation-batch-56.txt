@@ -1,0 +1,39 @@
+# Batch 56 validation — October 13, 2026
+
+Snapshot: upstream `main` `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`; 1,163 records (232 issues, 931 PRs). The sanitized source export was refreshed at 12:59 UTC and the ledger/inventory were regenerated from that saved export at 13:30 UTC. The refreshed source still flags PRs #1195, #1196, #1198, and #1202 for renewed triage.
+
+## Source dispositions
+
+- PRs #616–620 and #624 are superseded by later dependency versions and the current resolved lockfile. PR #625's release/1.4.0 backport is superseded by the current 1.10.0 line.
+- PR #621 is verified: qBittorrent's `error_string` is shown for error-state torrents, with a generic fallback when detail is absent.
+- PR #622 is verified: Express does not emit `x-powered-by`.
+- PR #623 is verified: the preferred-group add button has an accessible name and its icon is decorative to assistive technology.
+- Issue #626 is verified: duplicate qBittorrent responses reconcile to the existing download, and an accepted-but-unconfirmed request does not issue another upload.
+- PR #627 is verified: downloader modules are present and reviewed rTorrent/XML-RPC/auth/logging concerns have regression coverage.
+- PR #628 is verified: mobile logs show the newest 200 matching cards and explain that Copy includes all matching entries.
+- Issue #629 and PR #630 are verified: a production instance works under `/Questarr`; assets and API calls use that prefix, and unknown nested paths without a runtime asset hint fail closed.
+
+## Regression checks
+
+- Focused batch regression run — 12 files passed, 152 tests passed. Coverage includes qBittorrent error text and fallback, duplicate/accepted download behavior, rTorrent hostile-path argument handling, mobile log cap/copy behavior, accessibility naming, and client path resolution.
+- Base-path/API group: `npm run test -- server/__tests__/vite_base_href.test.ts server/__tests__/api_routes.test.ts client/__tests__/app-path.test.ts client/__tests__/queryClient-base-path.test.ts` — 4 files passed, 426 tests passed.
+- The first full run caught a stale expectation in the second `app-path` test file. The expectation and test name were corrected to match fail-closed behavior, then the complete rerun passed: `npm run test` — 261 files passed, 1 skipped; 4,171 tests passed, 7 skipped.
+- `npm run check` — passed.
+- `npm run lint` — passed with zero warnings.
+- `npm run format:check` — passed.
+- `npm run build` — passed. Vite reported the existing large-chunk advisory for the main and three.js bundles.
+- `npm run secretlint` — passed.
+- `npm run release-notes:check` with a temporary PR body linking the mobile screenshot — passed; 1 user-facing fragment validated.
+- `git diff --check` — passed.
+
+## Running UI and production reverse-proxy smoke
+
+Ran `npm run dev:test` in an isolated temporary worktree, bound only to localhost port 51987 with `QUESTARR_BASE_PATH=/Questarr`. At a 390×844 viewport, headless Chromium loaded 205 mocked log lines, observed exactly 200 rendered cards, confirmed the oldest capped line was absent and the newest was visible, and confirmed the cap explanation. Clicking Copy produced the toast `205 log lines copied to clipboard`. The screenshot is [batch-56-mobile-logs.png](batch-56-mobile-logs.png).
+
+For production behavior, built the application with its relative base and ran the server on localhost port 51988 with an isolated SQLite database and `/Questarr` runtime mount. Chromium authenticated, opened `/Questarr/logs`, and observed 14 JavaScript, CSS, and font assets and 9 API endpoints return HTTP 200. There were no page errors or failed requests. The logs API returned 200 at `/Questarr/api/logs?limit=1000`.
+
+Downloader protocol tests use controlled responses; no live qBittorrent or rTorrent service was configured. The production and UI smoke accounts used format-valid dummy IGDB values in disposable databases only; they were not sent to IGDB.
+
+## Scratch and cleanup
+
+Both temporary server processes were stopped. The isolated worktree, source export, test databases, and generated build output were removed after validation; ports 51987 and 51988 are free. Port 5100 and its unrelated service were left untouched. Local temporary storage was sufficient, so no NFS scratch space was used.

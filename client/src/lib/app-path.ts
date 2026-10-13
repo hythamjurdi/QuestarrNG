@@ -77,9 +77,11 @@ export function resolveBasePathFrom(
         return normalizeBasePath(basePath);
       }
 
-      const lastSlashIndex = pathname.lastIndexOf("/");
-      const parentPath = lastSlashIndex > 0 ? pathname.slice(0, lastSlashIndex) : "/";
-      return normalizeBasePath(parentPath);
+      // Without a recognized route or a loaded runtime asset, the deployment
+      // prefix cannot be distinguished safely from an unknown nested route.
+      // Fail closed at the origin root instead of sending API/socket traffic
+      // to a path inferred from that unknown route.
+      return "/";
     } catch {
       return "/";
     }

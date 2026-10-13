@@ -83,6 +83,27 @@ describe("rtorrent remaining regression coverage", () => {
     vi.mocked(isSafeUrl).mockResolvedValue(true);
   });
 
+  it("passes the configured directory as a positional argument to avoid shell injection", async () => {
+    const client = new RTorrentClient(createDownloader());
+    const privateClient = client as unknown as {
+      makeXMLRPCRequest(method: string, params: unknown[]): Promise<unknown>;
+    };
+    const rpcSpy = vi
+      .spyOn(privateClient, "makeXMLRPCRequest")
+      .mockResolvedValueOnce("/downloads; touch /tmp/questarr-should-not-exist")
+      .mockResolvedValueOnce("4096");
+
+    await expect(client.getFreeSpace()).resolves.toBe(4096);
+    expect(rpcSpy).toHaveBeenNthCalledWith(2, "execute.capture", [
+      "",
+      "sh",
+      "-c",
+      'df --output=avail -B1 "$1" | tail -1',
+      "sh",
+      "/downloads; touch /tmp/questarr-should-not-exist",
+    ]);
+  });
+
   it("covers addDownload retry, raw upload, stopped mode, and addDownload error handling", async () => {
     const client = new RTorrentClient(
       createDownloader({ category: "games", downloadPath: "/downloads" })

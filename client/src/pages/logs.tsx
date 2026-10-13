@@ -58,6 +58,7 @@ const LEVEL_MAP: Record<number, { label: string; className: string }> = {
 };
 
 const MAX_LINES = 5000;
+const MOBILE_LOG_CAP = 200;
 const ROW_HEIGHT = 32;
 const OVERSCAN_ROWS = 10;
 const DEFAULT_VIEWPORT_HEIGHT = 400;
@@ -589,8 +590,11 @@ export default function LogsPage() {
     () => filteredLines.slice(startIndex, endIndex),
     [filteredLines, startIndex, endIndex]
   );
-  const MOBILE_LOG_CAP = 200;
   const linesToRender = isMobile ? filteredLines.slice(-MOBILE_LOG_CAP) : visibleLines;
+  const logCountSummary =
+    isMobile && filteredLines.length > MOBILE_LOG_CAP
+      ? `Showing the latest ${MOBILE_LOG_CAP} of ${filteredLines.length} matching lines. Copy includes all matches.`
+      : `${filteredLines.length} lines displayed`;
 
   const copyText = useCallback(
     (text: string, description: string) => {
@@ -640,7 +644,7 @@ export default function LogsPage() {
             Server Logs
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Real-time server output &mdash; {filteredLines.length} lines displayed
+            Real-time server output &mdash; {logCountSummary}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

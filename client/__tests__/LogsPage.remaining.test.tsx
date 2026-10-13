@@ -318,6 +318,41 @@ describe("LogsPage remaining coverage", () => {
     });
   });
 
+  it("caps mobile log cards at the latest 200 and explains that Copy includes all matches", async () => {
+    mobileState.value = true;
+    const lines = Array.from({ length: 205 }, (_, index) =>
+      JSON.stringify({
+        level: 30,
+        time: `2026-04-16T08:01:${String(index % 60).padStart(2, "0")}.000Z`,
+        module: "mobile-test",
+        msg: `Mobile log ${index + 1}`,
+      })
+    );
+
+    apiRequestMock.mockResolvedValue({
+      json: async () => ({ lines }),
+    } as Response);
+
+    renderPage();
+    await screen.findByText("Mobile log 205");
+
+    expect(screen.getAllByTestId("log-line-row")).toHaveLength(200);
+    expect(screen.queryByText("Mobile log 5")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Real-time server output — Showing the latest 200 of 205 matching lines. Copy includes all matches."
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy log lines" }));
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith({
+        title: "Copied",
+        description: "205 log lines copied to clipboard",
+      });
+    });
+  });
+
   it("covers cached viewport setup, fallback parsing, sort branches, and active auto-scroll changes", async () => {
     const originalStringify = JSON.stringify;
     const cachedData = {

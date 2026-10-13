@@ -113,6 +113,20 @@ describe("PreferredReleaseGroupsSettings", () => {
     );
   });
 
+  it("gives the icon-only add-group button a descriptive accessible name", () => {
+    withClient(
+      <PreferredReleaseGroupsSettings
+        preferredGroups={[]}
+        filterByPreferredGroups={false}
+        onGroupsChange={vi.fn()}
+        onFilterChange={vi.fn()}
+      />
+    );
+
+    const addButton = screen.getByRole("button", { name: "Add preferred release group" });
+    expect(addButton.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("disables the pre-filter switch when there are no groups", () => {
     withClient(
       <PreferredReleaseGroupsSettings
