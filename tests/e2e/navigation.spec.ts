@@ -11,6 +11,7 @@ test.describe("Navigation", () => {
     await page.getByTestId("nav-browse").click();
     await expect(page).toHaveURL("/discover");
 
+    await page.getByTestId("nav-more").click();
     await page.getByTestId("nav-wishlist").click();
     await expect(page).toHaveURL("/wishlist");
 

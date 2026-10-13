@@ -92,7 +92,7 @@ test.describe("Discover details release actions", () => {
       const dialog = page.getByRole("dialog").last();
       await expect(dialog.getByText(release.title, { exact: true })).toBeVisible();
       if (scenario === "blacklist" || scenario === "send") {
-        await dialog.getByRole("button", { name: "More options" }).click();
+        await dialog.getByRole("button", { name: "More download options" }).click();
         if (scenario === "blacklist") {
           await page.getByRole("menuitem", { name: "Blacklist release" }).click();
           await expect.poll(() => searches.includes(libraryId)).toBe(true);
