@@ -63,6 +63,40 @@ this lighter table format matches the pragmatic tone of the rest of `docs/`.
 | zizmor `cache-poisoning` on `actions/setup-node` (`ci.yml`)            | zizmor's static analysis flags every job in `.github/workflows/ci.yml` that sets `cache: "npm"` on `actions/setup-node` (`secrets-scan`, `check-overrides`, `sca-scan`, `test`, `merge-test-reports`, `build`) — code executing before the cache is saved could in principle poison it for a later, more-trusted run.                                                                                                                                                                              | Low             | Low        | Accepted risk, suppressed inline (`# zizmor: ignore[cache-poisoning]`) rather than splitting cache restore/save by trust: GitHub Actions caches are scoped per-branch, so a `pull_request` run cannot write into the cache a `push`/`main` run restores from, and every `npm ci` in this workflow already runs `--ignore-scripts`, so a compromised dependency can't run install/postinstall code to tamper with the cache before it's saved. Repo also has a single maintainer with push access. Follow-up considered and declined during PR #806 review.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `.github/workflows/ci.yml`                                                                                                                            |
 | Unauthenticated Socket.IO channel                                      | The Socket.IO server used to accept any connection and broadcast every event to it, including the live server log stream (`logLine`), notifications, and download/import progress, so anyone who could reach the port could read them without logging in.                                                                                                                                                                                                                                          | Medium          | Medium     | Fixed for 1.5.0: `io.use` in `server/socket.ts` verifies the same JWT the REST API accepts (the httpOnly auth cookie, or a bearer token passed as `auth.token` for legacy sessions) and rejects the handshake otherwise. A cookie-authenticated handshake must also come from this server's own origin (its `Host`, or `X-Forwarded-Host` behind a reverse proxy) or one listed in `ALLOWED_ORIGINS` / `APP_URL`, since WebSockets bypass CORS and a same-site page could otherwise ride the cookie. Events are still broadcast to every authenticated socket, which matches the single-user design; per-user rooms remain tracked in #1081.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `server/socket.ts`, `client/src/lib/socket.ts`                                                                                                        |
 
+## CI test execution and secret boundaries
+
+Pull-request validation executes candidate code, so candidate-controlled
+workflow steps must not receive repository secrets. The regular CI workflow
+contains no Codecov token reference. It uploads reports only for `main` pushes;
+a separate `workflow_run` workflow loaded from the default branch accepts only
+a same-repository push to `main` and runs in the `codecov-main` environment.
+That environment's deployment policy allows `main` only. The uploader checks out
+the trusted repository default branch and uses Codecov's commit override for the
+triggering run, so the secret-bearing workflow never checks out run-provided
+source. Store
+`CODECOV_TOKEN`, if configured, as a secret in that environment; do not create a
+repository or organization secret with that name. The `trusted-pr-validation`
+workflow is also loaded from the pull-request base and runs the base validator
+against the candidate snapshot inside Bubblewrap without repository secrets.
+The sandbox unshares external networking and supplies only synthetic `localhost`
+entries plus a resolver file with no nameserver for tests that open local sockets;
+it does not mount the host's `/etc/hosts` or resolver settings, or expose host
+services.
+Contracts in `scripts/validation-engine/workflow-security.contract.mjs` guard
+the workflow structure; the environment's branch policy is configured in
+GitHub repository settings.
+
+GitHub exposes repository secrets to every workflow in the repository, so the
+release webhook must not remain repository-scoped. The announcement jobs use
+the `discord-release` environment, restricted to `main`, and read a separately
+named `DISCORD_WEBHOOK` environment secret. Tag announcements run in a
+default-branch `workflow_run` workflow only after the trusted image workflow
+succeeds. Create a replacement
+webhook in that environment, then delete the repository-level
+`DISCORD_RELEASE_WEBHOOK`; GitHub does not reveal the stored secret's value for
+transfer. Until the repository secret is removed, same-repository
+pull-request workflows can still reference it.
+
 ## Optional pre-import scanning
 
 The VirusTotal and ClamAV checks are disabled unless an operator enables and

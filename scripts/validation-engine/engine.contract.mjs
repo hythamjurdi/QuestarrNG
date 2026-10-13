@@ -1,10 +1,12 @@
 // Copyright (c) QuestarrNG contributors. All rights reserved.
+import { Buffer } from 'node:buffer';
 import assert from 'node:assert/strict';
 import {
   existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   symlinkSync,
@@ -27,6 +29,7 @@ import {
   isolatedTaskEnvironment,
   main as runEngine,
   releaseRunLock,
+  runtimeProbeDirectory,
 } from './engine.mjs';
 import { validation } from './config.mjs';
 
@@ -82,6 +85,7 @@ function baseConfig(overrides = {}) {
 function fixture() {
   const root = makeRoot({
     'package.json': '{"name":"validation-fixture"}\n',
+    'src/app.js': 'export const candidate = true;\n',
     'tests/example.test.mjs': "import test from 'node:test';\ntest('fixture passes', () => {});\n",
   });
   return { root, config: baseConfig() };
@@ -107,16 +111,22 @@ test('only the dependency installer receives the configured npm cache', () => {
   const lint = validation.tasks.find((task) => task.id === 'lint');
   assert.ok(install);
   assert.ok(lint);
-  assert.deepEqual(install.passEnv, ['NPM_CONFIG_CACHE']);
+  assert.deepEqual(install.passEnv, ['NPM_CONFIG_CACHE', 'NPM_CONFIG_OFFLINE']);
   const inherited = {
     PATH: process.env.PATH,
     NPM_CONFIG_CACHE: path.join(runRoot, 'shared-npm-cache'),
+    NPM_CONFIG_OFFLINE: 'true',
   };
   assert.equal(
     isolatedTaskEnvironment(install, runRoot, inherited).NPM_CONFIG_CACHE,
     inherited.NPM_CONFIG_CACHE,
   );
+  assert.equal(
+    isolatedTaskEnvironment(install, runRoot, inherited).NPM_CONFIG_OFFLINE,
+    'true',
+  );
   assert.equal(isolatedTaskEnvironment(lint, runRoot, inherited).NPM_CONFIG_CACHE, undefined);
+  assert.equal(isolatedTaskEnvironment(lint, runRoot, inherited).NPM_CONFIG_OFFLINE, undefined);
 });
 
 test('glob matching covers root and nested files without crossing sibling names', () => {
@@ -292,6 +302,32 @@ test('native execution records passing case counts, source identity and private 
   const log = path.join(runRoot, result.receipt.tasks[0].logFile);
   assert.equal(statSync(log).mode & 0o777, 0o600);
   assert.match(readFileSync(path.join(runRoot, 'receipt.json'), 'utf8'), /"status": "passed"/);
+});
+
+test('failed test tasks expose a bounded printable diagnostic to the caller', async () => {
+  const { root, config } = fixture();
+  config.tasks[0].command = [
+    process.execPath,
+    '-e',
+    "process.stdout.write('x'.repeat(20000)); process.stderr.write('\\u001b[31mcontract failure\\u001b[0m\\r\\n::error::forged\\n##[group]forged\\n'); process.exit(1);",
+  ];
+  const failures = [];
+  const result = await executePlan(root, config, createPlan(root, config), {
+    onTaskFailure: (failure) => failures.push(failure),
+  });
+  assert.equal(result.exitCode, 1);
+  assert.equal(failures.length, 1);
+  assert.equal(failures[0].taskId, 'unit-tests');
+  assert.equal(failures[0].status, 'failed');
+  assert.equal(failures[0].outputBytes > 16 * 1024, true);
+  assert.equal(failures[0].truncated, true);
+  assert.ok(Buffer.byteLength(failures[0].output, 'utf8') <= 16 * 1024);
+  // eslint-disable-next-line no-control-regex -- verify the terminal-control filter.
+  assert.doesNotMatch(failures[0].output, /[\u0000-\u0009\u000B-\u001F\u007F]/u);
+  assert.match(failures[0].output, /contract failure/u);
+  assert.match(failures[0].output, /^\| ::error::forged$/mu);
+  assert.match(failures[0].output, /^\| ##\[group\]forged$/mu);
+  assert.doesNotMatch(failures[0].output, /^(?:::|##\[)/mu);
 });
 
 test('live progress reports task start, heartbeat, and completion', async () => {
@@ -576,7 +612,25 @@ test('plan and executor reject dependency cycles and report missing tools', asyn
 test('candidate digests change after tracked source edits', () => {
   const { root, config } = fixture();
   const before = captureCandidate(root, config.inputs, discoverInventory(root, config.inventory));
-  writeFileSync(path.join(root, 'package.json'), '{"edited":true}\n');
+  const externalDiff = spawnSync('git', ['config', 'diff.external', '/bin/true'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  assert.equal(externalDiff.status, 0, externalDiff.stderr);
+  writeFileSync(path.join(root, 'src/app.js'), 'export const candidate = false;\n');
   const afterEdit = captureCandidate(root, config.inputs, discoverInventory(root, config.inventory));
   assert.notEqual(before.sourceSha256, afterEdit.sourceSha256);
+});
+
+test('runtime probe directories resolve trusted temporary-root symlinks', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'questarrng-runtime-probe-contract-'));
+  temporaryRoots.push(root);
+  const actualRoot = path.join(root, 'actual-temp');
+  const aliasRoot = path.join(root, 'temp-alias');
+  mkdirSync(actualRoot);
+  symlinkSync(actualRoot, aliasRoot, process.platform === 'win32' ? 'junction' : 'dir');
+
+  const probe = runtimeProbeDirectory(aliasRoot);
+  assert.equal(path.dirname(probe), realpathSync(actualRoot));
+  rmSync(probe, { recursive: true, force: true });
 });

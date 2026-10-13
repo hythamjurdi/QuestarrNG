@@ -31,6 +31,7 @@ export const ENGINE_VERSION = 1;
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = path.resolve(ENGINE_DIR, '..', '..');
 const MAX_BUFFER = 8 * 1024 * 1024;
+const MAX_FAILURE_DIAGNOSTIC_BYTES = 16 * 1024;
 const PROGRESS_INTERVAL_MS = 60_000;
 const IGNORED_DIRS = new Set([
   '.git',
@@ -51,7 +52,10 @@ const INHERITED_ENVIRONMENT_KEYS = new Set([
   'VOLTA_HOME', 'SYSTEMROOT', 'TZ', 'WINDIR',
 ]);
 const APPROVED_TASK_PASS_ENVIRONMENT = new Map();
-APPROVED_TASK_PASS_ENVIRONMENT.set('install-dependencies', new Set(['NPM_CONFIG_CACHE']));
+APPROVED_TASK_PASS_ENVIRONMENT.set(
+  'install-dependencies',
+  new Set(['NPM_CONFIG_CACHE', 'NPM_CONFIG_OFFLINE'])
+);
 
 function fail(message) {
   throw new Error(message);
@@ -227,9 +231,20 @@ function untrackedDigests(root) {
 }
 
 export function captureCandidate(root, inputs, inventory) {
-  const commit = gitText(root, ['rev-parse', 'HEAD']);
+  const snapshotCommit = gitText(root, ['rev-parse', 'HEAD']);
+  const commit = process.env.VALIDATION_CANDIDATE_SHA ?? snapshotCommit;
+  if (!/^[a-f0-9]{40}$/.test(commit)) {
+    fail('Trusted candidate source identity must be a full Git commit SHA.');
+  }
   const tree = gitText(root, ['rev-parse', 'HEAD^{tree}']);
-  const diffSha256 = hash(git(root, ['diff', '--binary', 'HEAD']));
+  const diffSha256 = hash(git(root, [
+    '-c', 'diff.external=',
+    'diff',
+    '--no-ext-diff',
+    '--no-textconv',
+    '--binary',
+    'HEAD',
+  ]));
   const untracked = untrackedDigests(root);
   const inputDigests = inputs.map((relative) => ({
     file: relative,
@@ -247,6 +262,7 @@ export function captureCandidate(root, inputs, inventory) {
   const status = gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
   return {
     commit,
+    snapshotCommit,
     tree,
     sourceSha256,
     inventorySha256,
@@ -305,16 +321,50 @@ function preserveVersionManagerDataDirectories(env, inherited) {
   return env;
 }
 
-function inspectRuntime(root, runtime) {
+export function runtimeProbeDirectory(root = process.platform === 'win32'
+  ? path.join(process.env.SystemRoot || process.env.WINDIR || 'C:\\Windows', 'Temp')
+  : '/tmp') {
+  // Runtime probes must not trust TMPDIR/TMP/TEMP from the invoking process.
+  // The Linux sandbox exposes its own private /tmp here; on Windows use the
+  // OS temp directory instead of the caller-selected temporary path. Resolve
+  // trusted aliases such as macOS's /tmp before requiring a real directory.
+  const resolvedRoot = realpathSync(root);
+  const metadata = lstatSync(resolvedRoot);
+  if (!metadata.isDirectory())
+    fail('The trusted runtime probe temporary root is not a directory: ' + root);
+  return mkdtempSync(path.join(resolvedRoot, 'questarr-runtime-probe-'));
+}
+
+function inspectRuntime(runtime) {
   const available = commandAvailable(runtime.command);
   if (!available) return { ...runtime, available, version: null, exitCode: null };
-  const result = spawnSync(runtime.command, runtime.args ?? ['--version'], {
-    cwd: root,
-    encoding: 'utf8',
-    timeout: 10_000,
-    maxBuffer: 1024 * 1024,
-    env: preserveVersionManagerDataDirectories(sanitizedEnvironment(), process.env),
-  });
+  const probeHome = runtimeProbeDirectory();
+  const userConfig = path.join(probeHome, 'user.npmrc');
+  const globalConfig = path.join(probeHome, 'global.npmrc');
+  writeFileSync(userConfig, '', { mode: 0o600 });
+  writeFileSync(globalConfig, '', { mode: 0o600 });
+  let result;
+  try {
+    const env = preserveVersionManagerDataDirectories(
+      sanitizedEnvironment(),
+      process.env
+    );
+    Object.assign(env, {
+      HOME: probeHome,
+      USERPROFILE: probeHome,
+      NPM_CONFIG_USERCONFIG: userConfig,
+      NPM_CONFIG_GLOBALCONFIG: globalConfig,
+    });
+    result = spawnSync(runtime.command, runtime.args ?? ['--version'], {
+      cwd: probeHome,
+      encoding: 'utf8',
+      timeout: 10_000,
+      maxBuffer: 1024 * 1024,
+      env,
+    });
+  } finally {
+    rmSync(probeHome, { recursive: true, force: true });
+  }
   const version = (result.stdout ?? '') + (result.stderr ?? '');
   const versionLine = version.trim().split(/\r?\n/, 1)[0] ?? '';
   const versionCompatible = !runtime.versionPattern ||
@@ -443,7 +493,7 @@ export function createPlan(root, config, options = {}) {
     ...selectedTasks.map((task) => task.command[0]),
   ])]
     .map((command) => ({ command, available: commandAvailable(command) }));
-  const runtimes = (config.runtimes ?? []).map((runtime) => inspectRuntime(root, runtime));
+  const runtimes = (config.runtimes ?? []).map((runtime) => inspectRuntime(runtime));
   const executionContext = {
     executor: process.env.GITHUB_ACTIONS === 'true' ? 'github-actions' : 'local',
     platform: process.platform,
@@ -457,6 +507,7 @@ export function createPlan(root, config, options = {}) {
       eventName: process.env.GITHUB_EVENT_NAME ?? null,
       sha: process.env.GITHUB_SHA ?? null,
     } : null,
+    trustedBaseSha: process.env.VALIDATION_TRUSTED_BASE_SHA ?? null,
   };
   const plan = {
     schemaVersion: ENGINE_VERSION,
@@ -569,7 +620,42 @@ function terminate(child) {
   child.kill('SIGTERM');
 }
 
-export async function runCommand(task, root, logPath) {
+function failureDiagnostic(output, outputBytes) {
+  const buffer = Buffer.from(output, 'utf8');
+  const truncated = outputBytes > MAX_FAILURE_DIAGNOSTIC_BYTES;
+  let excerpt = buffer.subarray(-MAX_FAILURE_DIAGNOSTIC_BYTES).toString('utf8');
+  if (truncated) {
+    const firstNewline = excerpt.indexOf('\n');
+    if (firstNewline >= 0) excerpt = excerpt.slice(firstNewline + 1);
+  }
+  excerpt = excerpt
+    .replace(/\r\n?/gu, '\n')
+    // eslint-disable-next-line no-control-regex -- strip terminal controls from untrusted test output.
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/gu, '')
+    .trimEnd();
+  let formatted = excerpt
+    ? excerpt.split('\n').map((line) => '| ' + line).join('\n')
+    : '';
+  let outputTruncated = truncated;
+  while (Buffer.byteLength(formatted, 'utf8') > MAX_FAILURE_DIAGNOSTIC_BYTES) {
+    outputTruncated = true;
+    const firstNewline = formatted.indexOf('\n');
+    if (firstNewline >= 0) {
+      formatted = formatted.slice(firstNewline + 1);
+      continue;
+    }
+    let line = formatted.startsWith('| ') ? formatted.slice(2) : formatted;
+    line = Buffer.from(line, 'utf8')
+      .subarray(-(MAX_FAILURE_DIAGNOSTIC_BYTES - 2))
+      .toString('utf8');
+    while (Buffer.byteLength(line, 'utf8') > MAX_FAILURE_DIAGNOSTIC_BYTES - 2)
+      line = line.slice(1);
+    formatted = '| ' + line;
+  }
+  return { output: formatted, outputBytes, truncated: outputTruncated };
+}
+
+export async function runCommand(task, root, logPath, onFailure) {
   const startedAt = new Date().toISOString();
   const started = Date.now();
   const command = task.command[0];
@@ -639,6 +725,13 @@ export async function runCommand(task, root, logPath) {
     : task.kind === 'test' && activeCases < task.minimumCases
       ? 'incomplete'
       : 'passed';
+  if (task.kind === 'test' && status !== 'passed' && typeof onFailure === 'function') {
+    onFailure({
+      taskId: task.id,
+      status,
+      ...failureDiagnostic(combined, outputBytes),
+    });
+  }
   return {
     taskId: task.id,
     status,
@@ -777,6 +870,7 @@ export async function executePlan(root, config, plan, options = {}) {
         configuredTask,
         root,
         path.join(runRoot, task.id + '.log'),
+        options.onTaskFailure,
       );
     } finally {
       clearInterval(heartbeat);
@@ -862,6 +956,18 @@ function help(config) {
 export async function main(argv = process.argv.slice(2), root = DEFAULT_ROOT, config) {
   const loaded = config ?? (await import(pathToFileURL(path.join(ENGINE_DIR, 'config.mjs')).href)).validation;
   const args = [...argv];
+  let rootPath = root;
+  const rootIndex = args.indexOf('--root');
+  if (rootIndex >= 0) {
+    const requestedRoot = args[rootIndex + 1];
+    if (!requestedRoot || requestedRoot.startsWith('--') || !path.isAbsolute(requestedRoot))
+      fail('--root requires an absolute checkout path.');
+    if (process.env.VALIDATION_CANDIDATE_SHA && requestedRoot !== '/mnt/workspace')
+      fail('Trusted CI validation must use the isolated candidate workspace.');
+    rootPath = realpathSync(requestedRoot);
+    if (!lstatSync(rootPath).isDirectory()) fail('--root must name a directory.');
+    args.splice(rootIndex, 2);
+  }
   if (args.includes('--help')) {
     process.stdout.write(help(loaded) + '\n');
     return 0;
@@ -881,7 +987,7 @@ export async function main(argv = process.argv.slice(2), root = DEFAULT_ROOT, co
     if (args[index] === '--task') index += 1;
   }
   if (planIndex >= 0 && testsOnly) fail('--plan and --tests-only cannot be combined.');
-  const plan = createPlan(root, loaded, { testsOnly, task: taskId });
+  const plan = createPlan(rootPath, loaded, { testsOnly, task: taskId });
   if (planIndex >= 0) {
     process.stdout.write(json
       ? JSON.stringify(plan, null, 2) + '\n'
@@ -891,11 +997,18 @@ export async function main(argv = process.argv.slice(2), root = DEFAULT_ROOT, co
         plan.prerequisites.length + ' command prerequisites available.\n');
     return 0;
   }
-  const lock = acquireRunLock(root, loaded.repository);
+  const lock = acquireRunLock(rootPath, loaded.repository);
   let result;
   try {
-    result = await executePlan(root, loaded, plan, {
+    result = await executePlan(rootPath, loaded, plan, {
       onProgress: (summary) => process.stderr.write(summary + '\n'),
+      onTaskFailure: ({ taskId, status, output, outputBytes, truncated }) => {
+        const retainedBytes = Buffer.byteLength(output, 'utf8');
+        process.stderr.write(
+          `[validation] ${taskId} ${status}; ${retainedBytes} of ${outputBytes} output bytes retained${truncated ? ' (truncated)' : ''}:\n`
+        );
+        if (output) process.stderr.write(output + '\n');
+      },
     });
   } finally {
     releaseRunLock(lock);

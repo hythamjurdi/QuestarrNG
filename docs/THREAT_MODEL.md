@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Date:** 2026-10-04
-**Last reviewed:** 2026-10-06
+**Last reviewed:** 2026-10-13
 **Author:** Snapetech maintainers
 **Audience:** Maintainers, contributors, security reviewers
 
@@ -76,7 +76,7 @@ flowchart LR
     Import --> RomM
 ```
 
-Six named trust boundaries:
+Eight named trust boundaries:
 
 1. **Browser ↔ Server** — JWT bearer auth (`server/auth.ts`). Once authenticated, a user has
    full access to their own resources; there is no admin/non-admin split (see Section 8,
@@ -101,6 +101,21 @@ Six named trust boundaries:
    configured API key stays server-side. ClamAV receives scanned file contents over its
    INSTREAM TCP protocol at a DNS-validated address. That connection is not encrypted, so
    operators should keep the configured daemon on a trusted network.
+8. **GitHub Actions ↔ candidate source** — pull-request code, lockfiles, and generated
+   reports are untrusted. The base-sourced `trusted-pr-validation` workflow runs the exact
+   candidate snapshot with a read-only token and no repository secrets, using Bubblewrap,
+   a trusted npm runtime, registry-only dependency URLs, and offline tests. Regular test and
+   build jobs also use a reviewed launcher and sandbox. Codecov reports are uploaded by a
+   default-branch `workflow_run` job only for same-repository pushes to `main`, behind the
+   `codecov-main` environment restricted to `main`. The uploader checks out only the trusted
+   repository default branch; Codecov's `override_commit` associates reports with the exact
+   triggering CI commit without checking out workflow-run source code in the secret-bearing
+   job. Discord tag announcements run from a default-branch `workflow_run` workflow only
+   after the trusted image-release workflow
+   succeeds; manual announcements are limited to dispatches from `main`. Both use the
+   `discord-release` environment, restricted to `main`. The old repository-level webhook
+   secret remains a migration item until a new environment secret is configured and the
+   repository secret is deleted.
 
 ---
 
@@ -214,6 +229,36 @@ streams at most 100 registered files, and the existing provider rate limit
 applies. A compromised SeerrNG credential can retrieve files available to its
 QuestarrNG account, so operators should keep that scoped key private and
 dedicated to SeerrNG.
+
+### 4.7 GitHub Actions candidate validation
+
+Pull-request source, dependency lockfiles, and generated coverage/JUnit files are untrusted
+inputs. The `trusted-pr-validation` workflow is loaded from the pull-request base, checks out
+the exact base and candidate commits separately, and runs the base validator against a
+filtered candidate snapshot inside Bubblewrap. The workflow has only `contents: read`; it
+does not pass a GitHub token or repository secrets to candidate code. Candidate dependency
+URLs must use `registry.npmjs.org`; archives are unpacked in Bubblewrap with lifecycle
+scripts disabled, and validation runs offline. The sandbox uses an unshared network
+namespace, a synthetic hosts file containing only `localhost`, and a resolver file with
+no nameserver. This allows loopback-only tests without access to host services, host DNS
+settings, or external networks. The regular test/build jobs
+also use the external reviewed launcher; they keep the same no-secret boundary and isolate
+candidate test/build execution.
+
+Coverage and JUnit reports are exported from the sandbox through a size-bounded, no-follow
+copy. The Codecov upload workflow is loaded from the default branch, accepts reports only
+from the matching attempt of a same-repository `main` push, and uses the `codecov-main`
+environment. It checks out only trusted default-branch code and uses the triggering run's
+commit SHA as Codecov's report override. Its event and environment restrictions prevent
+pull-request workflows from obtaining the Codecov token. The Codecov token must be stored
+as an environment secret, not a repository-wide or organization-wide secret. The release
+announcement job uses the `discord-release` environment and its separately named
+`DISCORD_WEBHOOK` secret. The existing
+repository-level webhook must be replaced in that environment and removed before
+same-repository pull-request workflows are fully isolated from secrets. The environment
+is restricted to `main`; tag-triggered image runs cannot access its secret. A trusted
+default-branch `workflow_run` sends tag announcements only after the release workflow
+completes successfully.
 
 ---
 
