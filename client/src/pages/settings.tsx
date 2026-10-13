@@ -33,6 +33,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { PathBrowser } from "@/components/PathBrowser";
+import { BilingualLocaleName } from "@/components/BilingualLocaleName";
+import { InterfaceLanguageSelect } from "@/components/InterfaceLanguageSelect";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch, apiRequest, clearSearchCache } from "@/lib/queryClient";
@@ -58,7 +60,7 @@ import {
   useRegionalPreference,
 } from "@/lib/regional-format";
 import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
-import { INTERFACE_LANGUAGE_OPTIONS, useInterfaceLanguage } from "@/lib/interface-locale";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 import {
   THEMES,
   THEME_CONFIGS,
@@ -224,6 +226,21 @@ export default function SettingsPage() {
 
   const [ghostUnlocked] = useLocalStorageState(GHOST_UNLOCK_KEY, false);
   const regionalFormat = useRegionalPreference();
+  const selectedRegionalFormatOption = REGIONAL_FORMAT_OPTIONS.find(
+    (option) => option.value === regionalFormat
+  );
+  const renderRegionalFormatLabel = (option: (typeof REGIONAL_FORMAT_OPTIONS)[number]) =>
+    option.value === "system" ? (
+      <span lang={languageFor(option.label)} dir={directionFor(option.label)}>
+        {t(option.label)}
+      </span>
+    ) : (
+      <BilingualLocaleName
+        language={option.value}
+        nativeName={option.nativeName}
+        englishName={option.englishName}
+      />
+    );
   const [selectedTheme, setSelectedTheme] = useLocalStorageState<Theme>(
     THEME_KEY,
     getCurrentTheme(ghostUnlocked)
@@ -1418,21 +1435,12 @@ export default function SettingsPage() {
                 >
                   {t("Select a language")}
                 </Label>
-                <Select
+                <InterfaceLanguageSelect
+                  id="interface-language"
                   value={language}
-                  onValueChange={(value) => setLanguage(value as typeof language)}
-                >
-                  <SelectTrigger id="interface-language" className="w-full sm:w-80">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INTERFACE_LANGUAGE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onValueChange={setLanguage}
+                  className="w-full sm:w-80"
+                />
               </CardContent>
             </Card>
 
@@ -1470,18 +1478,16 @@ export default function SettingsPage() {
                 </Label>
                 <Select value={regionalFormat} onValueChange={setRegionalPreference}>
                   <SelectTrigger id="regional-format" className="w-full sm:w-80">
-                    <SelectValue placeholder={t("Use browser settings")} />
+                    <SelectValue placeholder={t("Use browser settings")}>
+                      {selectedRegionalFormatOption
+                        ? renderRegionalFormatLabel(selectedRegionalFormatOption)
+                        : null}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {REGIONAL_FORMAT_OPTIONS.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.value === "system" ? (
-                          <span lang={languageFor(option.label)} dir={directionFor(option.label)}>
-                            {t(option.label)}
-                          </span>
-                        ) : (
-                          option.label
-                        )}
+                        {renderRegionalFormatLabel(option)}
                       </SelectItem>
                     ))}
                   </SelectContent>

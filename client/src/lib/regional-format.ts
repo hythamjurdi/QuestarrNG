@@ -27,18 +27,18 @@ export const REGIONAL_FORMAT_KEY = "questarrng.regional-format";
 
 export const REGIONAL_FORMAT_OPTIONS = [
   { value: "system", label: "Use browser settings" },
-  { value: "es", label: "Español — Spanish" },
-  { value: "zh-CN", label: "简体中文 — Chinese (Simplified)" },
-  { value: "hi-IN", label: "हिन्दी — Hindi" },
-  { value: "de", label: "Deutsch — German" },
-  { value: "ja", label: "日本語 — Japanese" },
-  { value: "fr", label: "Français — French" },
-  { value: "pt-BR", label: "Português (Brasil) — Brazilian Portuguese" },
-  { value: "ar", label: "العربية — Arabic" },
-  { value: "ko", label: "한국어 — Korean" },
-  { value: "zh-TW", label: "繁體中文 — Chinese (Traditional)" },
-  { value: "vi", label: "Tiếng Việt — Vietnamese" },
-  { value: "id", label: "Bahasa Indonesia — Indonesian" },
+  { value: "es", nativeName: "Español", englishName: "Spanish" },
+  { value: "zh-CN", nativeName: "简体中文", englishName: "Chinese (Simplified)" },
+  { value: "hi-IN", nativeName: "हिन्दी", englishName: "Hindi" },
+  { value: "de", nativeName: "Deutsch", englishName: "German" },
+  { value: "ja", nativeName: "日本語", englishName: "Japanese" },
+  { value: "fr", nativeName: "Français", englishName: "French" },
+  { value: "pt-BR", nativeName: "Português (Brasil)", englishName: "Brazilian Portuguese" },
+  { value: "ar", nativeName: "العربية", englishName: "Arabic" },
+  { value: "ko", nativeName: "한국어", englishName: "Korean" },
+  { value: "zh-TW", nativeName: "繁體中文", englishName: "Chinese (Traditional)" },
+  { value: "vi", nativeName: "Tiếng Việt", englishName: "Vietnamese" },
+  { value: "id", nativeName: "Bahasa Indonesia", englishName: "Indonesian" },
 ] as const;
 
 const supportedRegionalFormats = new Set<string>(

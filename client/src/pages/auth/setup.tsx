@@ -24,14 +24,8 @@ import { Lock, User, ShieldCheck, Gamepad2, Info, ExternalLink } from "lucide-re
 import { withBasePath } from "@/lib/app-path";
 import { passwordPolicySchema } from "@shared/schema";
 import { IgdbHelpPopover, IgdbTestConnectionButton } from "@/components/IgdbCredentialsHelper";
-import { INTERFACE_LANGUAGE_OPTIONS, useInterfaceLanguage } from "@/lib/interface-locale";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { InterfaceLanguageSelect } from "@/components/InterfaceLanguageSelect";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 
 type SetupForm = {
   username: string;
@@ -163,21 +157,12 @@ export default function SetupPage() {
                 {t("Interface language")}
               </span>
             </label>
-            <Select
+            <InterfaceLanguageSelect
+              id="setup-interface-language"
               value={language}
-              onValueChange={(value) => setLanguage(value as typeof language)}
-            >
-              <SelectTrigger id="setup-interface-language" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {INTERFACE_LANGUAGE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onValueChange={setLanguage}
+              className="w-full"
+            />
             <p
               className="text-xs text-muted-foreground"
               lang={languageFor(

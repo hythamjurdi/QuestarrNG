@@ -19,8 +19,20 @@ test.describe("Initial Setup", () => {
     // We proceed anyway to handle potential re-runs if config persists but DB was wiped.
 
     if (!hasUsers) {
+      await page.addInitScript(() => {
+        localStorage.setItem("questarr.interface-language", "ar");
+      });
       await page.goto("/");
       await expect(page).toHaveURL("/setup");
+
+      const interfaceLanguage = page.locator("#setup-interface-language");
+      await expect(interfaceLanguage.locator('[lang="ar"][dir="rtl"]')).toHaveText("العربية");
+      await expect(interfaceLanguage.locator('[lang="en"][dir="ltr"]')).toContainText("Arabic");
+      await interfaceLanguage.click();
+      const arabicOption = page.getByRole("option", { name: "العربية — Arabic", exact: true });
+      await expect(arabicOption.locator('[lang="ar"][dir="rtl"]')).toHaveText("العربية");
+      await expect(arabicOption.locator('[lang="en"][dir="ltr"]')).toContainText("Arabic");
+      await page.getByRole("option", { name: "English", exact: true }).click();
 
       await page.fill('input[name="username"]', "admin");
       await page.fill('input[name="password"]', "password123");

@@ -2,19 +2,19 @@ import { useSyncExternalStore } from "react";
 import { UI_LABELS } from "./ui-labels";
 
 export const INTERFACE_LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Español — Spanish" },
-  { value: "zh-Hans", label: "简体中文 — Simplified Chinese" },
-  { value: "hi", label: "हिन्दी — Hindi" },
-  { value: "de", label: "Deutsch — German" },
-  { value: "ja", label: "日本語 — Japanese" },
-  { value: "fr", label: "Français — French" },
-  { value: "pt-BR", label: "Português (Brasil) — Brazilian Portuguese" },
-  { value: "ar", label: "العربية — Arabic" },
-  { value: "ko", label: "한국어 — Korean" },
-  { value: "zh-Hant", label: "繁體中文 — Traditional Chinese" },
-  { value: "vi", label: "Tiếng Việt — Vietnamese" },
-  { value: "id", label: "Bahasa Indonesia — Indonesian" },
+  { value: "en", nativeName: "English", englishName: undefined },
+  { value: "es", nativeName: "Español", englishName: "Spanish" },
+  { value: "zh-Hans", nativeName: "简体中文", englishName: "Simplified Chinese" },
+  { value: "hi", nativeName: "हिन्दी", englishName: "Hindi" },
+  { value: "de", nativeName: "Deutsch", englishName: "German" },
+  { value: "ja", nativeName: "日本語", englishName: "Japanese" },
+  { value: "fr", nativeName: "Français", englishName: "French" },
+  { value: "pt-BR", nativeName: "Português (Brasil)", englishName: "Brazilian Portuguese" },
+  { value: "ar", nativeName: "العربية", englishName: "Arabic" },
+  { value: "ko", nativeName: "한국어", englishName: "Korean" },
+  { value: "zh-Hant", nativeName: "繁體中文", englishName: "Traditional Chinese" },
+  { value: "vi", nativeName: "Tiếng Việt", englishName: "Vietnamese" },
+  { value: "id", nativeName: "Bahasa Indonesia", englishName: "Indonesian" },
 ] as const;
 
 export type InterfaceLanguage = (typeof INTERFACE_LANGUAGE_OPTIONS)[number]["value"];

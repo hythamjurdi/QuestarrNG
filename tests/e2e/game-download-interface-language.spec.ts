@@ -169,6 +169,43 @@ test.describe("Game download interface language", () => {
     await expect(page.getByTestId("nav-library")).toContainText("Library");
   });
 
+  test("marks native and English locale names in selectors", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("questarr.interface-language", "ar");
+      localStorage.setItem("questarrng.regional-format", "ar");
+    });
+    await page.goto("/settings");
+
+    const interfaceLanguage = page.locator("#interface-language");
+    await expect(interfaceLanguage.locator('[lang="ar"][dir="rtl"]')).toHaveText("العربية");
+    await expect(interfaceLanguage.locator('[lang="en"][dir="ltr"]')).toContainText("Arabic");
+    await interfaceLanguage.click();
+    const interfaceArabicOption = page.getByRole("option", {
+      name: "العربية — Arabic",
+      exact: true,
+    });
+    await expect(interfaceArabicOption.locator('[lang="ar"][dir="rtl"]')).toHaveText("العربية");
+    await expect(interfaceArabicOption.locator('[lang="en"][dir="ltr"]')).toContainText("Arabic");
+    await page.keyboard.press("Escape");
+
+    const regionalFormat = page.locator("#regional-format");
+    await expect(regionalFormat.locator('[lang="ar"][dir="rtl"]')).toHaveText("العربية");
+    await expect(regionalFormat.locator('[lang="en"][dir="ltr"]')).toContainText("Arabic");
+    await regionalFormat.click();
+    const regionalArabicOption = page.getByRole("option", {
+      name: "العربية — Arabic",
+      exact: true,
+    });
+    await expect(regionalArabicOption.locator('[lang="ar"][dir="rtl"]')).toHaveText("العربية");
+    await expect(regionalArabicOption.locator('[lang="en"][dir="ltr"]')).toContainText("Arabic");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-bilingual-locale-options-ar.png`,
+        fullPage: true,
+      });
+    }
+  });
+
   test("marks translated calendar labels and release counts with their language", async ({
     page,
   }) => {
