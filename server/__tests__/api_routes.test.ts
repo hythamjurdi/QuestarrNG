@@ -60,6 +60,12 @@ vi.mock("../ssrf.js", async () => {
   return { ...actual, safeFetch: safeFetchMock };
 });
 
+const checkDownloadStatusMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock("../cron.js", async () => {
+  const actual = await vi.importActual<typeof import("../cron.js")>("../cron.js");
+  return { ...actual, checkDownloadStatus: checkDownloadStatusMock };
+});
+
 // Mock dependencies (factory bodies live in ./fixtures/common-route-mocks.ts so they can be
 // shared with other test files that also boot the full app via registerRoutes())
 vi.mock("../storage.js", () => ({ storage: createStorageMock() }));
@@ -232,6 +238,7 @@ describe("API Routes - Extended Coverage", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.mocked(storage.getImportConfig).mockResolvedValue({ enablePostProcessing: false } as any);
     app = express();
     app.set("trust proxy", 1);
     app.use(express.json());
@@ -3524,6 +3531,28 @@ describe("API Routes - Extended Coverage", () => {
       );
     });
 
+    it("queues an already-completed claim for post-processing when enabled", async () => {
+      vi.mocked(storage.getTrackedDownloadKeys).mockResolvedValue(new Set());
+      vi.mocked(storage.getImportConfig).mockResolvedValue({ enablePostProcessing: true } as any);
+      mockSabnzbdClaimTarget();
+      vi.mocked(storage.addGameDownload).mockResolvedValue(undefined as any);
+
+      const res = await request(app).post("/api/downloads/claim").send({
+        downloaderId: "dl-1",
+        downloadHash: USENET_MIXED_CASE_ID,
+        downloadTitle: "Finished Game",
+        currentStatus: "completed",
+        category: "main",
+        gameId: "game-1",
+      });
+
+      expect(res.status).toBe(200);
+      expect(storage.addGameDownload).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "downloading" })
+      );
+      expect(checkDownloadStatusMock).toHaveBeenCalledOnce();
+    });
+
     it("rejects a claim as a duplicate when the mixed-case Usenet id is already tracked", async () => {
       vi.mocked(storage.getTrackedDownloadKeys).mockResolvedValue(
         new Set([`dl-1:${USENET_MIXED_CASE_ID}`])
@@ -3630,6 +3659,25 @@ describe("API Routes - Extended Coverage", () => {
       expect(res.body.addedCount).toBe(1);
       expect(res.body.failedCount).toBe(0);
       expect(storage.addGameDownload).toHaveBeenCalled();
+    });
+
+    it("queues completed batch claims for post-processing when enabled", async () => {
+      vi.mocked(storage.getImportConfig).mockResolvedValue({ enablePostProcessing: true } as any);
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: "game-1",
+        userId: "user-1",
+        status: "wanted",
+      } as any);
+
+      const res = await request(app)
+        .post("/api/downloads/claim-batch")
+        .send({ items: [validItem] });
+
+      expect(res.status).toBe(200);
+      expect(storage.addGameDownload).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "downloading" })
+      );
+      expect(checkDownloadStatusMock).toHaveBeenCalledOnce();
     });
 
     it("marks item skipped when download hash is already tracked", async () => {

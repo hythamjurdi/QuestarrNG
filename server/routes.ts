@@ -7,7 +7,7 @@ import { createServer, type Server } from "http";
 import { storage, type IStorage } from "./storage.js";
 import { stripUndefined } from "./object-utils.js";
 import { normalizeDownloadHash, normalizeTrackedKey } from "./download-hash.js";
-import { withGameOperationLock } from "./cron.js";
+import { checkDownloadStatus, withGameOperationLock } from "./cron.js";
 import { igdbClient } from "./igdb.js";
 import type { IGDBGame } from "./igdb.js";
 import { rawgClient } from "./rawg.js";
@@ -4555,9 +4555,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ error: "This download is already linked to a game" });
       }
 
-      // Determine download status for gameDownloads record
-      const downloadStatus =
-        currentStatus === "completed" || currentStatus === "seeding"
+      const isAlreadyComplete = currentStatus === "completed" || currentStatus === "seeding";
+      const importConfig = isAlreadyComplete ? await storage.getImportConfig(userId) : undefined;
+      // Keep completed claims pollable when post-processing is enabled. The normal completion
+      // checker then resolves client paths and starts the same import flow used for Questarr-added
+      // downloads. Without post-processing, preserve the terminal completed status.
+      const shouldPostProcessClaim = Boolean(
+        isAlreadyComplete && importConfig?.enablePostProcessing
+      );
+      const downloadStatus = shouldPostProcessClaim
+        ? "downloading"
+        : isAlreadyComplete
           ? "completed"
           : currentStatus === "downloading"
             ? "downloading"
@@ -4643,6 +4651,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       );
 
+      if (shouldPostProcessClaim) {
+        // Run the regular completion check promptly; don't make the user wait for the next cron
+        // interval, and don't hold the claim response open on downloader I/O or extraction.
+        void checkDownloadStatus().catch((error) => {
+          routesLogger.error(
+            { error, gameId: resolvedGameId },
+            "Failed to process claimed download"
+          );
+        });
+      }
+
       // Clear stale "search results available" flag now that the game has a linked download
       await storage.updateGameSearchResultsAvailable(resolvedGameId, false);
 
@@ -4669,6 +4688,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       parsedItems.push(parsed.data);
     }
+
+    const hasCompletedItems = parsedItems.some(
+      (item) => item.currentStatus === "completed" || item.currentStatus === "seeding"
+    );
+    const importConfig = hasCompletedItems ? await storage.getImportConfig(userId) : undefined;
+    let shouldPostProcessClaim = false;
 
     const task = await storage.createImportTask({
       userId,
@@ -4705,8 +4730,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         continue;
       }
       try {
-        const downloadStatus =
-          item.currentStatus === "completed" || item.currentStatus === "seeding"
+        const isAlreadyComplete =
+          item.currentStatus === "completed" || item.currentStatus === "seeding";
+        const shouldPostProcessItem = Boolean(
+          isAlreadyComplete && importConfig?.enablePostProcessing
+        );
+        const downloadStatus = shouldPostProcessItem
+          ? "downloading"
+          : isAlreadyComplete
             ? "completed"
             : item.currentStatus === "downloading"
               ? "downloading"
@@ -4815,6 +4846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             category: item.category,
           })
         );
+        shouldPostProcessClaim ||= shouldPostProcessItem;
         await storage.updateGameSearchResultsAvailable(resolvedGameId, false);
 
         trackedKeys.add(key);
@@ -4856,6 +4888,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       },
       userId
     );
+
+    if (shouldPostProcessClaim) {
+      void checkDownloadStatus().catch((error) => {
+        routesLogger.error({ error, taskId: task.id }, "Failed to process claimed downloads");
+      });
+    }
 
     return res.json({ success: true, taskId: task.id, addedCount, failedCount, skippedCount });
   });

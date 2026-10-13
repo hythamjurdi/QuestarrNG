@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 345,
+      "verified": 360,
       "needs-implementation": 1,
       "superseded": 36,
       "not-applicable": 7,
-      "unreviewed": 757,
+      "unreviewed": 742,
       "implemented-unverified": 1
     }
   },
@@ -11166,10 +11166,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Preferred release groups are configurable in Settings and apply to manual game searches plus automated main, update, and packs searches. The strict filtering option and empty/malformed settings behavior have regression coverage."
+        ],
+        "acceptance": [
+          "Users can manage preferred groups and strictness; both manual and automated search honor the configured policy."
+        ],
+        "evidence": [
+          "client/src/components/PreferredReleaseGroupsSettings.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11186,10 +11196,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Per-game release blacklisting is available from search results, is reflected in the user's blacklist list, and is consulted by search and automated selection. The setting can be removed and ownership is enforced by the API/storage path."
+        ],
+        "acceptance": [
+          "A user can blacklist a bad release, stop it from resurfacing in relevant searches or automated picks, and remove it later."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/components/BlacklistedReleasesList.tsx",
+          "server/routes.ts",
+          "server/storage.ts",
+          "server/cron.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11206,10 +11229,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "47aa5c8a8fde71050a9eb62c96d6a9e31f39c41a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The auto-search unreleased-game setting defaults off and gates scheduled searches for unreleased or delayed games; enabling it restores those searches."
+        ],
+        "acceptance": [
+          "Default and opted-in behavior are tested for released, unreleased, and delayed games."
+        ],
+        "evidence": [
+          "shared/schema.ts",
+          "server/cron.ts",
+          "client/src/pages/settings.tsx",
+          "server/__tests__/cron_autosearch.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11226,10 +11259,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "612ae3955cc615401dfebc8c5a223c6e9d0c6bcd",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SSL certificate and key operations are constrained to approved roots with lexical and canonical path checks before validation. The fork's path-browser, startup, and WebSocket safeguards cover the review findings beyond the original SSL patch."
+        ],
+        "acceptance": [
+          "Certificate/key paths outside allowed roots and traversal through symlinks are rejected; valid in-root certificate operations remain covered."
+        ],
+        "evidence": [
+          "server/path-security.ts",
+          "server/routes.ts",
+          "server/ssl.ts",
+          "server/index.ts",
+          "server/__tests__/ssl.test.ts",
+          "server/__tests__/path_traversal.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11246,10 +11291,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "cb81783573a65dfe6d15442893e1f465373807ba",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The workflow request for setup-qemu-action 3.7.0 is exceeded by the fork's SHA-pinned step-security setup-qemu-action v4.2.0 in the image and deployment workflows."
+        ],
+        "acceptance": [
+          "All QEMU setup steps used for the fork's image builds resolve to the reviewed, SHA-pinned v4.2.0 action."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11266,10 +11319,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d5944a0cb3f88192b42bd6e52d22ddbb89c1ac70",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested build-push-action 6.19.2 update is exceeded by the fork's SHA-pinned step-security docker-build-push-action v7.3.0 across its image, deploy, CI, and vulnerability workflows."
+        ],
+        "acceptance": [
+          "All build-push workflow references use the current pinned action version."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/ci.yml",
+          ".github/workflows/vulnerability-scan.yml",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11286,10 +11349,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "05d1bc9f4b8c8ee7f648fd5ccf9a510f7ba82c2a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "typescript-eslint is locked at 8.71.0, beyond the requested 8.55.0."
+        ],
+        "acceptance": [
+          "The development dependency and lockfile resolve to the newer 8.71.0 release."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11306,10 +11377,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "f969390fb9ec98f3a38c61fcca206f957ef59c7e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "pino is locked at the requested 10.3.1 version."
+        ],
+        "acceptance": [
+          "The manifest and lockfile resolve pino 10.3.1."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11326,10 +11405,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "aa0b8ec93645dee28cd9d74137a6b43b04e682f7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "@tanstack/react-query is locked at 5.104.1, beyond the requested 5.90.21."
+        ],
+        "acceptance": [
+          "The manifest and lockfile resolve the newer 5.104.1 release."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11346,10 +11433,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "8fe4aaaf8ab1485cff6e7a704e61f41f1f18c668",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "lucide-react is locked at 1.48.0, beyond the requested 0.564.0; the fork's current build and tests validate the upgraded icon API."
+        ],
+        "acceptance": [
+          "The manifest and lockfile resolve lucide-react 1.48.0."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11366,10 +11461,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "82508c5a10eff0e40de9eacfd09e5c1bee21e3cb",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "dotenv is locked at 18.0.5, beyond the requested 17.3.1."
+        ],
+        "acceptance": [
+          "The manifest and lockfile resolve dotenv 18.0.5."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11386,10 +11489,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The closed, unmerged request for dynamic game-card ARIA labels is implemented in both standard and compact cards, with accessible names reflecting each game's actions and state."
+        ],
+        "acceptance": [
+          "Screen-reader labels identify the specific game/action and update with card state; component and accessibility tests cover them."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/src/components/CompactGameCard.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "client/__tests__/CompactGameCard.test.tsx",
+          "client/__tests__/Accessibility.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11406,10 +11520,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "289e078842b6e508c1866890934a0c15ceedddcf",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "RSS fetches use the shared DNS-pinned safe fetcher, which validates every redirect hop and binds the request to the vetted address, closing the DNS-rebinding gap in the original patch."
+        ],
+        "acceptance": [
+          "Unsafe/private targets and rebinding redirects are rejected; safe RSS responses continue to parse."
+        ],
+        "evidence": [
+          "server/rss.ts",
+          "server/ssrf.ts",
+          "server/routes.ts",
+          "server/__tests__/rss-ssrf.test.ts",
+          "server/__tests__/ssrf.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11426,10 +11551,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "11c05735551da5f8a5df364454290f7e9ad8c2bf",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The scheduled game-update job batches game writes and notification inserts, and tests assert the batched results and notification behavior."
+        ],
+        "acceptance": [
+          "A cron run uses one batch write for changed games and notifications rather than per-game database mutations."
+        ],
+        "evidence": [
+          "server/cron.ts",
+          "server/__tests__/cron_updates.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11480,10 +11613,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Claiming active downloads already linked them to library games, but completed claims were stored as terminal and never entered the completion poll. Completed and seeding single or bulk claims now stay pollable when post-processing is enabled and immediately trigger the standard import pipeline; disabled post-processing preserves the completed status."
+        ],
+        "acceptance": [
+          "With post-processing enabled, a completed claim reaches normal path resolution/import and the existing manual-review fallback. Single and bulk claims are tested. With it disabled, completed claims remain terminal and retain current library-status behavior."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/cron.ts",
+          "server/services/ImportManager.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-41.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

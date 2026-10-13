@@ -1053,3 +1053,25 @@ and [batch 40 validation](evidence/validation-batch-40.txt).
 The ledger now records **345 verified**, **36 superseded**, **757 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** records. Issue #37 remains outstanding.
+
+## Batch 41 — October 13, 2026
+
+Batch 41 reviewed issues [#392–393](inventory.md), PRs [#394–405](inventory.md),
+and issue [#407](https://github.com/Doezer/Questarr/issues/407). Issue #406 was
+already verified in batch 4. Preferred release groups, release blacklisting,
+unreleased-game auto-search controls, SSL certificate path protections, RSS
+SSRF defenses, update batching, and dynamic game-card accessibility labels are
+present with regression coverage. The requested dependency and GitHub Action
+versions are all exceeded by the versions locked or pinned in QuestarrNG.
+
+The #407 claim flow now sends an already-completed client download through the
+normal completion/import pipeline when post-processing is enabled. This works
+for both single claims and bulk claims; imports use the same path resolution and
+manual-review fallback as downloads started in QuestarrNG. With post-processing
+disabled, a completed claim keeps its terminal completed status. See the
+[release note](../../release-notes/2026-10-13-claimed-download-post-processing.md)
+and [batch 41 validation](evidence/validation-batch-41.txt).
+
+The ledger now records **360 verified**, **36 superseded**, **742 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** records. Issue #37 remains outstanding.
