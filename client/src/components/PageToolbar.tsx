@@ -29,6 +29,9 @@ interface PageToolbarProps {
   search?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+  searchClearLabel?: string;
+  searchClearLang?: string;
+  searchClearDir?: "ltr" | "rtl";
   searchLang?: string;
   searchDir?: "ltr" | "rtl" | "auto";
   /** Direction to use for the placeholder while an auto-directed search is empty. */
@@ -51,6 +54,9 @@ export default function PageToolbar({
   search,
   onSearchChange,
   searchPlaceholder = "Search...",
+  searchClearLabel = "Clear search",
+  searchClearLang,
+  searchClearDir,
   searchLang,
   searchDir,
   searchEmptyDir,
@@ -92,7 +98,9 @@ export default function PageToolbar({
                 size="icon"
                 className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 p-0 hover:bg-transparent sm:h-6 sm:w-6 no-default-hover-elevate no-default-active-elevate"
                 onClick={() => onSearchChange?.("")}
-                aria-label="Clear search"
+                aria-label={searchClearLabel}
+                lang={searchClearLang}
+                dir={searchClearDir}
               >
                 <X className="h-3 w-3" />
               </Button>

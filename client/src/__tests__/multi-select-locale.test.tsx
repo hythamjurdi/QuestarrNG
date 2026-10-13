@@ -75,4 +75,34 @@ describe("MultiSelect localized content", () => {
     expect(optionValue).toHaveAttribute("lang", "und");
     expect(optionValue).toHaveAttribute("dir", "auto");
   });
+
+  it("marks remove actions and upstream labels with their own language metadata", () => {
+    render(
+      <MultiSelect
+        options={[{ value: "FitGirl", label: "FitGirl" }]}
+        selected={["FitGirl"]}
+        onChange={vi.fn()}
+        placeholder="اختر المجموعات..."
+        lang="ar"
+        dir="rtl"
+        removeLabel={(label) => `إزالة ${label}`}
+        removeLang="ar"
+        removeDir="rtl"
+      />
+    );
+
+    const removeButton = screen.getByRole("button", { name: "إزالة FitGirl" });
+    const labelIds = removeButton.getAttribute("aria-labelledby")?.split(/\s+/) ?? [];
+    expect(labelIds).toHaveLength(2);
+    const [actionId, optionId] = labelIds;
+    if (!actionId || !optionId) throw new Error("Expected action and option label references");
+    const action = document.getElementById(actionId);
+    const option = document.getElementById(optionId);
+    expect(action).toHaveTextContent("إزالة");
+    expect(action).toHaveAttribute("lang", "ar");
+    expect(action).toHaveAttribute("dir", "rtl");
+    expect(option).toHaveTextContent("FitGirl");
+    expect(option).toHaveAttribute("lang", "und");
+    expect(option).toHaveAttribute("dir", "auto");
+  });
 });

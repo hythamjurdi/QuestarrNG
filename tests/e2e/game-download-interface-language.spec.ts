@@ -266,6 +266,12 @@ test.describe("Game download interface language", () => {
         fullPage: true,
       });
     }
+    const clearCalendarSearch = page.getByRole("button", { name: "مسح البحث", exact: true });
+    await expect(clearCalendarSearch).toHaveAttribute("lang", "ar");
+    await expect(clearCalendarSearch).toHaveAttribute("dir", "rtl");
+    await clearCalendarSearch.click();
+    await expect(calendarSearch).toHaveValue("");
+    await expect(calendarSearch).toHaveAttribute("lang", "ar");
     await calendarSearch.fill("لعبة");
     await expect(calendarSearch).toHaveAttribute("lang", "und");
     await expect(calendarSearch).toHaveCSS("direction", "rtl");

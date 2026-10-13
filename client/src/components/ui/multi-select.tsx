@@ -62,6 +62,7 @@ export function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
+  const removeLabelId = React.useId();
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) setSearchValue("");
@@ -97,26 +98,70 @@ export function MultiSelect({
         >
           <div className="flex gap-1 flex-wrap">
             {selectedOptions.length > 0 ? (
-              selectedOptions.map((option) => (
-                <Badge variant="secondary" key={option.value} className="flex items-center">
-                  <span lang="und" dir="auto">
-                    {option.label}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove(option.value);
-                    }}
-                    aria-label={removeLabel(option.label)}
-                    className="ml-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
-                    lang={removeLang}
-                    dir={removeDir}
-                  >
-                    <X className="h-3 w-3 cursor-pointer" />
-                  </button>
-                </Badge>
-              ))
+              selectedOptions.map((option, index) => {
+                const optionNameMarker = "__questarr_option_name__";
+                const removeAccessibleNameTemplate = removeLabel(optionNameMarker);
+                const optionNamePosition = removeAccessibleNameTemplate.indexOf(optionNameMarker);
+                const actionBefore =
+                  optionNamePosition < 0
+                    ? removeAccessibleNameTemplate
+                    : removeAccessibleNameTemplate.slice(0, optionNamePosition);
+                const actionAfter =
+                  optionNamePosition < 0
+                    ? ""
+                    : removeAccessibleNameTemplate.slice(
+                        optionNamePosition + optionNameMarker.length
+                      );
+                const optionLabelId = `${removeLabelId}-option-${index}`;
+                const actionBeforeId = `${removeLabelId}-before-${index}`;
+                const actionAfterId = `${removeLabelId}-after-${index}`;
+                const removeLabelledBy = [
+                  actionBefore ? actionBeforeId : null,
+                  optionLabelId,
+                  actionAfter ? actionAfterId : null,
+                ]
+                  .filter((id): id is string => id !== null)
+                  .join(" ");
+
+                return (
+                  <Badge variant="secondary" key={option.value} className="flex items-center">
+                    <span id={optionLabelId} lang="und" dir="auto">
+                      {option.label}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove(option.value);
+                      }}
+                      aria-labelledby={removeLabelledBy}
+                      className="ml-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      {actionBefore ? (
+                        <span
+                          id={actionBeforeId}
+                          className="sr-only"
+                          lang={removeLang}
+                          dir={removeDir}
+                        >
+                          {actionBefore}
+                        </span>
+                      ) : null}
+                      {actionAfter ? (
+                        <span
+                          id={actionAfterId}
+                          className="sr-only"
+                          lang={removeLang}
+                          dir={removeDir}
+                        >
+                          {actionAfter}
+                        </span>
+                      ) : null}
+                      <X className="h-3 w-3 cursor-pointer" />
+                    </button>
+                  </Badge>
+                );
+              })
             ) : (
               <span className="text-muted-foreground" lang={lang} dir={dir}>
                 {placeholder}

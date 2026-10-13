@@ -310,6 +310,9 @@ export default function CalendarPage() {
           search={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder={t("Filter games...")}
+          searchClearLabel={t("Clear search")}
+          searchClearLang={languageFor("Clear search")}
+          searchClearDir={directionFor("Clear search")}
           searchLang={languageFor("Filter games...")}
           searchDir="auto"
           searchEmptyDir={directionFor("Filter games...")}
