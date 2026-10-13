@@ -1154,3 +1154,29 @@ and [batch 44 validation](evidence/validation-batch-44.txt).
 The ledger now records **392 verified**, **52 superseded**, **694 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** record. Issue #37 remains outstanding.
+
+## Batch 45 — October 13, 2026
+
+Batch 45 reviewed issues [#458](https://github.com/Doezer/Questarr/issues/458),
+[#459](https://github.com/Doezer/Questarr/issues/459), and
+[#466](https://github.com/Doezer/Questarr/issues/466), plus PRs #460–465 and
+#467–473. Transmission downloads request and map labels so the configured
+category filter excludes unrelated torrents; the Prowlarr download path safely
+handles proxy URLs and redirects to magnet links. The Wishlist unreleased toggle,
+Steam sync improvements, memoized filtering, RSS SSRF checks, descriptive
+accessible labels, IGDB pagination, rTorrent path handling, and RomM import flow
+are already present with regression coverage. PR #470's small-screen settings
+tabs and string-safe SQLite migration handling are also in place; archive
+extraction uses the Alpine-native 7-Zip package instead of the incompatible
+`7zip-bin` binary.
+
+The four dependency PRs #462–465 are superseded by newer locked versions. The
+Unraid template already used the requested PUID 99 and PGID 100 and kept app
+data, library, and downloads separate; it now also sets the requested UMASK 022. The RomM import flow addresses the reviewed manual-review, HTTP status,
+and placed-file reporting issues from PR #473. See the
+[Unraid template release note](../../release-notes/2026-10-13-unraid-template-permissions.md)
+and [batch 45 validation](evidence/validation-batch-45.txt).
+
+The ledger now records **404 verified**, **56 superseded**, **678 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** record. Issue #37 remains outstanding.

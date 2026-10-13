@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 392,
+      "verified": 404,
       "needs-implementation": 1,
-      "superseded": 52,
+      "superseded": 56,
       "not-applicable": 7,
-      "unreviewed": 694,
+      "unreviewed": 678,
       "implemented-unverified": 1
     }
   },
@@ -13052,10 +13052,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Transmission RPC requests torrent labels and maps the first label to normalized category; the manager's configured-category filter then excludes unrelated torrents."
+        ],
+        "acceptance": [
+          "With a category configured, only torrents carrying that matching Transmission label appear in Downloads."
+        ],
+        "evidence": [
+          "server/downloaders/transmission.ts#getAllDownloads and mapTransmissionStatus",
+          "server/downloaders/manager.ts#getAllDownloads",
+          "server/__tests__/downloaders_transmission_remaining.test.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13072,10 +13081,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Torrent downloads use the shared safe Prowlarr/indexer fetch path, encode Prowlarr's base64 link parameter safely, and manually follow redirects so an HTTP-to-magnet redirect reaches the downloader."
+        ],
+        "acceptance": [
+          "Cloudflare-protected Prowlarr downloads and redirects to magnet URIs are handled without asking the download client to fetch the blocked indexer URL."
+        ],
+        "evidence": [
+          "server/downloaders/utils.ts#fetchWithMagnetDetection",
+          "server/__tests__/magnet_detection.test.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13092,10 +13109,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "85ed255f451e4a7631b7a4ef7987fd56b57d38be",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Wishlist already persists the Unreleased toggle through useLocalStorageState and orders Released before Upcoming and TBA. The state hook and page-level filtering are present."
+        ],
+        "acceptance": [
+          "Users can hide or show unreleased wishlist games, and Released remains the first section."
+        ],
+        "evidence": [
+          "client/src/pages/wishlist.tsx",
+          "client/src/hooks/use-local-storage-state.ts",
+          "client/__tests__/WishlistPage.mobile.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13112,10 +13137,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "47ba1492e0edc13e134244ba0cac98d2204b8eb9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Steam sync uses extracted backend helpers and a React Query mutation with loading feedback. Existing-game lookup is indexed by IGDB ID, nullable IDs use null checks, and the regression suite covers an IGDB ID of zero."
+        ],
+        "acceptance": [
+          "Steam wishlist sync remains modular and reports progress while preserving valid mappings, including falsy numeric IDs."
+        ],
+        "evidence": [
+          "server/cron.ts#linkExistingGamesToSteam and addNewSteamWishlistGames",
+          "client/src/components/Header.tsx",
+          "server/__tests__/steam_wishlist.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13132,10 +13165,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All six requested development dependency versions are exceeded by the current lockfile: Vitest packages 5.0.2, esbuild 0.28.2, lint-staged 17.6.0, and typescript-eslint 8.71.0."
+        ],
+        "acceptance": [
+          "No additional dependency update is needed."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13152,10 +13192,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b742ce8eb43c41a99348afea2f668f7d58fe2619",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "fast-xml-parser is locked at 5.11.2, newer than the requested 5.5.5."
+        ],
+        "acceptance": [
+          "No additional dependency update is needed."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13172,10 +13219,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6116bf88913dee7ba4aaa122a016072ebde4170a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "nanoid is locked at 6.0.1, newer than the requested 5.1.7."
+        ],
+        "acceptance": [
+          "No additional dependency update is needed."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13192,10 +13246,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5322e95fb83c16750251f727979cdcd51ad5cefd",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "better-sqlite3 is locked at 13.0.3, newer than the requested 12.8.0."
+        ],
+        "acceptance": [
+          "No additional dependency update is needed."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13212,10 +13273,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork's Unraid template already separates app data, game library, and downloads and uses Unraid's PUID 99 / PGID 100. Added the requested UMASK 022 default; the image entrypoint applies it."
+        ],
+        "acceptance": [
+          "The Unraid template supplies the corrected UID/GID and file-creation mask."
+        ],
+        "evidence": [
+          "unraid/questarr.xml",
+          "entrypoint.sh",
+          "docs/upstream-resolution/evidence/validation-batch-45.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13232,10 +13301,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c69d1142fef44b88108825dafe9bfb9529932c6e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Filtering is memoized in Wishlist, Library, and AppSidebar. AppSidebar already counts wishlist and playing games in one pass, covering the review's follow-up optimization."
+        ],
+        "acceptance": [
+          "Unrelated renders do not repeat the game filtering/counting work."
+        ],
+        "evidence": [
+          "client/src/pages/wishlist.tsx",
+          "client/src/pages/library.tsx",
+          "client/src/components/AppSidebar.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13252,10 +13329,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "aed66c96ce00ef3595580687a3970800dd36756d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "RSS feed create and update endpoints validate user URLs with the server-side SSRF boundary before saving or fetching them."
+        ],
+        "acceptance": [
+          "Unsafe local or private-network RSS URLs are rejected."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/ssrf.ts",
+          "server/__tests__/rss-routes.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13272,10 +13357,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c1db5ddc13dfe4ea746cecd36748d835fa499325",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Notification controls expose unread counts and notification state/title to assistive technology. Download-dialog labels include the release title with dots and underscores normalized to spaces."
+        ],
+        "acceptance": [
+          "Icon-only notification and download controls have descriptive accessible names without making release-name punctuation awkward to hear."
+        ],
+        "evidence": [
+          "client/src/components/NotificationCenter.tsx",
+          "client/src/components/NotificationItem.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/NotificationItem.accessibility.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13292,10 +13386,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "50c327a6da7ac9e52c5e81a4e3b5d9b860c9f3ae",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Settings tabs already scroll horizontally on narrow screens. The SQLite migration runner contains the string-safe duplicate-column error handling from the review; the upstream migration architecture has been moved under server/db/migrate-sqlite.ts. Archive extraction uses Alpine's musl-native 7zip package instead of the incompatible npm 7zip-bin binary."
+        ],
+        "acceptance": [
+          "The responsive settings and migration-resilience behavior are present with the fork's current database and container architecture."
+        ],
+        "evidence": [
+          "client/src/pages/settings.tsx",
+          "server/db/migrate-sqlite.ts",
+          "server/__tests__/migrate.test.ts",
+          "server/services/ArchiveService.ts",
+          "Dockerfile"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13312,10 +13416,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "0d2d556f15cd5bcaf439cd02253757e412c3b9e7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "IGDB platform retrieval paginates through the configured offset limit, de-duplicates and sorts through a shared helper, and falls back to a broader query or a stable platform list."
+        ],
+        "acceptance": [
+          "Platform selection is not limited to the first IGDB page and remains usable if the filtered endpoint returns no data."
+        ],
+        "evidence": [
+          "server/igdb.ts#getPlatforms",
+          "server/__tests__/igdb.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13332,10 +13443,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "fb80bdccfeccd35ffe751b93908261e688303b9b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "rTorrent applies the configured directory when adding torrents and avoids appending the native category twice. The downloader form hides path controls for Usenet clients."
+        ],
+        "acceptance": [
+          "rTorrent downloads honor the configured path while Usenet clients continue to manage paths through their category settings."
+        ],
+        "evidence": [
+          "server/downloaders/rtorrent.ts#addDownload",
+          "server/__tests__/downloaders.test.ts",
+          "client/src/pages/downloaders.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13352,10 +13471,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork has a full RomM import strategy and post-download import flow. The reviewed follow-ups are addressed: unresolved paths enter manual review, known import errors map to 400/404, and PC imports enumerate files placed after transfer."
+        ],
+        "acceptance": [
+          "RomM and PC imports report accurate results and leave unresolved cases visible and retryable."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "server/services/ImportStrategies.ts",
+          "server/routes/import.ts",
+          "server/cron.ts",
+          "server/__tests__/import_strategies.test.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "server/__tests__/import_routes_coverage.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

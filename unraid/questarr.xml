@@ -26,6 +26,7 @@
   <Config Name="Downloads" Target="/downloads" Default="/mnt/user/downloads" Mode="rw" Description="Downloads shared with the configured download client." Type="Path" Display="always" Required="false" Mask="false">/mnt/user/downloads</Config>
   <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID for files created by this service." Type="Variable" Display="always" Required="false" Mask="false">99</Config>
   <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID for files created by this service." Type="Variable" Display="always" Required="false" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="022" Mode="" Description="Permissions mask for files created by this service." Type="Variable" Display="always" Required="false" Mask="false">022</Config>
   <Config Name="TZ" Target="TZ" Default="Etc/UTC" Mode="" Description="Time zone used by this service." Type="Variable" Display="always" Required="false" Mask="false">Etc/UTC</Config>
   <Config Name="PORT" Target="PORT" Default="5000" Mode="" Description="Internal QuestarrNG web port." Type="Variable" Display="advanced" Required="false" Mask="false">5000</Config>
 </Container>

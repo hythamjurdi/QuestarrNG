@@ -448,22 +448,22 @@ Snapshot: 2026-10-13T05:20:58.476Z. 1147 items. All ancestry observations requir
 | [pr #455](https://github.com/Doezer/Questarr/pull/455) | 🛡️ Sentinel: [HIGH] Fix missing rate limit on login | MERGED | merge-commit-in-fork-history | verified |
 | [pr #456](https://github.com/Doezer/Questarr/pull/456) | ⚡ Bolt: Memoize expensive array filtering in Library and Wishlist pages | CLOSED | no-merge-commit | verified |
 | [pr #457](https://github.com/Doezer/Questarr/pull/457) | 🎨 Palette: Improve screen reader context for Sidebar and Notifications | MERGED | merge-commit-in-fork-history | verified |
-| [issue #458](https://github.com/Doezer/Questarr/issues/458) | Downloads tab shows all Transmission torrents instead of filtering by category/label | CLOSED | no-merge-commit | unreviewed |
-| [issue #459](https://github.com/Doezer/Questarr/issues/459) | Torrent file downloads from Cloudflare-protected indexers fail (bypasses Prowlarr's FlareSolverr proxy) | CLOSED | no-merge-commit | unreviewed |
-| [pr #460](https://github.com/Doezer/Questarr/pull/460) | Feat: Add toggle for showing unreleased games in wishlist + reorder sections | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #461](https://github.com/Doezer/Questarr/pull/461) | Refactor Steam sync UI logic and extract helper functions | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #462](https://github.com/Doezer/Questarr/pull/462) | chore(deps-dev): bump the dev-dependencies group with 6 updates | CLOSED | no-merge-commit | unreviewed |
-| [pr #463](https://github.com/Doezer/Questarr/pull/463) | chore(deps): bump fast-xml-parser from 5.4.2 to 5.5.5 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #464](https://github.com/Doezer/Questarr/pull/464) | chore(deps): bump nanoid from 5.1.6 to 5.1.7 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #465](https://github.com/Doezer/Questarr/pull/465) | chore(deps): bump better-sqlite3 from 12.6.2 to 12.8.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #466](https://github.com/Doezer/Questarr/issues/466) | [Feature Request] Unraid Support | CLOSED | no-merge-commit | unreviewed |
-| [pr #467](https://github.com/Doezer/Questarr/pull/467) | ⚡ Bolt: Optimize array filtering with useMemo in UI components | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #468](https://github.com/Doezer/Questarr/pull/468) | 🛡️ Sentinel: [HIGH] Fix SSRF vulnerability in RSS feeds | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #469](https://github.com/Doezer/Questarr/pull/469) | 🎨 Palette: Improve accessibility of icon-only buttons with aria-labels | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #470](https://github.com/Doezer/Questarr/pull/470) | Chore/deps and fixes | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #471](https://github.com/Doezer/Questarr/pull/471) | feat(igdb): paginate platform retrieval for complete results | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #472](https://github.com/Doezer/Questarr/pull/472) | fix: downloadPath not used for rTorrent + remove path from usenet downloaders setup | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #473](https://github.com/Doezer/Questarr/pull/473) | Romm integration | CLOSED | no-merge-commit | unreviewed |
+| [issue #458](https://github.com/Doezer/Questarr/issues/458) | Downloads tab shows all Transmission torrents instead of filtering by category/label | CLOSED | no-merge-commit | verified |
+| [issue #459](https://github.com/Doezer/Questarr/issues/459) | Torrent file downloads from Cloudflare-protected indexers fail (bypasses Prowlarr's FlareSolverr proxy) | CLOSED | no-merge-commit | verified |
+| [pr #460](https://github.com/Doezer/Questarr/pull/460) | Feat: Add toggle for showing unreleased games in wishlist + reorder sections | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #461](https://github.com/Doezer/Questarr/pull/461) | Refactor Steam sync UI logic and extract helper functions | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #462](https://github.com/Doezer/Questarr/pull/462) | chore(deps-dev): bump the dev-dependencies group with 6 updates | CLOSED | no-merge-commit | superseded |
+| [pr #463](https://github.com/Doezer/Questarr/pull/463) | chore(deps): bump fast-xml-parser from 5.4.2 to 5.5.5 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #464](https://github.com/Doezer/Questarr/pull/464) | chore(deps): bump nanoid from 5.1.6 to 5.1.7 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #465](https://github.com/Doezer/Questarr/pull/465) | chore(deps): bump better-sqlite3 from 12.6.2 to 12.8.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [issue #466](https://github.com/Doezer/Questarr/issues/466) | [Feature Request] Unraid Support | CLOSED | no-merge-commit | verified |
+| [pr #467](https://github.com/Doezer/Questarr/pull/467) | ⚡ Bolt: Optimize array filtering with useMemo in UI components | MERGED | merge-commit-in-fork-history | verified |
+| [pr #468](https://github.com/Doezer/Questarr/pull/468) | 🛡️ Sentinel: [HIGH] Fix SSRF vulnerability in RSS feeds | MERGED | merge-commit-in-fork-history | verified |
+| [pr #469](https://github.com/Doezer/Questarr/pull/469) | 🎨 Palette: Improve accessibility of icon-only buttons with aria-labels | MERGED | merge-commit-in-fork-history | verified |
+| [pr #470](https://github.com/Doezer/Questarr/pull/470) | Chore/deps and fixes | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #471](https://github.com/Doezer/Questarr/pull/471) | feat(igdb): paginate platform retrieval for complete results | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #472](https://github.com/Doezer/Questarr/pull/472) | fix: downloadPath not used for rTorrent + remove path from usenet downloaders setup | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #473](https://github.com/Doezer/Questarr/pull/473) | Romm integration | CLOSED | no-merge-commit | verified |
 | [pr #474](https://github.com/Doezer/Questarr/pull/474) | chore(deps): bump codecov/codecov-action from 5.5.2 to 5.5.3 | CLOSED | no-merge-commit | unreviewed |
 | [pr #475](https://github.com/Doezer/Questarr/pull/475) | chore(deps): bump react-hook-form from 7.71.2 to 7.72.0 in the react group | CLOSED | no-merge-commit | unreviewed |
 | [pr #476](https://github.com/Doezer/Questarr/pull/476) | chore(deps): bump @tanstack/react-query from 5.90.21 to 5.95.0 | CLOSED | no-merge-commit | unreviewed |

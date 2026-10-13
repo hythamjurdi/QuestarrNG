@@ -1,0 +1,23 @@
+Batch 45 validation — October 13, 2026
+
+- `npm run test -- server/__tests__/downloaders_transmission_remaining.test.ts server/__tests__/migrate.test.ts`:
+  passed, 9 tests. The Transmission list regression asserts that RPC requests
+  include `labels` and that a returned label is mapped to the category used by
+  the download filter. The migration test verifies that a duplicate-column
+  error thrown as a string is safely skipped.
+- `npm run check`: passed.
+- `npm run lint`: passed.
+- `npm run format:check`: passed.
+- `npm run secretlint`: passed.
+- Prettier check for the authored README, Codecov config, upstream-resolution
+  README, and release note: passed.
+- `npm run release-notes:check` for the batch diff: passed; one release-note
+  fragment validated.
+- `git diff --check`: passed.
+- Parsed `unraid/questarr.xml` and verified PUID `99`, PGID `100`, and UMASK
+  `022`.
+- Refreshed `upstream/main`; it still matches the ledger snapshot at
+  `ad69b8ca44c7456d9183422fbdfdefbb67a771e9`.
+
+This batch does not change `client/src/**`, so no new running-UI screenshot was
+required.

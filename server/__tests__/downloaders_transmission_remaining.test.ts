@@ -251,14 +251,19 @@ describe("transmission remaining regression coverage", () => {
             peersSendingToUs: 1,
             peersGettingFromUs: 2,
             uploadRatio: 0.1,
+            labels: ["Questarr"],
             errorString: "",
           },
         ],
       },
     });
     await expect(client.getAllDownloads()).resolves.toEqual([
-      expect.objectContaining({ id: "hash-8", status: "downloading" }),
+      expect.objectContaining({ id: "hash-8", status: "downloading", category: "Questarr" }),
     ]);
+    expect(makeRequestSpy).toHaveBeenLastCalledWith(
+      "torrent-get",
+      expect.objectContaining({ fields: expect.arrayContaining(["labels"]) })
+    );
 
     makeRequestSpy.mockRejectedValueOnce(new Error("pause boom"));
     await expect(client.pauseDownload("7")).resolves.toEqual({
