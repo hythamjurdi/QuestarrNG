@@ -480,22 +480,22 @@ Snapshot: 2026-10-13T05:20:58.476Z. 1147 items. All ancestry observations requir
 | [pr #487](https://github.com/Doezer/Questarr/pull/487) | Fix torznab client not able to correctly handle prowlarr links | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #488](https://github.com/Doezer/Questarr/pull/488) | feat: preferred release groups for auto-download and search filtering | CLOSED | no-merge-commit | verified |
 | [pr #489](https://github.com/Doezer/Questarr/pull/489) | chore: cherry-pick independent improvements from romm-integration into 1.3.0 | MERGED | merge-commit-not-in-either-main-history | verified |
-| [pr #490](https://github.com/Doezer/Questarr/pull/490) | feat: add ability to blacklist a release in downloads search | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #491](https://github.com/Doezer/Questarr/pull/491) | Add preferred release groups for auto-download and filtering | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #492](https://github.com/Doezer/Questarr/pull/492) | Add Helm chart for deployment | CLOSED | no-merge-commit | unreviewed |
-| [pr #493](https://github.com/Doezer/Questarr/pull/493) | Add Discord sharing feature to stats page | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #494](https://github.com/Doezer/Questarr/pull/494) | [Aikido] AI Fix for Template Injection in GitHub Workflows Action | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #495](https://github.com/Doezer/Questarr/pull/495) | [Aikido] Fix security issue in socket.io-parser via minor version upgrade from 4.2.5 to 4.2.6 | CLOSED | no-merge-commit | unreviewed |
-| [pr #496](https://github.com/Doezer/Questarr/pull/496) | [Aikido] Fix security issue in node-forge via minor version upgrade from 1.3.3 to 1.4.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #497](https://github.com/Doezer/Questarr/pull/497) | Feat/preferred release groups | CLOSED | no-merge-commit | unreviewed |
-| [pr #498](https://github.com/Doezer/Questarr/pull/498) | chore(deps): bump codecov/codecov-action from 5.5.3 to 6.0.0 | CLOSED | no-merge-commit | unreviewed |
-| [pr #499](https://github.com/Doezer/Questarr/pull/499) | chore(deps-dev): bump the dev-dependencies group with 4 updates | CLOSED | no-merge-commit | unreviewed |
-| [pr #500](https://github.com/Doezer/Questarr/pull/500) | chore(deps): bump fast-xml-parser from 5.5.8 to 5.5.9 | CLOSED | no-merge-commit | unreviewed |
-| [pr #501](https://github.com/Doezer/Questarr/pull/501) | chore(deps): bump drizzle-orm from 0.45.1 to 0.45.2 | CLOSED | no-merge-commit | unreviewed |
-| [pr #502](https://github.com/Doezer/Questarr/pull/502) | chore(deps): bump @tanstack/react-query from 5.95.0 to 5.95.2 | CLOSED | no-merge-commit | unreviewed |
-| [issue #503](https://github.com/Doezer/Questarr/issues/503) | Small issues to fix | CLOSED | no-merge-commit | unreviewed |
-| [pr #504](https://github.com/Doezer/Questarr/pull/504) | [StepSecurity] Apply security best practices | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #505](https://github.com/Doezer/Questarr/issues/505) | When hiding a game it's not possible ton show it again | CLOSED | no-merge-commit | unreviewed |
+| [pr #490](https://github.com/Doezer/Questarr/pull/490) | feat: add ability to blacklist a release in downloads search | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #491](https://github.com/Doezer/Questarr/pull/491) | Add preferred release groups for auto-download and filtering | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #492](https://github.com/Doezer/Questarr/pull/492) | Add Helm chart for deployment | CLOSED | no-merge-commit | verified |
+| [pr #493](https://github.com/Doezer/Questarr/pull/493) | Add Discord sharing feature to stats page | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #494](https://github.com/Doezer/Questarr/pull/494) | [Aikido] AI Fix for Template Injection in GitHub Workflows Action | MERGED | merge-commit-in-fork-history | verified |
+| [pr #495](https://github.com/Doezer/Questarr/pull/495) | [Aikido] Fix security issue in socket.io-parser via minor version upgrade from 4.2.5 to 4.2.6 | CLOSED | no-merge-commit | superseded |
+| [pr #496](https://github.com/Doezer/Questarr/pull/496) | [Aikido] Fix security issue in node-forge via minor version upgrade from 1.3.3 to 1.4.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #497](https://github.com/Doezer/Questarr/pull/497) | Feat/preferred release groups | CLOSED | no-merge-commit | superseded |
+| [pr #498](https://github.com/Doezer/Questarr/pull/498) | chore(deps): bump codecov/codecov-action from 5.5.3 to 6.0.0 | CLOSED | no-merge-commit | superseded |
+| [pr #499](https://github.com/Doezer/Questarr/pull/499) | chore(deps-dev): bump the dev-dependencies group with 4 updates | CLOSED | no-merge-commit | superseded |
+| [pr #500](https://github.com/Doezer/Questarr/pull/500) | chore(deps): bump fast-xml-parser from 5.5.8 to 5.5.9 | CLOSED | no-merge-commit | superseded |
+| [pr #501](https://github.com/Doezer/Questarr/pull/501) | chore(deps): bump drizzle-orm from 0.45.1 to 0.45.2 | CLOSED | no-merge-commit | superseded |
+| [pr #502](https://github.com/Doezer/Questarr/pull/502) | chore(deps): bump @tanstack/react-query from 5.95.0 to 5.95.2 | CLOSED | no-merge-commit | superseded |
+| [issue #503](https://github.com/Doezer/Questarr/issues/503) | Small issues to fix | CLOSED | no-merge-commit | verified |
+| [pr #504](https://github.com/Doezer/Questarr/pull/504) | [StepSecurity] Apply security best practices | MERGED | merge-commit-in-fork-history | verified |
+| [issue #505](https://github.com/Doezer/Questarr/issues/505) | When hiding a game it's not possible ton show it again | CLOSED | no-merge-commit | verified |
 | [issue #506](https://github.com/Doezer/Questarr/issues/506) | Platform select box goes out of viewport without scroll | CLOSED | no-merge-commit | unreviewed |
 | [issue #507](https://github.com/Doezer/Questarr/issues/507) | Redirected magnet links fail with rdt-client/qBittorrent (`Unsafe URL`) | CLOSED | no-merge-commit | unreviewed |
 | [pr #508](https://github.com/Doezer/Questarr/pull/508) | Fix magnet link redirects blocked by SSRF check in qBittorrent downloader | MERGED | merge-commit-not-in-either-main-history | unreviewed |

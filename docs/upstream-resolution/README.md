@@ -1190,3 +1190,50 @@ PR #484's download summaries aggregate in SQL, with the indicators, search-resul
 Issue #485 is fixed for clients carrying the old fixed `multiFilePlacement: "subfolder"` field: the RomM settings route now drops only that legacy default and still rejects other unknown keys. Issue #486 is not applicable as an implementation request: its report used an unreleased 1.3.0 build, and the requested server logs were never supplied, so the unsafe-URL rejection cannot be distinguished from the intended SSRF guard. The guard remains in place.
 
 Focused validation passed: 12 test files and 845 tests (one skipped), including auth compatibility, RomM settings, Torznab rewriting, preferred-group filtering, download summaries, and the affected UI components. Typecheck, lint, formatting, secret scanning, and release-note validation are recorded in [batch 46 evidence](evidence/validation-batch-46.txt). The ledger now records **412 verified**, **63 superseded**, **662 unreviewed**, **8 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** record. Issue #37 remains outstanding.
+
+## Batch 47 — October 13, 2026
+
+Batch 47 reviewed PRs #490–502 and #504, plus issues #503 and #505. PR #490's
+per-game release blacklist filters both manual searches and automated searches
+before notifications or downloads. Preferred release-group settings and
+fallback behavior from PR #491 are present; the missing maintainer follow-up is
+now covered too: users can save selected search groups to Settings without
+changing the automatic pre-filter switch. The running dialog is shown in the
+[UI evidence](../pr-evidence/upstream-preferred-groups-batch-47.png).
+
+PR #492's Kubernetes chart is present and passes `helm lint`. Its validation
+rejects multiple SQLite replicas and databases outside persisted storage; the
+install notes explain LoadBalancer address watching and Questarr's persisted
+generated JWT key. PR #493's stats dialog offers image download, only posts to
+Discord after the user selects that action, and calls the entry point “Share”
+when no webhook is configured. The server revalidates webhook destinations and
+uses the SSRF-safe fetcher. Workflow injection protection from #494 and
+StepSecurity's hardening from #504 are also present, including SHA-pinned
+actions, least-privilege permissions, a digest-pinned Docker base image, and
+the repository's pre-commit configuration.
+
+PR #497 is superseded by the merged preferred-groups work in #491, including
+the new search-to-settings action. PR #495 was closed as merged with #496; the
+fork's lockfile has `socket.io-parser` 4.2.7, and its vendored `node-forge` is
+1.4.1-questarr.2. Dependency PRs #498–502 are superseded by the newer locked
+versions and Codecov action already in the fork.
+
+Issue #503's seven reports are covered: downloader names are validated before
+testing or saving, while a client-managed default download path remains
+optional and Real-Debrid's local staging path is required; download search is
+debounced; game detail dialogs can be closed and covers open details; qBittorrent
+seeding and complete progress enter the completion/import path; and the
+Downloads badge counts only active transfers. Issue #505 is covered by
+Discovery Settings' hidden-games list and per-game Unhide action, which also
+uses a responsive drawer on mobile.
+
+Focused validation passed across 15 test files and 649 tests (one skipped),
+including the search save/merge behavior, blacklist and preferred-group search,
+Discord sharing, downloader validation, game-card interactions, qBittorrent
+status mapping, completion handling, and active-download counts. `helm lint`
+and the `dev:test` browser run passed; typecheck, lint, formatting, secret
+scanning, release-note validation, and diff checks are recorded in
+[batch 47 evidence](evidence/validation-batch-47.txt). The ledger now records
+**420 verified**, **71 superseded**, **646 unreviewed**, **8 not-applicable**,
+**1 implemented-unverified**, and 1 needs-implementation record. Issue #37
+remains outstanding.

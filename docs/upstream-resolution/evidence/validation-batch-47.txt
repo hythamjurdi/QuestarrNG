@@ -1,0 +1,13 @@
+Batch 47 validation — October 13, 2026
+
+- `npm run test -- --run client/__tests__/GameDownloadDialog.test.tsx client/__tests__/DownloadersPage.test.tsx client/__tests__/GameCard.test.tsx client/__tests__/GameCard.remaining.test.tsx client/__tests__/CompactGameCard.test.tsx client/__tests__/CompactGameCard.remaining.test.tsx client/__tests__/AppSidebar.test.tsx client/__tests__/StatsPage.test.tsx client/__tests__/DiscordWebhookSettings.test.tsx client/__tests__/BlacklistedReleasesList.test.tsx server/__tests__/api_routes.test.ts server/__tests__/cron_autosearch.test.ts server/__tests__/cron_download_status.test.ts server/__tests__/downloaders_qbittorrent_remaining.test.ts server/__tests__/downloaders_qbittorrent_regression.test.ts`: passed, 15 files, 649 tests, 1 skipped.
+- `helm lint charts/questarr`: passed, one chart linted.
+- Running UI evidence: launched `npm run dev:test` with a task-specific SQLite path and port 5101 because another review server already owned port 5100. A headless Playwright browser logged into the test app, opened the real download dialog, selected a detected release group, and verified the new save action was visible. Search/indexer results were local fixtures. Screenshot: [upstream-preferred-groups-batch-47.png](../../pr-evidence/upstream-preferred-groups-batch-47.png).
+- The temporary test database and its WAL/SHM files were removed after stopping the server. The existing port-5100 review server and its files were left untouched.
+- After formatting, `npm run test -- --run client/__tests__/GameDownloadDialog.test.tsx`: passed, 1 file, 52 tests, 1 skipped.
+- The focused batch suite passed, 15 files, 649 tests, 1 skipped.
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run secretlint`: passed.
+- `npm run build`: passed. Vite emitted its advisory that a client chunk exceeds 500 kB after minification.
+- `npm run release-notes:check` against the batch 46 base and staged batch 47 tree: validated one user-facing release-note fragment.
+- `helm lint charts/questarr`: passed. `git diff --check`: passed.
+- Cleanup: stopped the task-specific port-5101 test server and removed its temporary SQLite database and WAL/SHM files. No NFS scratch files were created. The unrelated pre-existing port-5100 review server and files were left untouched.

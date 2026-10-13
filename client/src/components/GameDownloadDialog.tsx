@@ -65,6 +65,7 @@ import {
   Activity,
   Ban,
   Info,
+  Plus,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -393,6 +394,58 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     enabled: open,
   });
 
+  const savePreferredGroupsMutation = useMutation({
+    mutationFn: async (groupsToAdd: string[]) => {
+      const settingsResponse = await apiRequest("GET", "/api/settings");
+      const latestSettings = (await settingsResponse.json()) as Pick<
+        UserSettings,
+        "preferredReleaseGroups"
+      >;
+      const preferredGroups = parseJsonStringArray(latestSettings.preferredReleaseGroups);
+      const existing = new Set(preferredGroups.map((group) => group.trim().toLowerCase()));
+      const addedGroups: string[] = [];
+
+      for (const group of groupsToAdd) {
+        const trimmed = group.trim();
+        const key = trimmed.toLowerCase();
+        if (trimmed && !existing.has(key)) {
+          preferredGroups.push(trimmed);
+          addedGroups.push(trimmed);
+          existing.add(key);
+        }
+      }
+
+      if (addedGroups.length > 0) {
+        await apiRequest("PATCH", "/api/settings", {
+          preferredReleaseGroups: JSON.stringify(preferredGroups),
+        });
+      }
+
+      return addedGroups;
+    },
+    onSuccess: (addedGroups) => {
+      if (addedGroups.length > 0) {
+        toast({
+          title: "Preferred groups updated",
+          description: `Added ${addedGroups.join(", ")} to your preferred release groups.`,
+        });
+      } else {
+        toast({
+          title: "Groups already saved",
+          description: "The selected groups are already in your preferred list.",
+        });
+      }
+      void queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Could not save preferred groups",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const applyDownloadRules = useCallback(() => {
     if (userSettings?.downloadRules) {
       try {
@@ -547,6 +600,22 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     );
     return Array.from(groups).sort((a, b) => a.localeCompare(b));
   }, [searchResults?.items]);
+
+  const preferredGroups = useMemo(
+    () => parseJsonStringArray(userSettings?.preferredReleaseGroups),
+    [userSettings?.preferredReleaseGroups]
+  );
+  const preferredGroupKeys = useMemo(
+    () => new Set(preferredGroups.map((group) => group.trim().toLowerCase())),
+    [preferredGroups]
+  );
+  const selectedGroupsToSave = useMemo(
+    () =>
+      selectedGroups.filter(
+        (group) => group.trim() && !preferredGroupKeys.has(group.trim().toLowerCase())
+      ),
+    [selectedGroups, preferredGroupKeys]
+  );
 
   // Pre-calculate release metadata once per item to avoid repeated regex operations
   const itemsMetadata = useMemo(() => {
@@ -1072,6 +1141,26 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
           placeholder="Select groups..."
           className="w-full"
         />
+        {selectedGroupsToSave.length > 0 && (
+          <div className="space-y-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={savePreferredGroupsMutation.isPending}
+              onClick={() => savePreferredGroupsMutation.mutate(selectedGroupsToSave)}
+            >
+              <Plus className="h-4 w-4" />
+              {savePreferredGroupsMutation.isPending
+                ? "Saving groups..."
+                : "Add to preferred groups"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Saves these groups in Settings without changing your automatic search filter.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

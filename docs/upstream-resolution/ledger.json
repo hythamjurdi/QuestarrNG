@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 412,
+      "verified": 420,
       "needs-implementation": 1,
-      "superseded": 63,
+      "superseded": 71,
       "not-applicable": 8,
-      "unreviewed": 662,
+      "unreviewed": 646,
       "implemented-unverified": 1
     }
   },
@@ -13959,10 +13959,24 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "671acc9885396a36f0217c6749d3200965af283d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Per-game release blacklisting is available in the download search dialog and persisted through the blacklist API/storage layer. Manual search results and automated-search candidates are filtered before availability notifications or downloads.",
+          "Regression coverage verifies blacklist API filtering and that automated search does not notify or grab when every matching result is blacklisted."
+        ],
+        "acceptance": [
+          "Users can blacklist and remove releases from a game-specific search.",
+          "Blacklisted releases are excluded from future manual and automated searches, notifications, and auto-downloads."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "server/routes.ts",
+          "server/cron.ts",
+          "server/storage.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/cron_autosearch.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13979,10 +13993,24 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "78523f8c585b80d94f26839dc1166971a29824f9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Preferred release groups persist in settings and feed manual-search and automated-search filtering, including the all-results fallback when no preferred group matches.",
+          "The search dialog now lets users add selected detected groups to the saved preference list. It reads the latest settings, merges case-insensitively, updates only preferredReleaseGroups, and leaves filterByPreferredGroups unchanged."
+        ],
+        "acceptance": [
+          "Preferred groups can be managed in Settings and used by manual and automated release filtering.",
+          "A user can save a newly detected group directly from download search without silently enabling or disabling automatic filtering.",
+          "A save merges into the current list without duplicating names that differ only by case."
+        ],
+        "evidence": [
+          "client/src/components/PreferredReleaseGroupsSettings.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "server/cron.ts",
+          "docs/pr-evidence/upstream-preferred-groups-batch-47.png",
+          "docs/upstream-resolution/evidence/validation-batch-47.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13999,10 +14027,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG includes an adapted Helm chart with deployment, service, ingress, persistent storage, secret handling, and install guidance.",
+          "Chart validation prevents more than one SQLite replica and prevents the database path from escaping the persisted data directory. NOTES explain how to watch for LoadBalancer address assignment and that the app generates and persists its JWT secret when none is supplied.",
+          "helm lint charts/questarr passes."
+        ],
+        "acceptance": [
+          "The chart lints successfully with its default values.",
+          "SQLite deployment stays single-replica and the database is persisted across pod replacement."
+        ],
+        "evidence": [
+          "charts/questarr/Chart.yaml",
+          "charts/questarr/templates/_validate.tpl",
+          "charts/questarr/templates/NOTES.txt",
+          "charts/questarr/templates/deployment.yaml",
+          "charts/questarr/templates/pvc.yaml",
+          "helm lint charts/questarr"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14019,10 +14061,25 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "2b3176520201ee8ffbed570e6e63fe314b36b64b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Stats page labels the entry point Share when no webhook is configured and Share to Discord when one is configured. The dialog always allows image download and posts only after the user explicitly chooses Share to Discord.",
+          "The webhook is validated when saved and again before posting; the POST uses the SSRF-safe fetcher with private destinations disallowed."
+        ],
+        "acceptance": [
+          "Users can download the generated image without configuring Discord.",
+          "Nothing is posted automatically; posting requires an explicit action and a configured webhook.",
+          "Webhook use is revalidated and protected against unsafe destinations."
+        ],
+        "evidence": [
+          "client/src/components/ShareDiscordDialog.tsx",
+          "client/src/pages/stats.tsx",
+          "client/src/components/DiscordWebhookSettings.tsx",
+          "server/routes.ts",
+          "client/__tests__/StatsPage.test.tsx",
+          "client/__tests__/DiscordWebhookSettings.test.tsx",
+          "server/__tests__/api_routes.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14039,10 +14096,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8d0e137a92e2d9c24f5e85c79c3f971db82cc7a4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The deployment workflow carries user-supplied environment and tag inputs through environment variables and action inputs rather than interpolating them into shell command text. Workflow actions are SHA-pinned."
+        ],
+        "acceptance": [
+          "Untrusted workflow inputs do not enter shell source through direct expression interpolation."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          ".github/workflows/ci.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14059,10 +14123,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested socket.io-parser 4.2.6 fix is superseded by the fork lockfile resolving socket.io-parser 4.2.7. Upstream closed this PR with the note that it was merged with #496."
+        ],
+        "acceptance": [
+          "The locked parser version is at least the requested fixed 4.2.6."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/495"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14079,10 +14150,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8291da2be05d1385d0f5738ae4ad0ffd611bac89",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested node-forge 1.4.0 fix is superseded by QuestarrNG vendoring node-forge 1.4.1-questarr.2, which is newer than the requested fixed version."
+        ],
+        "acceptance": [
+          "The bundled node-forge implementation is newer than the requested 1.4.0 version."
+        ],
+        "evidence": [
+          "package.json",
+          "vendor/node-forge/package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14099,10 +14178,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "This closed PR has the same preferred-release-groups title as #491 and no separate description or distinct acceptance request. The preferred-groups feature is implemented by #491, including the maintainer-requested ability to add detected groups from the download dialog."
+        ],
+        "acceptance": [
+          "Preferred release groups can be configured, applied, and extended from search."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/497",
+          "https://github.com/Doezer/Questarr/pull/491",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/components/PreferredReleaseGroupsSettings.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14119,10 +14207,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested Codecov action 6.0.0 is superseded by the SHA-pinned Codecov action v7.1.1."
+        ],
+        "acceptance": [
+          "The CI Codecov action is at least the requested v6.0.0."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14139,10 +14233,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All development dependency targets in this grouped PR are exceeded by the versions pinned in package.json and package-lock.json, including Vitest and its UI/coverage packages and typescript-eslint."
+        ],
+        "acceptance": [
+          "The lockfile versions meet or exceed the grouped PR targets."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14159,10 +14260,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "fast-xml-parser is locked at 5.11.2, newer than the requested 5.5.9."
+        ],
+        "acceptance": [
+          "The locked fast-xml-parser version is at least 5.5.9."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14179,10 +14287,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "drizzle-orm is locked at 0.45.3, newer than the requested 0.45.2 security fix."
+        ],
+        "acceptance": [
+          "The locked drizzle-orm version is at least 0.45.2."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14199,10 +14314,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "@tanstack/react-query is locked at 5.104.1, newer than the requested 5.95.2."
+        ],
+        "acceptance": [
+          "The locked @tanstack/react-query version is at least 5.95.2."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14219,10 +14341,36 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Downloader names are required before connection tests or saves. A client-managed default download path is intentionally optional for clients that use their own configured default; Real-Debrid requires a QuestarrNG local staging path.",
+          "Header and download-dialog searches are debounced. Game detail dialogs expose a close control, and standard/compact card covers or detail controls open the detail view.",
+          "qBittorrent UP states and complete progress are recognized as seeding/completed; the status cron treats seeding as complete and records the download as completed after the completion/import path.",
+          "The Downloads sidebar count increments only for status downloading, not paused, seeding, or completed records."
+        ],
+        "acceptance": [
+          "Invalid downloader forms cannot test or save, and required path semantics are clear by downloader type.",
+          "Search input is debounced.",
+          "Game details can be closed and opened from cards.",
+          "Seeding and 100%-complete downloads leave the active downloading state and enter completion/import handling.",
+          "The sidebar badge counts only actively downloading records."
+        ],
+        "evidence": [
+          "client/src/pages/downloaders.tsx",
+          "client/__tests__/DownloadersPage.test.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "client/src/components/GameCard.tsx",
+          "client/src/components/CompactGameCard.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "client/__tests__/CompactGameCard.test.tsx",
+          "client/src/components/AppSidebar.tsx",
+          "client/__tests__/AppSidebar.test.tsx",
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_remaining.test.ts",
+          "server/cron.ts",
+          "server/__tests__/cron_download_status.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14239,10 +14387,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e236b9b3e8fccc0ac1306355d9dabc4825bd9d20",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG's workflows use least-privilege permissions, SHA-pinned GitHub Actions, StepSecurity Harden Runner on execution jobs, and StepSecurity-maintained Docker actions. The Dockerfile pins its base image by digest, and the repository includes a pre-commit configuration."
+        ],
+        "acceptance": [
+          "Workflow actions are pinned to immutable SHAs and jobs receive only their required permissions.",
+          "Runner and container-build hardening remains active."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/release.yml",
+          "Dockerfile",
+          ".pre-commit-config.yaml",
+          ".husky/pre-commit"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14259,10 +14420,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Discovery Settings lists manually hidden games and provides a per-game Unhide action. On mobile the settings use a responsive drawer; unhide invalidates the game queries so the game can return to Discovery."
+        ],
+        "acceptance": [
+          "Users can find hidden games from Discovery Settings and restore them to Discovery."
+        ],
+        "evidence": [
+          "client/src/components/DiscoverSettingsModal.tsx",
+          "client/src/pages/discover.tsx",
+          "client/src/components/GameCard.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

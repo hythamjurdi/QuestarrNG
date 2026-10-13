@@ -1097,6 +1097,58 @@ describe("GameDownloadDialog", () => {
     });
   });
 
+  it("adds selected release groups to preferences without changing automatic filtering", async () => {
+    const fetchMock = createFetchMock({
+      search: groupSearchResults,
+      settings: { filterByPreferredGroups: false, preferredReleaseGroups: '["SKIDROW"]' },
+    });
+    globalThis.fetch = fetchMock;
+
+    renderComponent();
+
+    await screen.findByText("Test Game CODEX");
+    fireEvent.click(screen.getByText("Show Filters"));
+    fireEvent.click(screen.getByText("Select groups..."));
+    fireEvent.click(await screen.findByRole("option", { name: /CODEX/ }));
+    await waitFor(() => expect(screen.getByText("1 selected")).toBeInTheDocument());
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add to preferred groups" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/settings",
+        expect.objectContaining({ method: "GET" })
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/settings",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ preferredReleaseGroups: '["SKIDROW","CODEX"]' }),
+        })
+      );
+    });
+  });
+
+  it("does not offer to save a selected group that is already preferred, regardless of case", async () => {
+    globalThis.fetch = createFetchMock({
+      search: groupSearchResults,
+      settings: { filterByPreferredGroups: false, preferredReleaseGroups: '["skidrow"]' },
+    });
+
+    renderComponent();
+
+    await screen.findByText("Test Game SKIDROW");
+    fireEvent.click(screen.getByText("Show Filters"));
+    fireEvent.click(screen.getByText("Select groups..."));
+    fireEvent.click(await screen.findByRole("option", { name: /SKIDROW/ }));
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(
+      screen.queryByRole("button", { name: "Add to preferred groups" })
+    ).not.toBeInTheDocument();
+  });
+
   const pcItem = makeTorrentItem({
     guid: "pc-1",
     title: "Test Game PC v1.0-SKIDROW",
