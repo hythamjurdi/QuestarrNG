@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 404,
+      "verified": 412,
       "needs-implementation": 1,
-      "superseded": 56,
-      "not-applicable": 7,
-      "unreviewed": 678,
+      "superseded": 63,
+      "not-applicable": 8,
+      "unreviewed": 662,
       "implemented-unverified": 1
     }
   },
@@ -13503,10 +13503,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The fork pins codecov/codecov-action to the v7.1.1 commit, ahead of the requested v5.5.3."
+        ],
+        "acceptance": [
+          "The workflow uses a newer immutable action revision than the requested tag."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13523,10 +13529,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "react-hook-form is declared and locked at 7.89.0, above the requested 7.72.0."
+        ],
+        "acceptance": [
+          "The installed dependency is newer than the requested version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13543,10 +13556,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "@tanstack/react-query is declared at ^5.104.0, above the requested 5.95.0."
+        ],
+        "acceptance": [
+          "The installed dependency is newer than the requested version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13563,10 +13583,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "@types/pg is declared at ^8.23.1, above the requested 8.20.0."
+        ],
+        "acceptance": [
+          "The installed type package is newer than the requested version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13583,10 +13610,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "fast-xml-parser is declared and locked at 5.11.2, above the requested 5.5.8."
+        ],
+        "acceptance": [
+          "The installed dependency is newer than the requested version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13603,10 +13637,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested development dependency updates are exceeded by the current lockfile, including Tailwind Vite 4.3.3, Vitest coverage 5.0.2, drizzle-kit 0.31.11, esbuild 0.28.2, lint-staged 17.6.0, and typescript-eslint 8.71.0."
+        ],
+        "acceptance": [
+          "All requested development package targets are met or exceeded by declared and locked versions."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13623,10 +13664,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "83944e05e1d9d680d369f391a916fc429df35e34",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Downloader host, username, password, URL path, and download path fields are trimmed at validation; setup trims credentials. Login tries the raw password first, then the trimmed value, preserving accounts created with surrounding spaces."
+        ],
+        "acceptance": [
+          "Whitespace is normalized on save without invalidating historical password hashes."
+        ],
+        "evidence": [
+          "shared/schema.ts",
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/import_routes_coverage.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13643,10 +13693,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "5d193002b2b41383f3c91ec7fccf40f6784e4294",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "A shared GitHub/version link shows the installed version and newer release availability on both login and the sidebar."
+        ],
+        "acceptance": [
+          "Users can identify the running version and reach the project before and after login."
+        ],
+        "evidence": [
+          "client/src/components/GitHubVersionLink.tsx",
+          "client/src/pages/auth/login.tsx",
+          "client/src/components/AppSidebar.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13663,11 +13721,26 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0d3de8eef44beaa161a726d9cfedb9a2624242a1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The six dependency requests rolled into this PR are already exceeded by newer package versions and an immutable Codecov action pin."
+        ],
+        "acceptance": [
+          "No dependency is rolled back to the March 2026 targets."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/ci.yml"
+        ],
+        "dependencies": [
+          "pr:474",
+          "pr:475",
+          "pr:476",
+          "pr:477",
+          "pr:478",
+          "pr:479"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -13683,10 +13756,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "944a0e79fa2407edfd3cdc9a03d874c68abc20a3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCard and CompactGameCard controls expose labels that include the affected game title."
+        ],
+        "acceptance": [
+          "Repeated icon controls distinguish the game they act on for assistive technology."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/src/components/CompactGameCard.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "client/__tests__/CompactGameCard.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13703,10 +13785,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "22c60d80b60e7d200ac3d13c0e5dc77f4456645e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Download summaries are authenticated and aggregated in SQL; game cards, Library/Wishlist filters, search-result state, and shared view controls are wired to the feature."
+        ],
+        "acceptance": [
+          "Download state and search availability are visible and filterable without loading every download row into application memory."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/storage.ts#getDownloadSummaryByGame",
+          "server/__tests__/download-summary.test.ts",
+          "client/src/components/DownloadIndicator.tsx",
+          "client/src/components/SearchResultsBadge.tsx",
+          "client/src/components/ViewControlsToolbar.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13723,10 +13816,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The older RomM client sent the fixed multiFilePlacement=\"subfolder\" default, while the current strict PATCH schema no longer recognizes the retired field. The route now drops only that exact legacy value before validation; all other unknown keys remain rejected."
+        ],
+        "acceptance": [
+          "A settings update containing the historical fixed field succeeds and persists current settings; unrelated unknown keys still receive 400."
+        ],
+        "evidence": [
+          "server/routes/import.ts",
+          "server/__tests__/import_routes_coverage.test.ts",
+          "client/src/components/ImportSettings.tsx",
+          "shared/schema.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13743,10 +13845,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The report used an unreleased 1.3.0 build. The maintainer requested server logs, but none were provided, so the rejected URL cannot be assessed as a false positive; blocking unsafe downloader URLs is intentional SSRF protection."
+        ],
+        "acceptance": [
+          "Keep the SSRF guard fail-closed; a current-release reproduction and server logs are needed before changing the policy."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/486",
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_ssrf.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13763,10 +13873,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "7536964f390eb653590faa87852d57e49de21464",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Torznab reconstructs Prowlarr proxy URLs for numeric indexer IDs, avoids double wrapping existing proxy links, and applies API-key transport policy using URL and URLSearchParams."
+        ],
+        "acceptance": [
+          "Prowlarr releases point to a valid configured proxy endpoint and ordinary indexers retain the standard rewrite behavior."
+        ],
+        "evidence": [
+          "server/torznab.ts",
+          "server/__tests__/torznab.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13783,10 +13900,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Preferred groups narrow auto-search when matches exist and fall back to all results when none match; the setting persists and optionally preselects groups in manual search."
+        ],
+        "acceptance": [
+          "Preferred-group filtering affects automatic decisions only when useful matches exist and remains user-controlled in manual search."
+        ],
+        "evidence": [
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "shared/release-scoring.ts",
+          "client/src/components/PreferredReleaseGroupsSettings.tsx",
+          "client/src/components/GameDownloadDialog.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -13803,10 +13930,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "9a476a818a632abda49955c7e00925740a368778",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The independent cherry-picks are present: normalized API error messages, expanded title/platform handling, a shared Lucide-compatible icon type, and updated Compose guidance."
+        ],
+        "acceptance": [
+          "The fork retains the standalone improvements without importing the rest of the RomM branch."
+        ],
+        "evidence": [
+          "client/src/lib/queryClient.ts",
+          "shared/title-utils.ts",
+          "client/src/types/components.ts",
+          "docker-compose.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

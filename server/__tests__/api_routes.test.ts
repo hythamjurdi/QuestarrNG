@@ -566,6 +566,19 @@ describe("API Routes - Extended Coverage", () => {
         expect(comparePassword).toHaveBeenCalledWith("  password123  ", "hashed");
         expect(comparePassword).toHaveBeenCalledWith("password123", "hashed");
       });
+
+      it("should still accept a legacy password whose stored value includes surrounding spaces", async () => {
+        vi.mocked(storage.getUserByUsername).mockResolvedValue(mockUserHashed);
+        vi.mocked(storage.assignOrphanGamesToUser).mockResolvedValue(undefined);
+        vi.mocked(comparePassword).mockResolvedValueOnce(true);
+
+        const res = await request(app)
+          .post("/api/auth/login")
+          .send({ username: "testuser", password: " password123 " });
+
+        expect(res.status).toBe(200);
+        expect(comparePassword).toHaveBeenCalledExactlyOnceWith(" password123 ", "hashed");
+      });
     });
 
     describe("GET /api/auth/me", () => {

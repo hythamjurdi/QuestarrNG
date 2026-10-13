@@ -21,7 +21,7 @@ they are not instructions to blindly replay every historical patch.
 - [Source snapshot](sources.json): exported issue bodies/discussion and PR bodies.
   PR reviews/diffs and complete issue timelines still require detailed collection.
 
-Latest inventory (October 12, 2026): **232 issues** (4 open, 228 closed) and
+Latest inventory (October 13, 2026): **232 issues** (4 open, 228 closed) and
 **915 PRs** (2 open, 705 merged, 208 closed unmerged), for **1,147 items**.
 
 Of the 705 merged PRs, 487 merge commits are ancestors of the fork snapshot,
@@ -1180,3 +1180,13 @@ and [batch 45 validation](evidence/validation-batch-45.txt).
 The ledger now records **404 verified**, **56 superseded**, **678 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** record. Issue #37 remains outstanding.
+
+## Batch 46 — October 13, 2026
+
+Batch 46 reviewed PRs [#474–489](inventory.md) and issues [#485](https://github.com/Doezer/Questarr/issues/485)–[#486](https://github.com/Doezer/Questarr/issues/486). Dependency PRs #474–479 and roll-up #482 are superseded by the newer package versions and SHA-pinned Codecov action already in the fork. The password and URL trimming from #480 is present; login keeps trying the original password first so accounts created with surrounding spaces still work. #481's version link is shared between login and the sidebar, and #483's game-specific accessible labels are present.
+
+PR #484's download summaries aggregate in SQL, with the indicators, search-result state, filters, and shared view controls already wired through the UI. PR #487's Torznab client builds Prowlarr proxy links with URL parameters and has focused tests. PR #488's preferred-group filtering falls back to all results when no group matches; settings and the manual-search prefilter are present. The independent title-cleaning, error-message, platform-detection, and icon-type improvements from #489 are also present.
+
+Issue #485 is fixed for clients carrying the old fixed `multiFilePlacement: "subfolder"` field: the RomM settings route now drops only that legacy default and still rejects other unknown keys. Issue #486 is not applicable as an implementation request: its report used an unreleased 1.3.0 build, and the requested server logs were never supplied, so the unsafe-URL rejection cannot be distinguished from the intended SSRF guard. The guard remains in place.
+
+Focused validation passed: 12 test files and 845 tests (one skipped), including auth compatibility, RomM settings, Torznab rewriting, preferred-group filtering, download summaries, and the affected UI components. Typecheck, lint, formatting, secret scanning, and release-note validation are recorded in [batch 46 evidence](evidence/validation-batch-46.txt). The ledger now records **412 verified**, **63 superseded**, **662 unreviewed**, **8 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** record. Issue #37 remains outstanding.

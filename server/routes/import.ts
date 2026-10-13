@@ -64,6 +64,19 @@ const platformMappingPatchSchema = z
   })
   .strict();
 
+// The earlier RomM client sent this fixed default even though placement for
+// multi-file games is now implicit. Accept that one legacy field so a stale
+// client can save the rest of its settings; keep rejecting other unknown keys.
+const rommConfigPatchSchema = z.preprocess((value: unknown) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const patch = value as Record<string, unknown>;
+  if (patch.multiFilePlacement !== "subfolder") return value;
+
+  const normalized = { ...patch };
+  delete normalized.multiFilePlacement;
+  return normalized;
+}, rommConfigSchema.partial().strict());
+
 function isPathInside(root: string, candidate: string): boolean {
   const resolvedRoot = path.resolve(root);
   const resolvedCandidate = path.resolve(candidate);
@@ -385,7 +398,7 @@ importRouter.get("/romm", async (_req, res) => {
 importRouter.patch("/romm", async (req, res) => {
   try {
     const userId = res.locals.userId as string;
-    const patch = rommConfigSchema.partial().strict().parse(req.body);
+    const patch = rommConfigPatchSchema.parse(req.body);
     const current = await storage.getRomMConfig(userId);
     const next = rommConfigSchema.parse({ ...current, ...patch });
     if (path.resolve(next.libraryRoot) === path.parse(path.resolve(next.libraryRoot)).root) {

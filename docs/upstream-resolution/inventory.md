@@ -464,22 +464,22 @@ Snapshot: 2026-10-13T05:20:58.476Z. 1147 items. All ancestry observations requir
 | [pr #471](https://github.com/Doezer/Questarr/pull/471) | feat(igdb): paginate platform retrieval for complete results | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #472](https://github.com/Doezer/Questarr/pull/472) | fix: downloadPath not used for rTorrent + remove path from usenet downloaders setup | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #473](https://github.com/Doezer/Questarr/pull/473) | Romm integration | CLOSED | no-merge-commit | verified |
-| [pr #474](https://github.com/Doezer/Questarr/pull/474) | chore(deps): bump codecov/codecov-action from 5.5.2 to 5.5.3 | CLOSED | no-merge-commit | unreviewed |
-| [pr #475](https://github.com/Doezer/Questarr/pull/475) | chore(deps): bump react-hook-form from 7.71.2 to 7.72.0 in the react group | CLOSED | no-merge-commit | unreviewed |
-| [pr #476](https://github.com/Doezer/Questarr/pull/476) | chore(deps): bump @tanstack/react-query from 5.90.21 to 5.95.0 | CLOSED | no-merge-commit | unreviewed |
-| [pr #477](https://github.com/Doezer/Questarr/pull/477) | chore(deps): bump @types/pg from 8.18.0 to 8.20.0 | CLOSED | no-merge-commit | unreviewed |
-| [pr #478](https://github.com/Doezer/Questarr/pull/478) | chore(deps): bump fast-xml-parser from 5.5.5 to 5.5.8 | CLOSED | no-merge-commit | unreviewed |
-| [pr #479](https://github.com/Doezer/Questarr/pull/479) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 9 updates | CLOSED | no-merge-commit | unreviewed |
-| [pr #480](https://github.com/Doezer/Questarr/pull/480) | Sanitize URL, password, and username fields from trailing/leading spaces | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #481](https://github.com/Doezer/Questarr/pull/481) | Add GitHub link with version info to login page | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #482](https://github.com/Doezer/Questarr/pull/482) | chore(deps): combine all Dependabot updates (March 2026) | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #483](https://github.com/Doezer/Questarr/pull/483) | feat(a11y): add dynamic aria-labels to game cards | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #484](https://github.com/Doezer/Questarr/pull/484) | feat: download indicators, search results badge, and shared view controls | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #485](https://github.com/Doezer/Questarr/issues/485) | cant save Romm config section | CLOSED | no-merge-commit | unreviewed |
-| [issue #486](https://github.com/Doezer/Questarr/issues/486) | Downloaders failed | CLOSED | no-merge-commit | unreviewed |
-| [pr #487](https://github.com/Doezer/Questarr/pull/487) | Fix torznab client not able to correctly handle prowlarr links | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #488](https://github.com/Doezer/Questarr/pull/488) | feat: preferred release groups for auto-download and search filtering | CLOSED | no-merge-commit | unreviewed |
-| [pr #489](https://github.com/Doezer/Questarr/pull/489) | chore: cherry-pick independent improvements from romm-integration into 1.3.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #474](https://github.com/Doezer/Questarr/pull/474) | chore(deps): bump codecov/codecov-action from 5.5.2 to 5.5.3 | CLOSED | no-merge-commit | superseded |
+| [pr #475](https://github.com/Doezer/Questarr/pull/475) | chore(deps): bump react-hook-form from 7.71.2 to 7.72.0 in the react group | CLOSED | no-merge-commit | superseded |
+| [pr #476](https://github.com/Doezer/Questarr/pull/476) | chore(deps): bump @tanstack/react-query from 5.90.21 to 5.95.0 | CLOSED | no-merge-commit | superseded |
+| [pr #477](https://github.com/Doezer/Questarr/pull/477) | chore(deps): bump @types/pg from 8.18.0 to 8.20.0 | CLOSED | no-merge-commit | superseded |
+| [pr #478](https://github.com/Doezer/Questarr/pull/478) | chore(deps): bump fast-xml-parser from 5.5.5 to 5.5.8 | CLOSED | no-merge-commit | superseded |
+| [pr #479](https://github.com/Doezer/Questarr/pull/479) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 9 updates | CLOSED | no-merge-commit | superseded |
+| [pr #480](https://github.com/Doezer/Questarr/pull/480) | Sanitize URL, password, and username fields from trailing/leading spaces | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #481](https://github.com/Doezer/Questarr/pull/481) | Add GitHub link with version info to login page | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #482](https://github.com/Doezer/Questarr/pull/482) | chore(deps): combine all Dependabot updates (March 2026) | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #483](https://github.com/Doezer/Questarr/pull/483) | feat(a11y): add dynamic aria-labels to game cards | MERGED | merge-commit-in-fork-history | verified |
+| [pr #484](https://github.com/Doezer/Questarr/pull/484) | feat: download indicators, search results badge, and shared view controls | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #485](https://github.com/Doezer/Questarr/issues/485) | cant save Romm config section | CLOSED | no-merge-commit | verified |
+| [issue #486](https://github.com/Doezer/Questarr/issues/486) | Downloaders failed | CLOSED | no-merge-commit | not-applicable |
+| [pr #487](https://github.com/Doezer/Questarr/pull/487) | Fix torznab client not able to correctly handle prowlarr links | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #488](https://github.com/Doezer/Questarr/pull/488) | feat: preferred release groups for auto-download and search filtering | CLOSED | no-merge-commit | verified |
+| [pr #489](https://github.com/Doezer/Questarr/pull/489) | chore: cherry-pick independent improvements from romm-integration into 1.3.0 | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #490](https://github.com/Doezer/Questarr/pull/490) | feat: add ability to blacklist a release in downloads search | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #491](https://github.com/Doezer/Questarr/pull/491) | Add preferred release groups for auto-download and filtering | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #492](https://github.com/Doezer/Questarr/pull/492) | Add Helm chart for deployment | CLOSED | no-merge-commit | unreviewed |

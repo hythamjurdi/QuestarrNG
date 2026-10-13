@@ -1,0 +1,14 @@
+Batch 46 validation — October 13, 2026
+
+- `npm run test -- server/__tests__/import_routes_coverage.test.ts server/__tests__/api_routes.test.ts`: passed, 2 files and 415 tests. Covers the legacy RomM payload, strict rejection of unrelated keys, password trimming, and raw-password compatibility.
+- `npm run test -- server/__tests__/torznab.test.ts server/__tests__/download-summary.test.ts server/__tests__/cron_autosearch.test.ts shared/__tests__/release-scoring.test.ts shared/__tests__/title_utils.test.ts client/__tests__/GameCard.test.tsx client/__tests__/CompactGameCard.test.tsx client/__tests__/ViewControlsToolbar.test.tsx client/__tests__/SearchResultsBadge.test.tsx client/__tests__/GameDownloadDialog.test.tsx`: passed, 10 files, 430 tests, 1 skipped.
+- Re-ran `server/__tests__/import_routes_coverage.test.ts` after strengthening the strictness assertion: passed, 40 tests.
+- `npm run check`: passed.
+- `npm run lint`: passed.
+- `npm run format:check`: passed.
+- `npm run secretlint`: passed.
+- `npm run release-notes:check` for the batch diff: passed; one release-note fragment validated.
+- `git diff --check`: passed.
+- Refreshed `upstream/main`; it still matches the inventory source snapshot at `ad69b8ca44c7456d9183422fbdfdefbb67a771e9`.
+
+The batch changes no files under `client/src/**`, so no new running-UI screenshot was required.

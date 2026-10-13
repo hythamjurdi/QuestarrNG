@@ -5,6 +5,7 @@ const { mockStorage, mockImportManager, mockPlatformMappingService, fsMock } = v
   mockStorage: {
     getImportConfig: vi.fn(),
     getRomMConfig: vi.fn(),
+    updateRomMConfig: vi.fn(),
     getEnabledDownloaders: vi.fn(),
     getPendingImportReviews: vi.fn(),
     getGame: vi.fn(),
@@ -72,6 +73,34 @@ beforeEach(() => {
     files: [],
     hasArchive: false,
     totalCount: 0,
+  });
+});
+
+describe("PATCH /api/imports/romm", () => {
+  it("saves current settings when a legacy client includes the fixed multi-file default", async () => {
+    const savedConfig = makeRomMConfig({ enabled: true });
+    mockStorage.updateRomMConfig.mockResolvedValue(savedConfig);
+
+    const res = await request(createApp()).patch("/api/imports/romm").send({
+      enabled: true,
+      multiFilePlacement: "subfolder",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(savedConfig);
+    expect(mockStorage.updateRomMConfig).toHaveBeenCalledWith(
+      "user-1",
+      makeRomMConfig({ enabled: true })
+    );
+  });
+
+  it("continues rejecting unrelated unknown settings", async () => {
+    const res = await request(createApp())
+      .patch("/api/imports/romm")
+      .send({ multiFilePlacement: "subfolder", unexpectedSetting: true });
+
+    expect(res.status).toBe(400);
+    expect(mockStorage.updateRomMConfig).not.toHaveBeenCalled();
   });
 });
 
