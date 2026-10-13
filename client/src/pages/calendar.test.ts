@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  formatCalendarDate,
   formatCalendarTitle,
   formatDate,
   getGregorianMonthName,
@@ -80,6 +81,37 @@ describe("calendar locale week structure", () => {
       expect(title).toBe(gregorianTitle);
       expect(title).not.toBe(localeDefaultTitle);
     }
+  });
+
+  it("keeps localized calendar date labels on the Gregorian grid", () => {
+    const date = new Date(2026, 9, 1);
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    };
+
+    for (const locale of ["fa-IR", "th-TH"]) {
+      const label = formatCalendarDate(date, options, locale);
+      const gregorianLabel = new Intl.DateTimeFormat(locale, {
+        ...options,
+        calendar: "gregory",
+      }).format(date);
+      const localeDefaultLabel = new Intl.DateTimeFormat(locale, options).format(date);
+
+      expect(label).toBe(gregorianLabel);
+      if (locale === "fa-IR") expect(label).not.toBe(localeDefaultLabel);
+    }
+  });
+
+  it("uses the selected regional locale when formatting Gregorian calendar dates", () => {
+    setRegionalPreference("es");
+    const date = new Date(2026, 9, 1);
+    const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric" };
+
+    expect(formatCalendarDate(date, options)).toBe(
+      new Intl.DateTimeFormat("es", { ...options, calendar: "gregory" }).format(date)
+    );
   });
 
   it("keeps year-view month names aligned with Gregorian month positions", () => {

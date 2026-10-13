@@ -35,6 +35,11 @@ describe("MultiSelect localized content", () => {
     expect(popover).toHaveAttribute("dir", "rtl");
     expect(popover.querySelector("[cmdk-root]")).toHaveAttribute("dir", "rtl");
 
+    fireEvent.change(searchInput, { target: { value: "FitGirl" } });
+    expect(searchInput).toHaveAttribute("dir", "auto");
+    fireEvent.change(searchInput, { target: { value: "" } });
+    expect(searchInput).toHaveAttribute("dir", "rtl");
+
     const emptyState = screen.getByText("لم يتم العثور على عناصر.");
     expect(emptyState).toHaveAttribute("lang", "ar");
     expect(emptyState).toHaveAttribute("dir", "rtl");

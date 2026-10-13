@@ -47,41 +47,61 @@ export function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export function formatCalendarDate(
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+  locale = getRegionalLocale()
+): string {
+  return new Intl.DateTimeFormat(locale, { ...options, calendar: "gregory" }).format(date);
+}
+
 export function formatCalendarTitle(
   currentDate: Date,
   viewMode: ViewMode,
   locale?: string
 ): string {
   if (viewMode === "year") {
-    return new Intl.DateTimeFormat(locale, {
-      calendar: "gregory",
-      year: "numeric",
-    }).format(currentDate);
+    return formatCalendarDate(
+      currentDate,
+      {
+        year: "numeric",
+      },
+      locale
+    );
   }
 
   if (viewMode === "month") {
-    return new Intl.DateTimeFormat(locale, {
-      calendar: "gregory",
-      month: "long",
-      year: "numeric",
-    }).format(currentDate);
+    return formatCalendarDate(
+      currentDate,
+      {
+        month: "long",
+        year: "numeric",
+      },
+      locale
+    );
   }
 
   const weekDays = getWeekDays(new Date(currentDate));
-  const formatter = new Intl.DateTimeFormat(locale, {
-    calendar: "gregory",
+  const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
-  });
-  return formatter.format(weekDays[0]!) + " – " + formatter.format(weekDays[6]!);
+  };
+  return (
+    formatCalendarDate(weekDays[0]!, options, locale) +
+    " – " +
+    formatCalendarDate(weekDays[6]!, options, locale)
+  );
 }
 
 export function getGregorianMonthName(month: number, locale = getRegionalLocale()): string {
-  return new Intl.DateTimeFormat(locale, {
-    calendar: "gregory",
-    month: "long",
-  }).format(new Date(2000, month, 1));
+  return formatCalendarDate(
+    new Date(2000, month, 1),
+    {
+      month: "long",
+    },
+    locale
+  );
 }
 
 function getRegionalLanguage(): string {
@@ -469,7 +489,7 @@ function YearView({
                       lang={getRegionalLanguage()}
                       dir={getRegionalDirection()}
                     >
-                      {new Date(date).toLocaleDateString(getRegionalLocale(), {
+                      {formatCalendarDate(new Date(date), {
                         month: "short",
                         day: "numeric",
                       })}
@@ -511,8 +531,14 @@ function MonthView({
   const month = currentDate.getMonth();
   const weekStartsOn = getRegionalWeekStartsOn();
   const days = getDaysInMonth(year, month, weekStartsOn);
-  const weekdayShort = new Intl.DateTimeFormat(getRegionalLocale(), { weekday: "short" });
-  const weekdayNarrow = new Intl.DateTimeFormat(getRegionalLocale(), { weekday: "narrow" });
+  const weekdayShort = new Intl.DateTimeFormat(getRegionalLocale(), {
+    calendar: "gregory",
+    weekday: "short",
+  });
+  const weekdayNarrow = new Intl.DateTimeFormat(getRegionalLocale(), {
+    calendar: "gregory",
+    weekday: "narrow",
+  });
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(2023, 0, 1 + ((weekStartsOn + index) % 7));
     return { short: weekdayShort.format(date), narrow: weekdayNarrow.format(date) };
@@ -553,7 +579,7 @@ function MonthView({
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
           const isSelected = selectedDayKey === dateKey;
-          const formattedDayLabel = day.toLocaleDateString(getRegionalLocale(), {
+          const formattedDayLabel = formatCalendarDate(day, {
             weekday: "long",
             month: "long",
             day: "numeric",
@@ -666,7 +692,7 @@ function MonthView({
             lang={regionalLocale}
             dir={regionalDirection}
           >
-            {new Date(selectedDayKey).toLocaleDateString(getRegionalLocale(), {
+            {formatCalendarDate(new Date(selectedDayKey), {
               weekday: "long",
               month: "long",
               day: "numeric",
@@ -713,8 +739,8 @@ function WeekView({
           const gamesOnDay = gamesByDate[dateKey] || [];
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
-          const dayName = day.toLocaleDateString(getRegionalLocale(), { weekday: "short" });
-          const monthName = day.toLocaleDateString(getRegionalLocale(), { month: "short" });
+          const dayName = formatCalendarDate(day, { weekday: "short" });
+          const monthName = formatCalendarDate(day, { month: "short" });
 
           return (
             <div
@@ -785,7 +811,7 @@ function WeekView({
           const gamesOnDay = gamesByDate[dateKey] || [];
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
-          const dayName = day.toLocaleDateString(getRegionalLocale(), { weekday: "short" });
+          const dayName = formatCalendarDate(day, { weekday: "short" });
 
           return (
             <div
@@ -816,7 +842,7 @@ function WeekView({
                   lang={regionalLocale}
                   dir={regionalDirection}
                 >
-                  {day.toLocaleDateString(getRegionalLocale(), { month: "short" })}
+                  {formatCalendarDate(day, { month: "short" })}
                 </div>
               </div>
               <div className="space-y-2">
@@ -938,7 +964,7 @@ function GameBadge({
               dir={getRegionalDirection()}
             >
               {game.releaseDate &&
-                new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
+                formatCalendarDate(new Date(game.releaseDate), {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -948,7 +974,7 @@ function GameBadge({
               <p className="text-xs text-muted-foreground">
                 <LocalizedText source="Was originally scheduled for:" />{" "}
                 <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
-                  {new Date(game.originalReleaseDate).toLocaleDateString(getRegionalLocale(), {
+                  {formatCalendarDate(new Date(game.originalReleaseDate), {
                     month: "short",
                     day: "numeric",
                   })}
@@ -996,7 +1022,7 @@ function GameBadge({
                 dir={getRegionalDirection()}
               >
                 {game.releaseDate &&
-                  new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
+                  formatCalendarDate(new Date(game.releaseDate), {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -1017,7 +1043,7 @@ function GameBadge({
             {hideDate ? (
               <LocalizedText source="Release date TBD" />
             ) : game.releaseDate ? (
-              new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
+              formatCalendarDate(new Date(game.releaseDate), {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
@@ -1033,7 +1059,7 @@ function GameBadge({
                 <p className="text-xs text-muted-foreground">
                   <LocalizedText source="Was originally scheduled for:" />{" "}
                   <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
-                    {new Date(game.originalReleaseDate).toLocaleDateString(getRegionalLocale(), {
+                    {formatCalendarDate(new Date(game.originalReleaseDate), {
                       month: "long",
                       day: "numeric",
                       year: "numeric",

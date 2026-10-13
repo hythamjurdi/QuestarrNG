@@ -61,6 +61,12 @@ export function MultiSelect({
   ...rest
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState("");
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setSearchValue("");
+    setOpen(nextOpen);
+  };
 
   const handleToggle = (value: string) => {
     if (selected.includes(value)) {
@@ -77,7 +83,7 @@ export function MultiSelect({
   const selectedOptions = options.filter((option) => selected.includes(option.value));
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={true}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal={true}>
       <PopoverTrigger asChild>
         <Button
           {...rest}
@@ -125,8 +131,14 @@ export function MultiSelect({
         align="start"
         dir={dir}
       >
-        <Command dir={dir}>
-          <CommandInput placeholder={searchPlaceholder} lang={searchLang} dir={searchDir} />
+        <Command dir={searchDir}>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            lang={searchLang}
+            dir={searchValue ? "auto" : searchDir}
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandList>
             <CommandEmpty lang={emptyLang} dir={emptyDir}>
               {emptyMessage}

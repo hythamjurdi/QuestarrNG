@@ -341,6 +341,27 @@ test.describe("Game download interface language", () => {
       const title = page.locator("span.text-base.font-semibold");
       await expect(title).toHaveText(expectedTitle);
       await expect(title).toHaveAttribute("lang", "fa-IR");
+      const firstDateLabel = page.locator('span[id$="-date"]').first();
+      const firstDateLabelId = await firstDateLabel.getAttribute("id");
+      const firstDateKey = firstDateLabelId?.match(/-(\d{4}-\d{2}-\d{2})-date$/u)?.[1];
+      expect(firstDateKey).toBeTruthy();
+      if (!firstDateKey) throw new Error("Calendar date label did not include a date.");
+      const [expectedGridDateLabel, defaultGridDateLabel] = await page.evaluate((dateKey) => {
+        const [year, month, day] = dateKey.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        const options: Intl.DateTimeFormatOptions = {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        };
+        return [
+          new Intl.DateTimeFormat(undefined, { ...options, calendar: "gregory" }).format(date),
+          new Intl.DateTimeFormat(undefined, options).format(date),
+        ];
+      }, firstDateKey);
+      expect(expectedGridDateLabel).not.toBe(defaultGridDateLabel);
+      await expect(firstDateLabel).toHaveText(expectedGridDateLabel);
+      await expect(firstDateLabel).toHaveAttribute("lang", "fa-IR");
       if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
         await page.screenshot({
           path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-calendar-gregorian-grid-fa-IR.png`,
@@ -573,11 +594,26 @@ test.describe("Game download interface language", () => {
     const filterSearch = page.getByPlaceholder("بحث...");
     await expect(filterSearch).toHaveAttribute("lang", "ar");
     await expect(filterSearch).toHaveAttribute("dir", "rtl");
+    await expect(filterSearch).toHaveCSS("direction", "rtl");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-multiselect-empty-search-rtl-ar.png`,
+        fullPage: true,
+      });
+    }
     await filterSearch.fill("no matching group");
+    await expect(filterSearch).toHaveAttribute("dir", "auto");
+    await expect(filterSearch).toHaveCSS("direction", "ltr");
     const emptyState = page.getByText("لم يتم العثور على عناصر.");
     await expect(emptyState).toBeVisible();
     await expect(emptyState).toHaveAttribute("lang", "ar");
     await expect(emptyState).toHaveAttribute("dir", "rtl");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-multiselect-auto-search-direction-ar.png`,
+        fullPage: true,
+      });
+    }
     await page.keyboard.press("Escape");
 
     await downloadButton.click();
