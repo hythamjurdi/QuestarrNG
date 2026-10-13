@@ -220,11 +220,20 @@ test.describe("Game download interface language", () => {
     await expect(calendarSearch).toHaveAttribute("dir", "rtl");
     await expect(calendarSearch).toHaveCSS("direction", "rtl");
     await calendarSearch.fill("Calendar Localization Demo");
+    await expect(calendarSearch).toHaveAttribute("lang", "und");
     await expect(calendarSearch).toHaveAttribute("dir", "auto");
     await expect(calendarSearch).toHaveCSS("direction", "ltr");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-calendar-search-latin-text-und-ar.png`,
+        fullPage: true,
+      });
+    }
     await calendarSearch.fill("لعبة");
+    await expect(calendarSearch).toHaveAttribute("lang", "und");
     await expect(calendarSearch).toHaveCSS("direction", "rtl");
     await calendarSearch.clear();
+    await expect(calendarSearch).toHaveAttribute("lang", "ar");
     await expect(calendarSearch).toHaveAttribute("dir", "rtl");
     await expect(calendarSearch).toHaveCSS("direction", "rtl");
     if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
@@ -602,6 +611,7 @@ test.describe("Game download interface language", () => {
       });
     }
     await filterSearch.fill("no matching group");
+    await expect(filterSearch).toHaveAttribute("lang", "und");
     await expect(filterSearch).toHaveAttribute("dir", "auto");
     await expect(filterSearch).toHaveCSS("direction", "ltr");
     const emptyState = page.getByText("لم يتم العثور على عناصر.");

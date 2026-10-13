@@ -134,7 +134,7 @@ export function MultiSelect({
         <Command dir={searchDir}>
           <CommandInput
             placeholder={searchPlaceholder}
-            lang={searchLang}
+            lang={searchValue ? "und" : searchLang}
             dir={searchValue ? "auto" : searchDir}
             value={searchValue}
             onValueChange={setSearchValue}

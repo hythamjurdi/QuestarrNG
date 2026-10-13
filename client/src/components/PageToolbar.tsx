@@ -82,7 +82,7 @@ export default function PageToolbar({
               placeholder={searchPlaceholder}
               className="h-10 pl-9 pr-8 text-sm sm:h-8"
               aria-label={searchPlaceholder}
-              lang={searchLang}
+              lang={search ? "und" : searchLang}
               dir={inputSearchDir}
             />
             {search && (
