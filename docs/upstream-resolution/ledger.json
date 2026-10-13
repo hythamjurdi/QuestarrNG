@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T10:34:42.273Z",
-  "forkHead": "95ba0a849469eccf1bc913997646be57f8a38b2d",
+  "capturedAt": "2026-10-13T10:46:07.577Z",
+  "forkHead": "13529cc7b59632ea05d1688f9b06e222d1f479ea",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -15415,10 +15415,34 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e8276d7d4938fbab04eb3cdf64d9073e32bed1d9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The PR bundles route, security, storage, and UI fixes that are present in QuestarrNG: RSS deletion returns 204, discovery and download summaries are scoped to the signed-in user, Steam ID updates use PATCH, metadata refresh is rate-limited, duplicate-title detection falls back when an IGDB ID is absent, notification routes require authentication, and settings timestamps use millisecond units.",
+          "Review follow-ups are present: Discord share data URLs are restricted to supported image schemes, expired authentication drops stale query data, blacklist actions are disabled while pending, partial download failures identify affected releases, keyboard focus remains visible, and downloader result types are named. The local .claude/settings.local.json comment does not apply because that file is not tracked in this fork."
+        ],
+        "acceptance": [
+          "Route and storage behavior preserves user isolation, explicit authentication, correct HTTP status codes, rate limits, duplicate prevention, and timestamp units.",
+          "Client and service regressions cover authentication-cache clearing, safe image data, pending blacklist state, visible focus, and per-release failure reporting.",
+          "The relevant server/client test group, typecheck, lint, format check, and production build pass."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/steam-routes.ts",
+          "server/storage.ts",
+          "shared/schema.ts",
+          "client/src/lib/auth.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "server/__tests__/steam_routes.test.ts",
+          "server/__tests__/rss-routes.test.ts",
+          "server/__tests__/download-summary.test.ts",
+          "server/__tests__/dialect-parity.test.ts",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt",
+          "https://github.com/Doezer/Questarr/pull/539"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15435,10 +15459,28 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "91d14906fe5e69aea0af970c3c403f6747cacb20",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "implemented-unverified",
+        "findings": [
+          "The NexusMods client, API-key settings and environment fallback, cached and rate-limited domain/trending endpoints, and Game Details UI are implemented and covered by stubbed client, route, and component tests.",
+          "No NexusMods API key was available for a live service request, so provider connectivity remains unverified."
+        ],
+        "acceptance": [
+          "Key configuration, masking, fallback, domain lookup, trending-mod responses, and UI behavior pass stubbed tests.",
+          "Verify one live NexusMods response with a valid operator API key."
+        ],
+        "evidence": [
+          "server/nexusmods.ts",
+          "server/routes.ts",
+          "client/src/pages/settings.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "server/__tests__/nexusmods.test.ts",
+          "server/__tests__/nexusmods-routes.test.ts",
+          "client/__tests__/SettingsPage.test.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx",
+          "docs/SECRETS.md",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt",
+          "https://github.com/Doezer/Questarr/pull/540"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15455,10 +15497,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reporter initially read the downloader name placeholder as a prefilled value. Upstream discussion confirms that the name must be entered; the reporter then saved successfully after entering SABnzbd. QuestarrNG requires a name and now returns a field-specific Zod issue instead of an opaque validation error."
+        ],
+        "acceptance": [
+          "A missing downloader name is rejected with a structured detail pointing to the name field.",
+          "A valid named downloader can be saved after a successful connection test."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/541",
+          "client/src/pages/downloaders.tsx",
+          "server/middleware.ts",
+          "server/__tests__/api_routes.test.ts",
+          "client/__tests__/DownloadersPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15475,10 +15529,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c9f9a945f4e294f641381390b9c2d7b056a5e3b1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SQLite startup repairs missing v1.2.2-to-v1.3.0 columns after migrations. Column repairs run in one transaction, duplicate rows are removed before unique indexes are created, and existing columns are left intact. The repair is intentionally SQLite-specific."
+        ],
+        "acceptance": [
+          "A database with the documented v1.2.2 schema gains missing columns and required tables safely during startup.",
+          "Duplicate-column and duplicate-row cases do not abort migration or create partial schema repairs.",
+          "Migration repair regression tests pass."
+        ],
+        "evidence": [
+          "server/migrate.ts",
+          "server/db/migrate-sqlite.ts",
+          "server/__tests__/migrate.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt",
+          "https://github.com/Doezer/Questarr/pull/542"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15495,10 +15561,28 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "49b5d3849d1067528d67f0faa7b5d364dab2fad9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Downloads supports individual and batch linking to existing library games or IGDB matches. The server checks game ownership, prevents duplicate claims, preserves selected categories, and routes completed claims through configured post-processing. Transmission labels are exposed as download categories. Review feedback on unsafe cross-user matching, category filtering, and batch behavior is covered by current guards and regression tests."
+        ],
+        "acceptance": [
+          "A user can scan unlinked downloads, review candidate groups, select game/category matches, and claim one or many downloads.",
+          "Claims cannot attach another user's game or duplicate an already tracked downloader/hash pair.",
+          "Partial failures remain visible, and category and post-processing state are preserved."
+        ],
+        "evidence": [
+          "client/src/pages/downloads.tsx",
+          "client/src/components/ClaimDownloadModal.tsx",
+          "client/src/components/ClaimBatchModal.tsx",
+          "server/routes.ts",
+          "server/downloaders.ts",
+          "shared/schema.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/api_routes_async_download.test.ts",
+          "client/__tests__/DownloadsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt",
+          "https://github.com/Doezer/Questarr/pull/543"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15515,11 +15599,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The reporter closed this release-group filtering report as a duplicate of issue #391. The canonical issue is already verified: recognized groups populate the filter and selecting a group removes nonmatching results."
+        ],
+        "acceptance": [
+          "The duplicate points to canonical issue #391 and the canonical filter behavior remains covered by component regression tests."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/544",
+          "https://github.com/Doezer/Questarr/issues/391",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt"
+        ],
+        "dependencies": [
+          "issue:391"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -15535,10 +15631,29 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "53c49f84a995dba1f56f5f94e4673c869244bc1c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All seven requested fixes are present: preferred-platform filtering composes with per-game blacklists; the availability badge follows canonical results; changed download states refresh the detail view; results show the availability indicator; Newznab file counts are parsed; expanded text stays within the dialog; and the detail close button works. Review feedback on filter messaging and search handling is also reflected in the current code."
+        ],
+        "acceptance": [
+          "Platform and blacklist combinations produce accurate results and availability state.",
+          "Download status changes, Newznab file counts, long text, and detail-modal close behavior remain correct.",
+          "Relevant dialog, route, search, and Newznab regressions pass."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/src/components/GameCard.tsx",
+          "server/routes.ts",
+          "server/newznab.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "server/__tests__/newznab.test.ts",
+          "server/__tests__/search.test.ts",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt",
+          "https://github.com/Doezer/Questarr/pull/545"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15555,11 +15670,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "PR #546 is a WIP planning PR with one initial-plan commit and no changed files. Its release chore scope was carried out in PR #547, which includes the dependency/security update, test fixes, and typecheck."
+        ],
+        "acceptance": [
+          "The replacement chore work in PR #547 is present and verified against current dependencies and tests."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/546",
+          "https://github.com/Doezer/Questarr/pull/547",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt"
+        ],
+        "dependencies": [
+          "pr:547"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -15575,10 +15700,23 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b45942238d1fcb5aa647f52ab5536a73814479c8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The axios fix exceeds the requested 1.15.0 version: QuestarrNG resolves axios 1.20.0. The current npm audit reports zero vulnerabilities. The deterministic RSS SSRF test mocks its network boundary, and the download dialog stays open after a successful send as intended."
+        ],
+        "acceptance": [
+          "Resolved axios is at least 1.15.0 and npm audit reports no vulnerabilities.",
+          "The RSS SSRF suite remains deterministic without external DNS, and download-dialog success behavior matches the implementation.",
+          "Typecheck and the full test suite pass."
+        ],
+        "evidence": [
+          "package-lock.json",
+          "server/__tests__/rss-ssrf.test.ts",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt",
+          "docs/upstream-resolution/evidence/validation-batch-50.txt",
+          "https://github.com/Doezer/Questarr/pull/547"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15595,10 +15733,28 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "71c64d29d3f2080babc2112516d0c4910fb34c40",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The library update-available filter is backed by a hasUpdateDownload summary computed in both memory and database storage and is exposed in the filter controls. Database aggregation avoids group_concat truncation; dialect parity and component tests cover the behavior."
+        ],
+        "acceptance": [
+          "Games with update/patch/fix downloads are identified, and selecting the update-available filter narrows the library.",
+          "Memory, SQLite, and PostgreSQL summary behavior stays consistent.",
+          "The running desktop and mobile UI screenshots and regression tests are present."
+        ],
+        "evidence": [
+          "shared/schema.ts",
+          "server/storage.ts",
+          "server/__tests__/download-summary.test.ts",
+          "server/__tests__/dialect-parity.test.ts",
+          "client/src/components/GameFilterPills.tsx",
+          "client/__tests__/GameFilterPills.test.tsx",
+          "client/src/pages/library.tsx",
+          "docs/pr-evidence/upstream-update-available.png",
+          "docs/pr-evidence/upstream-update-available-mobile.png",
+          "docs/upstream-resolution/evidence/validation-batch-51.txt",
+          "https://github.com/Doezer/Questarr/pull/548"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

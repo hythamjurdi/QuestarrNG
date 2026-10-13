@@ -1,0 +1,8 @@
+Batch 51 validation — October 13, 2026
+
+- Source review: read the issue discussions and PR descriptions, commits, review summaries, and changed-file lists for items #539–548. PR #540's NexusMods integration is implemented and stub-tested, but one live API request remains unverified because no operator key was available.
+- Focused regression group: 18 test files passed, 789 tests passed, 1 skipped. The group covered API routes and user scoping, Steam ID updates, RSS status codes, SQLite repair, download summaries and dialect parity, NexusMods routes/client/UI, claim-download UI, release filtering, Newznab parsing, security/CSRF, and settings.
+- Dependency security check: `npm audit` found 0 vulnerabilities. `npm ls axios --all` resolved axios 1.20.0, above PR #547's 1.15.0 target.
+- The broader full Vitest run (4,140 passed, 7 skipped), typecheck, lint, formatting, build, and 49-test Playwright run are recorded in [batch 50 evidence](validation-batch-50.txt); no application code changed in this audit batch.
+- Existing running desktop and mobile screenshots for PR #548 are retained at `docs/pr-evidence/upstream-update-available.png` and `docs/pr-evidence/upstream-update-available-mobile.png`.
+- Cleanup: this audit batch created no scratch files or generated test artifacts. The E2E screenshot restoration and retained pre-existing SQLite sidecars are documented in batch 50 evidence.

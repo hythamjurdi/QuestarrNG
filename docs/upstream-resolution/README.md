@@ -20,26 +20,25 @@ behavior when implementing upstream requests.
 
 The saved source exports were collected on **October 13, 2026 at 05:20:58
 UTC**. The ledger and inventory were regenerated from those exports at
-**10:34:42 UTC**; this update did not refresh upstream sources. Review status
+**10:46:07 UTC**; this update did not refresh upstream sources. Review status
 is independent of GitHub's open, closed, or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       445 |
-| `superseded`             |        78 |
+| `verified`               |       452 |
+| `superseded`             |        80 |
 | `not-applicable`         |         9 |
-| `implemented-unverified` |         1 |
+| `implemented-unverified` |         2 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       614 |
+| `unreviewed`             |       604 |
 | **Total**                | **1,147** |
 
-The ledger now gives 532 items a completed evidence-backed disposition. One
-implemented item still needs verification, no currently identified item needs
-implementation, and 614 have not been reviewed. These numbers describe the
-ledger, not completion of the campaign. Batch 50 is the latest completed
-implementation batch; its results are in
-[validation evidence](evidence/validation-batch-50.txt), and its commit is
-`dea59b96` on `codex/upstream-resolution`.
+The ledger now gives 541 items a completed evidence-backed disposition. Two
+implemented items still need verification, no currently identified item needs
+implementation, and 604 have not been reviewed. These numbers describe the
+ledger, not completion of the campaign. Batch 51 is the latest completed audit
+batch; its results are in
+[validation evidence](evidence/validation-batch-51.txt).
 
 ## Project records
 
@@ -1338,3 +1337,40 @@ Issue #37 is now verified in the ledger. The review status totals are 445
 verified, 78 superseded, 9 not-applicable, 1 implemented-unverified, 0
 needs-implementation, and 614 unreviewed. The campaign still has substantial
 historical review work remaining.
+
+## Batch 51 — October 13, 2026
+
+Batch 51 reviewed upstream PRs [#539](https://github.com/Doezer/Questarr/pull/539)–
+[#540](https://github.com/Doezer/Questarr/pull/540),
+[#542](https://github.com/Doezer/Questarr/pull/542)–
+[#543](https://github.com/Doezer/Questarr/pull/543),
+[#545](https://github.com/Doezer/Questarr/pull/545)–
+[#548](https://github.com/Doezer/Questarr/pull/548), and issues
+[#541](https://github.com/Doezer/Questarr/issues/541) and
+[#544](https://github.com/Doezer/Questarr/issues/544). Their route, storage,
+migration, download-claim, NexusMods, update-filter, and UI behavior is already
+present in the fork and covered by the current regression tests. PR #539's
+user-isolation and authentication fixes, PR #542's transactional SQLite schema
+repair, PR #543's ownership-checked claim flows, and PR #545's search/dialog
+fixes were checked against the actual implementation and review feedback.
+
+Issue #541 was a required downloader name that the reporter mistook for a
+prefilled placeholder; the reporter confirmed that entering the name allowed
+the save. Issue #544 was closed as a duplicate of already-verified issue #391.
+WIP PR #546 is superseded by the completed release checks in PR #547. The
+NexusMods integration from PR #540 is implemented and stub-tested, but remains
+`implemented-unverified` until a valid operator key can verify a live response.
+The available-update filter from PR #548 includes desktop and mobile running
+screenshots in [the PR evidence directory](../pr-evidence/).
+
+Focused regression validation passed across 18 test files: 789 tests passed,
+with 1 skipped. `npm audit` found zero vulnerabilities, and the resolved Axios
+version is 1.20.0. The broader full-suite, browser, typecheck, lint, format, and
+production-build results are recorded in
+[batch 50 evidence](evidence/validation-batch-50.txt). See
+[batch 51 evidence](evidence/validation-batch-51.txt) for the exact test group
+and item-by-item validation.
+
+After this batch, the ledger records 452 verified, 80 superseded, 9
+not-applicable, 2 implemented-unverified, 0 needs-implementation, and 604
+unreviewed items. The historical audit remains in progress.
