@@ -99,6 +99,7 @@ vi.mock("../apprise.js", () => ({
 }));
 
 const { checkDownloadStatus, resetDownloadStatusTracking } = await import("../cron.js");
+const { igdbLogger } = await import("../logger.js");
 
 const baseDownloader = {
   id: "dl-sabnzbd",
@@ -154,6 +155,14 @@ describe("Cron - checkDownloadStatus", () => {
     mockGetDownloadDetails.mockResolvedValue(null);
     mockProcessImport.mockResolvedValue(undefined);
     mockGetDownloadsByGameId.mockResolvedValue([baseDownload]);
+  });
+
+  it("does not log an idle status tick when no downloads are tracked", async () => {
+    mockGetDownloadingGameDownloads.mockResolvedValue([]);
+
+    await checkDownloadStatus();
+
+    expect(igdbLogger.info).not.toHaveBeenCalledWith(expect.anything(), "Checking download status");
   });
 
   it("should find a download via the bulk map when it is in the queue", async () => {

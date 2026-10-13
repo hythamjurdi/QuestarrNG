@@ -311,7 +311,7 @@ and troubleshooting.
 ### UNRAID
 
 <details>
-<summary><b>Install via Community Applications</b></summary>
+<summary><b>Install via an Unraid user template</b></summary>
 
 The upstream **Questarr** Community Apps entry uses the upstream image and
 does not include this fork's SeerrNG integration routes. Use the
@@ -320,11 +320,20 @@ for `ghcr.io/snapetech/questarrng:latest`. QuestarrNG works as a standalone
 game manager; SeerrNG integration is optional. For package or integration
 support, use the [SeerrNG issue tracker](https://github.com/snapetech/seerrng/issues).
 
-1. Install the **QuestarrNG** template rather than the upstream **Questarr** template.
+Unraid 6.10 and later no longer has the **Template repositories** field. Add
+the local user template from the Unraid terminal:
+
+```bash
+wget -O /boot/config/plugins/dockerMan/templates-user/questarrng.xml \
+  https://raw.githubusercontent.com/snapetech/QuestarrNG/main/unraid/questarr.xml
+```
+
+1. In Docker, choose **Add Container** and select the **QuestarrNG** user template.
 2. Set your **Data Path** (default `/mnt/user/appdata/questarrng`), **PUID**/**PGID**, and HTTP port (default `5000`).
 3. Set the **Game Library** and **Downloads** paths to the folders shared with your download client. The game
-   library is mounted at `/data` inside the container; add a matching entry under **Settings → Path Mappings**
-   when the download client reports a different path.
+   library is mounted at `/data` inside the container. Under **Settings → Path
+   Mappings**, set **Local Path** to `/data` and **Remote Path** to the exact
+   path reported by the download client.
 4. Apply, then open `http://<unraid-host>:5000` to access the UI.
 
 The image runs as a non-root user. The template maps that user to `99:100` by
