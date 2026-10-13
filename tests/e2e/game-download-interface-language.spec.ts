@@ -161,6 +161,20 @@ test.describe("Game download interface language", () => {
     for (let index = 0; index < monthsToDecember; index += 1) {
       await page.getByRole("button", { name: "الفترة التالية" }).click();
     }
+    const calendarSearch = page.getByRole("textbox");
+    await expect(calendarSearch).toHaveAttribute("lang", "ar");
+    await expect(calendarSearch).toHaveAttribute("dir", "auto");
+    await calendarSearch.fill("Calendar Localization Demo");
+    await expect(calendarSearch).toHaveCSS("direction", "ltr");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-calendar-search-direction.png`,
+        fullPage: true,
+      });
+    }
+    await calendarSearch.fill("لعبة");
+    await expect(calendarSearch).toHaveCSS("direction", "rtl");
+    await calendarSearch.clear();
     const releaseCountLabel = page.locator('span[id$="-releases"]').first();
     await expect(releaseCountLabel).not.toBeEmpty();
     await expect(releaseCountLabel).toHaveText("إصداران");

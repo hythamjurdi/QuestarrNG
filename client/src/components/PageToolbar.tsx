@@ -30,7 +30,7 @@ interface PageToolbarProps {
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
   searchLang?: string;
-  searchDir?: "ltr" | "rtl";
+  searchDir?: "ltr" | "rtl" | "auto";
   /** Content rendered in the filter row (filter pills, custom toggles). */
   filterPills?: React.ReactNode;
   /** Sort select. Rendered when sortOptions is non-empty. */
