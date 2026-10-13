@@ -29,22 +29,22 @@ deployment, database, security, and user-facing behavior where applicable.
 ## Current snapshot
 
 The source export was refreshed against upstream main
-`2715243f6c229dd48a58ba588c169d0fd6779d1c` on **October 13, 2026 at 11:13 UTC**.
-The generated ledger currently contains 232 issues and 930 pull requests
-(1,162 records total). Its review-status counts after batch 54 are:
+`0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 12:43 UTC**.
+The generated ledger currently contains 232 issues and 931 pull requests
+(1,163 records total). Its review-status counts after batch 55 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   472 | Acceptance checks have evidence showing the behavior is present and works.             |
-| `superseded`             |   106 | A later request or implementation replaces the original; the relationship is recorded. |
+| `verified`               |   481 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |   112 | A later request or implementation replaces the original; the relationship is recorded. |
 | `not-applicable`         |     9 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
 | `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
 | `implemented-unverified` |     4 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   571 | No completed source-by-source disposition has been recorded yet.                       |
+| `unreviewed`             |   557 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
-The source export contains 1,162 items and the counts above reflect reviews
-through batch 54. See `capturedAt`, `forkHead`, and `upstreamHead` in the ledger
+The source export contains 1,163 items and the counts above reflect reviews
+through batch 55. See `capturedAt`, `forkHead`, and `upstreamHead` in the ledger
 for inventory-generation metadata. The branch may contain later implementation
 commits; those metadata fields do not advance automatically as batches are added.
 

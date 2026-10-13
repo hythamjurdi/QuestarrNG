@@ -629,10 +629,10 @@ to accept changes or close their issues and PRs.
 The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
-[1,162-item inventory](docs/upstream-resolution/inventory.md), and each batch's
+[1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
 [validation evidence](docs/upstream-resolution/evidence/). At the ledger
-snapshot generated on October 13, 2026, 472 items were verified, 106 were
-superseded, and 9 were not applicable. Another 571 remain unreviewed, four
+snapshot generated on October 13, 2026, 481 items were verified, 112 were
+superseded, and 9 were not applicable. Another 557 remain unreviewed, four
 await live-service verification, and none currently need implementation. This
 is an active effort; the full review and validation gate must pass before
 campaign work is merged to `main`.

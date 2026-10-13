@@ -1,14 +1,14 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T12:28:29.011Z",
-  "forkHead": "6cb99e35c06d37e67aae743b97a9af26d9136cff",
-  "upstreamHead": "2715243f6c229dd48a58ba588c169d0fd6779d1c",
+  "capturedAt": "2026-10-13T12:55:10.953Z",
+  "forkHead": "e375646a164d62d2934de677a9083d168e2c9e48",
+  "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
     "pr:MERGED": 711,
     "pr:CLOSED": 208,
     "issue:OPEN": 4,
-    "pr:OPEN": 11
+    "pr:OPEN": 12
   },
   "limitations": [
     "Ancestry is not behavioral verification: changes can be reverted, superseded or ported with different hashes.",
@@ -17166,11 +17166,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "57b420ec6976a750a6954928d6925bf5bd993a7c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The current entrypoint checks ownership before chown and also detects nested data-directory mismatches. The batch 54 container smoke test started successfully with matching IDs while a failing chown stub was available, covering the root-squash trigger."
+        ],
+        "acceptance": [
+          "When /app and /app/data already have the resolved Questarr UID/GID, startup succeeds without invoking chown."
+        ],
+        "evidence": [
+          "entrypoint.sh",
+          "docs/upstream-resolution/evidence/validation-batch-54.txt",
+          "https://github.com/Doezer/Questarr/pull/601",
+          "https://github.com/Doezer/Questarr/issues/597"
+        ],
+        "dependencies": [
+          "issue:597"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17186,10 +17197,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6336fa2387670bce2588a5b3ab68a8c33db8675a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Automatic search applies the strict preferred-group setting, removes same-protocol duplicate releases by normalized title while preserving indexer priority, and keeps same-title torrent and Usenet choices distinct. The added regression test would fail if the protocol were dropped from the deduplication key. The two inline review concerns are covered: the dedup key includes download type, and SABnzbd uploads use explicit multipart bytes with TLS verification retained."
+        ],
+        "acceptance": [
+          "Strict mode returns no candidates when no preferred group matches; same-protocol duplicates collapse to the highest-priority indexer; same-title torrent and Usenet releases remain two choices and do not trigger an unsafe single-result auto-download; SABnzbd multipart upload and TLS regression tests pass."
+        ],
+        "evidence": [
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/__tests__/downloaders_sabnzbd_tls.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-54.txt",
+          "https://github.com/Doezer/Questarr/pull/602",
+          "https://github.com/Doezer/Questarr/pull/602#discussion_r3229849229",
+          "https://github.com/Doezer/Questarr/pull/602#discussion_r3229849235"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17206,10 +17230,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "197100fa4a28f52225acc013defe68b0907e0ad5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "Every current harden-runner use is pinned to the immutable v2.21.1 commit, which is newer than the requested v2.19.1 update."
+        ],
+        "acceptance": [
+          "No workflow still uses the v2.19.0 or v2.19.1 harden-runner revision."
+        ],
+        "evidence": [
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/603"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17226,10 +17257,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "197100fa4a28f52225acc013defe68b0907e0ad5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Updated the remaining slash-command workflow from the v7 pin to the same immutable v9 pin already used by the auto-label workflow. The script uses the injected github client and contains no require('@actions/github') dependency."
+        ],
+        "acceptance": [
+          "All actions/github-script uses are pinned to the v9 SHA; the changed workflow parses as YAML and retains its existing command-dispatch logic."
+        ],
+        "evidence": [
+          ".github/workflows/slash-command-listener.yml",
+          ".github/workflows/auto-label-plane.yml",
+          "docs/upstream-resolution/evidence/validation-batch-55.txt",
+          "https://github.com/Doezer/Questarr/pull/604"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17246,10 +17286,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c381917ee9f30b596a0b929544a4f67505002e17",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The dependency group is already beyond the requested versions: React and ReactDOM are 19.3.0, the React types are 19.3.0, react-hook-form is 7.89.0, and react-day-picker is 10.0.1."
+        ],
+        "acceptance": [
+          "The lockfile resolves versions newer than every version requested by this PR."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/605"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17266,10 +17314,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "75e6a6f2349ae47b13889225f388604e3a722fcd",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The RSS delete control has a feed-specific accessible name and disables while deletion is pending; existing component regression coverage checks both behaviors."
+        ],
+        "acceptance": [
+          "Each delete control is named with its feed, and pending deletion cannot be submitted twice."
+        ],
+        "evidence": [
+          "client/src/components/RssSettings.tsx",
+          "client/__tests__/RssSettings.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt",
+          "https://github.com/Doezer/Questarr/pull/606"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17286,10 +17343,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested external API capability exists. The documented JWT API accepts IGDB IDs when creating a game and exposes per-game download status; the machine-integration API also supports API-key-authenticated game requests and library status. The later comment asks for additional batch progress and indexer/protocol details, and the maintainer explicitly asked that follow-up to be filed as a separate issue."
+        ],
+        "acceptance": [
+          "An external client can authenticate, add a game with its IGDB ID, and retrieve that game's download records; the integration API's narrower machine-client routes are separately documented."
+        ],
+        "evidence": [
+          "docs/API.md",
+          "server/routes/integration.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/integration_api.test.ts",
+          "https://github.com/Doezer/Questarr/issues/607",
+          "https://github.com/Doezer/Questarr/wiki/Questarr-API-Reference"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17306,11 +17374,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The qBittorrent client accepts both SID and QBT_SID_* session cookies and forwards the exact cookie name/value. The linked PR is present, focused tests pass, and the original reporter confirmed success against qBittorrent 5.2.0."
+        ],
+        "acceptance": [
+          "A login response containing QBT_SID_20080 is reused on subsequent API requests, while legacy SID cookies remain supported."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_clients_regression.test.ts",
+          "server/__tests__/downloaders_qbittorrent_remaining.test.ts",
+          "https://github.com/Doezer/Questarr/issues/608",
+          "https://github.com/Doezer/Questarr/pull/611"
+        ],
+        "dependencies": [
+          "pr:611"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17326,10 +17406,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All eight requested development dependency updates are already surpassed in package.json/package-lock.json; examples include @tailwindcss/vite 4.3.3, @types/node 26.6.3, Vitest 5.0.2, PostCSS 8.5.28, and current Vite/TypeScript tooling."
+        ],
+        "acceptance": [
+          "The committed lockfile resolves versions newer than the PR's target versions for the full development dependency group."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/609"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17346,10 +17434,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The report was against v1.3.0 and the screenshot shows user_settings missing. Current startup applies migrations before serving requests. A real fresh-database HTTP smoke completed all migrations, created the first account with IGDB unconfigured, returned 200 for settings GET and PATCH, then returned the saved value on reread. The original symptom does not reproduce in the current fork."
+        ],
+        "acceptance": [
+          "A fresh SQLite deployment creates the user_settings table before handling HTTP; first-account setup succeeds; authenticated settings GET, PATCH, and reread return 200 and persist the changed setting."
+        ],
+        "evidence": [
+          "server/index.ts",
+          "server/migrate.ts",
+          "server/db/migrate-sqlite.ts",
+          "migrations/0000_init_sqlite.sql",
+          "docs/upstream-resolution/evidence/validation-batch-55.txt",
+          "https://github.com/Doezer/Questarr/issues/610"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17366,11 +17465,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "fcd301b1138ba3b938d62deef38f7e1c3b912282",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The qBittorrent client preserves and forwards either legacy SID or QBT_SID_* cookie names, with regression coverage for the new 5.2.x cookie format."
+        ],
+        "acceptance": [
+          "QBT_SID_20080 from Set-Cookie is sent back unchanged on later qBittorrent API calls, and legacy SID authentication remains supported."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_clients_regression.test.ts",
+          "server/__tests__/downloaders_qbittorrent_remaining.test.ts",
+          "https://github.com/Doezer/Questarr/pull/611",
+          "https://github.com/Doezer/Questarr/issues/608"
+        ],
+        "dependencies": [
+          "issue:608"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17386,11 +17497,32 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d30565e610e10c373d01b9d27a997df110fd7e09",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The roll-up's package versions are now newer than its targets, harden-runner is v2.21.1, and the Docker actions it requested are no longer used in current workflows. Its remaining github-script v7 reference was brought to v9 in this batch."
+        ],
+        "acceptance": [
+          "Each still-used action/dependency from the roll-up is at or beyond the requested version, and obsolete action references have been removed."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/",
+          "docs/upstream-resolution/evidence/validation-batch-55.txt",
+          "https://github.com/Doezer/Questarr/pull/612"
+        ],
+        "dependencies": [
+          "pr:587",
+          "pr:588",
+          "pr:589",
+          "pr:592",
+          "pr:593",
+          "pr:594",
+          "pr:603",
+          "pr:604",
+          "pr:605",
+          "pr:609"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17406,11 +17538,25 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9a4df1a8e37daafef81c855ce96f65e7f27dd83c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This is the v1.3.0 release merge. QuestarrNG is now at 1.10.0; the release's functional changes are present in newer code and are separately reviewed under the NFS ownership and Prowlarr URL-encoding requests, while the remaining release metadata and contributor tooling have been replaced by the current branch."
+        ],
+        "acceptance": [
+          "The v1.3.0-specific merge is superseded by the current release line, and its functional code changes remain covered by current implementation and regression tests."
+        ],
+        "evidence": [
+          "package.json",
+          "entrypoint.sh",
+          "server/downloaders/utils.ts",
+          "server/__tests__/magnet_detection.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-54.txt",
+          "https://github.com/Doezer/Questarr/pull/613"
+        ],
+        "dependencies": [
+          "pr:600",
+          "pr:601"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17426,10 +17572,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The current qBittorrent adapter treats HTTP 202 acceptance as an asynchronous handoff, polls for the resulting torrent, and does not submit a second torrent-file fallback when the accepted job is not immediately visible. Regression coverage exercises both eventual hash resolution and accepted-but-unconfirmed behavior."
+        ],
+        "acceptance": [
+          "A qBittorrent-accepted Prowlarr download is not reported as a false failure or resubmitted merely because it is not immediately visible; transient lookup failures remain distinct from a rejected add."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-55.txt",
+          "https://github.com/Doezer/Questarr/issues/614"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -17446,10 +17601,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR is closed without a merge, and every current harden-runner use is pinned to v2.21.1, newer than the requested v2.19.3."
+        ],
+        "acceptance": [
+          "No current workflow uses an older harden-runner revision than the requested v2.19.3."
+        ],
+        "evidence": [
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/615"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -28812,8 +28974,8 @@
       "title": "Add System Tasks, Activity pages and leftover-archive detection (1.5.1)",
       "url": "https://github.com/Doezer/Questarr/pull/1195",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:11:54Z",
-      "sourceDigest": "bf49610a8eed078a62b1c4fb1b84118fed348ce4e0ec8d3ad5d4d80650be1619",
+      "upstreamUpdatedAt": "2026-10-13T11:15:58Z",
+      "sourceDigest": "98dfeb9c2b9f3bd77948a310bf8bf41cfdecb452cf25bc92c81565e3e0a6fb8e",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -28823,7 +28985,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "pr:1196",
@@ -28832,8 +28994,8 @@
       "title": "Add release scoring: profile, custom formats, search integration, settings UI, xREL verification",
       "url": "https://github.com/Doezer/Questarr/pull/1196",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:12:24Z",
-      "sourceDigest": "a96388fae052843ee426e5bb980159699efe9cec03160cb6cefb1973c6fc9504",
+      "upstreamUpdatedAt": "2026-10-13T11:16:39Z",
+      "sourceDigest": "61047936112c917edf56268c9d8c8b67e37817a40f66668a03b24b24365cd3cc",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -28843,7 +29005,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "pr:1197",
@@ -28872,8 +29034,8 @@
       "title": "Add scoped API keys, the SeerrNG provider API and a Gameyfin guide",
       "url": "https://github.com/Doezer/Questarr/pull/1198",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:11:09Z",
-      "sourceDigest": "ea3bda39b991db0eae187f45dfc4c7cbf77a3906cb3f17d5481fc0abd8f20d55",
+      "upstreamUpdatedAt": "2026-10-13T11:20:46Z",
+      "sourceDigest": "fea3497b9c6ffd7ad5d18ff89c9253dd88bd7aa573e71cd1b4e1a310b24f537e",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -28883,7 +29045,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "pr:1199",
@@ -28952,8 +29114,28 @@
       "title": "Add RomM integration: platform folders, API sync and rescan",
       "url": "https://github.com/Doezer/Questarr/pull/1202",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:12:52Z",
-      "sourceDigest": "e421454ce7cc75adff41ed2c6b536de233ffa4733053f6986bd524950d21fcc9",
+      "upstreamUpdatedAt": "2026-10-13T11:18:15Z",
+      "sourceDigest": "6ec23552425952566624898707cdb9e8e42fa8ba00a42c2850f6d5240e31cd91",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": true
+    },
+    {
+      "key": "pr:1203",
+      "number": 1203,
+      "kind": "pr",
+      "title": "Replace the game details modal with a full page",
+      "url": "https://github.com/Doezer/Questarr/pull/1203",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T11:21:16Z",
+      "sourceDigest": "bcedefdbdd9a75081f1627fe69dfe8abac02c07feff7f6f872cd84e2a7c9bcea",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {

@@ -1639,6 +1639,56 @@ describe("Cron - checkAutoSearch", () => {
       );
     });
 
+    it("should keep same-title torrent and Usenet releases as separate choices", async () => {
+      const settings = { ...baseSettings, autoDownloadEnabled: true };
+      const torrentDownloader = {
+        id: "torrent-downloader",
+        name: "qBittorrent",
+        type: "torrent",
+        enabled: true,
+      };
+      const usenetDownloader = {
+        id: "usenet-downloader",
+        name: "SABnzbd",
+        type: "usenet",
+        enabled: true,
+      };
+      const torrentItem = {
+        ...ITEM_INDEXER_A,
+        downloadType: "torrent" as const,
+        seeders: 50,
+      };
+      const usenetItem = {
+        ...ITEM_INDEXER_B,
+        link: "https://indexer-b.example.com/skidrow.nzb",
+        downloadType: "usenet" as const,
+        grabs: 500,
+      };
+
+      mockGetUserSettings.mockResolvedValue(settings);
+      mockGetEnabledDownloaders.mockResolvedValue([torrentDownloader, usenetDownloader]);
+      mockGetEnabledIndexers.mockResolvedValue([
+        { id: "indexer-a", priority: 1 },
+        { id: "indexer-b", priority: 2 },
+      ]);
+      mockSearchAllIndexers.mockResolvedValue({
+        items: [torrentItem, usenetItem],
+        errors: [],
+        total: 2,
+      });
+
+      await checkAutoSearch();
+
+      expect(mockUpdateGameSearchResultsAvailable).toHaveBeenCalledWith(baseGame.id, true);
+      expect(mockAddNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Multiple Results Found",
+          message: expect.stringContaining("2 result(s) found"),
+        })
+      );
+      expect(mockAddDownloadWithFallback).not.toHaveBeenCalled();
+    });
+
     it("should treat titles as duplicates despite punctuation or casing differences", async () => {
       // "Test Game SKIDROW" and "Test.Game.SKIDROW" normalise to the same key → de-duplicated to 1.
       const settings = { ...baseSettings, autoDownloadEnabled: true };

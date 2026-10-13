@@ -3,8 +3,8 @@
 ## Scope and ownership
 
 Review every issue and pull request in Doezer/Questarr, including closed issues,
-merged PRs, and closed unmerged PRs. The refreshed inventory has **1,162
-records**: 232 issues and 930 PRs. Implement actionable behavior that is missing
+merged PRs, and closed unmerged PRs. The refreshed inventory has **1,163
+records**: 232 issues and 931 PRs. Implement actionable behavior that is missing
 from QuestarrNG, verify behavior that already exists, and record an
 evidence-backed disposition for every source item. The user confirmed the full
 historical scope on October 12, 2026.
@@ -19,27 +19,27 @@ behavior when implementing upstream requests.
 ## Current ledger snapshot
 
 The saved issue and PR exports were refreshed against upstream main
-`2715243f6c229dd48a58ba588c169d0fd6779d1c` on **October 13, 2026 at 11:13
+`0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 12:43
 UTC**. The ledger and generated inventory are regenerated from this export when
 review statuses change. Review status is independent of GitHub's open, closed,
 or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       465 |
-| `superseded`             |        98 |
+| `verified`               |       481 |
+| `superseded`             |       112 |
 | `not-applicable`         |         9 |
 | `implemented-unverified` |         4 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       586 |
-| **Total**                | **1,162** |
+| `unreviewed`             |       557 |
+| **Total**                | **1,163** |
 
-The ledger now gives 572 items a completed evidence-backed disposition. Four
+The ledger now gives 602 items a completed evidence-backed disposition. Four
 implemented integrations still need live-service verification, no currently
-identified item needs implementation, and 586 have not been reviewed. These
-numbers describe the ledger, not completion of the campaign. Batch 53 is the
+identified item needs implementation, and 557 have not been reviewed. These
+numbers describe the ledger, not completion of the campaign. Batch 55 is the
 latest completed review; its results are in
-[validation evidence](evidence/validation-batch-53.txt).
+[validation evidence](evidence/validation-batch-55.txt).
 
 ## Project records
 
@@ -1503,3 +1503,65 @@ space was needed. Exact results are in [batch 54 evidence](evidence/validation-b
 After batch 54, the ledger records 472 verified, 106 superseded, 9
 not-applicable, 4 implemented-unverified, 0 needs-implementation, and 571
 unreviewed items. The full audit remains in progress.
+
+## Batch 55 — October 13, 2026
+
+Batch 55 reviewed PRs [#601](https://github.com/Doezer/Questarr/pull/601),
+[#602](https://github.com/Doezer/Questarr/pull/602), #603–606,
+[#609](https://github.com/Doezer/Questarr/pull/609),
+[#611](https://github.com/Doezer/Questarr/pull/611),
+[#612](https://github.com/Doezer/Questarr/pull/612),
+[#613](https://github.com/Doezer/Questarr/pull/613), and
+[#615](https://github.com/Doezer/Questarr/pull/615), plus issues
+[#607](https://github.com/Doezer/Questarr/issues/607),
+[#608](https://github.com/Doezer/Questarr/issues/608),
+[#610](https://github.com/Doezer/Questarr/issues/610), and
+[#614](https://github.com/Doezer/Questarr/issues/614). The source refresh also
+added open PR #1203 to the inventory; it remains unreviewed for the next batch.
+
+The NFS ownership guard and strict auto-search group filter are present. The
+deduplication review found the important torrent-versus-Usenet edge case: same
+title and same protocol results collapse to the highest-priority indexer, while
+same-title results with different protocols remain separate choices. A new
+cron regression test proves the latter cannot accidentally trigger a single
+candidate auto-download. qBittorrent's `QBT_SID_*` cookie handling is covered by
+the linked PR and the original reporter's successful 5.2 test.
+
+The external API request is satisfied by the documented JWT API for adding
+games with IGDB IDs and retrieving per-game download records, with a narrower
+API-key integration API for machine clients. The later request for aggregate
+progress and richer indexer metadata was explicitly referred to a separate
+issue by the upstream maintainer. Issue #610 did not reproduce as a migration
+defect in the current fork: a fresh SQLite migration created the `users` and
+`user_settings` tables with all 39 current settings columns, and a real HTTP
+smoke completed first-account setup plus settings GET, PATCH, and reread with
+200 responses and persisted state—even with IGDB unconfigured. The report was
+against v1.3.0; the upstream maintainer also could not reproduce it on a fresh
+deployment.
+
+The last `actions/github-script` v7 pin was upgraded to the same immutable v9
+revision already used by the other workflow. The remaining requests in the
+dependency roll-up are superseded by newer locked versions or actions no
+longer used. The v1.3.0 release merge is superseded by the current 1.10.0 line;
+its NFS and Prowlarr behavior is covered by current code and regression tests.
+The Prowlarr 500 report is handled by qBittorrent's asynchronous-accept path,
+which avoids resubmitting a download when immediate verification is delayed.
+
+The focused API, auto-search, downloader, and migration groups passed 775 tests
+across 15 files, and the full Vitest suite passed 4,165 tests across 261 files
+(7 skipped). A fresh isolated SQLite database completed every migration and
+contained the `users` and `user_settings` tables; the follow-up HTTP smoke
+successfully created an account, loaded settings, saved a setting, and verified
+the persisted value. The changed GitHub
+workflow parsed successfully as YAML, and all current `actions/github-script`
+references use the v9 SHA. No production source under `client/src/**` changed,
+so this batch required no new running-UI screenshot. Validation used
+`/tmp/questarr-upstream-batch55-work`; its SQLite database and downloaded issue
+screenshot were removed after checks. No NFS scratch space or unrelated
+services were touched. Exact results are in
+[batch 55 evidence](evidence/validation-batch-55.txt).
+
+After batch 55, the ledger records 481 verified, 112 superseded, 9
+not-applicable, 4 implemented-unverified, 0 needs-implementation, and 557
+unreviewed items. The upstream snapshot contains 1,163 records, and the full
+audit remains in progress.

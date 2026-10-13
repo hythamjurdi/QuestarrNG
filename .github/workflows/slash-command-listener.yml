@@ -22,7 +22,7 @@ jobs:
           egress-policy: audit
 
       - name: Parse and dispatch slash command
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v7
+        uses: actions/github-script@8ade135a41bc03ea155e62e844d188df1ea18608 # v9
         with:
           github-token: ${{ secrets.PAT }}
           script: |
