@@ -372,12 +372,12 @@ describe("GameDownloadDialog", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText("Health")).toBeInTheDocument();
+      expect(screen.getByText("Test Torrent 1")).toBeInTheDocument();
     });
 
     // Click on Health sort header
     // Initial state is Seeders Desc (ArrowDown). Clicking it should toggle to Asc (ArrowUp).
-    const healthHeader = screen.getByText("Health");
+    const healthHeader = screen.getByRole("button", { name: "Health" });
     fireEvent.click(healthHeader);
 
     // Should trigger a re-sort -> Ascending -> ArrowUp
@@ -388,13 +388,13 @@ describe("GameDownloadDialog", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText("Priority")).toBeInTheDocument();
+      expect(screen.getByText("Test Torrent 1")).toBeInTheDocument();
     });
 
     // Click the Priority sort header. Default order (desc) shows the
     // highest-priority indexer (lowest configured priority number) first:
     // Indexer B (priority 1) < Indexer A (priority 2) < Indexer C (priority 3).
-    fireEvent.click(screen.getByText("Priority"));
+    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
 
     await waitFor(() => {
       // Dialog content renders into a Radix portal on document.body, not inside `container`.
@@ -434,11 +434,11 @@ describe("GameDownloadDialog", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText("Priority")).toBeInTheDocument();
+      expect(screen.getByText("Test Torrent Unknown")).toBeInTheDocument();
     });
 
     // Default order (desc): known indexers by priority, unknown last.
-    fireEvent.click(screen.getByText("Priority"));
+    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
     await waitFor(() => {
       const text = document.body.textContent ?? "";
       const posB = text.indexOf("Test Torrent 2");
@@ -450,7 +450,7 @@ describe("GameDownloadDialog", () => {
     });
 
     // Reversed order (asc): unknown indexer must still sort last, not first.
-    fireEvent.click(screen.getByText("Priority"));
+    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
     await waitFor(() => {
       const text = document.body.textContent ?? "";
       const posB = text.indexOf("Test Torrent 2");
@@ -484,7 +484,7 @@ describe("GameDownloadDialog", () => {
     // The Priority header should render even though only one of the two
     // result indexers is present in the enabled-indexers list.
     await waitFor(() => {
-      expect(screen.getByText("Priority")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Priority" })).toBeInTheDocument();
     });
 
     // The unrecognized indexer's row shows an em dash instead of a number.
@@ -1022,7 +1022,7 @@ describe("GameDownloadDialog", () => {
       (
         await screen.findAllByText(
           (_, element) =>
-            element?.textContent?.includes("No results match your preferred platform") ?? false
+            element?.textContent?.includes("No results for selected platforms:") ?? false
         )
       ).length
     ).toBeGreaterThan(0);
@@ -1030,7 +1030,7 @@ describe("GameDownloadDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show all results" }));
 
     await waitFor(() => {
-      expect(screen.queryByText(/No results match your preferred platform/i)).toBeNull();
+      expect(screen.queryByText(/No results for selected platforms:/i)).toBeNull();
       expect(screen.getAllByText("Test Game PC v1.0-SKIDROW").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Test Game Mac Edition-CODEX").length).toBeGreaterThan(0);
     });
@@ -1148,14 +1148,14 @@ describe("GameDownloadDialog", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Download with Updates?")).toBeInTheDocument();
-      expect(screen.getByText("1 of 1 updates selected")).toBeInTheDocument();
+      expect(screen.getByText("Selection: 1/1")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText("Deselect All"));
-    expect(screen.getByText("0 of 1 updates selected")).toBeInTheDocument();
+    expect(screen.getByText("Selection: 0/1")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Select All"));
-    expect(screen.getByText("1 of 1 updates selected")).toBeInTheDocument();
+    expect(screen.getByText("Selection: 1/1")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Only the main game"));
 

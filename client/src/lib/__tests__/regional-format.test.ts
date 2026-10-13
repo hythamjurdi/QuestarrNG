@@ -6,6 +6,7 @@ import {
   formatRegionalPercent,
   getRegionalDateFnsLocale,
   getRegionalDirection,
+  getRegionalPreference,
   getRegionalWeekStartsOn,
   setRegionalPreference,
   useRegionalPreference,
@@ -34,6 +35,12 @@ describe("regional formatting locale", () => {
     setRegionalPreference(locale);
 
     expect(getRegionalWeekStartsOn()).toBe(expected);
+  });
+
+  it("ignores unsupported regional-format preferences", () => {
+    setRegionalPreference("unsupported");
+
+    expect(getRegionalPreference()).toBe("system");
   });
 
   it("uses the selected locale for relative time", () => {
@@ -93,6 +100,21 @@ describe("regional formatting locale", () => {
     }
   });
 
+  it("formats near-zero relative times through Intl's fallback", () => {
+    setRegionalPreference("system");
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "ru-RU" } as Intl.ResolvedDateTimeFormatOptions);
+
+    try {
+      expect(formatRegionalDistanceToNow(new Date(Date.now() + 1))).toBe(
+        new Intl.RelativeTimeFormat("ru-RU", { numeric: "auto" }).format(0, "second")
+      );
+    } finally {
+      resolvedOptions.mockRestore();
+    }
+  });
+
   it("uses the Hong Kong Traditional Chinese locale and Sunday-first fallback", () => {
     setRegionalPreference("system");
     const resolvedOptions = vi
@@ -127,6 +149,51 @@ describe("regional formatting locale", () => {
       weekInfo.mockRestore();
       resolvedOptions.mockRestore();
     }
+  });
+
+  it("uses valid Intl week data when the first day is Sunday", () => {
+    setRegionalPreference("system");
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "en-GB" } as Intl.ResolvedDateTimeFormatOptions);
+    const weekInfo = vi
+      .spyOn(Intl.Locale.prototype, "getWeekInfo")
+      .mockImplementation(() => ({ firstDay: 7 }) as never);
+
+    try {
+      expect(getRegionalWeekStartsOn()).toBe(0);
+    } finally {
+      weekInfo.mockRestore();
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it.each([
+    ["en-US", 0],
+    ["en-AF", 6],
+    ["en-MV", 5],
+    ["en-GB-u-rg-uszzzz", 0],
+    ["en-GB-u-rg-001zzzz", 1],
+    ["en", 0],
+  ])("uses CLDR region fallback data for %s", (locale, expected) => {
+    setRegionalPreference("system");
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale } as Intl.ResolvedDateTimeFormatOptions);
+    const weekInfo = vi.spyOn(Intl.Locale.prototype, "getWeekInfo").mockImplementation(() => {
+      throw new TypeError("Simulate a browser without usable week data");
+    });
+
+    try {
+      expect(getRegionalWeekStartsOn()).toBe(expected);
+    } finally {
+      weekInfo.mockRestore();
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it("falls back to the language subtag when Intl cannot parse the locale", () => {
+    expect(getRegionalDirection("ar-??")).toBe("rtl");
   });
 
   it("rerenders subscribers when the active regional preference changes", () => {
