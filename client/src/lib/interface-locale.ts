@@ -32,11 +32,13 @@ function isInterfaceLanguage(value: string | null): value is InterfaceLanguage {
   return INTERFACE_LANGUAGE_OPTIONS.some((option) => option.value === value);
 }
 
-function browserLanguage(): InterfaceLanguage {
-  if (typeof navigator === "undefined") return "en";
-  for (const candidate of navigator.languages?.length
-    ? navigator.languages
-    : [navigator.language]) {
+export function getBrowserInterfaceLanguage(
+  browser: Pick<Navigator, "language" | "languages"> | null = typeof navigator === "undefined"
+    ? null
+    : navigator
+): InterfaceLanguage {
+  if (!browser) return "en";
+  for (const candidate of browser.languages?.length ? browser.languages : [browser.language]) {
     const normalized = candidate.toLowerCase();
     const base = normalized.split(/[-_]/)[0];
     if (base === "en") return "en";
@@ -56,6 +58,10 @@ function browserLanguage(): InterfaceLanguage {
       return base;
   }
   return "en";
+}
+
+function browserLanguage(): InterfaceLanguage {
+  return getBrowserInterfaceLanguage();
 }
 
 function readLanguage(): InterfaceLanguage {

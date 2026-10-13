@@ -3,11 +3,14 @@ import { act, render, screen } from "@testing-library/react";
 import { createElement } from "react";
 import {
   formatRegionalDistanceToNow,
+  getRegionalCollator,
   formatRegionalPercent,
   getRegionalDateFnsLocale,
   getRegionalDirection,
+  getRegionalLocale,
   getRegionalPreference,
   getRegionalWeekStartsOn,
+  REGIONAL_FORMAT_KEY,
   setRegionalPreference,
   useRegionalPreference,
 } from "../regional-format";
@@ -207,5 +210,169 @@ describe("regional formatting locale", () => {
     act(() => setRegionalPreference("de"));
 
     expect(screen.getByText("de")).toBeInTheDocument();
+  });
+
+  it("uses the active preference when resolving a regional locale", () => {
+    expect(getRegionalLocale()).toBeUndefined();
+    expect(getRegionalLocale("de")).toBe("de");
+  });
+
+  it("uses the active preference for collation by default", () => {
+    setRegionalPreference("de");
+
+    expect(getRegionalCollator().resolvedOptions().locale).toBe("de");
+  });
+
+  it("syncs supported regional-format preferences from storage events", () => {
+    localStorage.setItem(REGIONAL_FORMAT_KEY, "de");
+    window.dispatchEvent(new StorageEvent("storage", { key: "unrelated-key" }));
+    expect(getRegionalPreference()).toBe("system");
+
+    window.dispatchEvent(new StorageEvent("storage", { key: REGIONAL_FORMAT_KEY }));
+    expect(getRegionalPreference()).toBe("de");
+
+    localStorage.setItem(REGIONAL_FORMAT_KEY, "unsupported");
+    window.dispatchEvent(new StorageEvent("storage", { key: REGIONAL_FORMAT_KEY }));
+    expect(getRegionalPreference()).toBe("system");
+
+    localStorage.removeItem(REGIONAL_FORMAT_KEY);
+    window.dispatchEvent(new StorageEvent("storage", { key: null }));
+    expect(getRegionalPreference()).toBe("system");
+
+    vi.stubGlobal("localStorage", undefined);
+    try {
+      window.dispatchEvent(new StorageEvent("storage", { key: null }));
+      expect(getRegionalPreference()).toBe("system");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("uses language direction when a locale has no maximized script", () => {
+    const maximize = vi
+      .spyOn(Intl.Locale.prototype, "maximize")
+      .mockReturnValue({ script: undefined } as never);
+
+    try {
+      expect(getRegionalDirection("ar-SA")).toBe("rtl");
+      expect(getRegionalDirection("en-US")).toBe("ltr");
+    } finally {
+      maximize.mockRestore();
+    }
+  });
+
+  it.each([
+    ["zh-Hant-HK", "zh-TW"],
+    ["zh-Hans", "zh-CN"],
+  ])("maps fallback Chinese locale %s to date-fns locale %s", (locale, expected) => {
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale } as Intl.ResolvedDateTimeFormatOptions);
+
+    try {
+      expect(getRegionalDateFnsLocale()?.code).toBe(expected);
+    } finally {
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it("falls back to en-US when the browser reports an empty locale", () => {
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "" } as Intl.ResolvedDateTimeFormatOptions);
+
+    try {
+      expect(getRegionalDateFnsLocale()?.code).toBe("en-US");
+    } finally {
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it("falls back to en-US when Intl cannot resolve the browser locale", () => {
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockImplementation(() => {
+        throw new TypeError("Simulate a browser without locale resolution");
+      });
+
+    try {
+      expect(getRegionalDateFnsLocale()?.code).toBe("en-US");
+    } finally {
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it("uses legacy Intl.Locale weekInfo when getWeekInfo has no usable data", () => {
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "en-US" } as Intl.ResolvedDateTimeFormatOptions);
+    const getWeekInfo = vi
+      .spyOn(Intl.Locale.prototype, "getWeekInfo")
+      .mockReturnValue({ firstDay: undefined } as never);
+    const originalWeekInfo = Object.getOwnPropertyDescriptor(Intl.Locale.prototype, "weekInfo");
+    Object.defineProperty(Intl.Locale.prototype, "weekInfo", {
+      configurable: true,
+      value: { firstDay: 2 },
+    });
+
+    try {
+      expect(getRegionalWeekStartsOn()).toBe(2);
+    } finally {
+      getWeekInfo.mockRestore();
+      if (originalWeekInfo) {
+        Object.defineProperty(Intl.Locale.prototype, "weekInfo", originalWeekInfo);
+      } else {
+        delete (Intl.Locale.prototype as Intl.Locale & { weekInfo?: unknown }).weekInfo;
+      }
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it("ignores invalid Intl week data and uses the locale region", () => {
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "en-US" } as Intl.ResolvedDateTimeFormatOptions);
+    const weekInfo = vi
+      .spyOn(Intl.Locale.prototype, "getWeekInfo")
+      .mockReturnValue({ firstDay: 0 } as never);
+
+    try {
+      expect(getRegionalWeekStartsOn()).toBe(0);
+    } finally {
+      weekInfo.mockRestore();
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it("uses the Sunday-first fallback for Traditional Chinese without region data", () => {
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "zh-Hant" } as Intl.ResolvedDateTimeFormatOptions);
+    const weekInfo = vi.spyOn(Intl.Locale.prototype, "getWeekInfo").mockImplementation(() => {
+      throw new TypeError("Simulate a browser without usable week data");
+    });
+
+    try {
+      expect(getRegionalWeekStartsOn()).toBe(0);
+    } finally {
+      weekInfo.mockRestore();
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it("uses Monday when neither Intl nor date-fns has region data", () => {
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "ru" } as Intl.ResolvedDateTimeFormatOptions);
+    const weekInfo = vi.spyOn(Intl.Locale.prototype, "getWeekInfo").mockImplementation(() => {
+      throw new TypeError("Simulate a browser without usable week data");
+    });
+
+    try {
+      expect(getRegionalWeekStartsOn()).toBe(1);
+    } finally {
+      weekInfo.mockRestore();
+      resolvedOptions.mockRestore();
+    }
   });
 });
