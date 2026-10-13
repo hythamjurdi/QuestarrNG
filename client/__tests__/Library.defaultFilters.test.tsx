@@ -49,20 +49,63 @@ const games = [
   { id: "3", title: "Owned Game", status: "owned", searchResultsAvailable: true },
 ];
 
-function mockFetch(userSettings: Record<string, unknown>) {
+function mockFetch(userSettings: Record<string, unknown>, responseGames = games) {
   globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
     const url = getRequestUrl(input);
     if (url.includes("/api/settings")) {
       return { ok: true, json: async () => userSettings } as Response;
     }
     if (url.includes("/api/games")) {
-      return { ok: true, json: async () => games } as Response;
+      return { ok: true, json: async () => responseGames } as Response;
     }
     return { ok: true, json: async () => [] } as Response;
   }) as typeof fetch;
 }
 
 describe("Library default filtering settings", () => {
+  it("shows the shared empty state and opens Add Game for an empty library", async () => {
+    mockFetch({ hideShelvedByDefault: true, hideOwnedInHasResults: true }, []);
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <Library />
+      </QueryClientProvider>
+    );
+
+    const emptyState = await screen.findByTestId("empty-state");
+    expect(emptyState).toHaveTextContent("No games yet");
+    const addButton = screen.getByRole("button", { name: "Add your first game" });
+    fireEvent.click(addButton);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("offers to clear active filters when they hide every game", async () => {
+    const gameWithoutResults = {
+      id: "4",
+      title: "Game Without Search Results",
+      status: "wanted",
+      searchResultsAvailable: false,
+    };
+    mockFetch({ hideShelvedByDefault: true, hideOwnedInHasResults: true }, [gameWithoutResults]);
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <Library />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText("Game Without Search Results")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Show games with search results only" })[0]
+    );
+
+    const emptyState = await screen.findByTestId("empty-state");
+    expect(emptyState).toHaveTextContent("No games match your current filters");
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(await screen.findByText("Game Without Search Results")).toBeInTheDocument();
+  });
+
   it("hides shelved games by default when hideShelvedByDefault is true", async () => {
     mockFetch({ hideShelvedByDefault: true, hideOwnedInHasResults: true });
 

@@ -326,20 +326,20 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #331](https://github.com/Doezer/Questarr/pull/331) | chore(deps): bump react-hook-form from 7.71.0 to 7.71.1 in the react group | MERGED | merge-commit-in-fork-history | verified |
 | [pr #332](https://github.com/Doezer/Questarr/pull/332) | chore(deps-dev): bump the dev-dependencies group with 2 updates | CLOSED | no-merge-commit | superseded |
 | [pr #333](https://github.com/Doezer/Questarr/pull/333) | chore(deps): bump pg from 8.16.3 to 8.17.1 | CLOSED | no-merge-commit | superseded |
-| [pr #334](https://github.com/Doezer/Questarr/pull/334) | chore(deps): bump pino from 10.1.0 to 10.2.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #335](https://github.com/Doezer/Questarr/pull/335) | chore(deps): bump @tanstack/react-query from 5.90.16 to 5.90.19 | MERGED | merge-commit-in-fork-history | unreviewed |
+| [pr #334](https://github.com/Doezer/Questarr/pull/334) | chore(deps): bump pino from 10.1.0 to 10.2.0 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #335](https://github.com/Doezer/Questarr/pull/335) | chore(deps): bump @tanstack/react-query from 5.90.16 to 5.90.19 | MERGED | merge-commit-in-fork-history | verified |
 | [issue #336](https://github.com/Doezer/Questarr/issues/336) | Different Way to Search for Games | OPEN | no-merge-commit | verified |
-| [pr #337](https://github.com/Doezer/Questarr/pull/337) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 4 updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #338](https://github.com/Doezer/Questarr/pull/338) | Hardening: Fix flaky tests, lint issues, and improve types | CLOSED | no-merge-commit | unreviewed |
-| [pr #339](https://github.com/Doezer/Questarr/pull/339) | ⚡ Bolt: Batch game metadata updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #340](https://github.com/Doezer/Questarr/pull/340) | 🎨 Palette: Better Empty States | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #341](https://github.com/Doezer/Questarr/pull/341) | 🛡️ Sentinel: [CRITICAL] Fix SSRF IPv6 bypasses | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #342](https://github.com/Doezer/Questarr/pull/342) | Iterative hardening: fix flaky tests, lint warnings, and docs | CLOSED | no-merge-commit | unreviewed |
-| [pr #343](https://github.com/Doezer/Questarr/pull/343) | Hardening: Fix lint, format, and test stability issues | CLOSED | no-merge-commit | unreviewed |
-| [issue #344](https://github.com/Doezer/Questarr/issues/344) | Fresh install issue (1.0.5) | CLOSED | no-merge-commit | unreviewed |
-| [pr #345](https://github.com/Doezer/Questarr/pull/345) | Harden logging, fix flaky tests, and improve empty state UI | CLOSED | no-merge-commit | unreviewed |
-| [pr #346](https://github.com/Doezer/Questarr/pull/346) | chore(deps): bump actions/checkout from 6.0.1 to 6.0.2 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #347](https://github.com/Doezer/Questarr/pull/347) | chore(deps-dev): bump the dev-dependencies group with 3 updates | MERGED | merge-commit-in-fork-history | unreviewed |
+| [pr #337](https://github.com/Doezer/Questarr/pull/337) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 4 updates | MERGED | merge-commit-in-fork-history | verified |
+| [pr #338](https://github.com/Doezer/Questarr/pull/338) | Hardening: Fix flaky tests, lint issues, and improve types | CLOSED | no-merge-commit | superseded |
+| [pr #339](https://github.com/Doezer/Questarr/pull/339) | ⚡ Bolt: Batch game metadata updates | MERGED | merge-commit-in-fork-history | verified |
+| [pr #340](https://github.com/Doezer/Questarr/pull/340) | 🎨 Palette: Better Empty States | MERGED | merge-commit-in-fork-history | verified |
+| [pr #341](https://github.com/Doezer/Questarr/pull/341) | 🛡️ Sentinel: [CRITICAL] Fix SSRF IPv6 bypasses | MERGED | merge-commit-in-fork-history | verified |
+| [pr #342](https://github.com/Doezer/Questarr/pull/342) | Iterative hardening: fix flaky tests, lint warnings, and docs | CLOSED | no-merge-commit | verified |
+| [pr #343](https://github.com/Doezer/Questarr/pull/343) | Hardening: Fix lint, format, and test stability issues | CLOSED | no-merge-commit | verified |
+| [issue #344](https://github.com/Doezer/Questarr/issues/344) | Fresh install issue (1.0.5) | CLOSED | no-merge-commit | verified |
+| [pr #345](https://github.com/Doezer/Questarr/pull/345) | Harden logging, fix flaky tests, and improve empty state UI | CLOSED | no-merge-commit | verified |
+| [pr #346](https://github.com/Doezer/Questarr/pull/346) | chore(deps): bump actions/checkout from 6.0.1 to 6.0.2 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #347](https://github.com/Doezer/Questarr/pull/347) | chore(deps-dev): bump the dev-dependencies group with 3 updates | MERGED | merge-commit-in-fork-history | verified |
 | [pr #348](https://github.com/Doezer/Questarr/pull/348) | chore(deps): bump pg from 8.16.3 to 8.17.2 | MERGED | merge-commit-in-fork-history | unreviewed |
 | [pr #349](https://github.com/Doezer/Questarr/pull/349) | chore(deps): bump pino from 10.2.0 to 10.3.0 | MERGED | merge-commit-in-fork-history | unreviewed |
 | [pr #350](https://github.com/Doezer/Questarr/pull/350) | chore(deps): bump lucide-react from 0.562.0 to 0.563.0 | MERGED | merge-commit-in-fork-history | unreviewed |

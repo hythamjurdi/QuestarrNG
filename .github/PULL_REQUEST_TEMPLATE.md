@@ -4,6 +4,14 @@
 
 Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
 
+## Verification
+
+List the automated checks you ran and their results. Describe any manual checks and attach screenshots or recordings for UI changes. If a relevant check was not run, say why.
+
+## Risk Analysis
+
+Describe the main user, data, or compatibility risks and how to roll the change back if needed.
+
 ## Screenshots
 
 For any UI change (`client/src/**`), include a screenshot or short recording of it running. Not required for backend-only changes.

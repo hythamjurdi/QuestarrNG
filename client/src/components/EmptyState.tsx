@@ -11,6 +11,7 @@ interface EmptyStateProps {
   actionLabel?: string;
   actionLink?: string;
   onAction?: () => void;
+  action?: React.ReactNode;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export default function EmptyState({
   actionLabel,
   actionLink,
   onAction,
+  action,
   className,
 }: EmptyStateProps) {
   return (
@@ -43,6 +45,7 @@ export default function EmptyState({
           {actionLabel}
         </Button>
       )}
+      {action}
     </div>
   );
 }

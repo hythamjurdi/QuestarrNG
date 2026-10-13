@@ -32,6 +32,7 @@ describe("Logger Module", () => {
     expect(loggerModule.expressLogger).toBeDefined();
     expect(loggerModule.downloadersLogger).toBeDefined();
     expect(loggerModule.torznabLogger).toBeDefined();
+    expect(loggerModule.middlewareLogger).toBeDefined();
   });
 
   it("should create child loggers with module property", async () => {
@@ -43,6 +44,7 @@ describe("Logger Module", () => {
     expect(loggerModule.expressLogger.bindings()).toHaveProperty("module", "express");
     expect(loggerModule.downloadersLogger.bindings()).toHaveProperty("module", "downloaders");
     expect(loggerModule.torznabLogger.bindings()).toHaveProperty("module", "torznab");
+    expect(loggerModule.middlewareLogger.bindings()).toHaveProperty("module", "middleware");
   });
 
   it("should respect LOG_LEVEL environment variable", async () => {

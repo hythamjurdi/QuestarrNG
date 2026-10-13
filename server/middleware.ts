@@ -5,7 +5,7 @@ import { TORRENT_DOWNLOADER_TYPES, USENET_DOWNLOADER_TYPES } from "../shared/dow
 import { GAME_STATUSES } from "../shared/schema.js";
 import { normalizeReleaseTitle } from "../shared/title-utils.js";
 import { storage } from "./storage.js";
-import { expressLogger } from "./logger.js";
+import { expressLogger, middlewareLogger } from "./logger.js";
 import { reportServerError } from "./error-telemetry.js";
 import {
   isSafeConfiguredDownloadPath,
@@ -41,7 +41,7 @@ export const igdbRateLimiter = rateLimit({
       const settings = await storage.getUserSettings(userId);
       return settings?.igdbRateLimitPerSecond ?? 20;
     } catch (error) {
-      console.error("Error fetching user rate limit:", error);
+      middlewareLogger.error({ error }, "Error fetching user rate limit");
       return 20; // Fallback to default on error
     }
   },

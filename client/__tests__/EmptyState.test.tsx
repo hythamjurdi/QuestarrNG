@@ -59,6 +59,19 @@ describe("EmptyState", () => {
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
+  it("renders a caller-provided action", () => {
+    render(
+      <EmptyState
+        icon={DummyIcon}
+        title="No games yet"
+        description="Add a game to start"
+        action={<button type="button">Add your first game</button>}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Add your first game" })).toBeInTheDocument();
+  });
+
   it("applies a custom className", () => {
     render(
       <EmptyState

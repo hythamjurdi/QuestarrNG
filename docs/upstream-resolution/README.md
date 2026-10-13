@@ -991,3 +991,13 @@ and [batch 36 validation](evidence/validation-batch-36.txt).
 The ledger now records **291 verified**, **33 superseded**, **814 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** records. Issue #37 remains outstanding.
+
+## Batch 37 — October 12, 2026
+
+Batch 37 reviewed [PRs #334–335 and #337–347](inventory.md) and issue [#344](https://github.com/Doezer/Questarr/issues/344); issue #336 was reviewed in batch 5. The dependency requests are already exceeded by the locked versions. Metadata refresh uses 50-game transactions, and the merged IPv6 SSRF protections are present. Issue #344's reporter confirmed that the fresh-install problem cleared after the image was updated.
+
+PR #338 is superseded by the later hardening iterations. PR #342's verification and risk-analysis prompts now live in GitHub's `.github/PULL_REQUEST_TEMPLATE.md`; PR #343's type, lint, and formatting work passes the current gates. The remaining fixed-delay setup test now waits for both field-validation messages. PR #345's shared empty state is now used in the Library, retaining its Add Game flow, providing a direct add action for a no-result search, and letting users clear filters from an empty filtered view. The IGDB rate-limit fallback also uses a module-specific structured logger. See the [release note](../../release-notes/2026-10-12-library-empty-states.md), [visual evidence](../pr-evidence/upstream-library-empty-state-batch-37.png), and [batch 37 validation](evidence/validation-batch-37.txt).
+
+The ledger now records **303 verified**, **34 superseded**, **801 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** records. Issue #37 remains outstanding.

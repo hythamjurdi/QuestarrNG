@@ -9462,10 +9462,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c224708ca027ca01ea5796a3074a651aa3c60318",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested Pino 10.2.0 update is already exceeded: package.json declares ^10.3.1 and package-lock.json resolves 10.3.1."
+        ],
+        "acceptance": [
+          "The fork uses the requested version or a newer compatible release."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/334",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9482,10 +9490,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f60526557400987cc030ca4979647bf58f55de37",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested React Query 5.90.19 update is already exceeded; the lockfile resolves @tanstack/react-query 5.104.1."
+        ],
+        "acceptance": [
+          "The fork uses the requested version or a newer compatible release."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/335",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9536,10 +9552,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4df3afe112ec005c84a50b2be42bd350113a4a57",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All four requested development dependencies are at or above the PR versions: @testing-library/react 16.3.3, @types/node 26.6.4, prettier 3.9.9, and typescript-eslint 8.71.0."
+        ],
+        "acceptance": [
+          "Every dependency in the grouped update is already advanced in the fork lockfile."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/337",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9556,10 +9580,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "This closed hardening proposal repeats work carried by the later #342/#343 passes and the current fork. Its flaky setup assertion is now covered by explicit waitFor assertions; current type, lint, logging, and test checks cover the remaining code requests."
+        ],
+        "acceptance": [
+          "No unique runtime change from this closed proposal remains outstanding."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/338",
+          "https://github.com/Doezer/Questarr/pull/342",
+          "https://github.com/Doezer/Questarr/pull/343",
+          "client/src/__tests__/SetupPage.test.tsx",
+          "server/cron.ts",
+          "server/migrate.ts",
+          "server/db.ts",
+          "server/middleware.ts",
+          "npm run check",
+          "npm run lint",
+          "npm test"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9576,10 +9616,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6d3817e3ed0caa21e0fa14c61066080fcfc5556c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Metadata refresh gathers IGDB updates and writes them in batches of 50 through updateGamesBatch, avoiding per-game transactions."
+        ],
+        "acceptance": [
+          "Refresh metadata uses transactional batched updates and keeps route/storage behavior covered by tests."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/339",
+          "server/routes.ts",
+          "server/storage.ts",
+          "server/__tests__/routes.test.ts",
+          "server/__tests__/storage.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9596,10 +9646,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d0a627cb6630ede211a93a3f1f1b0fc0a1261573",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Library now uses the shared EmptyState component for an empty library, an empty search result, and an empty filtered view. The first-game and search actions open the existing Add Game flow; users can clear filters directly."
+        ],
+        "acceptance": [
+          "Empty Library states offer a clear next action and use the shared accessible design."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/340",
+          "client/src/components/EmptyState.tsx",
+          "client/src/components/Library.tsx",
+          "client/__tests__/EmptyState.test.tsx",
+          "client/__tests__/Library.defaultFilters.test.tsx",
+          "docs/pr-evidence/upstream-library-empty-state-batch-37.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9616,10 +9677,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e3476343cf13546743711c739ca54efef4a8a13a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SSRF checks normalize bracketed IPv6 hosts, reject IPv4-mapped IPv6 metadata addresses, and fail closed when DNS resolution fails."
+        ],
+        "acceptance": [
+          "IPv6 and mapped-address variants cannot bypass the private/metadata address policy."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/341",
+          "server/ssrf.ts",
+          "server/__tests__/ssrf.test.ts",
+          "npm test"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9636,10 +9706,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The setup test waits for both required IGDB field errors instead of sleeping. The GitHub-recognized PR template now requests verification results and risk/rollback analysis. Type and logging hardening are present."
+        ],
+        "acceptance": [
+          "The test waits on observable UI state, and the active PR template prompts for verification and risk analysis."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/342",
+          "client/src/__tests__/SetupPage.test.tsx",
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          "server/cron.ts",
+          "server/migrate.ts",
+          "server/db.ts",
+          "npm run check",
+          "npm run lint",
+          "npm test"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9656,10 +9740,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The hardening pass is covered by current code and checks: the setup test uses explicit validation assertions, exception handling and structured logging are typed, and the PostgreSQL-to-SQLite CLI passes lint and format gates."
+        ],
+        "acceptance": [
+          "The requested test stability, lint, formatting, and type-safety outcomes pass current repository gates."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/343",
+          "client/src/__tests__/SetupPage.test.tsx",
+          "server/cron.ts",
+          "server/migrate.ts",
+          "server/db.ts",
+          "scripts/pg-to-sqlite.ts",
+          "npm run check",
+          "npm run lint",
+          "npm run format:check",
+          "npm test"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9676,10 +9775,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The issue was caused by a stale registry image; the maintainer updated it and the reporter confirmed the installation worked."
+        ],
+        "acceptance": [
+          "The refreshed image starts with the configured SQLite database and the reporter confirms access works."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/344"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9696,10 +9801,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reusable empty state now powers the Library. The requested structured logger is added for rate-limit fallback errors, and the setup test uses observable validation assertions."
+        ],
+        "acceptance": [
+          "The Library has a visible next step, and middleware logging uses its module-specific child logger."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/345",
+          "client/src/components/EmptyState.tsx",
+          "client/src/components/Library.tsx",
+          "client/__tests__/EmptyState.test.tsx",
+          "client/__tests__/Library.defaultFilters.test.tsx",
+          "server/logger.ts",
+          "server/middleware.ts",
+          "server/__tests__/logger.test.ts",
+          "server/__tests__/middleware.test.ts",
+          "docs/pr-evidence/upstream-library-empty-state-batch-37.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9716,10 +9836,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "67d8ed5398b1b22149bba26e5153b777bf72f751",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All checkout workflow references are pinned to the immutable actions/checkout v7.0.1 commit, newer than the requested v6.0.2."
+        ],
+        "acceptance": [
+          "CI and release workflows use the newer pinned action revision."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/346",
+          ".github/workflows/ci.yml",
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/release.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9736,10 +9865,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4fc61ae2357eb2f35c4f31a4b2e4390b8b65bef3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested @vitest/ui, prettier, and vitest versions are exceeded; the lockfile resolves each to 5.0.2 or 3.9.9 as appropriate."
+        ],
+        "acceptance": [
+          "All grouped development dependencies are at or above the PR versions."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/347",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
