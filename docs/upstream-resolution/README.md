@@ -483,3 +483,28 @@ advisory. The refreshed ledger records **171 verified**, **6 superseded**,
 **964 unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and
 **1 needs-implementation** record. Issue #37 remains the outstanding
 implementation item. See [batch 18 evidence](evidence/validation-batch-18.txt).
+
+## Follow-up: upstream PRs #169–175
+
+Genre and platform query conditions now have regression coverage for
+order-independent cache keys. Discover already shows loading spinners in both
+filter dropdowns, and the carousel navigation tooltips now have direct test
+coverage. IGDB game searches cache processed results by query, limit, and local
+filters: successful results last 15 minutes and empty results last 5 minutes.
+
+Per-download path overrides must be relative and cannot contain parent
+segments, with the same guard in the API validator and the Transmission and
+rTorrent clients. Configured downloader roots remain allowed to be absolute.
+The Search dialog now tells users to enter a relative path or leave the field
+blank to use the configured default. The live dialog was captured here:
+[download path guidance](../pr-evidence/upstream-relative-download-path-guidance.png).
+
+PR #171 was closed as a duplicate of the earlier path-traversal work. The
+other PRs in this group have no submitted code reviews or actionable comments;
+their requested behavior is present in the fork or covered by this batch.
+All 4,050 tests passed, with 7 skipped. Typecheck, lint, format check, and the
+production build passed; Vite continues to report its existing large-chunk
+advisory. The ledger now records **178 verified**, **6 superseded**, **957
+unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and **1
+needs-implementation** record. Issue #37 remains outstanding. See
+[batch 19 evidence](evidence/validation-batch-19.txt).

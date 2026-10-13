@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-12T23:53:34.664Z",
-  "forkHead": "84a99faf6b6ba5d0b0a8110ac19317048db508f8",
+  "capturedAt": "2026-10-13T00:22:17.221Z",
+  "forkHead": "e4fd82732e20b39704c030e6d57b0be1b7dffffd",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -4819,10 +4819,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "4321bb2afbead59c5370359c172f19e53373d82d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Genre and platform query conditions are sorted before request caching, so equivalent filter sets in different orders reuse the same IGDB response. Regression tests cover both APIs."
+        ],
+        "acceptance": [
+          "Reordering genre or platform filters does not create duplicate IGDB requests."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/169",
+          "server/igdb.ts",
+          "server/__tests__/igdb_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4839,10 +4847,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "f6ca3e04f93860500da57641a2166fde24f9759c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Discover records isFetching for both static filter queries and shows an animated Loader2 icon in each SelectTrigger while its list is loading."
+        ],
+        "acceptance": [
+          "Both dropdowns visibly communicate list loading without replacing their current values."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/170",
+          "client/src/pages/discover.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4859,10 +4874,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Transmission and rTorrent reject unsafe per-download path overrides before external requests. Absolute configured downloader roots remain supported, while request overrides must be relative and contain no parent-directory segments. The upstream PR was closed as a duplicate of earlier path-traversal work."
+        ],
+        "acceptance": [
+          "Unsafe override paths do not reach either torrent client, and configured absolute roots still work."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/171",
+          "server/downloaders/path-safety.ts",
+          "server/downloaders/transmission.ts",
+          "server/downloaders/rtorrent.ts",
+          "server/__tests__/downloaders.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4879,10 +4904,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "IGDB search results are cached after processing using the sanitized query, limit, and all local filtering options as the key. Successful results last 15 minutes and empty results last 5 minutes; API failures do not cache an empty result."
+        ],
+        "acceptance": [
+          "Repeated identical searches avoid rerunning the search approaches without leaking results across platform or release-year filters."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/172",
+          "server/igdb.ts",
+          "server/__tests__/igdb_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4899,10 +4932,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Carousel previous/next controls already expose explanatory tooltips, including First page reached and Last page reached when disabled. Added a regression test for that guidance."
+        ],
+        "acceptance": [
+          "Users can identify carousel navigation actions and why a disabled control cannot move further."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/173",
+          "client/src/components/GameCarouselSection.tsx",
+          "client/__tests__/GameCarouselSection.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4919,10 +4960,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Per-download request paths reject absolute POSIX and Windows paths plus parent-directory segments. Downloader configuration continues to accept an absolute root path while rejecting traversal."
+        ],
+        "acceptance": [
+          "A request cannot replace the configured root with an absolute or parent-traversing destination."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/174",
+          "server/downloaders/path-safety.ts",
+          "server/middleware.ts",
+          "server/__tests__/middleware.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -4939,10 +4989,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The processed-search cache includes successful and empty results. Regression tests confirm a repeated empty query skips the search approaches and different local year filters remain isolated."
+        ],
+        "acceptance": [
+          "Repeated searches reuse cached results while preserving local filter semantics."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/175",
+          "server/igdb.ts",
+          "server/__tests__/igdb_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

@@ -10,6 +10,7 @@ import parseTorrent from "parse-torrent";
 import crypto from "crypto";
 import { isSafeUrl, safeFetch } from "../ssrf.js";
 import type { DownloadRequest, DownloaderClient, XMLValue } from "./types.js";
+import { isSafeDownloadPathOverride } from "./path-safety.js";
 import {
   assertCredentialsAllowed,
   buildBasicAuthHeader,
@@ -89,6 +90,13 @@ export class RTorrentClient implements DownloaderClient {
   async addDownload(
     request: DownloadRequest
   ): Promise<{ success: boolean; id?: string; message: string }> {
+    if (request.downloadPath && !isSafeDownloadPathOverride(request.downloadPath)) {
+      return {
+        success: false,
+        message: "Invalid download path: use a relative path without parent-directory segments",
+      };
+    }
+
     try {
       if (!request.url) {
         return { success: false, message: "Download URL is required" };

@@ -9,6 +9,7 @@ import { downloadersLogger } from "../logger.js";
 import parseTorrent from "parse-torrent";
 import { isSafeUrl, safeFetch } from "../ssrf.js";
 import type { DownloadRequest, DownloaderClient } from "./types.js";
+import { isSafeDownloadPathOverride } from "./path-safety.js";
 import {
   fetchWithMagnetDetection,
   assertCredentialsAllowed,
@@ -169,6 +170,13 @@ export class TransmissionClient implements DownloaderClient {
   async addDownload(
     request: DownloadRequest
   ): Promise<{ success: boolean; id?: string; message: string }> {
+    if (request.downloadPath && !isSafeDownloadPathOverride(request.downloadPath)) {
+      return {
+        success: false,
+        message: "Invalid download path: use a relative path without parent-directory segments",
+      };
+    }
+
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const args: any = {};

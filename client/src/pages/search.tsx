@@ -799,7 +799,7 @@ export default function SearchPage() {
                     <FormLabel>Download Path (Optional)</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Use default path"
+                        placeholder="Relative path; blank uses default"
                         {...field}
                         data-testid="input-download-path"
                       />

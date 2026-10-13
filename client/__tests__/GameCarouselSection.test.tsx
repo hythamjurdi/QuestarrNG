@@ -105,4 +105,22 @@ describe("GameCarouselSection", () => {
     expect(screen.getByRole("heading", { name: "Adventure Games" })).toBeInTheDocument();
     expect(screen.getByText("No games found.")).toBeInTheDocument();
   });
+
+  it("shows tooltips that explain disabled carousel navigation", () => {
+    mockUseQuery.mockReturnValue({
+      data: [{ id: "game-1" }],
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: undefined,
+      refetch: vi.fn(),
+    });
+
+    render(<GameCarouselSection title="Popular Games" queryKey={["popular"]} queryFn={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "First page reached" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Last page reached" })).toBeDisabled();
+    expect(screen.getByText("First page reached")).toBeInTheDocument();
+    expect(screen.getByText("Last page reached")).toBeInTheDocument();
+  });
 });

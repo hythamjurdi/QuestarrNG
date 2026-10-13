@@ -276,6 +276,8 @@ const HIGH_RATING_COUNT = 5;
 const MAX_LIMIT = 100;
 const MAX_OFFSET = 10000;
 const HOUR_IN_SECONDS = 3600;
+const SEARCH_RESULTS_TTL_MS = 15 * 60 * 1000;
+const EMPTY_SEARCH_RESULTS_TTL_MS = 5 * 60 * 1000;
 
 const FALLBACK_PLATFORMS: Array<{ id: number; name: string }> = [
   { id: 6, name: "PC (Microsoft Windows)" },
@@ -766,6 +768,32 @@ class IGDBClient {
     const sanitizedQuery = sanitizeIgdbInput(query);
     if (!sanitizedQuery) return [];
 
+    const searchCacheKey = `searchGames:${JSON.stringify([
+      sanitizedQuery,
+      limit,
+      options.includeUndated ?? null,
+      options.undatedFirst ?? false,
+      options.platformId ?? null,
+      options.releaseYear ?? null,
+    ])}`;
+    const cachedSearch = this.cache.get(searchCacheKey) as CacheEntry<IGDBGame[]> | undefined;
+    if (cachedSearch && Date.now() < cachedSearch.expiry) {
+      igdbLogger.debug({ cacheKey: searchCacheKey }, "search cache hit");
+      return cachedSearch.data;
+    }
+    if (cachedSearch) this.cache.delete(searchCacheKey);
+    igdbLogger.debug({ cacheKey: searchCacheKey }, "search cache miss");
+
+    let successfulResponse = false;
+    const cacheSearchResults = (results: IGDBGame[]) => {
+      this.cache.set(searchCacheKey, {
+        data: results,
+        expiry:
+          Date.now() + (results.length > 0 ? SEARCH_RESULTS_TTL_MS : EMPTY_SEARCH_RESULTS_TTL_MS),
+      });
+      return results;
+    };
+
     let attemptCount = 0;
 
     // NOTE: platformId/releaseYear are intentionally NOT turned into `where`
@@ -828,6 +856,7 @@ class IGDBClient {
         );
         // Cache search results for 15 minutes to reduce redundant API calls
         const results = await this.makeRequest<IGDBGame[]>("games", approach, 15 * 60 * 1000);
+        successfulResponse = true;
         if (results.length > 0) {
           igdbLogger.debug(
             { approach: i + 1, query: sanitizedQuery, resultCount: results.length },
@@ -843,7 +872,7 @@ class IGDBClient {
           // that a later, less-targeted approach might still satisfy.
           const processedResults = await this.postProcessSearchResults(results, limit, options);
           if (processedResults.length > 0) {
-            return processedResults;
+            return cacheSearchResults(processedResults);
           }
         }
       } catch {
@@ -860,7 +889,7 @@ class IGDBClient {
         { query: sanitizedQuery, maxAttempts: MAX_SEARCH_ATTEMPTS },
         `search reached max attempts`
       );
-      return [];
+      return successfulResponse ? cacheSearchResults([]) : [];
     }
 
     // If no full-phrase results, try individual words without category filter
@@ -885,7 +914,9 @@ class IGDBClient {
           const wordCondition = `name ~ *"${sanitizedWord}"*`;
           const wordQuery = `fields ${IGDB_GAME_FIELDS}; ${withFilters([wordCondition])}sort rating desc; limit ${requestLimit};`;
           // Cache word search results for 15 minutes
-          return await this.makeRequest<IGDBGame[]>("games", wordQuery, 15 * 60 * 1000);
+          const results = await this.makeRequest<IGDBGame[]>("games", wordQuery, 15 * 60 * 1000);
+          successfulResponse = true;
+          return results;
         } catch (error) {
           igdbLogger.debug({ word, error }, `word search failed`);
           return [];
@@ -922,19 +953,24 @@ class IGDBClient {
         // unhandled crash; fall back to the uncanonicalized/unfiltered
         // word-search results instead.
         try {
-          return await this.postProcessSearchResults(uniqueResults, limit, options);
+          const processedResults = await this.postProcessSearchResults(
+            uniqueResults,
+            limit,
+            options
+          );
+          return cacheSearchResults(processedResults);
         } catch (error) {
           igdbLogger.warn(
             { error, query: sanitizedQuery },
             "post-processing failed for word search fallback results; returning uncanonicalized results"
           );
-          return uniqueResults.slice(0, limit);
+          return cacheSearchResults(uniqueResults.slice(0, limit));
         }
       }
     }
 
     igdbLogger.debug({ query: sanitizedQuery }, `search found no results`);
-    return [];
+    return successfulResponse ? cacheSearchResults([]) : [];
   }
 
   /**

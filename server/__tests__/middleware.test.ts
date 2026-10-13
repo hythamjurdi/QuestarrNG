@@ -484,6 +484,21 @@ describe("Middleware - Input Sanitization", () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
     });
+
+    it("allows an absolute configured downloader root", async () => {
+      const req = createMockRequest({ body: { downloadPath: "/downloads/games" } });
+      const res = createMockResponse();
+      const next = createMockNext();
+
+      for (const validator of sanitizeDownloaderUpdateData) {
+        await validator(req as Request, res as Response, next);
+      }
+
+      validateRequest(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
   });
 
   describe("sanitizeDownloaderDownloadData", () => {
@@ -525,7 +540,7 @@ describe("Middleware - Input Sanitization", () => {
         url: "https://example.com/file.zip",
         title: "Test Download",
         category: "games",
-        downloadPath: "/downloads/games",
+        downloadPath: "downloads/games",
         priority: 5,
       };
 
@@ -543,12 +558,17 @@ describe("Middleware - Input Sanitization", () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it("rejects parent-directory traversal in torrent download paths", async () => {
+    it.each([
+      "/downloads/../outside",
+      "downloads\\..\\outside",
+      "/downloads/games",
+      "C:\\downloads\\games",
+    ])("rejects unsafe torrent download path %s", async (downloadPath) => {
       const req = createMockRequest({
         body: {
           url: "magnet:?xt=urn:btih:abc",
           title: "Test Download",
-          downloadPath: "/downloads/../outside",
+          downloadPath,
         },
       });
       const res = createMockResponse();

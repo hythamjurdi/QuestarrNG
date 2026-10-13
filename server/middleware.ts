@@ -7,6 +7,10 @@ import { normalizeReleaseTitle } from "../shared/title-utils.js";
 import { storage } from "./storage.js";
 import { expressLogger } from "./logger.js";
 import { reportServerError } from "./error-telemetry.js";
+import {
+  isSafeConfiguredDownloadPath,
+  isSafeDownloadPathOverride,
+} from "./downloaders/path-safety.js";
 
 const DOWNLOADER_TYPES = [...TORRENT_DOWNLOADER_TYPES, ...USENET_DOWNLOADER_TYPES];
 
@@ -406,8 +410,8 @@ function optionalTrimmedString(field: string, max: number, label: string) {
 
 function optionalDownloadPath(field = "downloadPath") {
   return optionalTrimmedString(field, 500, "Download path")
-    .custom((value) => !value.includes(".."))
-    .withMessage("Download path cannot contain '..'");
+    .custom(isSafeConfiguredDownloadPath)
+    .withMessage("Download path cannot contain parent-directory segments");
 }
 
 function optionalBoolean(field: string, label: string) {
@@ -563,10 +567,10 @@ export const sanitizeDownloaderDownloadData = [
     .trim()
     .isLength({ max: 500 })
     .withMessage("Download path must be at most 500 characters")
-    // 🛡️ Sentinel: Add path traversal validation.
-    // Disallow '..' in download paths to prevent writing files outside the intended directory.
-    .custom((value) => !value.includes(".."))
-    .withMessage("Download path cannot contain '..'"),
+    // Download overrides are relative to the configured downloader root. Reject
+    // absolute paths and parent-directory segments before forwarding them.
+    .custom(isSafeDownloadPathOverride)
+    .withMessage("Download path must be relative and cannot contain parent-directory segments"),
   body("priority")
     .optional()
     .isInt({ min: 0, max: 10 })
