@@ -84,6 +84,8 @@ const defaultUserSettings = {
   preferredPlatform: "",
   xrelSceneReleases: true,
   xrelP2pReleases: false,
+  hideAdultContent: true,
+  hideAgeRestrictedContent: true,
   hideShelvedByDefault: true,
   hideOwnedInHasResults: true,
 };
@@ -113,6 +115,8 @@ describe("SettingsPage", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    localStorage.removeItem("questarr-selected-theme");
+    document.documentElement.classList.remove("theme-win2k");
   });
 
   it("renders the Settings heading", async () => {
@@ -125,6 +129,52 @@ describe("SettingsPage", () => {
     );
 
     expect(await screen.findByText("Settings")).toBeInTheDocument();
+  });
+
+  it("saves the two content filters independently", async () => {
+    const { apiRequest } = await import("@/lib/queryClient");
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    const hideErotic = await screen.findByRole("switch", { name: "Hide erotic content" });
+    const hideAgeRestricted = screen.getByRole("switch", {
+      name: "Hide age-restricted content",
+    });
+    expect(hideErotic).toBeChecked();
+    expect(hideAgeRestricted).toBeChecked();
+
+    fireEvent.click(hideErotic);
+    expect(hideErotic).not.toBeChecked();
+    expect(hideAgeRestricted).toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save Content Filtering" }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith("PATCH", "/api/settings", {
+        hideAdultContent: false,
+        hideAgeRestrictedContent: true,
+      });
+    });
+  });
+
+  it("applies the Windows 2000 theme when selected", async () => {
+    const testQueryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Settings");
+    fireEvent.click(screen.getByRole("button", { name: /Windows 2000/ }));
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveClass("theme-win2k");
+      expect(localStorage.getItem("questarr-selected-theme")).toBe("win2k");
+    });
   });
 
   it("explains automatic migrations and source-only recovery when settings fail to load", async () => {

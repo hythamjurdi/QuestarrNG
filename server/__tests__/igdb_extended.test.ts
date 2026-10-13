@@ -457,6 +457,48 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
     expect(formatted.releaseYear).toBe(2021);
   });
 
+  it.each([
+    {
+      description: "the IGDB Erotic theme",
+      fields: { themes: [{ id: 1, name: "Erotic" }] },
+      isAdultContent: true,
+      isAgeRestricted: false,
+    },
+    {
+      description: "the ESRB Adults Only rating",
+      fields: { age_ratings: [{ category: 1, rating: 12 }] },
+      isAdultContent: false,
+      isAgeRestricted: true,
+    },
+    {
+      description: "the PEGI 18 rating",
+      fields: { age_ratings: [{ category: 2, rating: 5 }] },
+      isAdultContent: false,
+      isAgeRestricted: true,
+    },
+    {
+      description: "unrelated themes and ratings",
+      fields: {
+        themes: [{ id: 2, name: "Action" }],
+        age_ratings: [
+          { category: 1, rating: 10 },
+          { category: 2, rating: 4 },
+        ],
+      },
+      isAdultContent: false,
+      isAgeRestricted: false,
+    },
+  ])(
+    "formatGameData classifies $description independently",
+    async ({ fields, isAdultContent, isAgeRestricted }) => {
+      const { igdbClient } = await import("../igdb.js");
+      const formatted = igdbClient.formatGameData({ id: 3, name: "Classified Game", ...fields });
+
+      expect(formatted.isAdultContent).toBe(isAdultContent);
+      expect(formatted.isAgeRestricted).toBe(isAgeRestricted);
+    }
+  );
+
   it("formatGameData handles a minimal game with no optional fields", async () => {
     const { igdbClient } = await import("../igdb.js");
     const formatted = igdbClient.formatGameData({
@@ -476,6 +518,8 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
     expect(formatted.isReleased).toBe(false);
     expect(formatted.releaseYear).toBeNull();
     expect(formatted.earlyAccess).toBe(false);
+    expect(formatted.isAdultContent).toBe(false);
+    expect(formatted.isAgeRestricted).toBe(false);
   });
 
   it("formatGameData treats an unreleased future date as not released", async () => {

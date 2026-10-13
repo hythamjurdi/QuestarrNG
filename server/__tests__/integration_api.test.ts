@@ -544,6 +544,48 @@ describe("integration API", () => {
       expect(res.body.games.map((g: { id: string }) => g.id)).toEqual(["game-1"]);
     });
 
+    it("applies erotic and age-rating preferences independently", async () => {
+      (storage.getUserGames as Mock).mockResolvedValue([
+        {
+          id: "standard",
+          title: "Standard Game",
+          status: "owned",
+          isAdultContent: false,
+          isAgeRestricted: false,
+        },
+        {
+          id: "erotic-only",
+          title: "Erotic Theme Only",
+          status: "owned",
+          isAdultContent: true,
+          isAgeRestricted: false,
+        },
+        {
+          id: "age-restricted-only",
+          title: "Age Restricted Only",
+          status: "owned",
+          isAdultContent: false,
+          isAgeRestricted: true,
+        },
+        {
+          id: "both",
+          title: "Both Signals",
+          status: "owned",
+          isAdultContent: true,
+          isAgeRestricted: true,
+        },
+      ]);
+      (storage.getUserSettings as Mock).mockResolvedValue({
+        hideAdultContent: false,
+        hideAgeRestrictedContent: true,
+      });
+
+      const res = await withKey(request(app).get("/api/integration/library"));
+
+      expect(res.status).toBe(200);
+      expect(res.body.games.map((g: { id: string }) => g.id)).toEqual(["standard", "erotic-only"]);
+    });
+
     it("returns 500 when the library lookup fails", async () => {
       (storage.getUserGames as Mock).mockRejectedValue(new Error("db unavailable"));
 
@@ -743,6 +785,27 @@ describe("integration API", () => {
 
       const res = await withKey(request(app).post("/api/integration/games/request")).send({
         title: "Filtered",
+      });
+
+      expect(res.status).toBe(404);
+      expect(storage.addGame).not.toHaveBeenCalled();
+    });
+
+    it("hides an age-restricted quick-add match when only that filter is enabled", async () => {
+      const { igdbClient } = await import("../igdb.js");
+      (igdbClient.formatGameData as Mock).mockReturnValue({
+        title: "Age Restricted",
+        igdbId: 1000,
+        isAdultContent: false,
+        isAgeRestricted: true,
+      });
+      (storage.getUserSettings as Mock).mockResolvedValue({
+        hideAdultContent: false,
+        hideAgeRestrictedContent: true,
+      });
+
+      const res = await withKey(request(app).post("/api/integration/games/request")).send({
+        title: "Age Restricted",
       });
 
       expect(res.status).toBe(404);
