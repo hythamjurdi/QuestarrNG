@@ -2,6 +2,68 @@
 
 This document outlines the standard operating procedures for maintaining and hardening this repository.
 
+## Running and monitoring an installation
+
+For a standard installation, follow the Docker Compose steps in the
+[README](../README.md). The bundled Compose file persists application state in
+the host's `./data` directory, including the SQLite database and
+`config.yaml`; the Postgres Compose file still needs that mount for non-database
+state. Both configurations run database migrations when the app starts, so a
+normal restart does not need a separate schema-push command.
+
+Check the app container and its recent logs with:
+
+```bash
+docker compose ps
+docker compose logs --tail=100 app
+```
+
+The Compose health check calls `GET /api/health`. That is a liveness check: it
+confirms the server responds. `GET /api/ready` also checks the database and
+IGDB connectivity and returns `503` if either is unavailable. Use your mapped
+port if it differs from the default `5000`:
+
+```bash
+curl --fail http://localhost:5000/api/health
+curl --fail http://localhost:5000/api/ready
+```
+
+## Backups and recovery
+
+Take a backup before applying an update, and keep the image version, Compose
+file, and required environment settings with it. Protect backups as secrets:
+they can contain account data, integration configuration, and database
+credentials. Do not commit or attach them to public issues.
+
+With the default SQLite Compose setup, stop the app before copying `./data` so
+the database and any SQLite write-ahead log files are captured consistently:
+
+```bash
+docker compose stop app
+tar -czf ../questarr-data-$(date +%F).tar.gz data
+docker compose start app
+```
+
+With the bundled Postgres Compose setup, create a database dump and back up
+`./data` separately because it still contains configuration and other
+non-database state:
+
+```bash
+docker compose -f docker-compose.postgres.yml exec -T db \
+  pg_dump -U questarr -d questarr > ../questarr-db-$(date +%F).sql
+tar -czf ../questarr-data-$(date +%F).tar.gz data
+```
+
+If Postgres is hosted outside Compose, use the database provider's backup
+procedure. Store `.env` and any database passwords in a protected backup
+location; do not place secrets in the SQL dump or a public repository.
+
+To recover, stop the app, restore the data directory and the matching database
+backup, then start the same app version that created the backup and check both
+health endpoints. Restore a Postgres dump into a clean database rather than
+over an active Questarr database. Test the recovery procedure periodically;
+keeping a backup is useful only if it can be restored.
+
 ## Verification Matrix
 
 All pull requests and hardening passes must pass the following verification gates:

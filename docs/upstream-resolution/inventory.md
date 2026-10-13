@@ -238,12 +238,12 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #243](https://github.com/Doezer/Questarr/pull/243) | ⚡ Bolt: Parallelize fallback search in IGDB client | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #244](https://github.com/Doezer/Questarr/pull/244) | 🎨 Palette: [UX improvement] Fix NotificationItem accessibility | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #245](https://github.com/Doezer/Questarr/issues/245) | App container has issues when first starting | CLOSED | no-merge-commit | verified |
-| [issue #246](https://github.com/Doezer/Questarr/issues/246) | Fresh install from readme "does not exist on type" | CLOSED | no-merge-commit | unreviewed |
-| [pr #247](https://github.com/Doezer/Questarr/pull/247) | ⚡ Bolt: parallelize downloader requests in routes | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #248](https://github.com/Doezer/Questarr/pull/248) | 🎨 Palette: Add ARIA labels to icon-only buttons | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #249](https://github.com/Doezer/Questarr/pull/249) | Harden repository: Fix tests and add operational docs | CLOSED | no-merge-commit | unreviewed |
-| [pr #250](https://github.com/Doezer/Questarr/pull/250) | chore(deps): bump docker/build-push-action from 6.10.0 to 6.18.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #251](https://github.com/Doezer/Questarr/pull/251) | chore(deps): bump docker/metadata-action from 5.6.1 to 5.10.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [issue #246](https://github.com/Doezer/Questarr/issues/246) | Fresh install from readme "does not exist on type" | CLOSED | no-merge-commit | verified |
+| [pr #247](https://github.com/Doezer/Questarr/pull/247) | ⚡ Bolt: parallelize downloader requests in routes | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #248](https://github.com/Doezer/Questarr/pull/248) | 🎨 Palette: Add ARIA labels to icon-only buttons | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #249](https://github.com/Doezer/Questarr/pull/249) | Harden repository: Fix tests and add operational docs | CLOSED | no-merge-commit | verified |
+| [pr #250](https://github.com/Doezer/Questarr/pull/250) | chore(deps): bump docker/build-push-action from 6.10.0 to 6.18.0 | MERGED | merge-commit-not-in-either-main-history | superseded |
+| [pr #251](https://github.com/Doezer/Questarr/pull/251) | chore(deps): bump docker/metadata-action from 5.6.1 to 5.10.0 | MERGED | merge-commit-not-in-either-main-history | superseded |
 | [pr #252](https://github.com/Doezer/Questarr/pull/252) | chore(deps): bump docker/login-action from 3.3.0 to 3.6.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #253](https://github.com/Doezer/Questarr/pull/253) | chore(deps): bump docker/setup-buildx-action from 3.7.1 to 3.12.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #254](https://github.com/Doezer/Questarr/pull/254) | chore(deps): bump actions/checkout from 4.2.2 to 6.0.1 | MERGED | merge-commit-not-in-either-main-history | unreviewed |

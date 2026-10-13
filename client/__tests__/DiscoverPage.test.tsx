@@ -170,6 +170,7 @@ describe("DiscoverPage", () => {
     );
 
     expect(await screen.findByText("Discover")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Discovery settings" })).toBeInTheDocument();
 
     // Give some time for queries to settle to hit coverage on our new hook
     await new Promise((resolve) => setTimeout(resolve, 50));

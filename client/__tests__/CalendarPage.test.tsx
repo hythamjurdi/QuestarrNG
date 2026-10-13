@@ -115,6 +115,8 @@ describe("CalendarPage", () => {
   it("shows the empty state when there are no wanted games", async () => {
     renderPage();
 
+    expect(screen.getByRole("button", { name: "Previous period" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next period" })).toBeInTheDocument();
     expect(
       await screen.findByText("No games in your wishlist. Add games to track their release dates.")
     ).toBeInTheDocument();

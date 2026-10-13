@@ -1,0 +1,36 @@
+Batch 27 review and validation
+==============================
+
+Items reviewed
+--------------
+
+- Issue #246: its reported cron property errors match the follow-up errors in
+  #241 and are absent from the current production TypeScript build. The author
+  later confirmed that updating Node/npm resolved installation; the fork
+  requires Node >=22.19. The subsequent database URL problem was tracked
+  separately in #260.
+- PR #247: `/api/downloads` and `/api/downloaders/storage` query enabled
+  downloaders concurrently and isolate failures per downloader.
+- PR #248: Calendar previous/next and Discover settings controls have
+  descriptive accessible names, covered by role-based page assertions.
+- PR #249: the old type mismatch is resolved. The current contribution guide
+  and PR template are maintained, and `docs/OPERATIONS.md` now documents
+  container health checks, log inspection, and SQLite/Postgres backup and
+  recovery. Its placeholder task list is replaced by the campaign ledger.
+- PRs #250 and #251 are superseded: the build/push action has been replaced by
+  a pinned step-security wrapper, and metadata-action is already pinned at
+  v6.2.0.
+
+Validation
+----------
+
+- Focused tests:
+  `npm test -- server/__tests__/api_routes.test.ts client/__tests__/Accessibility.test.tsx client/__tests__/CalendarPage.test.tsx client/__tests__/DiscoverPage.test.tsx`
+  — 4 files passed; 386 tests passed.
+- `npm run check` — passed.
+- Release-note preview and validation for the new operator-guide fragment — passed.
+- Production client and server builds passed in batch 26; this batch changes
+  documentation and test assertions only.
+- GitHub histories checked: issue #246 and PRs #247–251; issue #241 comments
+  were checked to confirm the duplicate build errors, and issue #260 is the
+  later database-connection disposition.

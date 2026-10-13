@@ -6797,11 +6797,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The reported cron.ts property errors match the follow-up errors on issue #241 and are absent from the current production TypeScript build. The reporter later upgraded Node/npm and confirmed installation worked; Node 18 was below the supported engine range (>=22.19.0). The later database connection error was a separate report tracked as issue #260."
+        ],
+        "acceptance": [
+          "A fresh supported-runtime build has no missing downloadHash/downloadTitle type errors.",
+          "The lockfile can be installed with the supported Node/npm toolchain; database configuration failures remain separately tracked."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/246",
+          "https://github.com/Doezer/Questarr/issues/246#issuecomment-3711811620",
+          "https://github.com/Doezer/Questarr/issues/241",
+          "package.json",
+          "server/cron.ts",
+          "docs/upstream-resolution/evidence/validation-batch-26.txt"
+        ],
+        "dependencies": [
+          "issue:241",
+          "issue:260"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -6817,10 +6832,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e9a583cb82214268a54ac6a563b216eb6b03b6ec",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GET /api/downloads and GET /api/downloaders/storage start enabled-downloader requests together with Promise.all. Each downloader is handled independently, so a failed client does not fail the whole response or discard successful clients."
+        ],
+        "acceptance": [
+          "Downloader status and free-space requests run concurrently.",
+          "Partial client failures are reported per downloader while successful results remain available."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/247",
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-27.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6837,10 +6862,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e596cfbac2c81f9b14fcfbaa7676184666e110b4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Calendar previous/next controls and Discover settings control expose descriptive accessible names. Role/name assertions exercise those controls through the rendered pages."
+        ],
+        "acceptance": [
+          "Icon-only Calendar and Discover controls have descriptive names for screen-reader and keyboard users."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/248",
+          "client/src/pages/calendar.tsx",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/CalendarPage.test.tsx",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-27.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6857,10 +6893,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The old game-torrent type mismatch is resolved in the fork and its production build passes. The PR's documentation request is covered by the maintained contribution guide and PR template; docs/OPERATIONS.md now provides concrete container monitoring, health-check, and SQLite/Postgres backup and recovery steps. Its placeholder TASKS.md list is unnecessary because the campaign ledger tracks the actual upstream work."
+        ],
+        "acceptance": [
+          "The application compiles with the current download schema.",
+          "Operators can find deployment, logs, health checks, and safe database backup/recovery guidance.",
+          "Contributors have a maintained PR template and contribution guide."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/249",
+          "docs/OPERATIONS.md",
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          ".github/CONTRIBUTING.md",
+          "docs/upstream-resolution/evidence/validation-batch-26.txt",
+          "docs/upstream-resolution/evidence/validation-batch-27.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6877,10 +6926,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "34d274919790eb9ace72b62baf84d39f9f06e0e0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The proposed docker/build-push-action v6.18.0 bump is obsolete in this fork: the workflows use the pinned step-security/docker-build-push-action v7.3.0 wrapper instead, and the upstream action is no longer referenced. Replaying the old package-lock changes is not needed."
+        ],
+        "acceptance": [
+          "Container builds use a maintained pinned build/push action."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/250",
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6897,10 +6954,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "5a0f5bb67733ffe197ebd19579c0549cbc809fc1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested docker/metadata-action v5.10.0 bump is already exceeded by the pinned v6.2.0 action in the deploy workflow. The older grouped lockfile changes do not need to be replayed."
+        ],
+        "acceptance": [
+          "Image metadata generation uses a maintained pinned action at least as current as the requested update."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/251",
+          ".github/workflows/deploy.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

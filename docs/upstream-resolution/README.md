@@ -656,3 +656,17 @@ PR [#243](https://github.com/Doezer/Questarr/pull/243) is verified: IGDB fallbac
 Ten focused test suites passed (211 tests, one skipped). Type checking, lint, formatting, and the production Vite/TypeScript builds passed. See [batch 26 validation](evidence/validation-batch-26.txt).
 
 The ledger now records **221 verified**, **18 superseded**, **901 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
+
+## Follow-up: build, downloader concurrency, accessibility and operations (#246–251)
+
+Issue [#246](https://github.com/Doezer/Questarr/issues/246) is verified. Its `cron.ts` type errors match the follow-up reported in #241 and are absent from the current production build. The reporter later confirmed that updating Node/npm fixed installation; the fork requires Node 22.19 or newer. The database connection error mentioned when closing #246 was the separate report tracked in #260.
+
+PR [#247](https://github.com/Doezer/Questarr/pull/247) is verified: download and free-space lookups use parallel downloader requests, while per-client failures leave other results available. PR [#248](https://github.com/Doezer/Questarr/pull/248) is verified: Calendar navigation and Discover settings have descriptive accessible names, now checked through role-based page tests.
+
+PR [#249](https://github.com/Doezer/Questarr/pull/249) is verified. The old type mismatch is fixed in the current code; the maintained contribution guide and PR template replace its generic templates, and [the operations guide](../OPERATIONS.md) now explains health checks, logs, and safe SQLite/Postgres backup and recovery. Its placeholder task list is replaced by this per-item ledger.
+
+PR [#250](https://github.com/Doezer/Questarr/pull/250) is superseded: the workflows use the pinned step-security build/push action rather than the old upstream action. PR [#251](https://github.com/Doezer/Questarr/pull/251) is superseded by the pinned metadata-action v6.2.0, above the requested v5.10.0.
+
+Four focused suites passed (386 tests), including the downloader routes and rendered accessibility names. TypeScript checking passed; the production build was also verified in [batch 26](evidence/validation-batch-26.txt). See [batch 27 validation](evidence/validation-batch-27.txt).
+
+The ledger now records **225 verified**, **20 superseded**, **895 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
