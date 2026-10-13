@@ -38,7 +38,8 @@ implemented item still needs verification, no currently identified item needs
 implementation, and 614 have not been reviewed. These numbers describe the
 ledger, not completion of the campaign. Batch 50 is the latest completed
 implementation batch; its results are in
-[validation evidence](evidence/validation-batch-50.txt).
+[validation evidence](evidence/validation-batch-50.txt), and its commit is
+`dea59b96` on `codex/upstream-resolution`.
 
 ## Project records
 
