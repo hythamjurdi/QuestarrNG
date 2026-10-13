@@ -136,7 +136,15 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
             <SidebarMenu>
               {navigation.map((item) =>
                 item.children && item.children.length > 0 ? (
-                  <Collapsible key={item.title} defaultOpen className="group/collapsible" asChild>
+                  <Collapsible
+                    key={item.title}
+                    defaultOpen={
+                      item.children?.some((child) => child.url === activeItem) ||
+                      (item.defaultOpen ?? true)
+                    }
+                    className="group/collapsible"
+                    asChild
+                  >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton

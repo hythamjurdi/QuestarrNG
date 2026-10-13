@@ -8,6 +8,7 @@ import {
   Gamepad2,
   HardDrive,
   Home,
+  MoreHorizontal,
   Newspaper,
   PieChart,
   Rss,
@@ -26,6 +27,7 @@ export interface AppNavItem {
   icon: LucideIcon;
   /** Nested sub-items, rendered as a collapsible group under this entry (sidebar only). */
   children?: AppNavItem[] | undefined;
+  defaultOpen?: boolean | undefined;
 }
 
 export const primaryNavigation: AppNavItem[] = [
@@ -35,7 +37,6 @@ export const primaryNavigation: AppNavItem[] = [
     icon: Home,
     children: [
       { title: "All Games", url: "/", icon: Home },
-      { title: "Wishlist", url: "/wishlist", icon: Star },
       { title: "Playing", url: "/playing", icon: Gamepad2 },
       { title: "Library Import", url: "/library-import", icon: FolderInput },
     ],
@@ -53,8 +54,17 @@ export const primaryNavigation: AppNavItem[] = [
     ],
   },
   { title: "Downloads", url: "/downloads", icon: Download },
-  { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Stats", url: "/stats", icon: PieChart },
+  {
+    title: "More",
+    url: "/more",
+    icon: MoreHorizontal,
+    defaultOpen: false,
+    children: [
+      { title: "Calendar", url: "/calendar", icon: Calendar },
+      { title: "Wishlist", url: "/wishlist", icon: Star },
+    ],
+  },
 ];
 
 export const managementNavigation: AppNavItem[] = [

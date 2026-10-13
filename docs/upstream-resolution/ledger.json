@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T00:27:26.087Z",
-  "forkHead": "580abeba6ea0fe62ebf8ebfdaf0b04938b487697",
+  "capturedAt": "2026-10-13T00:36:47.597Z",
+  "forkHead": "d66a3e6df3441b6cbed31a15bd87ff83562cb649",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -5232,10 +5232,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork passes the carousel heading as a prop and memoizes GameCarouselSection; it has no local title state/effect that causes the extra post-fetch title render described by the PR."
+        ],
+        "acceptance": [
+          "A data refresh does not cause an additional render solely to copy the section title into state."
+        ],
+        "evidence": [
+          "client/src/components/GameCarouselSection.tsx",
+          "client/__tests__/GameCarouselSection.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5252,10 +5260,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The downloader test route validates URLs, and downloader clients use the shared DNS-pinned safeFetch path, which checks every resolved address and revalidates redirect targets. Link-local metadata and unspecified/broadcast targets are blocked while private LAN hosts remain available for the self-hosted deployment model."
+        ],
+        "acceptance": [
+          "Connection tests cannot use DNS rebinding or redirects to reach metadata/link-local targets, while configured LAN downloaders continue to work."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/ssrf.ts",
+          "server/downloaders/manager.ts",
+          "server/downloaders/transmission.ts",
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/ssrf_routes.test.ts",
+          "server/__tests__/downloaders_ssrf.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5272,10 +5294,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "30b2a818438953b6bd8238e2aa2d4b9b9dc7cc65",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Download icon already has a tooltip. The View Details action is rendered as a named text button rather than an ambiguous icon-only control."
+        ],
+        "acceptance": [
+          "Icon-only GameCard actions explain themselves visually, and the details action has a visible text label."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5292,10 +5322,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SearchPage tracks the last notified query in a ref rather than state, so recording notification progress does not trigger an extra render."
+        ],
+        "acceptance": [
+          "Search completion/error notifications do not set component state solely to remember the last notified query."
+        ],
+        "evidence": [
+          "client/src/pages/search.tsx",
+          "client/__tests__/SearchPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5312,11 +5350,27 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This closed path-traversal request is covered by the previously verified middleware validation and downloader request checks, which reject absolute and parent-traversing overrides before writing or sending a request."
+        ],
+        "acceptance": [
+          "Absolute and traversal download overrides are blocked while configured absolute downloader roots remain supported."
+        ],
+        "evidence": [
+          "server/middleware.ts",
+          "server/downloaders/path-safety.ts",
+          "server/__tests__/middleware.test.ts",
+          "server/__tests__/downloaders.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-19.txt",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
+        "dependencies": [
+          "pr:171",
+          "pr:174",
+          "pr:177",
+          "pr:181"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -5332,10 +5386,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Library item routes to the implemented / Library page. Sidebar totals are derived from current game and download queries: all games, wanted games, and active downloads; no fixed 48 badge remains."
+        ],
+        "acceptance": [
+          "Library, Downloads, and Wishlist routes exist and their sidebar counts reflect current stored data."
+        ],
+        "evidence": [
+          "client/src/App.tsx",
+          "client/src/lib/routes.ts",
+          "client/src/components/AppSidebar.tsx",
+          "client/src/components/navigation-items.ts",
+          "client/__tests__/AppSidebar.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5352,10 +5417,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Calendar and Wishlist were moved into a collapsed More group; opening one of those routes expands the group automatically. The fork has no standalone Trending page or navigation link; trending mods remain contextual to game details."
+        ],
+        "acceptance": [
+          "Low-priority Calendar and Wishlist links stay out of the default navigation but remain reachable under More, and there is no standalone Trending page in the navigation."
+        ],
+        "evidence": [
+          "client/src/components/navigation-items.ts",
+          "client/src/components/AppSidebar.tsx",
+          "client/__tests__/AppSidebar.test.tsx",
+          "docs/pr-evidence/upstream-low-priority-pages-collapsed.png",
+          "docs/pr-evidence/upstream-low-priority-pages-expanded.png",
+          "docs/upstream-resolution/evidence/validation-batch-21.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

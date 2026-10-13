@@ -1,10 +1,10 @@
 /** @vitest-environment jsdom */
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
-import type { Game } from "@shared/schema";
+import type { DownloadStatus, Game } from "@shared/schema";
 
 import AppSidebar from "../src/components/AppSidebar";
 import { SidebarProvider } from "../src/components/ui/sidebar";
@@ -17,7 +17,7 @@ vi.mock("@/components/GitHubVersionLink", () => ({
   GitHubVersionLink: () => null,
 }));
 
-function renderSidebar(statuses: string[]) {
+function renderSidebar(statuses: string[], downloads: DownloadStatus[] = [], activeItem = "/") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, queryFn: () => null } },
   });
@@ -25,11 +25,11 @@ function renderSidebar(statuses: string[]) {
     ["/api/games"],
     statuses.map((status, i) => ({ id: `g${i}`, status }) as unknown as Game)
   );
-  queryClient.setQueryData(["/api/downloads"], { downloads: [] });
+  queryClient.setQueryData(["/api/downloads"], { downloads });
   return render(
     <QueryClientProvider client={queryClient}>
       <SidebarProvider>
-        <AppSidebar />
+        <AppSidebar activeItem={activeItem} />
       </SidebarProvider>
     </QueryClientProvider>
   );
@@ -38,6 +38,7 @@ function renderSidebar(statuses: string[]) {
 describe("AppSidebar library counts", () => {
   it("shows the library total, wishlist and playing counts", () => {
     renderSidebar(["wanted", "playing", "playing", "owned", "completed"]);
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
 
     expect(screen.getByRole("button", { name: "All Games, 5 games" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Wishlist, 1 game" })).toBeInTheDocument();
@@ -48,6 +49,7 @@ describe("AppSidebar library counts", () => {
 
   it("styles the playing count with the playing status color, unlike the wishlist", () => {
     renderSidebar(["wanted", "playing"]);
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
 
     expect(screen.getByTestId("badge-playing")).toHaveClass("bg-cyan-600");
     expect(screen.getByTestId("badge-wishlist")).not.toHaveClass("bg-cyan-600");
@@ -59,6 +61,27 @@ describe("AppSidebar library counts", () => {
     expect(screen.queryByTestId("badge-all-games")).not.toBeInTheDocument();
     expect(screen.queryByTestId("badge-playing")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Playing" })).toBeInTheDocument();
+  });
+
+  it("keeps lower-priority pages collapsed while preserving live badges under More", () => {
+    renderSidebar(["wanted"], [{ status: "downloading" } as unknown as DownloadStatus]);
+
+    expect(screen.queryByTestId("nav-calendar")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("nav-wishlist")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Downloads, 1 active downloads" })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+
+    expect(screen.getByTestId("nav-calendar")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Wishlist, 1 game" })).toBeInTheDocument();
+  });
+
+  it("opens More when a low-priority route is active", () => {
+    renderSidebar([], [], "/calendar");
+
+    expect(screen.getByTestId("nav-calendar")).toBeVisible();
   });
 
   it("lists Library Import under Library", () => {

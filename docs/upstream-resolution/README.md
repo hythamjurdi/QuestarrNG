@@ -526,3 +526,33 @@ Jules greetings. The ledger now records **182 verified**, **9 superseded**,
 **950 unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and
 **1 needs-implementation** record. Issue #37 remains outstanding. See
 [batch 20 evidence](evidence/validation-batch-20.txt).
+
+## Follow-up: upstream PRs #183–187 and issues #188–189
+
+PR #183's extra carousel-title state is not present in the fork: the title is a
+prop and `GameCarouselSection` is memoized. PR #184's SSRF concern is covered by
+the shared `safeFetch` layer, which validates all resolved addresses, pins the
+connection to the validated address, and revalidates redirects. The fork keeps
+private LAN downloader hosts available for self-hosted installations while
+blocking metadata, link-local, and unspecified targets. PR #185's Download
+icon already has a tooltip; View Details is a visible text button. PR #186's
+search notifications remember the last query in a ref, so that bookkeeping
+adds no state update. PR #187 duplicates the path protections reviewed in
+batch 19.
+
+Issue #188 is covered by the routed Library page and live Library, Wishlist,
+and Downloads badges. For #189, Calendar and Wishlist moved under a collapsed
+“More” group; those routes remain accessible, and the group opens when either
+route is active. Trending is not a standalone page or navigation item in the
+fork; trending mods are shown in game details. Live screenshots show the
+collapsed and expanded navigation states:
+[collapsed](../pr-evidence/upstream-low-priority-pages-collapsed.png) ·
+[expanded](../pr-evidence/upstream-low-priority-pages-expanded.png).
+
+Focused validation passed: 15 test files and 244 tests, including sidebar,
+carousel, GameCard, search notifications, downloader SSRF, and downloader
+client coverage. Typecheck, lint, formatting, and production build passed. Vite
+continues to report its existing large-chunk advisory. The ledger now records
+**188 verified**, **10 superseded**, **943 unreviewed**, **4 not-applicable**,
+**1 implemented-but-unverified**, and **1 needs-implementation** record. Issue
+#37 remains outstanding. See [batch 21 evidence](evidence/validation-batch-21.txt).
