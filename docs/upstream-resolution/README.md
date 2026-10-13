@@ -1,61 +1,77 @@
 # Upstream resolution campaign
 
-## Objective and scope
+## Scope and ownership
 
-Audit every issue and PR in Doezer/Questarr, including closed issues, merged PRs,
-and closed unmerged PRs. Implement still-unresolved actionable requests in
-QuestarrNG, preserving existing fork integrations. The user confirmed full
+Review every issue and pull request in Doezer/Questarr, including closed issues,
+merged PRs, and closed unmerged PRs. The collected inventory has **1,147
+records**: 232 issues and 915 PRs. Implement actionable behavior that is missing
+from QuestarrNG, verify behavior that already exists, and record an
+evidence-backed disposition for every source item. The user confirmed the full
 historical scope on October 12, 2026.
 
-The target is demonstrable resolution of each underlying request. Upstream
-maintainers retain control over acceptance, merging and administrative closure.
-Duplicates, obsolete dependency bumps, conflicting proposals, support questions
-and repository governance changes require an explicit disposition and evidence;
-they are not instructions to blindly replay every historical patch.
+“Resolved” means addressed or given a justified disposition in QuestarrNG. This
+campaign does not change upstream GitHub statuses: Doezer's maintainers decide
+whether to accept the work, merge it, publish it, or close the original issue
+or PR. Historical patches are evidence to inspect, not instructions to replay
+blindly. Preserve the fork's integrations, security, deployment, and database
+behavior when implementing upstream requests.
 
-## Inventory and status
+## Current ledger snapshot
 
-- [Every issue and PR](inventory.md): generated navigation table.
-- [Resolution ledger](ledger.json): per-item findings, acceptance checks,
-  dependencies and evidence. Review status is independent of GitHub state.
-- [Source snapshot](sources.json): exported issue bodies/discussion and PR bodies.
-  PR reviews/diffs and complete issue timelines still require detailed collection.
+The ledger records a source snapshot captured on **October 13, 2026 at
+05:20:58 UTC**. Review status is independent of GitHub's open, closed, or merged
+state:
 
-Latest inventory (October 13, 2026): **232 issues** (4 open, 228 closed) and
-**915 PRs** (2 open, 705 merged, 208 closed unmerged), for **1,147 items**.
+| Review status            |     Items |
+| ------------------------ | --------: |
+| `verified`               |       444 |
+| `superseded`             |        78 |
+| `not-applicable`         |         9 |
+| `implemented-unverified` |         1 |
+| `needs-implementation`   |         1 |
+| `unreviewed`             |       614 |
+| **Total**                | **1,147** |
 
-Of the 705 merged PRs, 487 merge commits are ancestors of the fork snapshot,
-none are ancestors of upstream/main without also being in the fork, and 218 are
-absent from both main histories. The remaining 210 PRs are open or closed unmerged. Release
-branches, squash/rebase merges, equivalent patches and reverts require further
-inspection. None of these counts proves functionality.
+That snapshot gives 531 items a completed evidence-backed disposition. One
+implemented item still needs verification, one actionable item still needs
+implementation, and 614 have not been reviewed. These numbers describe the
+ledger, not completion of the campaign. Batch 49 is the latest completed
+implementation batch; its results are in
+[validation evidence](evidence/validation-batch-49.txt), and its commit is
+`bc16a5be` on `codex/upstream-resolution`.
 
-The fork and fetched upstream/main diverge by 175 fork-only and 130 upstream-only
-commits at the initial snapshot. Reconcile those changes before independently
-reimplementing fixes already delivered upstream. Preserve the current validation
-engine work and the fork's SeerrNG, Real-Debrid, deployment and security behavior.
+## Project records
 
-## Implementation sequence
+- [Every issue and PR](inventory.md) is the generated navigation table. Its
+  history column reports commit ancestry only; ancestry does not prove behavior.
+- [The resolution ledger](ledger.json) is authoritative for each source's
+  findings, acceptance checks, evidence, dependencies, source digest, and review
+  status.
+- [The source snapshot](sources.json) records sanitized issue and PR list-export
+  data. It does not contain complete issue timelines, PR review threads, or
+  diffs.
+- [The audit and evidence process](AUDIT-PROCESS.md) defines source review,
+  status meanings, evidence standards, refresh procedure, and the merge gate.
+- [Batch evidence](evidence/) records focused and combined validation results.
 
-1. Establish a clean validation baseline and reconcile upstream/main in a dedicated
-   branch. Group conflicts by subsystem and retain fork-specific behavior.
-2. Review the six open items and all 208 closed unmerged PRs, including comments,
-   review threads and diffs. Link duplicates and later replacements.
-3. Review all 228 closed issues and 705 merged PRs against the resulting code.
-   Convert each outstanding requirement into a reproducible acceptance check.
-4. Implement dependency-ordered batches: correctness/security and data integrity;
-   search and release selection; update management; metadata providers; federation;
-   remaining product, deployment, accessibility and documentation gaps.
-5. Validate each batch and then the combined system. Record exact source commits,
-   command results, relevant migrations and running UI evidence.
-6. Refresh the upstream snapshot, review changes since collection, and produce a
-   per-item completion report and upstream-ready change descriptions.
+The `capturedAt`, `forkHead`, and `upstreamHead` fields identify the inventory
+generation. They are not a pointer to the latest campaign commit. Refresh the
+source snapshot before final review and revisit any item whose source changed.
 
-Do not mark an item resolved solely because a related commit exists, its PR was
-merged, a UI control was added, or a unit test passed. Verify the requested user
-journey, persistence, authorization and failure behavior where relevant. Database
-changes cover SQLite and PostgreSQL. UI PRs require screenshots/recordings of
-`npm run dev:test` in the PR description, as required by AGENTS.md.
+## Completion and merge gate
+
+Review source details and linked requests, translate requirements into
+acceptance checks, make changes in dependency-aware batches, and verify the
+resulting user behavior. Test persistence on SQLite and PostgreSQL when a change
+touches both database paths. Changes under `client/src/**` need a screenshot or
+recording of the running UI from `npm run dev:test`; include the visual evidence
+in the pull request description.
+
+The campaign is ready for merge to QuestarrNG `main` only after a fresh complete
+inventory has no `unreviewed`, `needs-implementation`, or
+`implemented-unverified` entries; every other entry has source-backed evidence;
+source changes have been re-reviewed; required UI evidence is present; and the
+combined validation suite passes. See the full [completion criteria](AUDIT-PROCESS.md#campaign-completion-and-merge-gate).
 
 ## Initial open-item findings
 
@@ -97,30 +113,17 @@ See [batch 6](evidence/validation-batch-6.txt).
 
 ## Refresh and review workflow
 
-Run from this checkout, using the repository's RTK wrapper when installed:
-
-```sh
-rtk git fetch upstream
-rtk node scripts/audit-upstream.mjs
-```
-
-An optional directory argument imports `questarr-upstream-issues.json` and
-`questarr-upstream-prs.json` produced by equivalent `gh ... list --json` exports.
-The tool preserves per-item reviews, records source digests and flags changed
-sources. It does not silently promote items to resolved. For a final review,
-fetch all paginated issue comments/timeline events and PR discussions/review
-threads, plus relevant diffs, then record evidence in the ledger.
-
-Suggested review states: `unreviewed`, `investigating`, `needs-implementation`,
-`implemented-unverified`, `verified`, `duplicate`, `superseded`,
-`decision-required`, `not-applicable`. Terminal dispositions need a rationale
-and links to the replacement or supporting evidence.
+Follow the [audit process](AUDIT-PROCESS.md#review-and-implementation-workflow)
+to refresh the inventory and collect full issue timelines and PR review
+threads. The refresh script preserves reviews, flags changed source digests,
+and does not promote an item to resolved. Use only the ledger's defined statuses
+and record evidence for each disposition.
 
 ## Working location
 
-The campaign starts in the isolated `codex/upstream-resolution` branch and
-`QuestarrNG-upstream-resolution` sibling worktree. The original
-`codex/validation-live-progress` checkout remains available for its existing work.
+Campaign work is being delivered from the isolated `codex/upstream-resolution`
+branch in the `QuestarrNG-upstream-resolution` sibling worktree. The original
+checkout remains separate from this campaign branch.
 
 ## Initial integration checkpoint — October 12, 2026
 

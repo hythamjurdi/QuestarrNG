@@ -48,6 +48,7 @@ A video game management application inspired by the -Arr apps (Sonarr, Radarr, P
 - [Roadmap](#roadmap)
 - [Troubleshooting](#troubleshooting)
 - [Project Security & Documentation](#project-security--documentation)
+- [Upstream issue and PR resolution](#upstream-issue-and-pr-resolution)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
@@ -613,6 +614,26 @@ If you run into an issue, go to the **Logs** page and click **Send Logs** before
 - [What changed in the fork](docs/FORK_CHANGES.md) summarizes the maintained additions since the upstream baseline.
 - [Import processing and security scans](docs/IMPORTS.md) explains RomM routing, archive handling, and optional malware checks.
 - Start with [docs/GITHUB_DOCUMENTATION.md](docs/GITHUB_DOCUMENTATION.md) for the full documentation map.
+
+## Upstream issue and PR resolution
+
+QuestarrNG is reviewing the complete history of [Doezer/Questarr issues and pull
+requests](docs/upstream-resolution/README.md), including closed issues, merged
+PRs, and closed unmerged PRs. The goal is to implement missing actionable
+behavior in this fork, verify behavior that already exists, and record a
+source-backed disposition for every item. Upstream maintainers decide whether
+to accept changes or close their issues and PRs.
+
+The [campaign overview](docs/upstream-resolution/README.md) links to the full
+[audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
+[per-item ledger](docs/upstream-resolution/ledger.json), the generated
+[1,147-item inventory](docs/upstream-resolution/inventory.md), and each batch's
+[validation evidence](docs/upstream-resolution/evidence/). At the ledger
+snapshot captured on October 13, 2026, 444 items were verified, 78 were
+superseded, and 9 were not applicable. Another 614 were unreviewed, one still
+needed implementation, and one awaited verification. This is an active effort;
+the full review and validation gate must pass before campaign work is merged to
+`main`.
 
 ## Contributing
 

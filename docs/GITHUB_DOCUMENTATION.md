@@ -49,6 +49,11 @@ documentation in this repository.
   [`extensions/playnite-questarr/README.md`](../extensions/playnite-questarr/README.md)
 - System architecture and background actors:
   [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
+- Full-history upstream issue and PR resolution campaign, including its
+  [progress ledger](./upstream-resolution/ledger.json), generated
+  [inventory](./upstream-resolution/inventory.md),
+  [audit and evidence process](./upstream-resolution/AUDIT-PROCESS.md), and
+  [batch history](./upstream-resolution/README.md).
 - Contribution guide: [`.github/CONTRIBUTING.md`](../.github/CONTRIBUTING.md)
 - Code of conduct: [`docs/CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
 
