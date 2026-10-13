@@ -129,7 +129,9 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                           data-testid={`nav-${item.title.toLowerCase()}`}
                         >
                           <item.icon className="w-4 h-4" aria-hidden="true" />
-                          <span>{t(item.title)}</span>
+                          <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
+                            {t(item.title)}
+                          </span>
                           <ChevronRight
                             className="ml-auto h-4 w-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90"
                             aria-hidden="true"
