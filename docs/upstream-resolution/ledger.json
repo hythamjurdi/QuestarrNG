@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T22:51:59.815Z",
-  "forkHead": "48a34502b51a69fe217e114888b996e28c3f4593",
+  "capturedAt": "2026-10-13T23:36:57.432Z",
+  "forkHead": "288fb7b9706d07ceb2812be248e4f821e5444983",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -24240,11 +24240,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "NZBGet history statuses beginning with SUCCESS/ are treated as completed, including GOOD, UNPACK, HEALTH, and ALL. Other status families continue through failure handling; upstream linked the correction to PR #855."
+        ],
+        "acceptance": [
+          "A successful NZBGet history status such as SUCCESS/GOOD must not be reported as aborted."
+        ],
+        "evidence": [
+          "server/downloaders/nzbget.ts",
+          "server/__tests__/downloaders_nzbget_remaining.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
+        "dependencies": [
+          "pr:855"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24260,10 +24270,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "db3af2140143bc65623f46aa7dc22ec4b3581f7a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "When a download disappears after repeated status checks, the cron handler now distinguishes disabled post-processing from enabled post-processing: the former is completed and owned, while the latter is sent to manual review. Both branches persist and publish the state change and notify the user."
+        ],
+        "acceptance": [
+          "A disappearing download is never silently marked owned while post-processing is enabled; the user receives a durable manual-review item and notification."
+        ],
+        "evidence": [
+          "server/cron.ts",
+          "server/__tests__/cron_async_download_resolution.test.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24280,10 +24299,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "52e6b88d8e20acb4f918860ef0c6a9c23ed0cc93",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "React, React DOM, and their type packages are on v19. Test setup guards same-element focus/blur recursion, and test-mode logging uses an in-process transport. Development and production logger-target tests now use a Writable stub so they do not start real Pino transport workers."
+        ],
+        "acceptance": [
+          "The app and type declarations use React 19; focus/blur recursion remains bounded; logger tests verify target configuration without spawning transport workers."
+        ],
+        "evidence": [
+          "package.json",
+          "tests/setup.ts",
+          "server/logger.ts",
+          "server/__tests__/logger.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24300,11 +24329,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1ef1d04d626f8ee2107178003966248fba149124",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The mobile download card uses min-width safeguards and wrap-anywhere for long release names. A real browser replay at 390px confirms a 358px card and 390px document width without horizontal overflow."
+        ],
+        "acceptance": [
+          "A long unbroken download name stays within its card on a 390px viewport without expanding the document."
+        ],
+        "evidence": [
+          "client/src/pages/downloads.tsx",
+          "client/__tests__/DownloadsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-71-mobile-download-card.png",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
+        "dependencies": [
+          "issue:835"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24320,10 +24361,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "61b93f4032febd44f7fb60c7d2868bf3a6b6f41b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Automatic and confirmed import failures are persisted as retryable manual-review work with an explanatory reason. Post-import auto-delete is isolated after successful finalization, so a cleanup failure cannot demote an imported download back to retryable review."
+        ],
+        "acceptance": [
+          "A failed import can be retried from manual review; a post-import delete error leaves the completed import finalized."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "server/__tests__/import_manager.test.ts",
+          "server/__tests__/import_manager_additional.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24340,10 +24390,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "fea8a0447aec1794b1f94d4c7a57610186b38df2",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Wishlist date sorting compares normalized primitive ISO date strings rather than constructing Date objects inside the sort comparator. Missing values have explicit ordering and equal values remain stable."
+        ],
+        "acceptance": [
+          "Ascending and descending wishlist date sorts handle ISO strings, Date inputs, missing values, and ties without per-comparison Date parsing."
+        ],
+        "evidence": [
+          "client/src/lib/game-sort.ts",
+          "client/src/pages/wishlist.tsx",
+          "client/__tests__/wishlist-sort.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24360,10 +24419,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "11ba367b95088400b01c743c4aa23575865457b8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Download action buttons expose item-specific accessible names alongside their Pause, Resume, or Start Download tooltip text. Regression tests assert all three accessible names."
+        ],
+        "acceptance": [
+          "Assistive technology can distinguish pause, resume, and start-download actions from their associated download or release."
+        ],
+        "evidence": [
+          "client/src/pages/downloads.tsx",
+          "client/src/pages/search.tsx",
+          "client/__tests__/DownloadsPage.test.tsx",
+          "client/__tests__/SearchPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24380,11 +24449,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The reported Home Assistant checkout failure is caused by the upstream repository wiki SSH submodule and was removed upstream in PR #846. QuestarrNG has no .gitmodules or .github/wiki submodule entry, so the offending checkout requirement is absent from this fork."
+        ],
+        "acceptance": [
+          "The fork can be cloned without recursively fetching the upstream SSH wiki submodule that prevented the Home Assistant repository integration from being added."
+        ],
+        "evidence": [
+          "git ls-files .gitmodules .github/wiki (empty)",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
+        "dependencies": [
+          "pr:846"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24400,10 +24478,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "007bcff0c23400373cbaf6c4d2774a5bb7225fdf",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork supports deployment under a normalized reverse-proxy subdirectory across API routing, static assets, redirects, health checks, and Socket.IO; its operator guide documents the proxy configuration and exact mount-root behavior."
+        ],
+        "acceptance": [
+          "A deployment mounted below a URL prefix serves the SPA, API, health check, and sockets under that prefix and handles the bare mount root without broken assets."
+        ],
+        "evidence": [
+          "server/config.ts",
+          "server/routes.ts",
+          "server/socket.ts",
+          "client/src/lib/app-path.ts",
+          "docs/REVERSE_PROXY.md",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24420,11 +24510,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9e29fb34de3f0589347b02b0172a793a88b76603",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Asynchronous qBittorrent adds are correlated by a unique tag with compatibility fallback when the API omits or does not apply tags, and tag cleanup is covered. Hash resolution now has one 15-second overall budget carried through polling and any re-authentication; an accepted but unresolved add remains tracked and warns users to check qBittorrent before retrying."
+        ],
+        "acceptance": [
+          "Polling cannot stack repeated 30-second request timeouts; after the 15-second budget expires, no duplicate upload is attempted and the accepted download remains trackable."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/qbittorrent_features.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-72.txt"
+        ],
+        "dependencies": [
+          "pr:823"
+        ]
       },
       "sourceChangedSinceReview": false
     },

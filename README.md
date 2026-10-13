@@ -653,14 +653,15 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
-[validation evidence](docs/upstream-resolution/evidence/). After Batch 71, the
-ledger records 614 verified, 191 superseded, 13 not applicable, five
-implemented-unverified, zero needing implementation, and 340 unreviewed
-records. Batch 71 reviewed PRs #826–831 and issues #832–835. It verified
-NZBGet category fallback and retryable import failures, corrected mobile
-overflow for long download names, and confirmed the Node Alpine image digest.
-See [the Batch 71 validation record](docs/upstream-resolution/evidence/validation-batch-71.txt)
-and [mobile screenshot](docs/upstream-resolution/evidence/validation-batch-71-mobile-download-card.png).
+[validation evidence](docs/upstream-resolution/evidence/). After Batch 72, the
+ledger records 624 verified, 191 superseded, 13 not applicable, five
+implemented-unverified, zero needing implementation, and 330 unreviewed
+records. Batch 72 reviewed issues #836 and #843 and PRs #837–842 and #844–845.
+It verified NZBGet success-status handling, retryable imports, accessible
+download controls, and reverse-proxy paths, and bounded qBittorrent add
+resolution to 15 seconds. The full suite passed 4,255 tests with 7 skipped.
+See [the Batch 72 validation record](docs/upstream-resolution/evidence/validation-batch-72.txt)
+and the [Batch 71 mobile screenshot](docs/upstream-resolution/evidence/validation-batch-71-mobile-download-card.png).
 The DCO sign-off policy is implemented in the campaign branch, but its
 rollout still needs a maintainer decision because the campaign history includes
 unsigned commits. The full review and validation gate must pass before campaign

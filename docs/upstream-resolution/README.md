@@ -20,30 +20,31 @@ behavior when implementing upstream requests.
 
 The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
-pull requests. The ledger's `capturedAt` records audit generation time, not an
-individual GitHub request timestamp. Review status is independent of GitHub's
-open, closed, or merged state. The latest audit regenerated the ledger and
-inventory on October 13, 2026 at 22:51:59 UTC from the refreshed source list.
+pull requests. Its source list was refreshed on October 13, 2026 at 23:22:52
+UTC; after Batch 72, the ledger and generated inventory were regenerated from
+that snapshot at 23:36:57 UTC. The ledger's `capturedAt` records generation
+time, not an individual GitHub request timestamp. Review status is independent
+of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       614 |
+| `verified`               |       624 |
 | `superseded`             |       191 |
 | `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       340 |
+| `unreviewed`             |       330 |
 | **Total**                | **1,163** |
 
-The ledger gives 823 items an assigned disposition. Four implemented
+The ledger gives 833 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 340 are unreviewed. The
+currently identified item needs implementation, and 330 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. The ten Batch 71 records were unchanged
+its snapshot and still needs review. The ten Batch 72 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 71 is the latest completed
-review; see [validation evidence](evidence/validation-batch-71.txt).
+ledger, not completion of the campaign. Batch 72 is the latest completed
+review; see [validation evidence](evidence/validation-batch-72.txt).
 
 ## Project records
 
@@ -2204,3 +2205,42 @@ implemented-unverified, 0 needs-implementation, and 340 unreviewed items. The
 source snapshot still contains 232 issues and 931 pull requests, with PR #1194
 as the only changed-source flag. The campaign remains incomplete and must not
 be merged to `main`.
+
+## Batch 72 — October 13, 2026
+
+Batch 72 reviewed issues [#836](https://github.com/Doezer/Questarr/issues/836)
+and [#843](https://github.com/Doezer/Questarr/issues/843), plus PRs
+[#837](https://github.com/Doezer/Questarr/pull/837)–
+[#842](https://github.com/Doezer/Questarr/pull/842) and
+[#844](https://github.com/Doezer/Questarr/pull/844)–
+[#845](https://github.com/Doezer/Questarr/pull/845). All ten records were
+unchanged from the refreshed source snapshot and are now verified.
+
+The batch rechecked missing-download notifications and manual review,
+React 19 and its focus/blur guard, retryable import failures, primitive-date
+wishlist sorting, accessible download action names, and reverse-proxy
+subdirectory behavior. Issue #836 is covered by the linked NZBGet success
+status fix in PR #855; issue #843 is avoided in this fork because it contains
+no Home Assistant SSH wiki submodule, removed upstream in PR #846. For PR #839,
+the Batch 71 browser capture remains the running visual proof of the fix.
+
+The qBittorrent v5+ follow-up in PR #845 had actionable review feedback about
+the total hash-resolution wait. Accepted URL adds now use one 15-second budget
+across polling and re-authentication. An unresolved add remains tracked and
+warns the user to check qBittorrent before retrying, avoiding a duplicate
+upload. Logger target tests also use an in-process writable sink so they do not
+start real transport workers, and accessibility tests assert the actual names
+exposed for Pause, Resume, and Start Download actions.
+
+Focused validation passed 710 tests across 15 files; the full suite passed
+4,255 tests across 271 files with 7 tests skipped. TypeScript, lint, Prettier,
+the production build, secret scanning, dependency override checks, and license
+checks passed. The production dependency audit could not reach npm's registry
+advisory endpoint. The build retained its existing large-chunk advisory. No
+`client/src/**` source changed in this batch; see
+[validation evidence](evidence/validation-batch-72.txt).
+
+The ledger now records 624 verified, 191 superseded, 13 not applicable, 5
+implemented-unverified, 0 needs-implementation, and 330 unreviewed items. PR
+#1194 remains the only source-changed record. The campaign remains incomplete
+and must not be merged to `main`.
