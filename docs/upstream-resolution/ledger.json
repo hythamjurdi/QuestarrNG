@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T19:27:53.534Z",
-  "forkHead": "dfa3c8844c03920768a8a22dc622bd2af84871b2",
+  "capturedAt": "2026-10-13T19:45:46.274Z",
+  "forkHead": "781be8ba884314b07881962d0cda78c160e8b6f0",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -22089,10 +22089,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "Closed without merging as a seven-package Dependabot dev-dependency rollup. Every requested target is now behind the fork's resolved version: @tailwindcss/vite 4.3.3, @types/node 26.6.4, Prettier 3.9.9, Tailwind CSS 4.3.3, tsx 4.23.15, typescript-eslint 8.71.1, and Vite 8.3.2. No requested package change remains."
+        ],
+        "acceptance": [
+          "All seven dependencies resolve beyond the requested versions and the current project passes its type, lint, formatting, build, test, and production dependency checks."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/766",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22109,10 +22118,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "038a81aa1e6332441d47da0eb0d94a3d2407d01e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "Merged into upstream release/1.4.0 with six dev-dependency updates and Semgrep suppressions for the upstream image's root-first startup. All six requested dependency versions are now exceeded in QuestarrNG. The fork's Docker image switches to USER questarr:questarr and gives only a narrowly scoped CAP_CHOWN helper to the Home Assistant entrypoint; the application itself runs unprivileged, so the upstream root-first suppressions do not describe this image and should not be copied."
+        ],
+        "acceptance": [
+          "All six requested dev dependencies resolve beyond their targets, and the fork's container has a dedicated non-root runtime without importing suppressions for an upstream-only startup design."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/767",
+          "package.json",
+          "package-lock.json",
+          "questarr/Dockerfile",
+          "questarr/ha-entrypoint.sh",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22129,10 +22149,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "500f4b5b1fece19dd52640d7dcef253c8621e69c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged Apprise CLI mode is present alongside API mode. Settings switch between the correct field sets and persist the selected mode; CLI notifications resolve a fixed executable path (or the explicit APPRISE_CLI_PATH override), parse blank/comment lines safely, write service URLs to a private temporary config file rather than process arguments, map notification severity with -n, bound execution, and remove the config file. Existing tests cover successful sends and error paths without requiring a live notification service. The user-facing notification guide already documents both modes."
+        ],
+        "acceptance": [
+          "API mode remains usable; CLI mode saves and reloads its URL list; invalid field types are rejected before string operations; secrets do not appear in process arguments; severity is mapped; missing binaries, timeouts, and CLI failures produce bounded actionable errors; temporary config is removed."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/768",
+          "client/src/pages/settings.tsx",
+          "server/apprise.ts",
+          "server/__tests__/apprise.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "client/__tests__/SettingsPage.test.tsx",
+          "docs/NOTIFICATIONS.md",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22149,10 +22182,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The closed request names optional PostgreSQL support, and its discussion narrows the practical database target to PostgreSQL. QuestarrNG provides an explicit DB_DIALECT=postgres opt-in, the node-postgres driver, a dedicated PostgreSQL migration history, SQLite/PostgreSQL migration utilities, and database behavior parity coverage; the operator guide documents setup and both migration directions. A disposable PostgreSQL 18.6 cluster on loopback completed fresh and repeat migrations, answered the driver ping, created a setup user, and enforced the one-key cap across concurrent real-pool requests with one persisted key. No host PostgreSQL service or user data was used."
+        ],
+        "acceptance": [
+          "PostgreSQL is selected only by explicit dialect configuration; missing/invalid configuration fails clearly; fresh and repeated migrations succeed; real node-postgres reads and writes work; a concurrent transaction invariant holds; the documented SQLite and PostgreSQL paths remain covered by the dialect-parity suite."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/769",
+          "docs/DATABASE.md",
+          "server/config.ts",
+          "server/db.ts",
+          "server/db/connect-postgres.ts",
+          "server/db/migrate-pg.ts",
+          "migrations-pg/",
+          "server/__tests__/dialect-parity.test.ts",
+          "server/__tests__/transactional-ops-pg.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22169,10 +22217,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5d67a89cbc0c4a226da0bcff4cba0b6376f385ff",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged GitHub Script v9 update is present in both current workflows that use the action, and both references are pinned to the same full immutable commit SHA with a v9 version comment."
+        ],
+        "acceptance": [
+          "Every current actions/github-script reference uses v9 and a full commit SHA."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/770",
+          ".github/workflows/slash-command-listener.yml",
+          ".github/workflows/auto-label-plane.yml",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22189,10 +22246,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "54ce5f4409ed1a7fad8631214e592ddae512761e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The merged Vitest 4.1.10 development dependency update has been superseded by the project's current Vitest, UI, and coverage packages at 5.0.3. The full current suite passes on that later major version."
+        ],
+        "acceptance": [
+          "Vitest and its UI/coverage packages resolve beyond the requested versions and run the complete project test suite."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/771",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22209,10 +22275,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d649cbae19faf628ca2c3c7aa2e22b2b0ed1154e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The merged production dependency group requested axios 1.18.1 and react-hook-form 7.81.0. QuestarrNG currently resolves axios 1.20.0 and react-hook-form 7.89.0, so the requested versions have been replaced by later releases; focused route/settings tests and the full suite pass."
+        ],
+        "acceptance": [
+          "Both requested production dependencies resolve beyond their requested versions and the affected application tests pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/772",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22229,10 +22304,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "432dc8cc15a961454819cfeb78d7e339a28a4c27",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested @types/bcryptjs package is no longer needed: QuestarrNG uses bcryptjs 3.0.3, whose package exports its own TypeScript declarations at index.d.ts and umd/index.d.ts. There is no separate @types/bcryptjs dependency, and the full TypeScript check passes."
+        ],
+        "acceptance": [
+          "bcryptjs supplies its own declarations and the project typechecks without the separate DefinitelyTyped package."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/773",
+          "package.json",
+          "package-lock.json",
+          "server/auth.ts",
+          "server/__tests__/auth.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22249,10 +22335,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d668330fa98d6f91d92a179a829a5db602b82b7e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The merged tailwind-merge 3.6.0 upgrade is superseded by the current 3.7.0 release. The application still passes its full test suite and production build with the later version."
+        ],
+        "acceptance": [
+          "tailwind-merge resolves beyond 3.6.0 and the current frontend tests and production build pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/774",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22269,10 +22364,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The closed TypeScript upgrade request is present at the requested 6.0.3 version in the manifest and lockfile. Current TypeScript checking succeeds."
+        ],
+        "acceptance": [
+          "TypeScript is installed at 6.0.3 and npm run check passes."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/775",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

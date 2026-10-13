@@ -27,22 +27,22 @@ merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       573 |
-| `superseded`             |       164 |
+| `verified`               |       577 |
+| `superseded`             |       170 |
 | `not-applicable`         |        12 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       409 |
+| `unreviewed`             |       399 |
 | **Total**                | **1,163** |
 
-The ledger now gives 754 items an assigned disposition. Four implemented
+The ledger now gives 764 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 409 are unreviewed. The
+currently identified item needs implementation, and 399 are unreviewed. The
 source-change flags cleared in batch 61 remain clear. These numbers describe
-the ledger, not completion of the campaign. Batch 64 is the latest completed
+the ledger, not completion of the campaign. Batch 65 is the latest completed
 review; its results are in
-[validation evidence](evidence/validation-batch-64.txt).
+[validation evidence](evidence/validation-batch-65.txt).
 
 ## Project records
 
@@ -1960,3 +1960,35 @@ verified, 164 superseded, 12 not-applicable, five implemented-unverified, zero
 needs-implementation, and 409 unreviewed items; no source-change flags are set.
 The campaign remains in progress and has not passed the merge gate; see
 [Batch 64 evidence](evidence/validation-batch-64.txt).
+
+## Batch 65 — October 13, 2026
+
+Batch 65 reviewed upstream PRs [#766](https://github.com/Doezer/Questarr/pull/766)–
+[#768](https://github.com/Doezer/Questarr/pull/768), issue
+[#769](https://github.com/Doezer/Questarr/issues/769), and PRs
+[#770](https://github.com/Doezer/Questarr/pull/770)–
+[#775](https://github.com/Doezer/Questarr/pull/775). Six dependency updates
+were superseded by newer locked versions or by first-party TypeScript
+declarations. Apprise CLI mode, the optional PostgreSQL backend, the pinned
+GitHub Script v9 action, and TypeScript 6.0.3 were verified in QuestarrNG.
+The upstream PostgreSQL request does not ask for a particular additional
+dialect after its discussion narrowed the practical scope to PostgreSQL; the
+current opt-in backend addresses that request. Existing user guides already
+cover [Apprise API and CLI modes](../NOTIFICATIONS.md) and
+[SQLite/PostgreSQL setup and migration](../DATABASE.md).
+
+The PostgreSQL check went beyond PGlite parity: a disposable PostgreSQL 18.6
+cluster bound to loopback completed fresh and repeated migrations, answered the
+real node-postgres driver's health check, created a setup user, and enforced the
+API-key cap across concurrent pooled requests. No host PostgreSQL service was
+used. The scratch cluster and test data were removed after the run.
+
+Focused validation passed 468 tests in 8 Vitest files, including Apprise
+routes/settings and database parity/transaction suites. The complete test
+suite, type checking, lint, formatting, build, production audit and secret scan
+also passed. See [Batch 65 evidence](evidence/validation-batch-65.txt).
+
+The ledger now records 577 verified, 170 superseded, 12 not applicable, 5
+implemented-unverified, 0 needs-implementation, and 399 unreviewed items, with
+no source-change flags. The campaign remains incomplete and is not ready to
+merge to `main`.
