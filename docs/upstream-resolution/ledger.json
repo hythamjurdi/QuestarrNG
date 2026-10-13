@@ -7233,10 +7233,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reporter confirmed that rebuilding the Compose image without cache fixed startup and brought the app to the initial setup screen. The fork's current database startup has since been reworked and documents its SQLite default and Postgres setup; the closed report does not leave an outstanding code change."
+        ],
+        "acceptance": [
+          "A clean image rebuild starts successfully and reaches initial setup; database failures should remain diagnosable from the current startup logs."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/261",
+          "docs/DATABASE.md",
+          "server/db/connect-postgres.ts",
+          "docs/upstream-resolution/evidence/validation-batch-29.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7253,10 +7262,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reporter tested the upstream fix and closed the issue after NZBs were accepted. The fork accepts HTTP and HTTPS NZB links, preserves downloadType=usenet from search, and dispatches them to SABnzbd or NZBGet instead of torrent-only handling."
+        ],
+        "acceptance": [
+          "A Prowlarr Usenet result can be added to a configured Usenet downloader without an Invalid torrent URL error, while torrent and Usenet requests remain routed to matching client types."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/262",
+          "server/middleware.ts",
+          "server/routes.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/downloaders/nzbget.ts",
+          "client/__tests__/SearchPage.test.tsx",
+          "server/__tests__/usenet_integration.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-29.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7273,10 +7295,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "1fa3b5a30e4dd54726492e1d800c9cafd4705326",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Downloader setup now uses a consistent Host field and separate Port and Use SSL controls for supported client types, with type- and TLS-aware port defaults and client-specific setup guidance. This is more complete than the upstream field-label cleanup."
+        ],
+        "acceptance": [
+          "Downloader forms communicate host, port, and TLS behavior consistently and show sensible defaults and instructions for the selected client."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/263",
+          "client/src/pages/downloaders.tsx",
+          "client/__tests__/DownloadersPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-29.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7293,10 +7324,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "d84c23c8f48b189d9cc4382f0a8cfc6fbee53b92",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The sidebar links to the QuestarrNG repository and displays the running version; it checks the latest QuestarrNG release and shows an update indicator when appropriate. The implementation is adapted to this fork rather than querying the upstream Questarr package."
+        ],
+        "acceptance": [
+          "Users can identify the app version, open the correct repository, and see a newer published release when one is available; failed GitHub lookups do not block the app."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/264",
+          "client/src/components/GitHubVersionLink.tsx",
+          "client/src/hooks/use-latest-questarr-version.ts",
+          "client/src/lib/versionService.ts",
+          "client/__tests__/AppSidebar.test.tsx",
+          "client/__tests__/versionService.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-29.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7313,10 +7356,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "842a99caa038397ba4e9eff54e8e12a8049060a6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All route pages are loaded with React.lazy inside a shared Suspense boundary, and the production build emits separate page chunks with a loading fallback."
+        ],
+        "acceptance": [
+          "Route components are split from the entry bundle, and navigating to them retains the existing route behavior while chunks load."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/265",
+          "client/src/App.tsx",
+          "client/src/components/LoadingFallback.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-29.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7333,10 +7385,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "381b2c8b16c7dc680f7268e70ea019ce63f59da3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The server applies Helmet with a tailored Content Security Policy and other security headers. The optional Postgres pool has a configurable bounded size, connection and statement timeouts, minimum capacity validation for migrations, and idle-client error logging; these controls are more specific than the upstream fixed pool defaults."
+        ],
+        "acceptance": [
+          "Security headers protect the app without breaking required resources, and Postgres connection waits and queries are bounded with pool capacity validated at startup."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/266",
+          "server/routes.ts",
+          "server/db/connect-postgres.ts",
+          "server/config.ts",
+          "server/__tests__/security.test.ts",
+          "server/__tests__/config.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-29.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

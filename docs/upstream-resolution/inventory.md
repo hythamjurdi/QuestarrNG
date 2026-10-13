@@ -253,12 +253,12 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #258](https://github.com/Doezer/Questarr/pull/258) | chore(deps): bump drizzle-orm from 0.44.7 to 0.45.1 | MERGED | merge-commit-not-in-either-main-history | superseded |
 | [pr #259](https://github.com/Doezer/Questarr/pull/259) | chore(deps): bump recharts from 2.15.2 to 2.15.4 | MERGED | merge-commit-not-in-either-main-history | superseded |
 | [issue #260](https://github.com/Doezer/Questarr/issues/260) | Error: Failed to connect to database. Please check your DATABASE_URL configuration. | CLOSED | no-merge-commit | not-applicable |
-| [issue #261](https://github.com/Doezer/Questarr/issues/261) | Error on startup connecting to databse | CLOSED | no-merge-commit | unreviewed |
-| [issue #262](https://github.com/Doezer/Questarr/issues/262) | Error Adding Usenet Download Via Prowlarr | CLOSED | no-merge-commit | unreviewed |
-| [pr #263](https://github.com/Doezer/Questarr/pull/263) | Downloader field behaviour alignment | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #264](https://github.com/Doezer/Questarr/pull/264) | GitHub sidepanel link | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #265](https://github.com/Doezer/Questarr/pull/265) | ⚡ Bolt: Implement route-based code splitting | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #266](https://github.com/Doezer/Questarr/pull/266) | 🛡️ Sentinel: [security improvement] Harden server with Helmet and DB pool settings | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [issue #261](https://github.com/Doezer/Questarr/issues/261) | Error on startup connecting to databse | CLOSED | no-merge-commit | verified |
+| [issue #262](https://github.com/Doezer/Questarr/issues/262) | Error Adding Usenet Download Via Prowlarr | CLOSED | no-merge-commit | verified |
+| [pr #263](https://github.com/Doezer/Questarr/pull/263) | Downloader field behaviour alignment | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #264](https://github.com/Doezer/Questarr/pull/264) | GitHub sidepanel link | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #265](https://github.com/Doezer/Questarr/pull/265) | ⚡ Bolt: Implement route-based code splitting | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #266](https://github.com/Doezer/Questarr/pull/266) | 🛡️ Sentinel: [security improvement] Harden server with Helmet and DB pool settings | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #267](https://github.com/Doezer/Questarr/pull/267) | 🛡️ Sentinel: [HIGH] Fix SSRF in bundle download | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #268](https://github.com/Doezer/Questarr/pull/268) | 🎨 Palette: [UX improvement] | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [issue #269](https://github.com/Doezer/Questarr/issues/269) | Error on attempting download? | CLOSED | no-merge-commit | unreviewed |

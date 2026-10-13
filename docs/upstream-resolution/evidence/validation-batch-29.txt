@@ -1,0 +1,41 @@
+Upstream review batch 29
+========================
+
+Items reviewed
+--------------
+
+- Issue #261 verified: the reporter confirmed that `docker-compose build
+  --no-cache` fixed startup and the app reached initial setup. Current database
+  defaults and Postgres diagnostics were checked in `docs/DATABASE.md` and
+  `server/db/connect-postgres.ts`.
+- Issue #262 verified: the reporter tested the upstream fix. In the fork,
+  `sanitizeDownloaderDownloadData` accepts HTTP/HTTPS NZB URLs and the request
+  retains `downloadType: "usenet"` through routing to SABnzbd or NZBGet.
+- PR #263 verified: downloader setup uses Host, Port and TLS controls with
+  client-specific port defaults and guidance.
+- PR #264 verified: the sidebar version link targets QuestarrNG and compares
+  against its latest published GitHub release.
+- PR #265 verified: route pages are lazy imports under `Suspense`; the Vite
+  production build emits separate page chunks.
+- PR #266 verified: Helmet security headers and a tailored CSP are applied;
+  Postgres has a configured pool cap, connection and statement timeouts, and an
+  idle-client error handler.
+
+Validation
+----------
+
+- `npm test -- --run client/__tests__/DownloadersPage.test.tsx
+  client/__tests__/AppSidebar.test.tsx client/__tests__/versionService.test.ts
+  client/__tests__/SearchPage.test.tsx
+  server/__tests__/usenet_integration.test.ts server/__tests__/security.test.ts
+  server/__tests__/config.test.ts server/__tests__/api_routes.test.ts`
+  — 8 files passed; 461 tests passed.
+- `npm run check` — passed.
+- `./node_modules/.bin/vite build --outDir
+  /dev/shm/questarr-batch29-build --emptyOutDir` — passed and emitted separate
+  route chunks including `downloaders`, `discover`, `settings`, `calendar`,
+  `indexers`, and `downloads`. Vite warned that the entry chunk is 865.46 KB and
+  the Three.js chunk is 546.73 KB; this confirms code splitting but does not
+  establish a measured initial-load reduction.
+- `git diff --check` and ledger JSON/count checks passed after documentation
+  updates.

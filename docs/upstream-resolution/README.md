@@ -683,5 +683,36 @@ Recharts. No older action or package-lock changes need to be replayed.
 The manifest, lockfile, and workflow pins were checked directly; no application
 code changed in this batch. See [batch 28 evidence](evidence/validation-batch-28.txt).
 
-The ledger now records **225 verified**, **28 superseded**, **887 unreviewed**,
+## Follow-up: database, Usenet, downloader setup and hardening (#261–266)
+
+Issue [#261](https://github.com/Doezer/Questarr/issues/261) is verified: the
+reporter confirmed a no-cache Compose rebuild reached the initial setup screen.
+The current fork also has documented SQLite/Postgres startup configuration and
+more actionable Postgres connection diagnostics.
+
+Issue [#262](https://github.com/Doezer/Questarr/issues/262) is verified: the
+reporter tested the fix and closed the report after NZB submission worked. The
+current download validator accepts NZB URLs, search preserves the Usenet type,
+and downloader selection sends those results to SABnzbd or NZBGet.
+
+PR [#263](https://github.com/Doezer/Questarr/pull/263) is verified: downloader
+forms use a consistent Host field with separate Port and TLS controls, defaults
+that follow the selected client, and client-specific setup guidance. PR
+[#264](https://github.com/Doezer/Questarr/pull/264) is verified through the
+fork-adapted sidebar link and version check, which point at QuestarrNG and its
+releases. PR [#265](https://github.com/Doezer/Questarr/pull/265) is verified:
+route pages load lazily under a shared loading fallback, and the production
+build emits distinct page chunks. PR
+[#266](https://github.com/Doezer/Questarr/pull/266) is verified: Helmet applies
+security headers with the app's tailored CSP, while the optional Postgres pool
+has a configurable size, bounded connection/query waits, and idle-client error
+handling.
+
+Eight focused suites passed (461 tests), and TypeScript checking passed. A
+production Vite build emitted separate route chunks; it also reports large
+shared chunks (the entry chunk is about 865 KB), so the build confirms route
+splitting without claiming a measured initial-load reduction. See
+[batch 29 evidence](evidence/validation-batch-29.txt).
+
+The ledger now records **231 verified**, **28 superseded**, **881 unreviewed**,
 **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
