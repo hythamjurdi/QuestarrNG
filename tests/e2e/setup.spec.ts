@@ -20,6 +20,9 @@ test.describe("Initial Setup", () => {
 
     if (!hasUsers) {
       await page.addInitScript(() => {
+        const seededKey = "questarr.e2e-initial-language-seeded";
+        if (sessionStorage.getItem(seededKey)) return;
+        sessionStorage.setItem(seededKey, "true");
         localStorage.setItem("questarr.interface-language", "ar");
       });
       await page.goto("/");
@@ -33,6 +36,9 @@ test.describe("Initial Setup", () => {
       await expect(arabicOption.locator('[lang="ar"][dir="rtl"]')).toHaveText("العربية");
       await expect(arabicOption.locator('[lang="en"][dir="ltr"]')).toContainText("Arabic");
       await page.getByRole("option", { name: "English", exact: true }).click();
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem("questarr.interface-language")))
+        .toBe("en");
 
       await page.fill('input[name="username"]', "admin");
       await page.fill('input[name="password"]', "password123");
@@ -74,6 +80,13 @@ test.describe("Initial Setup", () => {
           await page.goto("/");
         }
       }
+
+      // The setup redirect must preserve the user's language choice. The Arabic
+      // seed above only applies to the first document so it cannot overwrite
+      // the selected language during this navigation.
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem("questarr.interface-language")))
+        .toBe("en");
 
       // Save storage state to be used by other tests
       await page.context().storageState({ path: authFile });
