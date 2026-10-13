@@ -6,11 +6,11 @@ The `client/src` React application currently has English interface copy, with no
 
 ## Implementation plan
 
-1. Inventory and extract visible labels, help, empty states, validation, notifications, and errors from `client/src` into an English source catalog. Preserve API values, game titles, release names, paths, and user-entered text.
+1. Inventory and extract visible labels, help, empty states, validation, notifications, and errors from `client/src` and server-originated content rendered by the client. Include free-form API error responses and persisted notification titles/messages. Define a translation strategy for each source; prefer stable message keys with interpolation parameters for server errors and stored notifications. Preserve API values, game titles, release names, paths, and user-entered text.
 2. Add `i18next` with `react-i18next` and ICU plural support, plus a catalog-key coverage check. Keep English as the per-key fallback.
 3. Add an accessible Display Language control to the existing Settings > Appearance surface. Apply changes immediately and persist the explicit choice with the existing user preference mechanism; on first use, try the browser's preferred locale before falling back to English.
-4. Format dates, numbers, and plurals from the selected locale instead of relying on a different browser locale after a user has chosen an app language.
-5. Add the locale files in the ranked order below. Ship Arabic only with correct document `lang`/ `dir` metadata, CSS logical properties, and RTL checks for settings, navigation, dialogs, and tables.
+4. Format dates, times, numbers, and plurals from the selected locale instead of relying on a different browser locale after a user has chosen an app language. Use that locale for user-visible sorting too, preferably through a shared `Intl.Collator`.
+5. Add the locale files in the ranked order below. Set the document `lang` to every selected locale and derive `dir` separately so right-to-left locales use RTL layout. Make calendar weekday order and week boundaries follow the selected locale. Ship Arabic only after verifying CSS logical properties and RTL behavior for settings, navigation, dialogs, and tables.
 6. For each PR that changes `client/src`, include the required running UI screenshot at desktop and narrow widths.
 
 ## First-pass locale order
@@ -34,4 +34,4 @@ The World Bank's 2025 report estimates Mandarin Chinese, Hindi, and Spanish at 1
 
 ## Translation boundaries and acceptance
 
-Translate interface labels, help, empty states, validation, notifications, and errors. Keep media titles, user names, filenames and paths, commands, API identifiers, protocol values, and other user-supplied content unchanged. Use the selected UI language for date, time, number, and plural formatting. Every locale must fall back to English for a missing key; CI should check placeholder parity and report missing strings. Arabic ships only after the app sets `lang` and `dir`, uses logical layout properties, and verifies the core workflows in RTL at narrow and desktop widths.
+Translate interface labels, help, empty states, validation, notifications, and errors, including server-originated content shown by the client. For free-form API errors and persisted notifications, use stable translatable message keys with parameters or otherwise ensure those messages are covered by the catalogs. Keep media titles, user names, filenames and paths, commands, API identifiers, protocol values, and other user-supplied content unchanged. Every locale must update document `lang`; derive `dir` separately. Use the selected UI language for date, time, number, plural, and collation behavior, and use its first day of week and weekday order in the calendar. Every locale must fall back to English for a missing key; CI should check placeholder parity and report missing strings. Arabic ships only after logical layout properties and core workflows are verified in RTL at narrow and desktop widths.
