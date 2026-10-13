@@ -1,0 +1,35 @@
+Batch 39 validation — upstream items #362–375
+Date: October 12, 2026
+
+Review dispositions:
+- PR #362: SteamID64 settings, authenticated wishlist sync, scheduled sync, and achievements are present. The upstream OAuth/session callback was not carried forward because its review identified unsafe account-linking state and a hard-coded session secret; manual linking preserves the public-wishlist workflow without that session boundary.
+- PR #363: RomM routing and post-processing are implemented with per-user configuration, canonical path containment, and manual review for uncertain import paths.
+- PRs #364–365: The download dialog includes its accessible description and current responsive layout; focused DB and search suites are present.
+- PRs #366–370: The container workflow uses a commit-pinned Step Security Docker login action; the requested npm packages are already at versions newer than the PR targets.
+- Issue #371: Configured root-folder scanning, unmatched-game review, and root-folder discovery are present.
+- PR #372: Prowlarr requests use the shared SSRF-safe fetcher, including DNS/IP validation and redirect checks; route and fetch tests cover unsafe destinations.
+- PR #373: Metadata refresh streams IGDB request batches, persists no more than 50 games per DB batch, logs failed IGDB chunks, continues with later chunks, and reports games without returned metadata.
+- PR #374: GameCard rating, user-rating, and release-date indicators have descriptive accessible labels.
+- Issue #375: The download dialog supports filtering results by release group.
+
+Regression tests:
+- server/__tests__/igdb.test.ts — verifies successful game batches remain available before and after a failed chunk, and the existing getGamesByIds API collects streamed results.
+- server/__tests__/api_routes_extended.test.ts — verifies partial IGDB results are counted and that a failed batch does not prevent later metadata updates.
+
+Full Vitest suite:
+- npm run test
+- 252 files passed, 1 skipped; 4,095 tests passed, 7 skipped.
+- The first full-suite attempt used the full /tmp tmpfs and failed with ENOSPC. The successful run set TMPDIR to a dedicated local task directory.
+
+Repository gates:
+- npm run check — passed.
+- npm run lint — passed with zero warnings.
+- Prettier check for changed TypeScript files — passed.
+- npm run build — passed; Vite reported the existing large-chunk advisory.
+- npm run secretlint — passed after the ledger, release note, and evidence updates.
+- Release-note validation is run against the committed batch and PR description before push.
+
+Scratch and cleanup:
+- The desktop is kspld0. /home had 132 GB available; /tmp was full.
+- /mnt/datapool_lvm_media is mounted from kspls0:/mnt/datapool_lvm_media, but querying its free space stalled, so no files were written to NFS.
+- Removed the dedicated local TMPDIR and the test-generated postgresql:/ SQLite database, WAL, and SHM files. No user auth state was touched.

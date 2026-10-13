@@ -1,16 +1,16 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T00:36:47.597Z",
+  "capturedAt": "2026-10-13T05:20:58.476Z",
   "forkHead": "9d1dc7ed262abf2371abcc81e8b6043fd20da9cc",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 316,
+      "verified": 330,
       "needs-implementation": 1,
       "superseded": 35,
       "not-applicable": 7,
-      "unreviewed": 787,
+      "unreviewed": 773,
       "implemented-unverified": 1
     }
   },
@@ -10296,10 +10296,21 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "76d553f16fc70774404be61155cbc32c6ebc228f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Manual SteamID64 linking, wishlist synchronization, scheduled sync, and achievements are implemented. The upstream OAuth callback is not carried forward because its review identified unsafe unsigned account-linking state and a hard-coded session secret; manual linking preserves the public-wishlist workflow without adding that session boundary."
+        ],
+        "acceptance": [
+          "A user can link a SteamID64 and sync the public wishlist through authenticated, per-user routes; the unsafe OAuth/session implementation is avoided."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/362",
+          "client/src/pages/settings.tsx",
+          "server/steam-routes.ts",
+          "server/steam.ts",
+          "server/cron.ts",
+          "server/__tests__/steam_wishlist.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10316,10 +10327,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork implements RomM routing and post-processing through per-user library roots and platform bindings. Import review and transfer paths are validated against canonical roots before filesystem changes."
+        ],
+        "acceptance": [
+          "ROM imports can be routed into the user's configured RomM library and reviewed safely when the destination or source needs attention."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/363",
+          "server/routes/import.ts",
+          "server/services/ImportManager.ts",
+          "server/services/ImportStrategies.ts",
+          "server/path-security.ts",
+          "server/__tests__/import_manager.test.ts",
+          "server/__tests__/import_routes_security.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10336,10 +10359,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "088a9a97818318490a3f441a9951c1e4d46839ba",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The download dialog has the redesigned responsive Dialog/Drawer presentation, an accessible title and description, and the current search and release controls."
+        ],
+        "acceptance": [
+          "The download flow remains usable on desktop and narrow screens, with dialog context exposed to assistive technology."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/364",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10356,10 +10387,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0188eaf770601040e45afde5d34fae8bb9c3b083",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Dedicated database and search test suites are present and are included in the full Vitest run."
+        ],
+        "acceptance": [
+          "The requested database and search paths have focused regression coverage."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/365",
+          "server/__tests__/db.test.ts",
+          "server/__tests__/search.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10376,10 +10415,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "915bbe605ac48c0710d5ba70b903434495ebc7e2",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The workflows use a commit-pinned Step Security Docker login action at v4.6.0 instead of the older docker/login-action 3.6 line, so the requested registry-login update is exceeded by the current hardened action."
+        ],
+        "acceptance": [
+          "Container publishing uses a newer, pinned registry-login action."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/366",
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10396,10 +10443,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "095ae9bca41ceee176384d61b4df1da41fa7115c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested autoprefixer 10.4.24 and typescript-eslint 8.54.0 versions are exceeded by the manifest and lockfile versions 10.6.1 and 8.71.0."
+        ],
+        "acceptance": [
+          "Both grouped development dependency updates are already included at newer versions."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/367",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10416,10 +10471,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b0d4da98c11434cd9d9c3e6b70b33238d983450d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "tailwind-merge is at 3.7.0 in the manifest and lockfile, beyond the requested 2.6.1."
+        ],
+        "acceptance": [
+          "The requested tailwind-merge update is exceeded."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/368",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10436,10 +10499,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3e78155a461b136d7c4045d004750451f3c41fbf",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "pg is at 8.23.0 in the manifest and lockfile, beyond the requested 8.18.0."
+        ],
+        "acceptance": [
+          "The requested PostgreSQL client update is exceeded."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/369",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10456,10 +10527,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2a388a16f8d91b6b5b7daeba7aa6645b06c6bec8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "fast-xml-parser is at 5.11.2 in the manifest and lockfile, beyond the requested 5.3.4."
+        ],
+        "acceptance": [
+          "The requested XML parser update is exceeded."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/370",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10476,10 +10555,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Configured root-folder scanning discovers installed games, exposes unmatched folders for review, and supports multiple user-owned roots; the request was closed upstream by the later scan work."
+        ],
+        "acceptance": [
+          "Users can scan installed game and ROM roots and review unresolved matches."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/371",
+          "server/library-scanner.ts",
+          "server/routes.ts",
+          "client/src/components/RootFolderDiscovery.tsx",
+          "server/__tests__/library-scanner.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10496,10 +10585,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "aa15487af9019ad1c753a177591a8c3fb040a58d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Prowlarr requests use the shared SSRF-safe fetch path, which validates resolved IP addresses and every redirect hop; this is stronger than checking only the submitted URL."
+        ],
+        "acceptance": [
+          "Unsafe local and cloud-metadata destinations are rejected before Prowlarr requests are sent."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/372",
+          "server/ssrf.ts",
+          "server/prowlarr.ts",
+          "server/routes.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/ssrf_routes.test.ts",
+          "server/__tests__/api_routes.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10516,10 +10617,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4ad9daa2baba54f2653c47e2a39bfda62e0daccf",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Metadata refresh now consumes rate-limited IGDB batches, writes at most 50 games per database batch, logs rejected request chunks, and continues with later chunks. Missing IGDB results are reflected in the endpoint's errorCount."
+        ],
+        "acceptance": [
+          "Large refreshes do not retain the whole IGDB response set in memory, and one failed request chunk does not stop later games from refreshing."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/373",
+          "server/igdb.ts",
+          "server/routes.ts",
+          "server/__tests__/igdb.test.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "release-notes/2026-10-12-metadata-refresh-chunk-resilience.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10536,10 +10648,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d71c628ce1f594ab8557d4b0e699d561a3e396fa",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "GameCard rating, personal-rating, and release-date indicators expose descriptive accessible labels."
+        ],
+        "acceptance": [
+          "Screen-reader users receive context for the values shown on each game card."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/374",
+          "client/src/components/GameCard.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10556,10 +10675,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The download dialog provides a multi-select release-group filter and filters available results by the selected groups."
+        ],
+        "acceptance": [
+          "Users can narrow a crowded release list to the groups they choose."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/375",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/components/PreferredReleaseGroupsSettings.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

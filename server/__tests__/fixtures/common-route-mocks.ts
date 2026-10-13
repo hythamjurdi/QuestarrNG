@@ -187,6 +187,9 @@ export function createIgdbMock() {
     getPlatforms: vi.fn().mockResolvedValue([]),
     getGameById: vi.fn(),
     getGamesByIds: vi.fn().mockResolvedValue([]),
+    getGamesByIdsBatches: vi.fn(async function* (ids: number[]) {
+      if (ids.length > 0) yield { requestedIds: ids, games: [] };
+    }),
     getTimeToBeats: vi.fn().mockResolvedValue(new Map<number, TimeToBeat>()),
     batchSearchGames: vi.fn().mockResolvedValue(new Map()),
     testCredentials: vi.fn().mockResolvedValue({ success: true }),

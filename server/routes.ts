@@ -2093,32 +2093,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       routesLogger.info({ userId, gameCount: userGames.length }, "starting metadata refresh");
 
-      // ⚡ Bolt: Optimize metadata refresh by fetching all games in batches
-      // instead of sequential 1-by-1 requests.
-      const igdbIds = userGames
-        .map((g) => g.igdbId)
-        .filter((id): id is number => id !== null && id !== undefined);
-
-      // Fetch all updated game data from IGDB in parallel/batches
-      const igdbGames = igdbIds.length > 0 ? await igdbClient.getGamesByIds(igdbIds) : [];
-      const igdbGameMap = new Map(igdbGames.map((g) => [g.id, g]));
-
       let updatedCount = 0;
       let errorCount = 0;
+      const gamesByIgdbId = new Map<number, Game[]>();
+      const igdbIds = new Set<number>();
+      for (const game of userGames) {
+        if (game.igdbId === null || game.igdbId === undefined) continue;
+        igdbIds.add(game.igdbId);
+        const matchingGames = gamesByIgdbId.get(game.igdbId) ?? [];
+        matchingGames.push(game);
+        gamesByIgdbId.set(game.igdbId, matchingGames);
+      }
 
-      // Process updates in batches to avoid overwhelming the database
-      // ⚡ Bolt: Use a larger batch size since we are now using a single transaction per batch
-      const BATCH_SIZE = 50;
-      for (let i = 0; i < userGames.length; i += BATCH_SIZE) {
-        const chunk = userGames.slice(i, i + BATCH_SIZE);
-        const updates: { id: string; data: Partial<Game> }[] = [];
+      const processedIgdbIds = new Set<number>();
+      // IGDB returns at most 100 games per request. Persist each fetched group
+      // before loading the next one, while retaining 50-game DB transactions.
+      const DB_BATCH_SIZE = 50;
+      for await (const igdbBatch of igdbClient.getGamesByIdsBatches([...igdbIds])) {
+        for (const id of igdbBatch.requestedIds) processedIgdbIds.add(id);
+        const igdbGameMap = new Map(igdbBatch.games.map((game) => [game.id, game]));
+        const gamesInBatch = igdbBatch.requestedIds.flatMap((id) => gamesByIgdbId.get(id) ?? []);
 
-        for (const game of chunk) {
-          if (!game.igdbId) continue;
+        for (let i = 0; i < gamesInBatch.length; i += DB_BATCH_SIZE) {
+          const chunk = gamesInBatch.slice(i, i + DB_BATCH_SIZE);
+          const updates: { id: string; data: Partial<Game> }[] = [];
 
-          try {
-            const igdbGame = igdbGameMap.get(game.igdbId);
-            if (igdbGame) {
+          for (const game of chunk) {
+            const igdbGame = game.igdbId == null ? undefined : igdbGameMap.get(game.igdbId);
+            if (!igdbGame) {
+              errorCount++;
+              continue;
+            }
+
+            try {
               const updatedData = igdbClient.formatGameData(igdbGame);
               updates.push({
                 id: game.id,
@@ -2144,26 +2151,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   aggregatedRating: (updatedData.aggregatedRating as number | undefined) ?? null,
                 },
               });
+            } catch (error) {
+              routesLogger.error(
+                { gameId: game.id, error },
+                "failed to prepare metadata update for game"
+              );
+              errorCount++;
             }
-          } catch (error) {
-            routesLogger.error(
-              { gameId: game.id, error },
-              "failed to prepare metadata update for game"
-            );
-            errorCount++;
           }
-        }
 
-        if (updates.length > 0) {
-          try {
-            await storage.updateGamesBatch(updates);
-            updatedCount += updates.length;
-          } catch (error) {
-            routesLogger.error({ error }, "failed to execute batch update");
-            errorCount += updates.length;
+          if (updates.length > 0) {
+            try {
+              await storage.updateGamesBatch(updates);
+              updatedCount += updates.length;
+            } catch (error) {
+              routesLogger.error({ error }, "failed to execute batch update");
+              errorCount += updates.length;
+            }
           }
         }
       }
+
+      // An unconfigured IGDB client yields no batches; report those games as
+      // unrefreshed instead of returning a misleading zero-error success.
+      errorCount += userGames.filter(
+        (game) => game.igdbId != null && !processedIgdbIds.has(game.igdbId)
+      ).length;
 
       routesLogger.info({ userId, updatedCount, errorCount }, "metadata refresh completed");
 

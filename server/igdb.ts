@@ -1212,8 +1212,22 @@ class IGDBClient {
     ids: number[],
     options: { includeReleaseDateStatuses?: boolean } = {}
   ): Promise<IGDBGame[]> {
-    if (!(await this.ensureConfigured())) return [];
-    if (ids.length === 0) return [];
+    const allResults: IGDBGame[] = [];
+    for await (const batch of this.getGamesByIdsBatches(ids, options)) {
+      allResults.push(...batch.games);
+    }
+    return allResults;
+  }
+
+  /**
+   * Fetches IGDB games in rate-limited batches so large-library refreshes can
+   * persist each batch before the next one is loaded into memory.
+   */
+  async *getGamesByIdsBatches(
+    ids: number[],
+    options: { includeReleaseDateStatuses?: boolean } = {}
+  ): AsyncGenerator<{ requestedIds: number[]; games: IGDBGame[] }, void, unknown> {
+    if (ids.length === 0 || !(await this.ensureConfigured())) return;
 
     // Get rate limit from settings
     let rateLimit = 3;
@@ -1232,7 +1246,6 @@ class IGDBClient {
       chunks.push(ids.slice(i, i + 100));
     }
 
-    const allResults: IGDBGame[] = [];
     const fields = options.includeReleaseDateStatuses
       ? `${IGDB_GAME_FIELDS}, release_dates.date, release_dates.status.name`
       : IGDB_GAME_FIELDS;
@@ -1253,8 +1266,21 @@ class IGDBClient {
         return this.makeRequest<IGDBGame[]>("games", igdbQuery, HOUR_IN_SECONDS * 1000, true);
       });
 
-      const results = await Promise.all(promises);
-      results.forEach((r) => allResults.push(...r));
+      const results = await Promise.allSettled(promises);
+      const games: IGDBGame[] = [];
+      results.forEach((result, batchIndex) => {
+        if (result.status === "fulfilled") {
+          games.push(...result.value);
+          return;
+        }
+
+        igdbLogger.warn(
+          { igdbIds: batch[batchIndex], error: result.reason },
+          "Failed to fetch a chunk of IGDB game metadata"
+        );
+      });
+
+      yield { requestedIds: batch.flat(), games };
 
       // If we made actual requests (cache miss), enforce rate limit
       if (this.lastRequestTime > startLastRequestTime && i + rateLimit < chunks.length) {
@@ -1266,8 +1292,6 @@ class IGDBClient {
         }
       }
     }
-
-    return allResults;
   }
 
   /** Returns the current Unix timestamp (seconds) floored to the nearest hour. */

@@ -619,7 +619,6 @@ The ledger now records **198 verified**, **13 superseded**, **929 unreviewed**,
 **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**.
 Issue #37 remains outstanding.
 
-
 ## Follow-up: search, calendar, and download items (#208–225)
 
 Issues [#208](https://github.com/Doezer/Questarr/issues/208) and [#209](https://github.com/Doezer/Questarr/issues/209) are verified: download results remain scrollable on desktop and mobile, and extended search supports the query and filtering controls requested. Issue [#210](https://github.com/Doezer/Questarr/issues/210) now has bug, feature, and question templates; #211 and #215 are covered by the existing README, license, contribution guide, and docs.
@@ -633,7 +632,6 @@ PR [#223](https://github.com/Doezer/Questarr/pull/223) is superseded by the fork
 The focused GameDownloadDialog suite passed (46 tests, 1 skipped); type checking, lint, and format checks passed. Headless-browser evidence was captured from `npm run dev:test`. See [batch 24 validation](evidence/validation-batch-24.txt).
 
 The ledger now records **213 verified**, **15 superseded**, **912 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
-
 
 ## Follow-up: repository hardening, Usenet, and version tracking (#226–233)
 
@@ -1009,5 +1007,25 @@ Batch 38 reviewed [PRs #348–360](inventory.md) and issue [#361](https://github
 The xREL release integration is present and SSRF-hardened. Its game-filtered latest feed now scans until it finds an extra game result before enabling Next, instead of estimating from an unreliable upstream page count. The page shows the current page without a fabricated total. See the [release note](../../release-notes/2026-10-12-xrel-release-pagination.md), [visual evidence](../pr-evidence/upstream-xrel-pagination-batch-38.png), and [batch 38 validation](evidence/validation-batch-38.txt).
 
 The ledger now records **316 verified**, **35 superseded**, **787 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** records. Issue #37 remains outstanding.
+
+## Batch 39 — October 12, 2026
+
+Batch 39 reviewed [PRs #362–370 and #372–374](inventory.md) and [issues #371
+and #375](inventory.md). The Steam wishlist workflow uses authenticated manual
+SteamID64 linking; the upstream OAuth/session callback was not ported after its
+review identified account-linking and secret-management risks. RomM imports,
+root-folder scanning, the redesigned download dialog, GameCard labels, and
+release-group filtering are present. Dependency targets are exceeded by the
+current locked versions, and Prowlarr endpoints use the shared SSRF-safe fetcher.
+
+Metadata refresh now streams IGDB data in bounded request batches while keeping
+database writes at 50 games per transaction. A failed chunk is logged, later
+chunks continue, and the response counts games that could not be refreshed. See
+the [release note](../../release-notes/2026-10-12-metadata-refresh-chunk-resilience.md)
+and [batch 39 validation](evidence/validation-batch-39.txt).
+
+The ledger now records **330 verified**, **35 superseded**, **773 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** records. Issue #37 remains outstanding.

@@ -354,20 +354,20 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #359](https://github.com/Doezer/Questarr/pull/359) | Add RSS feed functionality | MERGED | merge-commit-in-fork-history | verified |
 | [pr #360](https://github.com/Doezer/Questarr/pull/360) | feat: Introduce compact lists in dashboard, library and wishlist | MERGED | merge-commit-in-fork-history | verified |
 | [issue #361](https://github.com/Doezer/Questarr/issues/361) | Add notification providers (Pushover, Pushbullet etc.) | CLOSED | no-merge-commit | verified |
-| [pr #362](https://github.com/Doezer/Questarr/pull/362) | feat: Implement core game data integrations with IGDB and Steam | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #363](https://github.com/Doezer/Questarr/pull/363) | feat: Add RomM integration and post-processing imports with optional manual review of folder name | CLOSED | no-merge-commit | unreviewed |
-| [pr #364](https://github.com/Doezer/Questarr/pull/364) | feat: redesign of download modal | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #365](https://github.com/Doezer/Questarr/pull/365) | Add test coverage for db.ts and search.ts | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #366](https://github.com/Doezer/Questarr/pull/366) | chore(deps): bump docker/login-action from 3.6.0 to 3.7.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #367](https://github.com/Doezer/Questarr/pull/367) | chore(deps-dev): bump the dev-dependencies group with 2 updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #368](https://github.com/Doezer/Questarr/pull/368) | chore(deps): bump tailwind-merge from 2.6.0 to 2.6.1 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #369](https://github.com/Doezer/Questarr/pull/369) | chore(deps): bump pg from 8.17.2 to 8.18.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #370](https://github.com/Doezer/Questarr/pull/370) | chore(deps): bump fast-xml-parser from 5.3.3 to 5.3.4 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #371](https://github.com/Doezer/Questarr/issues/371) | Scan Games | CLOSED | no-merge-commit | unreviewed |
-| [pr #372](https://github.com/Doezer/Questarr/pull/372) | 🛡️ Sentinel: [CRITICAL] Fix SSRF in Prowlarr sync and test endpoints | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #373](https://github.com/Doezer/Questarr/pull/373) | ⚡ Bolt: Optimize metadata refresh with chunked fetching | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #374](https://github.com/Doezer/Questarr/pull/374) | 🎨 Palette: Improve GameCard accessibility with better ARIA labels | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #375](https://github.com/Doezer/Questarr/issues/375) | UI filter for different release groups | CLOSED | no-merge-commit | unreviewed |
+| [pr #362](https://github.com/Doezer/Questarr/pull/362) | feat: Implement core game data integrations with IGDB and Steam | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #363](https://github.com/Doezer/Questarr/pull/363) | feat: Add RomM integration and post-processing imports with optional manual review of folder name | CLOSED | no-merge-commit | verified |
+| [pr #364](https://github.com/Doezer/Questarr/pull/364) | feat: redesign of download modal | MERGED | merge-commit-in-fork-history | verified |
+| [pr #365](https://github.com/Doezer/Questarr/pull/365) | Add test coverage for db.ts and search.ts | MERGED | merge-commit-in-fork-history | verified |
+| [pr #366](https://github.com/Doezer/Questarr/pull/366) | chore(deps): bump docker/login-action from 3.6.0 to 3.7.0 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #367](https://github.com/Doezer/Questarr/pull/367) | chore(deps-dev): bump the dev-dependencies group with 2 updates | MERGED | merge-commit-in-fork-history | verified |
+| [pr #368](https://github.com/Doezer/Questarr/pull/368) | chore(deps): bump tailwind-merge from 2.6.0 to 2.6.1 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #369](https://github.com/Doezer/Questarr/pull/369) | chore(deps): bump pg from 8.17.2 to 8.18.0 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #370](https://github.com/Doezer/Questarr/pull/370) | chore(deps): bump fast-xml-parser from 5.3.3 to 5.3.4 | MERGED | merge-commit-in-fork-history | verified |
+| [issue #371](https://github.com/Doezer/Questarr/issues/371) | Scan Games | CLOSED | no-merge-commit | verified |
+| [pr #372](https://github.com/Doezer/Questarr/pull/372) | 🛡️ Sentinel: [CRITICAL] Fix SSRF in Prowlarr sync and test endpoints | MERGED | merge-commit-in-fork-history | verified |
+| [pr #373](https://github.com/Doezer/Questarr/pull/373) | ⚡ Bolt: Optimize metadata refresh with chunked fetching | MERGED | merge-commit-in-fork-history | verified |
+| [pr #374](https://github.com/Doezer/Questarr/pull/374) | 🎨 Palette: Improve GameCard accessibility with better ARIA labels | MERGED | merge-commit-in-fork-history | verified |
+| [issue #375](https://github.com/Doezer/Questarr/issues/375) | UI filter for different release groups | CLOSED | no-merge-commit | verified |
 | [issue #376](https://github.com/Doezer/Questarr/issues/376) | FR: Add status "dropped"; option to rate games; create custom list; and option to add personal notes | CLOSED | no-merge-commit | unreviewed |
 | [issue #377](https://github.com/Doezer/Questarr/issues/377) | Steam wishlist sync | CLOSED | no-merge-commit | unreviewed |
 | [pr #378](https://github.com/Doezer/Questarr/pull/378) | chore(deps-dev): bump the dev-dependencies group with 4 updates | MERGED | merge-commit-in-fork-history | unreviewed |

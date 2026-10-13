@@ -29,6 +29,17 @@ vi.mock("../storage.js", () => ({
   },
 }));
 
+vi.mock("../db.js", () => ({
+  db: {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        limit: vi.fn().mockResolvedValue([{ igdbRateLimitPerSecond: 1 }]),
+      })),
+    })),
+  },
+}));
+vi.mock("../db/tables.js", () => ({ userSettings: {} }));
+
 // igdb.ts fetches through the SSRF-safe wrapper rather than global fetch; mock it here
 // the same way steam.ts/hltb.ts/nexusmods.ts tests do.
 vi.mock("../ssrf.js", () => ({
@@ -600,6 +611,46 @@ describe("IGDBClient - Batch Operations", () => {
       token_type: "bearer",
     }),
   };
+
+  it("continues yielding game metadata batches after one chunk fails", async () => {
+    fetchMock
+      .mockResolvedValueOnce(authResponse)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: 1, name: "First game" }],
+      })
+      .mockRejectedValueOnce(new Error("temporary IGDB failure"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: 201, name: "Last game" }],
+      });
+
+    const { igdbClient } = await import("../igdb.js");
+    const batches = [];
+    for await (const batch of igdbClient.getGamesByIdsBatches(
+      Array.from({ length: 201 }, (_, i) => i + 1)
+    )) {
+      batches.push(batch);
+    }
+
+    expect(batches.map((batch) => batch.requestedIds.length)).toEqual([100, 100, 1]);
+    expect(batches[0]?.games).toEqual([{ id: 1, name: "First game" }]);
+    expect(batches[1]?.games).toEqual([]);
+    expect(batches[2]?.games).toEqual([{ id: 201, name: "Last game" }]);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("collects successful batches for existing getGamesByIds callers", async () => {
+    fetchMock.mockResolvedValueOnce(authResponse).mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ id: 42, name: "Collected game" }],
+    });
+
+    const { igdbClient } = await import("../igdb.js");
+    await expect(igdbClient.getGamesByIds([42])).resolves.toEqual([
+      { id: 42, name: "Collected game" },
+    ]);
+  });
 
   it("should batch steam app ID lookups correctly", async () => {
     const successResponse1 = {

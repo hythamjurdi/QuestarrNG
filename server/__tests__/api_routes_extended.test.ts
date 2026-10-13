@@ -640,9 +640,9 @@ describe("API Routes - Additional Coverage", () => {
       vi.mocked(storage.getUserGames).mockResolvedValue([
         { id: "g1", igdbId: 42, title: "Old Title" },
       ] as unknown as Game[]);
-      vi.mocked(igdbClient.getGamesByIds).mockResolvedValue([
-        { id: 42, name: "New Title" },
-      ] as never);
+      vi.mocked(igdbClient.getGamesByIdsBatches).mockImplementation(async function* (ids) {
+        yield { requestedIds: ids, games: [{ id: 42, name: "New Title" }] };
+      });
       vi.mocked(igdbClient.formatGameData).mockReturnValue({
         publishers: [],
         developers: [],
@@ -667,9 +667,9 @@ describe("API Routes - Additional Coverage", () => {
       vi.mocked(storage.getUserGames).mockResolvedValue([
         { id: "g1", igdbId: 42, title: "Old Title" },
       ] as unknown as Game[]);
-      vi.mocked(igdbClient.getGamesByIds).mockResolvedValue([
-        { id: 42, name: "New Title" },
-      ] as never);
+      vi.mocked(igdbClient.getGamesByIdsBatches).mockImplementation(async function* (ids) {
+        yield { requestedIds: ids, games: [{ id: 42, name: "New Title" }] };
+      });
       vi.mocked(igdbClient.formatGameData).mockReturnValue({
         publishers: [],
         developers: [],
@@ -707,6 +707,51 @@ describe("API Routes - Additional Coverage", () => {
             ],
           }),
         }),
+      ]);
+    });
+
+    it("reports missing IGDB results while refreshing games returned in other chunks", async () => {
+      vi.mocked(storage.getUserGames).mockResolvedValue([
+        { id: "g1", igdbId: 42, title: "Refreshable Game" },
+        { id: "g2", igdbId: 84, title: "Unavailable Game" },
+      ] as unknown as Game[]);
+      vi.mocked(igdbClient.getGamesByIdsBatches).mockImplementation(async function* (ids) {
+        yield { requestedIds: ids, games: [{ id: 42, name: "Refreshable Game" }] };
+      });
+
+      const res = await request(app).post("/api/games/refresh-metadata");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        success: true,
+        updatedCount: 1,
+        errorCount: 1,
+        message: expect.stringContaining("Failed for 1 games."),
+      });
+      expect(storage.updateGamesBatch).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "g1" }),
+      ]);
+    });
+
+    it("continues refreshing later IGDB batches after an earlier batch fails", async () => {
+      vi.mocked(storage.getUserGames).mockResolvedValue(
+        Array.from({ length: 101 }, (_, index) => ({
+          id: `g${index + 1}`,
+          igdbId: index + 1,
+          title: `Game ${index + 1}`,
+        })) as unknown as Game[]
+      );
+      vi.mocked(igdbClient.getGamesByIdsBatches).mockImplementation(async function* (ids) {
+        yield { requestedIds: ids.slice(0, 100), games: [] };
+        yield { requestedIds: ids.slice(100), games: [{ id: 101, name: "Game 101" }] };
+      });
+
+      const res = await request(app).post("/api/games/refresh-metadata");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ success: true, updatedCount: 1, errorCount: 100 });
+      expect(storage.updateGamesBatch).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "g101" }),
       ]);
     });
 
