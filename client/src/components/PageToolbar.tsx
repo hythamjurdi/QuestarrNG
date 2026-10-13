@@ -31,6 +31,8 @@ interface PageToolbarProps {
   searchPlaceholder?: string;
   searchLang?: string;
   searchDir?: "ltr" | "rtl" | "auto";
+  /** Direction to use for the placeholder while an auto-directed search is empty. */
+  searchEmptyDir?: "ltr" | "rtl";
   /** Content rendered in the filter row (filter pills, custom toggles). */
   filterPills?: React.ReactNode;
   /** Sort select. Rendered when sortOptions is non-empty. */
@@ -51,6 +53,7 @@ export default function PageToolbar({
   searchPlaceholder = "Search...",
   searchLang,
   searchDir,
+  searchEmptyDir,
   filterPills,
   sortValue,
   onSortChange,
@@ -59,6 +62,8 @@ export default function PageToolbar({
   viewControls,
   actions,
 }: PageToolbarProps) {
+  const inputSearchDir =
+    searchDir === "auto" && !(search ?? "") ? (searchEmptyDir ?? searchDir) : searchDir;
   const hasSearch = onSearchChange !== undefined;
   const hasSort = Boolean(sortOptions?.length && onSortChange);
   const hasRow2 = Boolean(filterPills || hasSort || actions);
@@ -78,7 +83,7 @@ export default function PageToolbar({
               className="h-10 pl-9 pr-8 text-sm sm:h-8"
               aria-label={searchPlaceholder}
               lang={searchLang}
-              dir={searchDir}
+              dir={inputSearchDir}
             />
             {search && (
               <Button

@@ -274,6 +274,7 @@ export default function CalendarPage() {
           searchPlaceholder={t("Filter games...")}
           searchLang={languageFor("Filter games...")}
           searchDir="auto"
+          searchEmptyDir={directionFor("Filter games...")}
           filterPills={
             <span className="text-base font-semibold" lang={regionalLocale} dir={regionalDirection}>
               {getTitle()}

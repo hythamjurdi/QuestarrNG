@@ -163,18 +163,22 @@ test.describe("Game download interface language", () => {
     }
     const calendarSearch = page.getByRole("textbox");
     await expect(calendarSearch).toHaveAttribute("lang", "ar");
-    await expect(calendarSearch).toHaveAttribute("dir", "auto");
+    await expect(calendarSearch).toHaveAttribute("dir", "rtl");
+    await expect(calendarSearch).toHaveCSS("direction", "rtl");
     await calendarSearch.fill("Calendar Localization Demo");
+    await expect(calendarSearch).toHaveAttribute("dir", "auto");
     await expect(calendarSearch).toHaveCSS("direction", "ltr");
+    await calendarSearch.fill("لعبة");
+    await expect(calendarSearch).toHaveCSS("direction", "rtl");
+    await calendarSearch.clear();
+    await expect(calendarSearch).toHaveAttribute("dir", "rtl");
+    await expect(calendarSearch).toHaveCSS("direction", "rtl");
     if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
       await page.screenshot({
         path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-calendar-search-direction.png`,
         fullPage: true,
       });
     }
-    await calendarSearch.fill("لعبة");
-    await expect(calendarSearch).toHaveCSS("direction", "rtl");
-    await calendarSearch.clear();
     const releaseCountLabel = page.locator('span[id$="-releases"]').first();
     await expect(releaseCountLabel).not.toBeEmpty();
     await expect(releaseCountLabel).toHaveText("إصداران");
