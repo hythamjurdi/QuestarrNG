@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T19:09:06.154Z",
-  "forkHead": "32267d006e0bd26b5e7fafd46f53746ebf49e786",
+  "capturedAt": "2026-10-13T19:27:53.534Z",
+  "forkHead": "dfa3c8844c03920768a8a22dc622bd2af84871b2",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -21781,10 +21781,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "PR #756 requested @hookform/resolvers 5.4.0. QuestarrNG already declares ^5.9.1 and locks 5.9.1, a newer release that replaces the requested target."
+        ],
+        "acceptance": [
+          "Retain the newer resolver version; current typechecking, production build, and project tests pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21801,10 +21809,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "PR #757 requested archiver and @types/archiver 8.0.0. Both are present at 8.0.0 in the manifest and lockfile; archive extraction and merge paths pass focused regression coverage."
+        ],
+        "acceptance": [
+          "Keep archiver and its type package aligned at 8.0.0 and preserve archive extraction, merge, and import behavior."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "server/__tests__/archive_service.test.ts",
+          "server/__tests__/archive_service_extract_merge.test.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21821,10 +21840,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "PR #758 requested Express 5.2.1 and the matching Express 5 type package. QuestarrNG uses express 5.2.1 and @types/express 5.0.6; route suites, typechecking, and the production build pass."
+        ],
+        "acceptance": [
+          "Keep Express 5.2.1 with Express 5 typings and preserve the route/API test contracts."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "server/__tests__/routes.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21841,10 +21871,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "PR #759 targeted js-yaml 5.2.1. QuestarrNG already declares ^5.4.3 and locks 5.4.3, which supersedes the requested release."
+        ],
+        "acceptance": [
+          "Retain the newer locked js-yaml version; the current project check and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21861,10 +21899,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "PR #760 requested @eslint/js 10.0.1. The manifest and lockfile use 10.0.1, and the repository-wide ESLint run passes with zero warnings."
+        ],
+        "acceptance": [
+          "Keep @eslint/js 10.0.1 and ensure the complete repository lint remains clean."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21881,10 +21927,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "PR #761 requested React and @types/react 19.2.7. QuestarrNG already uses 19.3.0 for both, a later compatible release; the current typecheck, production build, and focused UI tests pass."
+        ],
+        "acceptance": [
+          "Retain the matching React and type package at 19.3.0 and preserve the current UI test and build results."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21901,10 +21955,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "PR #762 requested date-fns 4.4.0. The current manifest and lockfile use 4.4.0, and calendar/date utility tests pass on that version."
+        ],
+        "acceptance": [
+          "Keep date-fns 4.4.0 and preserve calendar rendering and date utility behavior."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "client/__tests__/CalendarPage.test.tsx",
+          "client/__tests__/calendar-utils.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21921,10 +21985,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "PR #763 requested react-day-picker 10.0.1. QuestarrNG already uses 10.0.2, a later release; calendar pages and date utilities pass focused tests, and typechecking/build pass."
+        ],
+        "acceptance": [
+          "Retain react-day-picker 10.0.2 and preserve the v10 calendar integration behavior."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "client/__tests__/CalendarPage.test.tsx",
+          "client/__tests__/calendar-utils.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21941,10 +22015,27 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "352dd616f6274c5003d728f1afbbea7e8ff1af5e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "PR #764 was merged to release/1.4.0 and its status-picker, status-icon/color, compact-title overflow, and search-results badge fixes are present in QuestarrNG. The final upstream diff already uses min-w-0 for the compact title. Its review noted that lowercase status IDs were used as accessible names while the menu showed title-case labels; QuestarrNG now uses each visible label as the accessible name."
+        ],
+        "acceptance": [
+          "Each status option has an accessible name matching its visible label; the current status is pressed, downloading is not user-selectable, status changes work, the card title stays contained, and the search-results badge does not elevate on hover/press."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/764",
+          "client/src/components/StatusPicker.tsx",
+          "client/src/components/StatusBadge.tsx",
+          "client/src/components/CompactGameCard.tsx",
+          "client/src/components/SearchResultsBadge.tsx",
+          "client/__tests__/StatusPicker.test.tsx",
+          "client/__tests__/StatusBadge.test.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "client/__tests__/GameCard.remaining.test.tsx",
+          "client/__tests__/CompactGameCard.test.tsx",
+          "docs/upstream-resolution/evidence/upstream-pr-764-status-picker-2026-10-13.png",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21961,10 +22052,27 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "PR #765 was closed without merging and proposed eight action updates, including changing Docker workflow references from StepSecurity secure drop-in wrappers to Docker action names. QuestarrNG keeps the StepSecurity wrappers to preserve its existing hardening choice; their workflow pins are newer (setup-qemu 4.4.0, setup-buildx 4.4.1, login 4.6.0, build-push 7.4.0). Metadata-action 6.2.0 and upload-artifact 7.0.1 match the requested levels, while Scorecard 2.4.4 and CodeQL upload-sarif 4.38.2 are newer. All remain pinned by full commit SHA."
+        ],
+        "acceptance": [
+          "Keep the requested action functionality at the requested or a newer release, preserve the StepSecurity drop-in wrappers, and use immutable full-SHA references."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/765",
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/scorecard.yml",
+          ".github/workflows/vulnerability-scan.yml",
+          ".github/workflows/sast.yml",
+          "https://github.com/step-security/docker-build-push-action",
+          "https://github.com/step-security/docker-login-action",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt",
+          "docs/upstream-resolution/evidence/validation-batch-64.txt",
+          "https://github.com/step-security/setup-buildx-action",
+          "https://github.com/step-security/setup-qemu-action"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

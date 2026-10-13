@@ -281,8 +281,8 @@ describe("GameCard remaining coverage", () => {
     // Open the status picker popover
     fireEvent.click(screen.getByTestId("button-status-1"));
 
-    // Select "completed" from the picker chips (aria-label matches status id)
-    const completedChip = await screen.findByRole("button", { name: "completed" });
+    // Select "Completed" from the picker chips using its visible accessible name.
+    const completedChip = await screen.findByRole("button", { name: "Completed" });
     fireEvent.click(completedChip);
 
     expect(onStatusChange).toHaveBeenCalledWith("1", "completed");

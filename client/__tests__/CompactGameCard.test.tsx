@@ -106,8 +106,8 @@ describe("CompactGameCard", () => {
     const trigger = screen.getByLabelText(`Change status for ${mockGame.title}`);
     fireEvent.click(trigger);
 
-    // Select "owned" from the chips
-    const ownedChip = await screen.findByRole("button", { name: "owned" });
+    // Select "Owned" from the chips using its visible accessible name.
+    const ownedChip = await screen.findByRole("button", { name: "Owned" });
     fireEvent.click(ownedChip);
 
     expect(onStatusChange).toHaveBeenCalledWith("1", "owned");
@@ -150,7 +150,7 @@ describe("CompactGameCard", () => {
 
       fireEvent.click(trigger);
 
-      expect(screen.queryByRole("button", { name: "shelved" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Shelved" })).not.toBeInTheDocument();
       expect(onStatusChange).not.toHaveBeenCalled();
     });
   });

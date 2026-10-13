@@ -27,22 +27,22 @@ merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       567 |
-| `superseded`             |       160 |
+| `verified`               |       573 |
+| `superseded`             |       164 |
 | `not-applicable`         |        12 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       419 |
+| `unreviewed`             |       409 |
 | **Total**                | **1,163** |
 
-The ledger now gives 744 items an assigned disposition. Four implemented
+The ledger now gives 754 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 419 are unreviewed. The
+currently identified item needs implementation, and 409 are unreviewed. The
 source-change flags cleared in batch 61 remain clear. These numbers describe
-the ledger, not completion of the campaign. Batch 63 is the latest completed
+the ledger, not completion of the campaign. Batch 64 is the latest completed
 review; its results are in
-[validation evidence](evidence/validation-batch-63.txt).
+[validation evidence](evidence/validation-batch-64.txt).
 
 ## Project records
 
@@ -1919,3 +1919,44 @@ records 567 verified, 160 superseded, 12 not-applicable, five
 implemented-unverified, zero needs-implementation, and 419 unreviewed items.
 The campaign remains in progress and has not passed the merge gate; see
 [Batch 63 evidence](evidence/validation-batch-63.txt).
+
+## Batch 64 — October 13, 2026
+
+Batch 64 reviewed PRs [#756](https://github.com/Doezer/Questarr/pull/756)–
+[#765](https://github.com/Doezer/Questarr/pull/765). Six requests are verified
+and four are superseded by later locked dependency releases. Resolver 5.9.1
+replaces #756's 5.4.0 target; js-yaml 5.4.3 replaces #759's 5.2.1 target;
+React and its types are both at 19.3.0, above #761's 19.2.7; and
+react-day-picker 10.0.2 replaces #763's 10.0.1 target. Archiver/types 8.0.0,
+Express 5.2.1 with Express 5 typings, @eslint/js 10.0.1, and date-fns 4.4.0
+match #757, #758, #760, and #762. Archive, route, calendar, and UI tests pass on
+the current dependency set.
+
+PR #764 is merged to upstream `release/1.4.0`; its status icons and colors,
+card-title containment, and search-results badge behavior are present in the
+fork. The final upstream patch already corrected the narrow-card overflow
+reported in review. We also aligned each status option's accessible name with
+its visible label, and verified the active state and all selectable options in
+a running browser. The [status-picker screenshot](evidence/upstream-pr-764-status-picker-2026-10-13.png)
+shows the live interaction.
+
+PR #765 was closed without merging. Its requested action releases are met by
+current or newer pinned versions. The fork retains StepSecurity's secure
+drop-in [Buildx](https://github.com/step-security/setup-buildx-action),
+[QEMU](https://github.com/step-security/setup-qemu-action),
+[login](https://github.com/step-security/docker-login-action), and
+[build/push](https://github.com/step-security/docker-build-push-action)
+wrappers at newer releases, preserving the existing workflow hardening;
+metadata-action and artifact uploads match the requested levels, while
+Scorecard and CodeQL are newer. All workflow references remain full-SHA pinned.
+
+Batch 64 validation passed 599 tests across 13 focused files, TypeScript
+checking, repository-wide lint and formatting, the production build, and the
+production dependency audit. The isolated Playwright setup and status-picker
+journey both passed. The screenshot was retained; the task-owned server, test
+database, authentication state, copied dependencies, worktree, and other local
+scratch were removed. No NFS scratch was needed. The ledger now records 573
+verified, 164 superseded, 12 not-applicable, five implemented-unverified, zero
+needs-implementation, and 409 unreviewed items; no source-change flags are set.
+The campaign remains in progress and has not passed the merge gate; see
+[Batch 64 evidence](evidence/validation-batch-64.txt).
