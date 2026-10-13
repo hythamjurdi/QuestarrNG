@@ -727,13 +727,15 @@ jobs:
   announce-release:
     name: Announce release to Discord
     needs: [release, finalize-release]
-    if: ${{ always() && ((startsWith(github.ref, 'refs/tags/v') && needs.release.result == 'success') || (github.event_name == 'workflow_dispatch' && inputs.finalize_release_tag == '' && inputs.announce_release_tag != '') || (github.event_name == 'workflow_dispatch' && inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success')) }}
+    if: ${{ always() && github.repository == 'snapetech/QuestarrNG' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && ((inputs.finalize_release_tag == '' && inputs.announce_release_tag != '') || (inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success')) }}
     runs-on: ubuntu-latest
+    environment:
+      name: discord-release
     permissions:
       contents: read
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       TAG: ${{ inputs.finalize_release_tag || inputs.announce_release_tag || github.ref_name }}
     steps:
       - name: Checkout release tooling
@@ -756,10 +758,10 @@ jobs:
             echo 'Release announcement tag must use vMAJOR.MINOR.PATCH.' >&2
             exit 1
           fi
-          test -n "$DISCORD_WEBHOOK" || {
-            echo 'DISCORD_RELEASE_WEBHOOK is required to announce a release.' >&2
-            exit 1
-          }
+          if [[ -z "$DISCORD_WEBHOOK" ]]; then
+            echo '::warning::Discord announcement skipped because discord-release has no webhook secret.'
+            exit 0
+          fi
 
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
             --json body,isDraft,isPrerelease,tagName,url > release.json

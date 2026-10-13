@@ -97,9 +97,15 @@ type checking, application builds, and Docker image builds:
   npm test -- --coverage --reporter=default --reporter=junit --outputFile.junit=test-report.junit.xml
   ```
 
-  Coverage thresholds come from `vitest.config.ts`; coverage and JUnit results are uploaded to Codecov.
+  The reviewed sandbox launcher runs the source-bound plan with an offline npm
+  cache and installs dependencies inside Bubblewrap. Coverage thresholds come
+  from `vitest.config.ts`; reports are exported as a short-lived artifact and a
+  default-branch `workflow_run` uploads them to Codecov only for trusted pushes
+  to `main`.
 
-- `build`: `npm run lint`, `npm run check` (TypeScript) and `npm run build`, on Node 22.19.0 (plus 26.x on pushes to `main`/`release/*`).
+- `build`: the reviewed sandbox launcher runs `npm run lint`, `npm run check`
+  (TypeScript) and `npm run build` with offline dependencies, on Node 22.19.0
+  (plus 26.x on pushes to `main`/`release/*`).
 - `docker-build`: builds the image. It always runs on pushes; on a PR it runs when the PR touches the `Dockerfile`, `.dockerignore`, `entrypoint.sh`, `package*.json`, `requirements/`, migrations or `ci.yml`.
 
 Playwright E2E tests run in `.github/workflows/e2e.yml`. A new push to a PR cancels the CI, E2E, CodeQL and SAST runs still going for its previous commit.
@@ -150,8 +156,9 @@ npm run release-notes:preview -- --base origin/main --head HEAD
 ```
 
 CI validates the fragment and summarizes its release text. The tag workflow
-adds these fragments to the GitHub release notes and Discord announcement. Keep
-the versioned history in [`docs/CHANGELOG.md`](../docs/CHANGELOG.md).
+adds these fragments to the GitHub release notes. A trusted default-branch
+workflow announces successfully published tag releases to Discord. Keep the
+versioned history in [`docs/CHANGELOG.md`](../docs/CHANGELOG.md).
 
 ## Project Structure
 

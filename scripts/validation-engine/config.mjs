@@ -1,4 +1,6 @@
 // Copyright (c) QuestarrNG contributors. All rights reserved.
+import process from 'node:process';
+
 export const validation = {
   repository: 'questarrng',
   inputs: [
@@ -14,11 +16,27 @@ export const validation = {
     'playwright.config.ts',
     'release-notes/README.md',
     'release-notes/20261012-validation-environment-isolation.md',
+    'release-notes/20261013-validation-pr-secret-isolation.md',
+    'release-notes/20261012-validation-sandbox-hardening.md',
+    'release-notes/20261013-validation-sandbox-ci.md',
+    '.github/CONTRIBUTING.md',
     'docs/development/validation-engine.md',
+    'docs/SECURITY_ASSESSMENT.md',
+    'docs/THREAT_MODEL.md',
+    'docs/SECRETS.md',
     '.github/workflows/ci.yml',
+    '.github/workflows/codecov-upload.yml',
+    '.github/workflows/fork-image.yml',
+    '.github/workflows/trusted-discord-release-announcement.yml',
+    '.github/workflows/trusted-pr-validation.yml',
     'scripts/validation-engine/engine.mjs',
     'scripts/validation-engine/config.mjs',
     'scripts/validation-engine/engine.contract.mjs',
+    'scripts/validation-engine/trusted-test-launcher.mjs',
+    'scripts/validation-engine/trusted-test-launcher.contract.mjs',
+    'scripts/validation-engine/trusted-test-source-policy.mjs',
+    'scripts/validation-engine/trusted-test-source-policy.contract.mjs',
+    'scripts/validation-engine/workflow-security.contract.mjs',
     'scripts/validation-engine/reconcile-ci.mjs',
     'scripts/validation-engine/reconcile-ci.contract.mjs',
     'scripts/validate-development.mjs',
@@ -37,6 +55,9 @@ export const validation = {
     { id: 'shared-vitest', glob: 'shared/**/*.test.*', framework: 'vitest', owner: 'shared' },
     { id: 'server-vitest', glob: 'server/**/*.test.*', framework: 'vitest', owner: 'server' },
     { id: 'scripts-vitest', glob: 'scripts/**/*.test.*', framework: 'vitest', owner: 'scripts' },
+    { id: 'trusted-launcher-contracts', glob: 'scripts/validation-engine/trusted-test-launcher.contract.mjs', framework: 'node:test', owner: 'validation-engine' },
+    { id: 'trusted-source-policy-contracts', glob: 'scripts/validation-engine/trusted-test-source-policy.contract.mjs', framework: 'node:test', owner: 'validation-engine' },
+    { id: 'workflow-security-contracts', glob: 'scripts/validation-engine/workflow-security.contract.mjs', framework: 'node:test', owner: 'validation-engine' },
     { id: 'browser-playwright', glob: 'tests/e2e/**/*.spec.ts', framework: 'playwright', owner: 'browser' },
   ],
   tasks: [
@@ -45,10 +66,14 @@ export const validation = {
       name: 'Validation engine contract tests',
       stage: 'repository',
       kind: 'test',
-      command: ['node', '--test', 'scripts/validation-engine/engine.contract.mjs'],
+      command: ['node', '--test', 'scripts/validation-engine/engine.contract.mjs', 'scripts/validation-engine/trusted-test-launcher.contract.mjs', 'scripts/validation-engine/trusted-test-source-policy.contract.mjs', 'scripts/validation-engine/workflow-security.contract.mjs'],
       casePattern: '(?:ℹ|#)\\s*pass\\s+(\\d+)',
       minimumCases: 1,
-      env: { GITHUB_ACTIONS: 'false' },
+      inventoryLanes: ['trusted-launcher-contracts', 'trusted-source-policy-contracts', 'workflow-security-contracts'],
+      env: {
+        GITHUB_ACTIONS: 'false',
+        REQUIRE_VALIDATION_SANDBOX: process.env.GITHUB_ACTIONS === 'true' ? '1' : '0',
+      },
       timeoutSeconds: 180,
     },
     {
@@ -67,7 +92,7 @@ export const validation = {
       stage: 'prepare',
       kind: 'setup',
       command: ['npm', 'ci', '--ignore-scripts'],
-      passEnv: ['NPM_CONFIG_CACHE'],
+      passEnv: ['NPM_CONFIG_CACHE', 'NPM_CONFIG_OFFLINE'],
       timeoutSeconds: 1200,
     },
     {

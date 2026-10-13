@@ -1,0 +1,136 @@
+name: Trusted PR validation
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trusted-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  trusted-pr-validation:
+    name: trusted-pr-validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - name: Fetch trusted base and candidate as data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]
+          [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]
+          [[ -n "$GH_TOKEN" ]]
+          export GIT_CONFIG_NOSYSTEM=1
+          export GIT_CONFIG_GLOBAL=/dev/null
+          export GIT_LFS_SKIP_SMUDGE=1
+          export GIT_TERMINAL_PROMPT=0
+          trusted_repo="$GITHUB_WORKSPACE/trusted.git"
+          git init --quiet --bare "$trusted_repo"
+          git --git-dir="$trusted_repo" remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 --wrap=0)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+          # nosemgrep: yaml.github-actions.security.pull-request-target-code-checkout.pull-request-target-code-checkout
+          # Fetches Git objects only; system/global config, hooks, LFS smudging, and submodules are disabled.
+          git --git-dir="$trusted_repo" -c core.hooksPath=/dev/null -c submodule.recurse=false \
+            fetch --no-tags --no-recurse-submodules origin \
+            "+refs/heads/main:refs/remotes/origin/main" \
+            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head"
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0 GH_TOKEN auth
+          main_sha="$(git --git-dir="$trusted_repo" rev-parse 'refs/remotes/origin/main^{commit}')"
+          if ! git --git-dir="$trusted_repo" cat-file -e "$BASE_SHA^{commit}" || \
+            ! git --git-dir="$trusted_repo" merge-base --is-ancestor "$BASE_SHA" "$main_sha"; then
+            echo "The event base SHA is not a commit in the fetched main history." >&2
+            exit 1
+          fi
+          fetched_candidate_sha="$(git --git-dir="$trusted_repo" rev-parse "refs/remotes/pull/$PR_NUMBER/head^{commit}")"
+          if [ "$fetched_candidate_sha" != "$CANDIDATE_SHA" ]; then
+            echo "The fetched pull-request snapshot does not match the event SHA." >&2
+            exit 1
+          fi
+          # nosemgrep: yaml.github-actions.security.pull-request-target-code-checkout.pull-request-target-code-checkout
+          # Materializes only a base commit verified against main; no repository-provided hooks or filters run.
+          git --git-dir="$trusted_repo" -c core.hooksPath=/dev/null -c submodule.recurse=false \
+            worktree add --detach "$GITHUB_WORKSPACE/trusted" "$BASE_SHA"
+          # nosemgrep: yaml.github-actions.security.pull-request-target-code-checkout.pull-request-target-code-checkout
+          # Materializes the exact untrusted snapshot as data; the trusted launcher isolates it before execution.
+          git --git-dir="$trusted_repo" -c core.hooksPath=/dev/null -c submodule.recurse=false \
+            worktree add --detach "$GITHUB_WORKSPACE/candidate" "$CANDIDATE_SHA"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26.x
+          package-manager-cache: false
+
+      - name: Install trusted npm runtime
+        working-directory: trusted
+        run: node scripts/install-npm-runtime.mjs
+
+      - name: Install Bubblewrap
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap
+          profile="$RUNNER_TEMP/questarr-bubblewrap.apparmor"
+          cat > "$profile" <<'APPARMOR'
+          abi <abi/4.0>,
+          include <tunables/global>
+          profile questarr_bubblewrap /usr/bin/bwrap flags=(unconfined) {
+            userns,
+          }
+          APPARMOR
+          sudo apparmor_parser --add "$profile"
+          test "$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)" = 1
+          bwrap --die-with-parent --unshare-user --ro-bind / / -- /bin/true
+
+      - name: Run trusted validation against the candidate snapshot
+        env:
+          VALIDATION_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          VALIDATION_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GITHUB_WORKFLOW: ${{ github.workflow }}
+          GITHUB_JOB: trusted-pr-validation
+        run: |
+          set -euo pipefail
+          node trusted/scripts/validation-engine/trusted-test-launcher.mjs candidate \
+            --trusted-root trusted \
+            --trusted-base-sha "$VALIDATION_PR_BASE_SHA" \
+            --candidate-sha "$VALIDATION_PR_HEAD_SHA" \
+            --trusted-npm-cli trusted/.github/npm-runtime/node_modules/.questarr-npm-cli/bin/npm-cli.js \
+            --install-dependencies \
+            --receipt-output "$RUNNER_TEMP/quest-validation-receipts/test.json" \
+            -- \
+            node /mnt/trusted-validation/scripts/validate-development.mjs \
+              --root /mnt/workspace \
+              --tests-only
+
+      - name: Reconcile trusted receipt
+        env:
+          VALIDATION_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          VALIDATION_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node trusted/scripts/validation-engine/reconcile-ci.mjs \
+            --trusted-pr \
+            --receipt "$RUNNER_TEMP/quest-validation-receipts/test.json" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --sha "$VALIDATION_PR_HEAD_SHA" \
+            --base-sha "$VALIDATION_PR_BASE_SHA"
