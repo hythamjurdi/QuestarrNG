@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T11:57:56.548Z",
-  "forkHead": "6acb0a0be89c4b20909344c701dee16b6b811fea",
+  "capturedAt": "2026-10-13T12:28:29.011Z",
+  "forkHead": "6cb99e35c06d37e67aae743b97a9af26d9136cff",
   "upstreamHead": "2715243f6c229dd48a58ba588c169d0fd6779d1c",
   "counts": {
     "issue:CLOSED": 228,
@@ -16725,10 +16725,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The regression was loss of Prowlarr's required file query parameter; the current Torznab proxy builder includes it, and SABnzbd now fetches the NZB itself and uploads the bytes. The encoding helper preserves filename-space semantics while protecting the base64 link parameter."
+        ],
+        "acceptance": [
+          "A Prowlarr proxy URL contains its file parameter and link value; the SABnzbd download path keeps the parameter and can upload the fetched NZB."
+        ],
+        "evidence": [
+          "server/torznab.ts",
+          "server/__tests__/torznab.test.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/downloaders/utils.ts",
+          "server/__tests__/downloaders_comprehensive.test.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts",
+          "https://github.com/Doezer/Questarr/issues/586"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16745,10 +16757,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "197100fa4a28f52225acc013defe68b0907e0ad5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested docker/login-action update is superseded: current workflows no longer reference that action and use the fork's current Buildx-based image pipeline."
+        ],
+        "acceptance": [
+          "No workflow depends on docker/login-action; current image build workflows remain configured."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16765,10 +16784,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "197100fa4a28f52225acc013defe68b0907e0ad5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested docker/build-push-action update is superseded: current workflows build with docker buildx commands and do not use that action."
+        ],
+        "acceptance": [
+          "Current image workflows use the maintained Buildx pipeline without docker/build-push-action."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16785,10 +16811,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "197100fa4a28f52225acc013defe68b0907e0ad5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested docker/setup-qemu-action update is superseded: current workflows do not use that action and rely on the current Buildx setup."
+        ],
+        "acceptance": [
+          "No workflow references docker/setup-qemu-action; current Buildx workflow steps are present."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/ci.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16805,10 +16839,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested react-hook-form 7.74.0 update is superseded by the current lockfile version 7.89.0."
+        ],
+        "acceptance": [
+          "The lockfile resolves react-hook-form to a version newer than the PR target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16825,10 +16866,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "Every development dependency update in this group is superseded by newer locked versions: Tailwind Vite 4.3.3, Vitest packages 5.0.2, PostCSS 8.5.28, typescript-eslint 8.71.0, and Vite 8.3.1."
+        ],
+        "acceptance": [
+          "All packages named in the grouped request resolve to versions newer than its requested versions."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16845,10 +16893,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "76efb52abc79b924e089ae29b8c982bc57e78c91",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested express-rate-limit 8.4.1 update is superseded by the current lockfile version 8.7.0."
+        ],
+        "acceptance": [
+          "The lockfile resolves express-rate-limit to a version newer than the PR target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16865,10 +16920,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d5d2358b245469b1548e0ce8afed090e1d33da0c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested fast-xml-parser 5.7.2 update is superseded by the current lockfile version 5.11.2."
+        ],
+        "acceptance": [
+          "The lockfile resolves fast-xml-parser to a version newer than the PR target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16885,10 +16947,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f857913b2aab604141ae54d37677bcdc6f82b937",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The express-session types update no longer applies because neither express-session nor @types/express-session is present in the current package manifest or lockfile."
+        ],
+        "acceptance": [
+          "The removed dependency and its type package are absent from the current dependency graph."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16905,11 +16974,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The Steam ID settings mutation now matches the server route method and the settings-page regression test verifies the save request uses PATCH. The upstream issue discussion identifies the fix commit."
+        ],
+        "acceptance": [
+          "Saving a Steam ID sends PATCH to /api/user/steam-id and the server validates and persists the ID."
+        ],
+        "evidence": [
+          "client/src/pages/settings.tsx",
+          "client/__tests__/SettingsPage.test.tsx",
+          "server/steam-routes.ts",
+          "server/__tests__/steam_routes.test.ts",
+          "https://github.com/Doezer/Questarr/issues/595"
+        ],
+        "dependencies": [
+          "pr:596"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16925,11 +17006,23 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "21675393177247dc7b94bf82798149080d5f5e8a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The PR's PUT-versus-PATCH mismatch is corrected in the current settings mutation; client and server regression tests cover the request and route behavior."
+        ],
+        "acceptance": [
+          "Steam ID saves return the JSON response from the registered PATCH route rather than the SPA fallback."
+        ],
+        "evidence": [
+          "client/src/pages/settings.tsx",
+          "client/__tests__/SettingsPage.test.tsx",
+          "server/steam-routes.ts",
+          "server/__tests__/steam_routes.test.ts",
+          "https://github.com/Doezer/Questarr/pull/596"
+        ],
+        "dependencies": [
+          "issue:595"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16945,10 +17038,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The entrypoint checks ownership before chowning /app and recursively chowns /app/data only when it finds a mismatched owner. A container smoke test ran the current entrypoint against a correctly owned data mount with a chown stub that fails if invoked; startup and writable-volume checks succeeded without calling chown. The upstream reporter also confirmed the fix works."
+        ],
+        "acceptance": [
+          "A volume already owned by the configured PUID/PGID starts successfully without a chown attempt, including when chown would fail under root-squash-like conditions."
+        ],
+        "evidence": [
+          "entrypoint.sh",
+          "docs/upstream-resolution/evidence/validation-batch-54.txt",
+          "https://github.com/Doezer/Questarr/issues/597"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16965,10 +17066,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c11308bc75ed99a2fe635a184979d92b1d3e9d79",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "YearView memoizes its entries and selects month games with a date-string prefix check instead of constructing Date objects inside each month loop. CalendarPage regression coverage verifies the year view still places and dims releases correctly."
+        ],
+        "acceptance": [
+          "Year view renders games in the correct month and preserves past-month and past-release styling."
+        ],
+        "evidence": [
+          "client/src/pages/calendar.tsx",
+          "client/__tests__/CalendarPage.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/598"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16985,11 +17094,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The linked Prowlarr URL corruption is fixed by escaping plus signs only in the base64 link parameter before both qBittorrent URL submission and shared fallback fetches. Torrent errors remain tracked during the grace period, recover cleanly, and fail only when persistent; the upstream issue points users to the fixed release candidate."
+        ],
+        "acceptance": [
+          "Prowlarr links with literal plus characters reach the downloader intact; non-link filename parameters retain plus-as-space behavior; transient torrent errors can recover without immediately resetting the game to wanted."
+        ],
+        "evidence": [
+          "server/downloaders/utils.ts",
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts",
+          "server/__tests__/magnet_detection.test.ts",
+          "server/cron.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "https://github.com/Doezer/Questarr/issues/599"
+        ],
+        "dependencies": [
+          "pr:600"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -17005,11 +17128,29 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "448f22e3ccbd180bce4b78732c1c4a879ac8b8b8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The Prowlarr base64 link is now escaped only in the link parameter; regression tests preserve filename plus semantics and exercise qBittorrent direct and fallback requests. Torrent errors have a tested grace period. The inline review concern about rewriting every query parameter is resolved. The other inline comment describes a removed insecure TLS fallback and FormData path: current SABnzbd code builds a multipart Buffer with an explicit boundary, and certificate validation remains enabled; private CAs are trusted through NODE_EXTRA_CA_CERTS as documented. SonarCloud reported one security hotspot, but its details endpoint was inaccessible (403); the changed behavior was reviewed locally and the targeted tests passed."
+        ],
+        "acceptance": [
+          "Base64 plus characters are percent-escaped only inside the Prowlarr link value across direct and fallback torrent fetch paths; transient torrent errors recover during the grace period; SABnzbd multipart data carries an explicit boundary; HTTPS certificate verification is never silently disabled."
+        ],
+        "evidence": [
+          "server/downloaders/utils.ts",
+          "server/downloaders/qbittorrent.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/cron.ts",
+          "server/__tests__/magnet_detection.test.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "server/__tests__/downloaders_sabnzbd_tls.test.ts",
+          "docs/CHANGELOG.md",
+          "client/src/pages/downloaders.tsx",
+          "https://github.com/Doezer/Questarr/pull/600"
+        ],
+        "dependencies": [
+          "issue:599"
+        ]
       },
       "sourceChangedSinceReview": false
     },

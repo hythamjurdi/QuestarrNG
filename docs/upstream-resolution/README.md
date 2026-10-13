@@ -1461,3 +1461,45 @@ unreviewed items. Validation used a task-owned local scratch directory; the
 temporary database, server, reports, and config were removed. Existing auth
 state and screenshots were restored, and the unrelated port-5100 server was
 left untouched. The full audit remains in progress.
+
+## Batch 54 — October 13, 2026
+
+Batch 54 reviewed issues [#586](https://github.com/Doezer/Questarr/issues/586),
+[#595](https://github.com/Doezer/Questarr/issues/595),
+[#597](https://github.com/Doezer/Questarr/issues/597), and
+[#599](https://github.com/Doezer/Questarr/issues/599), plus PRs #587–594,
+[#596](https://github.com/Doezer/Questarr/pull/596),
+[#598](https://github.com/Doezer/Questarr/pull/598), and
+[#600](https://github.com/Doezer/Questarr/pull/600). The eight dependency PRs
+are superseded by a newer Buildx image pipeline, newer locked dependency
+versions, or packages no longer used.
+
+Issue #586's Prowlarr regression is covered by a new assertion that the proxied
+download URL retains its required `file` parameter. Steam ID saving uses the
+server's `PATCH` route, and the YearView uses the requested memoized entries and
+date-prefix filtering. Issue #597's chown guard checks the existing ownership
+before attempting changes; a container smoke test with a deliberately failing
+`chown` stub passed for a correctly owned data mount. The upstream reporter also
+confirmed that fix worked.
+
+PR #600 and issue #599 are verified: `+` is escaped only inside Prowlarr's
+base64 `link` parameter, while filename query values retain their space
+semantics. qBittorrent direct and fallback requests use the corrected URL, and
+torrent errors remain recoverable during the grace period. The PR's inline
+review feedback was checked: the query-parameter concern is covered by the
+focused tests; the self-signed TLS/FormData concern refers to a removed insecure
+fallback. Current SABnzbd uploads use explicit multipart bytes and the TLS
+certificate remains verified; private CAs are trusted through
+`NODE_EXTRA_CA_CERTS`. SonarCloud reported one security hotspot on the upstream
+PR, but its details endpoint returned 403; local review and the targeted tests
+passed.
+
+The focused regression run passed 230 tests across 11 files. Typecheck, lint,
+formatting, shell syntax, and diff checks passed. The current `entrypoint.sh`
+also completed in the container smoke test without calling the failing `chown`
+stub. No production source under `client/src/**` changed, and no NFS scratch
+space was needed. Exact results are in [batch 54 evidence](evidence/validation-batch-54.txt).
+
+After batch 54, the ledger records 472 verified, 106 superseded, 9
+not-applicable, 4 implemented-unverified, 0 needs-implementation, and 571
+unreviewed items. The full audit remains in progress.

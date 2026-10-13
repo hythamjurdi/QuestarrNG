@@ -631,8 +631,8 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,162-item inventory](docs/upstream-resolution/inventory.md), and each batch's
 [validation evidence](docs/upstream-resolution/evidence/). At the ledger
-snapshot generated on October 13, 2026, 465 items were verified, 98 were
-superseded, and 9 were not applicable. Another 586 remain unreviewed, four
+snapshot generated on October 13, 2026, 472 items were verified, 106 were
+superseded, and 9 were not applicable. Another 571 remain unreviewed, four
 await live-service verification, and none currently need implementation. This
 is an active effort; the full review and validation gate must pass before
 campaign work is merged to `main`.

@@ -131,6 +131,8 @@ describe("TorznabClient — download link rewriting", () => {
     expect(parsed.hostname).toBe("prowlarr");
     expect(parsed.port).toBe("9696");
     expect(parsed.pathname).toBe("/5/download");
+    // Prowlarr needs the filename query parameter to serve proxied downloads.
+    expect(parsed.searchParams.get("file")).toBe("Some Game");
 
     // Must include apikey matching the indexer config
     expect(parsed.searchParams.get("apikey")).toBe("prowlarr-api-key");
