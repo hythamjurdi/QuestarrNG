@@ -1,3 +1,8 @@
+import {
+  formatRegionalPercent,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -57,7 +62,7 @@ function formatDate(value: string | Date | null): string {
   if (!value) return "";
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString(undefined, {
+  return date.toLocaleString(getRegionalLocale(), {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -65,6 +70,7 @@ function formatDate(value: string | Date | null): string {
 
 export default function GameJournalTab({ gameId, steamAppId }: Readonly<GameJournalTabProps>) {
   const { toast } = useToast();
+  const regionalPreference = useRegionalPreference();
   const queryClient = useQueryClient();
 
   /** Shared onSuccess/onError pair for the mutations below: invalidate the
@@ -222,7 +228,12 @@ export default function GameJournalTab({ gameId, steamAppId }: Readonly<GameJour
                       )}
                       {achievement.globalPercent !== null && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {achievement.globalPercent.toFixed(1)}% of players
+                          {formatRegionalPercent(
+                            achievement.globalPercent,
+                            { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+                            regionalPreference
+                          )}{" "}
+                          of players
                         </p>
                       )}
                     </div>

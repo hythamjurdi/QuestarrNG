@@ -1,9 +1,15 @@
+import {
+  formatRegionalPercent,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
 import { useQuery, useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { formatBytes, formatAge, isUsenetItem, getDownloadTypeColor } from "@/lib/downloads-utils";
+import { getInterfaceLanguageDirection, useInterfaceLanguage } from "@/lib/interface-locale";
 import { isTorrentDownloaderType, isUsenetDownloaderType } from "@shared/downloader-types";
 import { cleanReleaseName } from "@shared/title-utils";
 import {
@@ -97,7 +103,7 @@ type DownloadForm = z.infer<typeof downloadSchema>;
 
 function formatDate(dateString: string): string {
   try {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getRegionalLocale());
   } catch {
     return dateString;
   }
@@ -113,6 +119,8 @@ const AI_LEGITIMACY_WARNING_THRESHOLD = 0.5;
  */
 export default function SearchPage() {
   const { toast } = useToast();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
+  const regionalPreference = useRegionalPreference();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [selectedDownload, setSelectedDownload] = useState<DownloadItem | null>(null);
@@ -602,7 +610,12 @@ export default function SearchPage() {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   AI flagged this file size as unusual for this type of release (
-                                  {Math.round(download.aiLegitimacyScore * 100)}% plausible)
+                                  {formatRegionalPercent(
+                                    download.aiLegitimacyScore * 100,
+                                    { maximumFractionDigits: 0 },
+                                    regionalPreference
+                                  )}{" "}
+                                  plausible)
                                 </TooltipContent>
                               </Tooltip>
                             )}
@@ -622,12 +635,13 @@ export default function SearchPage() {
                                 </>
                               )}
                               {download.age !== undefined && (
-                                <>
-                                  <span className="text-muted-foreground font-medium">
-                                    {formatAge(download.age)}
-                                  </span>
-                                  <span>old</span>
-                                </>
+                                <span
+                                  className="text-muted-foreground font-medium"
+                                  lang={interfaceLanguage}
+                                  dir={getInterfaceLanguageDirection(interfaceLanguage)}
+                                >
+                                  {formatAge(download.age, interfaceLanguage, regionalPreference)}
+                                </span>
                               )}
                             </>
                           ) : (

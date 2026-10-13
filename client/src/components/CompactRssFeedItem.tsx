@@ -1,10 +1,10 @@
 import React, { memo } from "react";
 import { ExternalLink, Calendar, Link } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
 import { RssFeedItem } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { safeUrl } from "@/lib/utils";
+import { RegionalRelativeTime } from "./RegionalRelativeTime";
 
 interface CompactRssFeedItemProps {
   item: RssFeedItem;
@@ -53,11 +53,11 @@ const CompactRssFeedItem = ({ item }: CompactRssFeedItemProps) => {
           {/* Pub Date */}
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            <span>
-              {item.pubDate
-                ? formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })
-                : "Unknown date"}
-            </span>
+            {item.pubDate ? (
+              <RegionalRelativeTime date={new Date(item.pubDate)} />
+            ) : (
+              <span>Unknown date</span>
+            )}
           </div>
         </div>
       </div>

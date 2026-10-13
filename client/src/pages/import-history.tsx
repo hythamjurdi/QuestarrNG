@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, CheckCircle, AlertTriangle, XCircle, Clock, Loader2 } from "lucide-react";
@@ -104,7 +105,7 @@ function formatDuration(
 function formatDate(ts: Date | string | number | null | undefined): string {
   const ms = toMs(ts);
   if (!ms) return "—";
-  return new Date(ms).toLocaleString();
+  return new Date(ms).toLocaleString(getRegionalLocale());
 }
 
 type TaskWithItems = ImportTask & { items: ImportTaskItem[] };

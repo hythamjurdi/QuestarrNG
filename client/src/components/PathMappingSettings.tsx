@@ -32,6 +32,7 @@ import { Plus, Trash2, FolderOpen, Loader2, Info, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Downloader, PathMapping } from "@shared/schema";
 import { FileBrowser } from "./FileBrowser";
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
 
 const ANY_DOWNLOADER_VALUE = "__any__";
 const UNAVAILABLE_DOWNLOADER_VALUE = "__unavailable__";
@@ -61,6 +62,8 @@ function getInitialFormState(mapping?: PathMapping | null): PathMappingFormState
 }
 
 export function PathMappingSettings() {
+  const { language: interfaceLanguage } = useInterfaceLanguage();
+  const nameCollator = useMemo(() => getInterfaceCollator(interfaceLanguage), [interfaceLanguage]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -91,12 +94,10 @@ export function PathMappingSettings() {
     return Array.from(hostToNames.entries())
       .map(([host, names]) => ({
         host,
-        label: Array.from(new Set(names))
-          .sort((a, b) => a.localeCompare(b))
-          .join(", "),
+        label: Array.from(new Set(names)).sort(nameCollator.compare).join(", "),
       }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [downloaders]);
+      .sort((a, b) => nameCollator.compare(a.label, b.label));
+  }, [downloaders, nameCollator]);
 
   const downloaderLabelByHost = useMemo(
     () => new Map(downloaderOptions.map((option) => [option.host, option.label])),

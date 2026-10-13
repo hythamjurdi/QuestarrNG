@@ -7,8 +7,8 @@ import ImportReviewModal from "./ImportReviewModal";
 import LinkGameModal from "./LinkGameModal";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
 import { GAME_LINK_REQUIRED_STATUS, QUARANTINED_STATUS } from "@shared/schema";
+import { RegionalRelativeTime } from "./RegionalRelativeTime";
 
 interface PendingImport {
   id: string;
@@ -122,9 +122,9 @@ export default function PendingImportsCard() {
                       {item.createdAt &&
                         (() => {
                           const d = new Date(item.createdAt);
-                          return Number.isNaN(d.getTime())
-                            ? null
-                            : formatDistanceToNow(d, { addSuffix: true });
+                          return Number.isNaN(d.getTime()) ? null : (
+                            <RegionalRelativeTime date={d} />
+                          );
                         })()}
                     </p>
                     {item.errorMessage && (

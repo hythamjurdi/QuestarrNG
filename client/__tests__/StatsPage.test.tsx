@@ -5,6 +5,7 @@ import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import StatsPage from "../src/pages/stats";
+import { formatRegionalPercent, setRegionalPreference } from "../src/lib/regional-format";
 import { createTestQueryClient } from "./test-utils";
 
 vi.mock("@/hooks/use-mobile", () => ({
@@ -42,6 +43,7 @@ vi.mock("recharts", () => ({
 describe("StatsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setRegionalPreference("system");
   });
 
   it("renders the Statistics heading", async () => {
@@ -63,5 +65,22 @@ describe("StatsPage", () => {
 
     const cards = await screen.findAllByTestId("stats-card");
     expect(cards.length).toBeGreaterThan(0);
+  });
+
+  it("formats percentage cards with the selected regional locale", async () => {
+    setRegionalPreference("fr");
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <StatsPage />
+      </QueryClientProvider>
+    );
+
+    const cards = await screen.findAllByTestId("stats-card");
+    const completionCard = cards.find((card) => card.textContent?.startsWith("Completion Rate"));
+
+    expect(completionCard?.textContent).toBe(
+      `Completion Rate: ${formatRegionalPercent(0, { maximumFractionDigits: 0 })}`
+    );
   });
 });

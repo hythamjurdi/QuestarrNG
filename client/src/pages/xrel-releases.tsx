@@ -1,3 +1,5 @@
+import { getRegionalLocale } from "@/lib/regional-format";
+import { formatXrelSize } from "@/lib/xrel-format";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw, Loader2, Plus } from "lucide-react";
@@ -29,17 +31,10 @@ interface XrelLatestResponse {
 }
 
 function formatDate(ts: number): string {
-  return new Date(ts * 1000).toLocaleString(undefined, {
+  return new Date(ts * 1000).toLocaleString(getRegionalLocale(), {
     dateStyle: "short",
     timeStyle: "short",
   });
-}
-
-function formatSize(mb?: number, unit?: string): string {
-  if (mb == null) return "—";
-  if (unit === "GB") return `${mb.toFixed(1)} GB`;
-  if (mb >= 1024 && !unit) return `${(mb / 1024).toFixed(1)} GB`;
-  return `${mb} ${unit || "MB"}`;
 }
 
 function safeUrl(url: string | undefined): string {
@@ -203,7 +198,7 @@ export default function XrelReleasesPage() {
                       </span>
                       {rel.sizeMb != null && (
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatSize(rel.sizeMb, rel.sizeUnit)}
+                          {formatXrelSize(rel.sizeMb, rel.sizeUnit)}
                         </span>
                       )}
                       <Badge variant="secondary" className="text-[10px] h-4 px-1.5">

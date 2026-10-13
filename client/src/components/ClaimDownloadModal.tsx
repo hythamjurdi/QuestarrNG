@@ -25,6 +25,12 @@ import { type Game } from "@shared/schema";
 import { categorizeDownload, type DownloadCategory } from "@shared/download-categorizer";
 import { releaseMatchesGame } from "@shared/title-utils";
 import { apiRequest } from "@/lib/queryClient";
+import {
+  formatRegionalPercent,
+  getRegionalDirection,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { parseReleaseDate } from "@/lib/utils";
 
@@ -54,6 +60,7 @@ export default function ClaimDownloadModal({
 }: ClaimDownloadModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const regionalPreference = useRegionalPreference();
 
   const detected = categorizeDownload(download.name);
   const [category, setCategory] = useState<DownloadCategory>(detected.category);
@@ -194,7 +201,12 @@ export default function ClaimDownloadModal({
             </SelectContent>
           </Select>
           <Badge variant="outline" className="text-xs">
-            {Math.round(detected.confidence * 100)}% confidence
+            {formatRegionalPercent(
+              detected.confidence * 100,
+              { maximumFractionDigits: 0 },
+              regionalPreference
+            )}{" "}
+            confidence
           </Badge>
         </div>
 
@@ -340,6 +352,11 @@ function GameRow({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const regionalPreference = useRegionalPreference();
+  const regionalLocale =
+    getRegionalLocale(regionalPreference) ?? Intl.DateTimeFormat().resolvedOptions().locale;
+  const regionalDirection = getRegionalDirection(regionalLocale);
+
   return (
     <button
       type="button"
@@ -361,14 +378,16 @@ function GameRow({
         <p className="font-medium text-sm truncate">{game.title}</p>
         {game.releaseDate &&
           (() => {
-            const { year, fullDate } = parseReleaseDate(game.releaseDate);
+            const { year, fullDate } = parseReleaseDate(game.releaseDate, regionalPreference);
             return fullDate ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <p className="text-xs text-muted-foreground cursor-default">{year}</p>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{fullDate}</p>
+                  <p lang={regionalLocale} dir={regionalDirection}>
+                    {fullDate}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             ) : (

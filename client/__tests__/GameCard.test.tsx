@@ -5,6 +5,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import GameCard from "../src/components/GameCard";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { setRegionalPreference } from "@/lib/regional-format";
 
 vi.mock("lucide-react", () => ({
   Download: () => <div data-testid="icon-download" />,
@@ -68,6 +69,7 @@ describe("GameCard", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
+    setRegionalPreference("system");
     Object.defineProperty(globalThis, "matchMedia", {
       writable: true,
       value: vi.fn().mockImplementation((query) => ({
@@ -105,6 +107,20 @@ describe("GameCard", () => {
     expect(screen.getByTestId("text-title-1")).toHaveTextContent("Test Game");
     expect(screen.getByTestId("text-rating-1")).toHaveTextContent("8.5/10");
     expect(screen.getByTestId("text-release-1")).toHaveTextContent("2024");
+  });
+
+  it("shows full release dates in the selected regional format", async () => {
+    setRegionalPreference("ja");
+    renderComponent({
+      game: { ...mockGame, releaseDate: "2024-02-03T00:00:00.000Z" },
+    });
+
+    fireEvent.pointerMove(screen.getByTestId("text-release-1"), {
+      pointerType: "mouse",
+    });
+    const fullDate = await screen.findByText("2024/02/03");
+    expect(fullDate).toHaveAttribute("lang", "ja");
+    expect(fullDate).toHaveAttribute("dir", "ltr");
   });
 
   it("displays a rating of 0 as 'N/A' since 0 is unrated", () => {

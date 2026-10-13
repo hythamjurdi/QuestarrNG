@@ -1,3 +1,5 @@
+import { formatRegionalPercent, useRegionalPreference } from "@/lib/regional-format";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,6 +38,8 @@ import DiscordWebhookSettings from "@/components/DiscordWebhookSettings";
 
 export default function StatsPage() {
   const [shareOpen, setShareOpen] = useState(false);
+  const regionalPreference = useRegionalPreference();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
     queryKey: ["/api/games", "", true], // Empty search, include hidden
@@ -54,7 +58,10 @@ export default function StatsPage() {
   });
 
   const isMobile = useIsMobile();
-  const stats = useMemo(() => calculateLibraryStats(games), [games]);
+  const stats = useMemo(
+    () => calculateLibraryStats(games, regionalPreference, interfaceLanguage),
+    [games, regionalPreference, interfaceLanguage]
+  );
 
   const pieData = useMemo(() => {
     return [
@@ -129,13 +136,21 @@ export default function StatsPage() {
         />
         <StatsCard
           title="Completion Rate"
-          value={`${stats.completionRate}%`}
+          value={formatRegionalPercent(
+            stats.completionRate,
+            { maximumFractionDigits: 0 },
+            regionalPreference
+          )}
           subtitle="of acquired games"
           icon={CheckCircle2}
         />
         <StatsCard
           title="Metadata Health"
-          value={`${stats.metadataHealth}%`}
+          value={formatRegionalPercent(
+            stats.metadataHealth,
+            { maximumFractionDigits: 0 },
+            regionalPreference
+          )}
           subtitle="complete metadata"
           icon={Filter}
         />
@@ -164,7 +179,11 @@ export default function StatsPage() {
                     ? {}
                     : {
                         label: ({ name, percent }: PieLabelRenderProps) =>
-                          `${name} ${((percent ?? 0) * 100).toFixed(0)}%`,
+                          `${name} ${formatRegionalPercent(
+                            (percent ?? 0) * 100,
+                            { maximumFractionDigits: 0 },
+                            regionalPreference
+                          )}`,
                       })}
                 >
                   {pieData.map((entry, index) => (

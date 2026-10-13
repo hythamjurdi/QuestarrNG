@@ -1,3 +1,8 @@
+import {
+  formatRegionalNumber,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import React, { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -473,6 +478,7 @@ function StarRatingInput({
 }
 
 export default function GameDetailsModal({ game, open, onOpenChange }: GameDetailsModalProps) {
+  useRegionalPreference();
   const isMobile = useIsMobile();
   const [selectedScreenshotIndex, setSelectedScreenshotIndex] = useState<number | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -930,7 +936,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   <span data-testid={`text-release-date-${game.id}`}>
-                    {new Date(game.releaseDate).toLocaleDateString(undefined, {
+                    {new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
@@ -1160,7 +1166,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                   <div>
                     <h4 className="font-medium text-sm text-muted-foreground mb-1">Release Date</h4>
                     <p className="text-sm" data-testid={`text-full-release-date-${game.id}`}>
-                      {new Date(game.releaseDate).toLocaleDateString(undefined, {
+                      {new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                         timeZone: "UTC",
                       })}
                     </p>
@@ -1171,7 +1177,9 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                     <h4 className="font-medium text-sm text-muted-foreground mb-1">
                       Added to Collection
                     </h4>
-                    <p className="text-sm">{new Date(game.addedAt).toLocaleDateString()}</p>
+                    <p className="text-sm">
+                      {new Date(game.addedAt).toLocaleDateString(getRegionalLocale())}
+                    </p>
                   </div>
                 )}
                 {game.developers && game.developers.length > 0 && (
@@ -1332,11 +1340,14 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                               <p className="text-sm font-medium">{formatBytes(dl.fileSize)}</p>
                             ) : null}
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {dl.addedAt ? new Date(dl.addedAt).toLocaleDateString() : "—"}
+                              {dl.addedAt
+                                ? new Date(dl.addedAt).toLocaleDateString(getRegionalLocale())
+                                : "—"}
                             </p>
                             {dl.completedAt && (
                               <p className="text-xs text-emerald-400 mt-0.5">
-                                Done {new Date(dl.completedAt).toLocaleDateString()}
+                                Done{" "}
+                                {new Date(dl.completedAt).toLocaleDateString(getRegionalLocale())}
                               </p>
                             )}
                           </div>
@@ -1576,7 +1587,10 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                       <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${scoreColor(game.rating)}`}
                       >
-                        {game.rating.toFixed(1)}
+                        {formatRegionalNumber(game.rating, {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5 text-sm font-medium">
@@ -1592,7 +1606,10 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                       <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${scoreColor(game.aggregatedRating)}`}
                       >
-                        {game.aggregatedRating.toFixed(1)}
+                        {formatRegionalNumber(game.aggregatedRating, {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5 text-sm font-medium">
@@ -1630,7 +1647,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                       .map((entry) => (
                         <div key={entry.label} className="flex items-center gap-3">
                           <div className="w-14 h-14 rounded-xl flex items-center justify-center text-sm font-bold bg-muted">
-                            {entry.value % 1 === 0 ? entry.value : entry.value.toFixed(1)}h
+                            {formatRegionalNumber(entry.value, { maximumFractionDigits: 1 })}h
                           </div>
                           <div>
                             <div className="text-sm font-medium">{entry.label}</div>
@@ -1794,11 +1811,13 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                               <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Download className="w-3 h-3" />
-                                  {(mod.mod_unique_downloads ?? 0).toLocaleString()}
+                                  {(mod.mod_unique_downloads ?? 0).toLocaleString(
+                                    getRegionalLocale()
+                                  )}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <ThumbsUp className="w-3 h-3" />
-                                  {(mod.endorsement_count ?? 0).toLocaleString()}
+                                  {(mod.endorsement_count ?? 0).toLocaleString(getRegionalLocale())}
                                 </span>
                                 {mod.user?.name && (
                                   <span className="truncate">by {mod.user.name}</span>

@@ -1,3 +1,4 @@
+import { formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Plus, Moon, Sun, HardDrive, AlertCircle, Loader2 } from "lucide-react";
@@ -30,6 +31,8 @@ const AddGameModal = lazy(() => import("./AddGameModal"));
 
 interface HeaderProps {
   title?: string;
+  titleLanguage?: string;
+  titleDirection?: "ltr" | "rtl";
 }
 
 interface StorageInfo {
@@ -39,15 +42,11 @@ interface StorageInfo {
   error?: string;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-}
-
-export default function Header({ title = "Library" }: HeaderProps) {
+export default function Header({
+  title = "Library",
+  titleLanguage = "en",
+  titleDirection = "ltr",
+}: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
@@ -122,7 +121,12 @@ export default function Header({ title = "Library" }: HeaderProps) {
                 </TooltipContent>
               </Tooltip>
             </span>
-            <h1 className="truncate text-lg font-semibold sm:text-xl" data-testid="text-page-title">
+            <h1
+              className="truncate text-lg font-semibold sm:text-xl"
+              data-testid="text-page-title"
+              lang={titleLanguage}
+              dir={titleDirection}
+            >
               {title}
             </h1>
           </div>

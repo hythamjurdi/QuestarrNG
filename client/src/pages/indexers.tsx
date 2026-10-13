@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch, queryClient, clearSearchCache } from "@/lib/queryClient";
 import { refreshIndexerQueries } from "@/lib/indexers-cache";
 import { asZodType, cn, compareEnabledPriorityName } from "@/lib/utils";
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
 import { Plus, Edit, Trash2, Check, X, Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,6 +136,8 @@ function PriorityControl({
 }
 
 export default function IndexersPage() {
+  const { language: interfaceLanguage } = useInterfaceLanguage();
+  const nameCollator = useMemo(() => getInterfaceCollator(interfaceLanguage), [interfaceLanguage]);
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isProwlarrDialogOpen, setIsProwlarrDialogOpen] = useState(false);
@@ -215,8 +218,8 @@ export default function IndexersPage() {
   );
 
   const sortedIndexers = useMemo(() => {
-    return [...indexers].sort(compareEnabledPriorityName);
-  }, [indexers]);
+    return [...indexers].sort((a, b) => compareEnabledPriorityName(a, b, nameCollator));
+  }, [indexers, nameCollator]);
 
   const diagnoseProwlarr = async () => {
     setDiagnosingProwlarr(true);

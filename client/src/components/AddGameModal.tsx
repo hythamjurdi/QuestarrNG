@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -457,7 +458,7 @@ export default function AddGameModal({ children, initialQuery }: AddGameModalPro
                             <Calendar className="w-3 h-3" />
                             {game.releaseDate.endsWith("-12-31")
                               ? new Date(game.releaseDate).getFullYear()
-                              : new Date(game.releaseDate).toLocaleDateString(undefined, {
+                              : new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                                   year: "numeric",
                                   month: "short",
                                 })}
@@ -584,11 +585,14 @@ export default function AddGameModal({ children, initialQuery }: AddGameModalPro
                                 <Calendar className="w-3 h-3" />
                                 {game.releaseDate.endsWith("-12-31")
                                   ? new Date(game.releaseDate).getFullYear()
-                                  : new Date(game.releaseDate).toLocaleDateString(undefined, {
-                                      year: "numeric",
-                                      month: "short",
-                                      day: "numeric",
-                                    })}
+                                  : new Date(game.releaseDate).toLocaleDateString(
+                                      getRegionalLocale(),
+                                      {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                      }
+                                    )}
                               </div>
                             )}
                             {game.rating && (

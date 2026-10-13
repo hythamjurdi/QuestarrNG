@@ -24,6 +24,8 @@ import { Lock, User, ShieldCheck, Gamepad2, Info, ExternalLink } from "lucide-re
 import { withBasePath } from "@/lib/app-path";
 import { passwordPolicySchema } from "@shared/schema";
 import { IgdbHelpPopover, IgdbTestConnectionButton } from "@/components/IgdbCredentialsHelper";
+import { InterfaceLanguageSelect } from "@/components/InterfaceLanguageSelect";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 
 type SetupForm = {
   username: string;
@@ -36,6 +38,7 @@ type SetupForm = {
 export default function SetupPage() {
   const { checkSetup } = useAuth();
   const { toast } = useToast();
+  const { language, setLanguage, t, languageFor, directionFor } = useInterfaceLanguage();
   // const [_, setLocation] = useLocation();
 
   // GET /api/config requires authentication, which doesn't exist yet during
@@ -145,6 +148,35 @@ export default function SetupPage() {
           </div>
           <CardTitle className="text-2xl font-bold">Initial Setup</CardTitle>
           <CardDescription>Create your admin account to get started</CardDescription>
+          <div className="mt-4 space-y-2 text-left">
+            <label htmlFor="setup-interface-language" className="text-sm font-medium">
+              <span
+                lang={languageFor("Interface language")}
+                dir={directionFor("Interface language")}
+              >
+                {t("Interface language")}
+              </span>
+            </label>
+            <InterfaceLanguageSelect
+              id="setup-interface-language"
+              value={language}
+              onValueChange={setLanguage}
+              className="w-full"
+            />
+            <p
+              className="text-xs text-muted-foreground"
+              lang={languageFor(
+                "Translations currently cover navigation and language settings; most other screens are still in English."
+              )}
+              dir={directionFor(
+                "Translations currently cover navigation and language settings; most other screens are still in English."
+              )}
+            >
+              {t(
+                "Translations currently cover navigation and language settings; most other screens are still in English."
+              )}
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>

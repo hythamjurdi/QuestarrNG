@@ -29,6 +29,13 @@ interface PageToolbarProps {
   search?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+  searchClearLabel?: string;
+  searchClearLang?: string;
+  searchClearDir?: "ltr" | "rtl";
+  searchLang?: string;
+  searchDir?: "ltr" | "rtl" | "auto";
+  /** Direction to use for the placeholder while an auto-directed search is empty. */
+  searchEmptyDir?: "ltr" | "rtl";
   /** Content rendered in the filter row (filter pills, custom toggles). */
   filterPills?: React.ReactNode;
   /** Sort select. Rendered when sortOptions is non-empty. */
@@ -47,6 +54,12 @@ export default function PageToolbar({
   search,
   onSearchChange,
   searchPlaceholder = "Search...",
+  searchClearLabel = "Clear search",
+  searchClearLang,
+  searchClearDir,
+  searchLang,
+  searchDir,
+  searchEmptyDir,
   filterPills,
   sortValue,
   onSortChange,
@@ -55,6 +68,8 @@ export default function PageToolbar({
   viewControls,
   actions,
 }: PageToolbarProps) {
+  const inputSearchDir =
+    searchDir === "auto" && !(search ?? "") ? (searchEmptyDir ?? searchDir) : searchDir;
   const hasSearch = onSearchChange !== undefined;
   const hasSort = Boolean(sortOptions?.length && onSortChange);
   const hasRow2 = Boolean(filterPills || hasSort || actions);
@@ -73,6 +88,8 @@ export default function PageToolbar({
               placeholder={searchPlaceholder}
               className="h-10 pl-9 pr-8 text-sm sm:h-8"
               aria-label={searchPlaceholder}
+              lang={search ? "und" : searchLang}
+              dir={inputSearchDir}
             />
             {search && (
               <Button
@@ -81,7 +98,9 @@ export default function PageToolbar({
                 size="icon"
                 className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 p-0 hover:bg-transparent sm:h-6 sm:w-6 no-default-hover-elevate no-default-active-elevate"
                 onClick={() => onSearchChange?.("")}
-                aria-label="Clear search"
+                aria-label={searchClearLabel}
+                lang={searchClearLang}
+                dir={searchClearDir}
               >
                 <X className="h-3 w-3" />
               </Button>

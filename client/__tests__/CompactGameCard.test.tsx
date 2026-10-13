@@ -6,6 +6,7 @@ import React from "react";
 import { type Game } from "@shared/schema";
 import "@testing-library/jest-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { setRegionalPreference } from "@/lib/regional-format";
 
 // Mocks
 const { mockInvalidateQueries, mockMutateAsync, mockToast } = vi.hoisted(() => {
@@ -75,6 +76,7 @@ describe("CompactGameCard", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    setRegionalPreference("system");
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
@@ -89,6 +91,18 @@ describe("CompactGameCard", () => {
     expect(screen.getByText("2023")).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
     expect(screen.getByText("Adventure")).toBeInTheDocument();
+  });
+
+  it("shows full release dates in the selected regional format", async () => {
+    setRegionalPreference("ja");
+    renderWithProviders(
+      <CompactGameCard game={{ ...mockGame, releaseDate: "2024-02-03T00:00:00.000Z" }} />
+    );
+
+    fireEvent.pointerMove(screen.getByText("2024"), { pointerType: "mouse" });
+    const fullDate = await screen.findByText("2024/02/03");
+    expect(fullDate).toHaveAttribute("lang", "ja");
+    expect(fullDate).toHaveAttribute("dir", "ltr");
   });
 
   it("renders no genre pills when genres is empty", () => {

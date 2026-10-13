@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState, useEffect } from "react";
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
+import React, { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Eye, EyeOff } from "lucide-react";
 import GameStatusGrid from "@/components/GameStatusGrid";
@@ -31,8 +32,14 @@ const SORT_OPTIONS = [
 // 笞｡ Bolt: Move sortGames outside of the component to prevent it from being recreated
 // on every render, which would break the `useMemo` dependencies below if it were
 // included in the dependency array.
-export const sortGames = (gameList: Game[], currentSortBy: SortOption): Game[] => {
+export const sortGames = (
+  gameList: Game[],
+  currentSortBy: SortOption,
+  interfaceLanguage: ReturnType<typeof useInterfaceLanguage>["language"]
+): Game[] => {
   const sorted = [...gameList];
+  const titleCollator =
+    currentSortBy === "title-asc" ? getInterfaceCollator(interfaceLanguage) : null;
 
   return sorted.sort((a, b) => {
     switch (currentSortBy) {
@@ -43,7 +50,7 @@ export const sortGames = (gameList: Game[], currentSortBy: SortOption): Game[] =
       case "added-desc":
         return compareDates(a.addedAt, b.addedAt, false);
       case "title-asc":
-        return a.title.localeCompare(b.title);
+        return titleCollator!.compare(a.title, b.title);
       default:
         return 0;
     }
@@ -51,6 +58,7 @@ export const sortGames = (gameList: Game[], currentSortBy: SortOption): Game[] =
 };
 
 export default function WishlistPage() {
+  const { language: interfaceLanguage } = useInterfaceLanguage();
   const [sortBy, setSortBy] = useState<SortOption>("release-desc");
   const { viewMode, setViewMode, listDensity, setListDensity } = useViewControls("wishlist");
   const [showUnreleased, setShowUnreleased] = useLocalStorageState("wishlistShowUnreleased", true);
@@ -106,16 +114,16 @@ export default function WishlistPage() {
 
   // 笞｡ Bolt: Memoize the sorted arrays to prevent re-sorting on every render
   const sortedUpcomingGames = useMemo(() => {
-    return sortGames(upcomingGames, sortBy);
-  }, [upcomingGames, sortBy]);
+    return sortGames(upcomingGames, sortBy, interfaceLanguage);
+  }, [upcomingGames, sortBy, interfaceLanguage]);
 
   const sortedReleasedGames = useMemo(() => {
-    return sortGames(releasedGames, sortBy);
-  }, [releasedGames, sortBy]);
+    return sortGames(releasedGames, sortBy, interfaceLanguage);
+  }, [releasedGames, sortBy, interfaceLanguage]);
 
   const sortedTbaGames = useMemo(() => {
-    return sortGames(tbaGames, sortBy);
-  }, [tbaGames, sortBy]);
+    return sortGames(tbaGames, sortBy, interfaceLanguage);
+  }, [tbaGames, sortBy, interfaceLanguage]);
 
   const isMobile = useIsMobile();
 

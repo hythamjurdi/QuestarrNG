@@ -33,6 +33,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { PathBrowser } from "@/components/PathBrowser";
+import { BilingualLocaleName } from "@/components/BilingualLocaleName";
+import { InterfaceLanguageSelect } from "@/components/InterfaceLanguageSelect";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch, apiRequest, clearSearchCache } from "@/lib/queryClient";
@@ -51,7 +53,14 @@ import AutoDownloadRulesSettings from "@/components/AutoDownloadRulesSettings";
 import PreferredReleaseGroupsSettings from "@/components/PreferredReleaseGroupsSettings";
 import ReleaseNameBlacklistSettings from "@/components/ReleaseNameBlacklistSettings";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
+import {
+  getRegionalLocale,
+  REGIONAL_FORMAT_OPTIONS,
+  setRegionalPreference,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 import {
   THEMES,
   THEME_CONFIGS,
@@ -212,9 +221,26 @@ function SettingsFilterCard({
  */
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { language, setLanguage, t, languageFor, directionFor } = useInterfaceLanguage();
   const queryClient = useQueryClient();
 
   const [ghostUnlocked] = useLocalStorageState(GHOST_UNLOCK_KEY, false);
+  const regionalFormat = useRegionalPreference();
+  const selectedRegionalFormatOption = REGIONAL_FORMAT_OPTIONS.find(
+    (option) => option.value === regionalFormat
+  );
+  const renderRegionalFormatLabel = (option: (typeof REGIONAL_FORMAT_OPTIONS)[number]) =>
+    option.value === "system" ? (
+      <span lang={languageFor(option.label)} dir={directionFor(option.label)}>
+        {t(option.label)}
+      </span>
+    ) : (
+      <BilingualLocaleName
+        language={option.value}
+        nativeName={option.nativeName}
+        englishName={option.englishName}
+      />
+    );
   const [selectedTheme, setSelectedTheme] = useLocalStorageState<Theme>(
     THEME_KEY,
     getCurrentTheme(ghostUnlocked)
@@ -1255,7 +1281,13 @@ export default function SettingsPage() {
   return (
     <div className="h-full overflow-auto p-4 pb-20 sm:p-6 md:pb-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1
+          className="text-2xl font-bold tracking-tight"
+          lang={languageFor("Settings")}
+          dir={directionFor("Settings")}
+        >
+          {t("Settings")}
+        </h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Configure your preferences and system settings
         </p>
@@ -1283,7 +1315,13 @@ export default function SettingsPage() {
               className="mb-0 flex w-full flex-nowrap justify-start overflow-x-auto motion-safe:scroll-smooth motion-reduce:scroll-auto"
             >
               <div ref={setTabsInnerNode} className="flex w-max flex-nowrap [&>*]:shrink-0">
-                <TabsTrigger value="appearance">Appearance</TabsTrigger>
+                <TabsTrigger
+                  value="appearance"
+                  lang={languageFor("Appearance")}
+                  dir={directionFor("Appearance")}
+                >
+                  {t("Appearance")}
+                </TabsTrigger>
                 <TabsTrigger value="discovery">Discovery & Downloads</TabsTrigger>
                 <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 <TabsTrigger value="platforms">Platforms</TabsTrigger>
@@ -1356,6 +1394,104 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle
+                  className="text-lg"
+                  lang={languageFor("Interface language")}
+                  dir={directionFor("Interface language")}
+                >
+                  {t("Interface language")}
+                </CardTitle>
+                <CardDescription>
+                  <span
+                    lang={languageFor("Choose the language used for the interface.")}
+                    dir={directionFor("Choose the language used for the interface.")}
+                  >
+                    {t("Choose the language used for the interface.")}
+                  </span>{" "}
+                  <span
+                    lang={languageFor(
+                      "Translations currently cover navigation and language settings; most other screens are still in English."
+                    )}
+                    dir={directionFor(
+                      "Translations currently cover navigation and language settings; most other screens are still in English."
+                    )}
+                  >
+                    {t(
+                      "Translations currently cover navigation and language settings; most other screens are still in English."
+                    )}
+                  </span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Label
+                  htmlFor="interface-language"
+                  lang={languageFor("Select a language")}
+                  dir={directionFor("Select a language")}
+                >
+                  {t("Select a language")}
+                </Label>
+                <InterfaceLanguageSelect
+                  id="interface-language"
+                  value={language}
+                  onValueChange={setLanguage}
+                  className="w-full sm:w-80"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle
+                  className="text-lg"
+                  lang={languageFor("Regional format")}
+                  dir={directionFor("Regional format")}
+                >
+                  {t("Regional format")}
+                </CardTitle>
+                <CardDescription>
+                  <span
+                    lang={languageFor(
+                      "Choose how dates, times, and numbers are displayed. This setting is separate from interface language."
+                    )}
+                    dir={directionFor(
+                      "Choose how dates, times, and numbers are displayed. This setting is separate from interface language."
+                    )}
+                  >
+                    {t(
+                      "Choose how dates, times, and numbers are displayed. This setting is separate from interface language."
+                    )}
+                  </span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Label
+                  htmlFor="regional-format"
+                  lang={languageFor("Date, time, and number format")}
+                  dir={directionFor("Date, time, and number format")}
+                >
+                  {t("Date, time, and number format")}
+                </Label>
+                <Select value={regionalFormat} onValueChange={setRegionalPreference}>
+                  <SelectTrigger id="regional-format" className="w-full sm:w-80">
+                    <SelectValue placeholder={t("Use browser settings")}>
+                      {selectedRegionalFormatOption
+                        ? renderRegionalFormatLabel(selectedRegionalFormatOption)
+                        : null}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REGIONAL_FORMAT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {renderRegionalFormatLabel(option)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
 
@@ -2848,7 +2984,9 @@ export default function SettingsPage() {
                                   </div>
                                   <span>
                                     {certInfo.validTo
-                                      ? new Date(certInfo.validTo).toLocaleDateString()
+                                      ? new Date(certInfo.validTo).toLocaleDateString(
+                                          getRegionalLocale()
+                                        )
                                       : "Unknown"}
                                   </span>
                                 </div>

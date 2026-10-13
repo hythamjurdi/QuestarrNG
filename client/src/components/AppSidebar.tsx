@@ -28,6 +28,8 @@ import {
   type AppNavItem,
 } from "@/components/navigation-items";
 import { withBasePath } from "@/lib/app-path";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
+import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
 
 interface AppSidebarProps {
   activeItem?: string;
@@ -40,6 +42,8 @@ const EMPTY_GAMES: Game[] = [];
 
 export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<AppSidebarProps>) {
   const { logout, user } = useAuth();
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
+  useRegionalPreference();
 
   const handleNavigation = (url: string) => {
     onNavigate?.(url);
@@ -84,9 +88,9 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
   const withBadge = (item: AppNavItem): NavItemWithBadge => {
     let badge: string | undefined;
     if (item.title === "Wishlist" && wishlistCount > 0) {
-      badge = wishlistCount.toString();
+      badge = formatRegionalNumber(wishlistCount);
     } else if (item.title === "Downloads" && activeDownloadsCount > 0) {
-      badge = activeDownloadsCount.toString();
+      badge = formatRegionalNumber(activeDownloadsCount);
     }
     return { ...item, badge, children: item.children?.map(withBadge) };
   };
@@ -109,7 +113,9 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel lang={languageFor("Navigation")} dir={directionFor("Navigation")}>
+            {t("Navigation")}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.map((item) =>
@@ -123,9 +129,13 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                             item.children.some((child) => child.url === activeItem)
                           }
                           data-testid={`nav-${item.title.toLowerCase()}`}
+                          lang={languageFor(item.title)}
+                          dir={directionFor(item.title)}
                         >
                           <item.icon className="w-4 h-4" aria-hidden="true" />
-                          <span>{item.title}</span>
+                          <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
+                            {t(item.title)}
+                          </span>
                           <ChevronRight
                             className="ml-auto h-4 w-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90"
                             aria-hidden="true"
@@ -144,13 +154,20 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                                 <button
                                   onClick={() => handleNavigation(child.url)}
                                   className="flex items-center justify-between w-full"
+                                  lang={languageFor(child.title)}
+                                  dir={directionFor(child.title)}
                                   aria-label={
-                                    child.badge ? `${child.title}, ${child.badge} items` : undefined
+                                    child.badge ? `${t(child.title)} (${child.badge})` : undefined
                                   }
                                 >
                                   <div className="flex items-center gap-2">
                                     <child.icon className="w-4 h-4" aria-hidden="true" />
-                                    <span>{child.title}</span>
+                                    <span
+                                      lang={languageFor(child.title)}
+                                      dir={directionFor(child.title)}
+                                    >
+                                      {t(child.title)}
+                                    </span>
                                   </div>
                                   {child.badge && (
                                     <Badge
@@ -179,17 +196,15 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                       <button
                         onClick={() => handleNavigation(item.url)}
                         className="flex items-center justify-between w-full"
-                        aria-label={
-                          item.badge
-                            ? `${item.title}, ${item.badge} ${
-                                item.title === "Downloads" ? "active downloads" : "items"
-                              }`
-                            : undefined
-                        }
+                        lang={languageFor(item.title)}
+                        dir={directionFor(item.title)}
+                        aria-label={item.badge ? `${t(item.title)} (${item.badge})` : undefined}
                       >
                         <div className="flex items-center gap-2">
                           <item.icon className="w-4 h-4" aria-hidden="true" />
-                          <span>{item.title}</span>
+                          <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
+                            {t(item.title)}
+                          </span>
                         </div>
                         {item.badge && (
                           <Badge variant="secondary" className="ml-auto text-xs" aria-hidden="true">
@@ -206,7 +221,9 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel lang={languageFor("Management")} dir={directionFor("Management")}>
+            {t("Management")}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {managementNavigation.map((item) => (
@@ -221,7 +238,9 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                       className="flex items-center gap-2 w-full"
                     >
                       <item.icon className="w-4 h-4" aria-hidden="true" />
-                      <span>{item.title}</span>
+                      <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
+                        {t(item.title)}
+                      </span>
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -231,7 +250,9 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Activity</SidebarGroupLabel>
+          <SidebarGroupLabel lang={languageFor("Activity")} dir={directionFor("Activity")}>
+            {t("Activity")}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {activityNavigation.map((item) => (
@@ -246,7 +267,9 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                       className="flex items-center gap-2 w-full"
                     >
                       <item.icon className="w-4 h-4" aria-hidden="true" />
-                      <span>{item.title}</span>
+                      <span lang={languageFor(item.title)} dir={directionFor(item.title)}>
+                        {t(item.title)}
+                      </span>
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

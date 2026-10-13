@@ -1,3 +1,13 @@
+import {
+  formatRegionalNumber,
+  formatRegionalPercent,
+  useRegionalPreference,
+} from "@/lib/regional-format";
+import {
+  getInterfaceCollator,
+  getInterfaceLanguageDirection,
+  useInterfaceLanguage,
+} from "@/lib/interface-locale";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiFetch } from "@/lib/queryClient";
@@ -128,6 +138,8 @@ const STATUS_COLORS: Record<DownloadStatusType, string> = {
 };
 
 export default function Downloads() {
+  const regionalPreference = useRegionalPreference();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
   const { toast } = useToast();
   const hasShownErrorsRef = useRef<Set<string>>(new Set());
   const [selectedDownload, setSelectedDownload] = useState<DownloadStatus | null>(null);
@@ -357,8 +369,9 @@ export default function Downloads() {
       const entry = map.get(d.downloaderId)!;
       entry.counts[d.status] = (entry.counts[d.status] ?? 0) + 1;
     }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [filteredDownloads]);
+    const collator = getInterfaceCollator(interfaceLanguage);
+    return Array.from(map.values()).sort((a, b) => collator.compare(a.name, b.name));
+  }, [filteredDownloads, interfaceLanguage]);
 
   if (isLoading) {
     return (
@@ -635,7 +648,12 @@ export default function Downloads() {
                           download.ratio !== undefined &&
                           shouldShowRatioBadge(download.ratio) &&
                           shouldShowTorrentMetrics(download) && (
-                            <Badge variant="outline">{download.ratio.toFixed(2)}</Badge>
+                            <Badge variant="outline">
+                              {formatRegionalNumber(download.ratio, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Badge>
                           )}
                         <Badge
                           variant={getStatusBadgeVariant(download.status)}
@@ -758,9 +776,15 @@ export default function Downloads() {
                           <Badge
                             variant="outline"
                             data-testid={`badge-age-${download.id}`}
-                            aria-label={`Age: ${formatAge(download.age)}`}
+                            aria-label={`Age: ${formatAge(download.age, interfaceLanguage, regionalPreference)}`}
                           >
-                            Age: {formatAge(download.age)}
+                            Age:{" "}
+                            <span
+                              lang={interfaceLanguage}
+                              dir={getInterfaceLanguageDirection(interfaceLanguage)}
+                            >
+                              {formatAge(download.age, interfaceLanguage, regionalPreference)}
+                            </span>
                           </Badge>
                         )}
                         {/* Usenet-specific: Grabs */}
@@ -778,9 +802,17 @@ export default function Downloads() {
                             <Badge
                               variant="outline"
                               data-testid={`badge-ratio-${download.id}`}
-                              aria-label={`Share ratio: ${download.ratio?.toFixed(2) ?? "0.00"}`}
+                              aria-label={`Share ratio: ${formatRegionalNumber(download.ratio ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 }, regionalPreference)}`}
                             >
-                              Ratio: {download.ratio?.toFixed(2) ?? "0.00"}
+                              Ratio:{" "}
+                              {formatRegionalNumber(
+                                download.ratio ?? 0,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                                regionalPreference
+                              )}
                             </Badge>
                           )}
                         {importConfig?.enablePostProcessing && download.gameStatus === "owned" && (
@@ -889,13 +921,20 @@ export default function Downloads() {
                   <div className="flex justify-between text-sm">
                     <span data-testid={`text-progress-label-${download.id}`}>Progress</span>
                     <span data-testid={`text-progress-value-${download.id}`}>
-                      {download.progress.toFixed(1)}%
+                      {formatRegionalPercent(
+                        download.progress,
+                        {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        },
+                        regionalPreference
+                      )}
                     </span>
                   </div>
                   <Progress
                     value={download.progress}
                     className="h-2"
-                    aria-label={`Download progress: ${download.progress.toFixed(1)}%`}
+                    aria-label={`Download progress: ${formatRegionalPercent(download.progress, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, regionalPreference)}`}
                     data-testid={`progress-bar-${download.id}`}
                   />
                   {download.error && (

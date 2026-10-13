@@ -1,3 +1,5 @@
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
+import { useRegionalPreference } from "@/lib/regional-format";
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -69,6 +71,9 @@ function LabeledSwitch({
 }
 
 export default function Library() {
+  const regionalPreference = useRegionalPreference();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
+  const nameCollator = useMemo(() => getInterfaceCollator(interfaceLanguage), [interfaceLanguage]);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [showFilters, setShowFilters] = useState(false);
@@ -177,10 +182,10 @@ export default function Library() {
     }
 
     return {
-      uniqueGenres: Array.from(genreSet).sort((a, b) => a.localeCompare(b)),
-      uniquePlatforms: Array.from(platformSet).sort((a, b) => a.localeCompare(b)),
+      uniqueGenres: Array.from(genreSet).sort(nameCollator.compare),
+      uniquePlatforms: Array.from(platformSet).sort(nameCollator.compare),
     };
-  }, [games]);
+  }, [games, nameCollator]);
 
   const visiblePlatforms = useMemo(() => {
     // The platform setting stores IGDB ids, while `games.platforms` holds IGDB
@@ -230,7 +235,7 @@ export default function Library() {
         return false;
       return true;
     });
-    return sortLibraryGames(filtered, sortBy);
+    return sortLibraryGames(filtered, sortBy, interfaceLanguage);
   }, [
     games,
     statusFilter,
@@ -244,6 +249,7 @@ export default function Library() {
     minRating,
     showUnratedOnly,
     sortBy,
+    interfaceLanguage,
   ]);
 
   const activeFilters = useMemo(() => {
@@ -291,7 +297,10 @@ export default function Library() {
     showOwnedInResultsOverride,
   ]);
 
-  const libStats = useMemo(() => calculateLibraryStats(games), [games]);
+  const libStats = useMemo(
+    () => calculateLibraryStats(games, regionalPreference, interfaceLanguage),
+    [games, regionalPreference, interfaceLanguage]
+  );
 
   // Keep the last known non-empty stats so the header line doesn't vanish
   // when a search returns zero results.

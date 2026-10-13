@@ -1,3 +1,5 @@
+import { getRegionalLocale, useRegionalPreference } from "@/lib/regional-format";
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, PauseCircle, PlayCircle, ScrollText, Search, Send, Trash2 } from "lucide-react";
@@ -201,13 +203,13 @@ function parseLogLine(raw: string): ParsedLogLine {
 function formatTime(time: string): string {
   if (!time) return "";
   const parsed = new Date(time);
-  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleTimeString();
+  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleTimeString(getRegionalLocale());
 }
 
 function formatDateTime(time: string): string {
   if (!time) return "No timestamp";
   const parsed = new Date(time);
-  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleString();
+  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleString(getRegionalLocale());
 }
 
 function buildSummaryText(fields: LogField[]): string {
@@ -224,6 +226,7 @@ const LogLineRow = memo(function LogLineRow({
   isSelected: boolean;
   onSelect: (line: ParsedLogLine) => void;
 }>) {
+  useRegionalPreference();
   const timeStr = formatTime(line.time);
   const summaryText = buildSummaryText(line.summaryFields);
 
@@ -264,6 +267,7 @@ const LogLineCard = memo(function LogLineCard({
   isSelected: boolean;
   onSelect: (line: ParsedLogLine) => void;
 }>) {
+  useRegionalPreference();
   const timeStr = formatTime(line.time);
   const summaryText = buildSummaryText(line.summaryFields);
 
@@ -472,6 +476,12 @@ function LogInspector({
 }
 
 export default function LogsPage() {
+  useRegionalPreference();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
+  const moduleCollator = useMemo(
+    () => getInterfaceCollator(interfaceLanguage),
+    [interfaceLanguage]
+  );
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -530,8 +540,8 @@ export default function LogsPage() {
     const set = new Set(
       lines.map((line) => line.module).filter((module): module is string => Boolean(module))
     );
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [lines]);
+    return Array.from(set).sort(moduleCollator.compare);
+  }, [lines, moduleCollator]);
 
   const minLevel = filterLevel === "all" ? 0 : Number.parseInt(filterLevel, 10);
   const normalizedFilterText = filterText.trim().toLowerCase();

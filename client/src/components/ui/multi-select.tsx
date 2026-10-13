@@ -24,6 +24,16 @@ interface MultiSelectProps {
   onChange: (selected: string[]) => void;
   placeholder?: string;
   emptyMessage?: string;
+  searchPlaceholder?: string;
+  lang?: string;
+  dir?: "ltr" | "rtl";
+  emptyLang?: string;
+  emptyDir?: "ltr" | "rtl";
+  searchLang?: string;
+  searchDir?: "ltr" | "rtl";
+  removeLabel?: (label: string) => string;
+  removeLang?: string;
+  removeDir?: "ltr" | "rtl";
   className?: string;
   disabled?: boolean;
   // Support additional HTML attributes like data-testid
@@ -36,11 +46,28 @@ export function MultiSelect({
   onChange,
   placeholder = "Select items...",
   emptyMessage = "No items found.",
+  searchPlaceholder = "Search...",
+  lang,
+  dir,
+  emptyLang = lang,
+  emptyDir = dir,
+  searchLang = lang,
+  searchDir = dir,
+  removeLabel = (label) => `Remove ${label}`,
+  removeLang = lang,
+  removeDir = dir,
   className,
   disabled = false,
   ...rest
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState("");
+  const removeLabelId = React.useId();
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setSearchValue("");
+    setOpen(nextOpen);
+  };
 
   const handleToggle = (value: string) => {
     if (selected.includes(value)) {
@@ -57,7 +84,7 @@ export function MultiSelect({
   const selectedOptions = options.filter((option) => selected.includes(option.value));
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={true}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal={true}>
       <PopoverTrigger asChild>
         <Button
           {...rest}
@@ -66,37 +93,101 @@ export function MultiSelect({
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
           disabled={disabled}
+          lang={lang}
+          dir={dir}
         >
           <div className="flex gap-1 flex-wrap">
             {selectedOptions.length > 0 ? (
-              selectedOptions.map((option) => (
-                <Badge variant="secondary" key={option.value} className="flex items-center">
-                  {option.label}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove(option.value);
-                    }}
-                    aria-label={`Remove ${option.label}`}
-                    className="ml-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <X className="h-3 w-3 cursor-pointer" />
-                  </button>
-                </Badge>
-              ))
+              selectedOptions.map((option, index) => {
+                const optionNameMarker = "__questarr_option_name__";
+                const removeAccessibleNameTemplate = removeLabel(optionNameMarker);
+                const optionNamePosition = removeAccessibleNameTemplate.indexOf(optionNameMarker);
+                const actionBefore =
+                  optionNamePosition < 0
+                    ? removeAccessibleNameTemplate
+                    : removeAccessibleNameTemplate.slice(0, optionNamePosition);
+                const actionAfter =
+                  optionNamePosition < 0
+                    ? ""
+                    : removeAccessibleNameTemplate.slice(
+                        optionNamePosition + optionNameMarker.length
+                      );
+                const optionLabelId = `${removeLabelId}-option-${index}`;
+                const actionBeforeId = `${removeLabelId}-before-${index}`;
+                const actionAfterId = `${removeLabelId}-after-${index}`;
+                const removeLabelledBy = [
+                  actionBefore ? actionBeforeId : null,
+                  optionLabelId,
+                  actionAfter ? actionAfterId : null,
+                ]
+                  .filter((id): id is string => id !== null)
+                  .join(" ");
+
+                return (
+                  <Badge variant="secondary" key={option.value} className="flex items-center">
+                    <span id={optionLabelId} lang="und" dir="auto">
+                      {option.label}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove(option.value);
+                      }}
+                      aria-labelledby={removeLabelledBy}
+                      className="ml-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      {actionBefore ? (
+                        <span
+                          id={actionBeforeId}
+                          className="sr-only"
+                          lang={removeLang}
+                          dir={removeDir}
+                        >
+                          {actionBefore}
+                        </span>
+                      ) : null}
+                      {actionAfter ? (
+                        <span
+                          id={actionAfterId}
+                          className="sr-only"
+                          lang={removeLang}
+                          dir={removeDir}
+                        >
+                          {actionAfter}
+                        </span>
+                      ) : null}
+                      <X className="h-3 w-3 cursor-pointer" />
+                    </button>
+                  </Badge>
+                );
+              })
             ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
+              <span className="text-muted-foreground" lang={lang} dir={dir}>
+                {placeholder}
+              </span>
             )}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search..." />
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0"
+        align="start"
+        dir={dir}
+      >
+        <Command dir={searchDir}>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            lang={searchValue ? "und" : searchLang}
+            dir={searchValue ? "auto" : searchDir}
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandList>
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandEmpty lang={emptyLang} dir={emptyDir}>
+              {emptyMessage}
+            </CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
                 const isSelected = selected.includes(option.value);
@@ -109,7 +200,9 @@ export function MultiSelect({
                     <Check
                       className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}
                     />
-                    {option.label}
+                    <span lang="und" dir="auto">
+                      {option.label}
+                    </span>
                   </CommandItem>
                 );
               })}

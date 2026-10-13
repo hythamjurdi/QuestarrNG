@@ -1,3 +1,4 @@
+import { formatRegionalNumber } from "@/lib/regional-format";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -71,7 +72,11 @@ function formatBytes(bytes: number | null): string {
     value /= 1024;
     unitIndex += 1;
   }
-  return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+  return (
+    formatRegionalNumber(value, { maximumFractionDigits: value >= 10 || unitIndex === 0 ? 0 : 1 }) +
+    " " +
+    units[unitIndex]
+  );
 }
 
 export function RootFolderDiscovery() {

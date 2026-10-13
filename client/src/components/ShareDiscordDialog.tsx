@@ -1,3 +1,8 @@
+import {
+  formatRegionalPercent,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { useState, useRef } from "react";
 import { toPng } from "html-to-image";
 import { Share2, Loader2, Download } from "lucide-react";
@@ -51,6 +56,7 @@ export default function ShareDiscordDialog({
   discordConfigured,
 }: ShareDiscordDialogProps) {
   const { toast } = useToast();
+  const regionalPreference = useRegionalPreference();
   const cardRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<Set<StatId>>(
     new Set<StatId>(["overview", "status", "quickinfo"])
@@ -166,7 +172,7 @@ export default function ShareDiscordDialog({
               <div>
                 <div style={{ fontSize: 18, fontWeight: 700 }}>Questarr Library Stats</div>
                 <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                  {displayDate.toLocaleDateString(undefined, {
+                  {displayDate.toLocaleDateString(getRegionalLocale(regionalPreference), {
                     month: "long",
                     day: "numeric",
                     year: "numeric",
@@ -187,7 +193,14 @@ export default function ShareDiscordDialog({
                 {[
                   { label: "Total Games", value: stats.totalGames },
                   { label: "Avg. Rating", value: stats.avgRating },
-                  { label: "Completion", value: `${stats.completionRate}%` },
+                  {
+                    label: "Completion",
+                    value: formatRegionalPercent(
+                      stats.completionRate,
+                      { maximumFractionDigits: 0 },
+                      regionalPreference
+                    ),
+                  },
                 ].map((item) => (
                   <div
                     key={item.label}

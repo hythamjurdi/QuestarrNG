@@ -549,6 +549,7 @@ product proposals are version-aware game upgrades, debrid/direct-download
 providers, importing owned Steam or GOG libraries, and possible Gameyfin or
 user-defined webhook integrations. The maintained [PRD](docs/PRD.md) marks
 what is shipped, what remains, and which ideas have no delivery commitment.
+The [UI localization roadmap](docs/localization-roadmap.md) tracks current language and calendar coverage, plus the remaining screen-level translation and RTL work.
 
 ## Troubleshooting
 
