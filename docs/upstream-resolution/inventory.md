@@ -400,22 +400,22 @@ Snapshot: 2026-10-13T05:20:58.476Z. 1147 items. All ancestry observations requir
 | [pr #405](https://github.com/Doezer/Questarr/pull/405) | ⚡ Bolt: Optimize game update cron job with batch DB updates | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #406](https://github.com/Doezer/Questarr/issues/406) | Is there anyway to search for specific file types?  | OPEN | no-merge-commit | verified |
 | [issue #407](https://github.com/Doezer/Questarr/issues/407) | FR: Post Processing and Taking over active download or adding active download to the library | CLOSED | no-merge-commit | verified |
-| [pr #408](https://github.com/Doezer/Questarr/pull/408) | chore(deps): bump docker/build-push-action from 6.18.0 to 6.19.2 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #409](https://github.com/Doezer/Questarr/pull/409) | chore(deps): bump docker/setup-qemu-action from 3.2.0 to 3.7.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #410](https://github.com/Doezer/Questarr/pull/410) | chore(deps): bump react-hook-form from 7.71.1 to 7.71.2 in the react group | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #411](https://github.com/Doezer/Questarr/pull/411) | chore(deps-dev): bump the dev-dependencies group with 5 updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #412](https://github.com/Doezer/Questarr/pull/412) | chore(deps): bump pino from 10.3.0 to 10.3.1 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #413](https://github.com/Doezer/Questarr/pull/413) | chore(deps): bump @tanstack/react-query from 5.90.20 to 5.90.21 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #414](https://github.com/Doezer/Questarr/pull/414) | chore(deps): bump dotenv from 17.2.4 to 17.3.1 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #415](https://github.com/Doezer/Questarr/pull/415) | Fix security vulnerabilities: credential exposure, weak session secret, missing brute-force protection | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #416](https://github.com/Doezer/Questarr/pull/416) | [Aikido] Fix security issue in fast-xml-parser via minor version upgrade from 5.3.5 to 5.3.7 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #417](https://github.com/Doezer/Questarr/pull/417) | [Aikido] AI Fix for Docker container runs as default root user | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #418](https://github.com/Doezer/Questarr/pull/418) | [Aikido] AI Fix for HTTP request might enable SSRF attack | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #419](https://github.com/Doezer/Questarr/pull/419) | [Aikido] AI Fix for 3rd party Github Actions should be pinned | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #420](https://github.com/Doezer/Questarr/pull/420) | Update 1.2 to 1.2.2 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #421](https://github.com/Doezer/Questarr/pull/421) | 🛡️ Sentinel: [MEDIUM] Fix error message information leakage | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #422](https://github.com/Doezer/Questarr/pull/422) | ⚡ Bolt: Lazy load game details and download dialogs | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #423](https://github.com/Doezer/Questarr/pull/423) | 🎨 Palette: Add contextual aria-labels to game cards | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #408](https://github.com/Doezer/Questarr/pull/408) | chore(deps): bump docker/build-push-action from 6.18.0 to 6.19.2 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #409](https://github.com/Doezer/Questarr/pull/409) | chore(deps): bump docker/setup-qemu-action from 3.2.0 to 3.7.0 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #410](https://github.com/Doezer/Questarr/pull/410) | chore(deps): bump react-hook-form from 7.71.1 to 7.71.2 in the react group | MERGED | merge-commit-in-fork-history | verified |
+| [pr #411](https://github.com/Doezer/Questarr/pull/411) | chore(deps-dev): bump the dev-dependencies group with 5 updates | MERGED | merge-commit-in-fork-history | verified |
+| [pr #412](https://github.com/Doezer/Questarr/pull/412) | chore(deps): bump pino from 10.3.0 to 10.3.1 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #413](https://github.com/Doezer/Questarr/pull/413) | chore(deps): bump @tanstack/react-query from 5.90.20 to 5.90.21 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #414](https://github.com/Doezer/Questarr/pull/414) | chore(deps): bump dotenv from 17.2.4 to 17.3.1 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #415](https://github.com/Doezer/Questarr/pull/415) | Fix security vulnerabilities: credential exposure, weak session secret, missing brute-force protection | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #416](https://github.com/Doezer/Questarr/pull/416) | [Aikido] Fix security issue in fast-xml-parser via minor version upgrade from 5.3.5 to 5.3.7 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #417](https://github.com/Doezer/Questarr/pull/417) | [Aikido] AI Fix for Docker container runs as default root user | MERGED | merge-commit-in-fork-history | verified |
+| [pr #418](https://github.com/Doezer/Questarr/pull/418) | [Aikido] AI Fix for HTTP request might enable SSRF attack | MERGED | merge-commit-in-fork-history | verified |
+| [pr #419](https://github.com/Doezer/Questarr/pull/419) | [Aikido] AI Fix for 3rd party Github Actions should be pinned | MERGED | merge-commit-in-fork-history | verified |
+| [pr #420](https://github.com/Doezer/Questarr/pull/420) | Update 1.2 to 1.2.2 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #421](https://github.com/Doezer/Questarr/pull/421) | 🛡️ Sentinel: [MEDIUM] Fix error message information leakage | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #422](https://github.com/Doezer/Questarr/pull/422) | ⚡ Bolt: Lazy load game details and download dialogs | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #423](https://github.com/Doezer/Questarr/pull/423) | 🎨 Palette: Add contextual aria-labels to game cards | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #424](https://github.com/Doezer/Questarr/pull/424) | Fix Docker container security by adjusting user permissions | MERGED | merge-commit-in-fork-history | unreviewed |
 | [pr #425](https://github.com/Doezer/Questarr/pull/425) | Use GitHub Releases API for version check instead of package.json from main | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [issue #426](https://github.com/Doezer/Questarr/issues/426) | Debrid Support | CLOSED | no-merge-commit | unreviewed |

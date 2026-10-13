@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 360,
+      "verified": 375,
       "needs-implementation": 1,
-      "superseded": 36,
+      "superseded": 37,
       "not-applicable": 7,
-      "unreviewed": 742,
+      "unreviewed": 726,
       "implemented-unverified": 1
     }
   },
@@ -11644,10 +11644,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1f7a7f6879edc4e76c57a75d4de945b94bb76bb1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested docker/build-push-action 6.19.2 update is exceeded by the current SHA-pinned v7.3.0 build action used by the image workflows."
+        ],
+        "acceptance": [
+          "Image workflows use a newer immutable action reference for builds."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/fork-image.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11664,10 +11672,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "94eaf880d8a39b7d2659d85c5b6097ae659e8d1e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested docker/setup-qemu-action 3.7.0 update is exceeded by the current SHA-pinned v4.2.0 action."
+        ],
+        "acceptance": [
+          "ARM image workflows use an immutable QEMU action reference newer than 3.7.0."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          ".github/workflows/fork-image.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11684,10 +11699,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "feb8c1905be638b55e8fbf215f3fe76b8a6cde32",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "react-hook-form is declared at ^7.89.0 and locked at 7.89.0, beyond the requested 7.71.2."
+        ],
+        "acceptance": [
+          "The runtime dependency is updated beyond the requested patch."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11704,10 +11726,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "cb605f43b104691b74994b9ca1e9189636c7a7a4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All five grouped development dependencies meet or exceed the requested versions: @eslint/js 10.0.1, @tailwindcss/vite 4.3.3, eslint 10.11.0, tailwindcss 4.3.3 in the lockfile, and typescript-eslint 8.71.0."
+        ],
+        "acceptance": [
+          "Every package in the grouped update is represented in the manifest/lockfile at the requested or a newer version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11724,10 +11753,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "bfa99331e48804027808fce7e726f992164ce725",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "pino is declared at ^10.3.1, matching the requested update."
+        ],
+        "acceptance": [
+          "The runtime dependency is updated to 10.3.1 or newer."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11744,10 +11780,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2e7bd920e35da3967e3ec81b8dc950dbc4ee850d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "@tanstack/react-query is declared at ^5.104.0 and locked at 5.104.1, beyond the requested 5.90.21."
+        ],
+        "acceptance": [
+          "The runtime dependency is updated beyond the requested patch."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11764,10 +11807,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8579c76f6f849b5e78cfb6a47bfb9ea85a544214",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "dotenv is declared at ^18.0.4 and locked at 18.0.5, beyond the requested 17.3.1."
+        ],
+        "acceptance": [
+          "The runtime dependency is updated beyond the requested version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11784,10 +11834,23 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "42bdb690b7a7a614c53991a93ef6590310403590",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The public config boundary omits the IGDB client ID and the authenticated settings endpoint is covered by the default-deny API auth boundary. Login uses a dedicated 20-attempt/15-minute limiter. JWT signing material is generated from 64 random bytes and persisted in the database. The former Passport/Steam OAuth session route is absent from the current application, so its forwarded-protocol URL construction and express-session secret path no longer execute."
+        ],
+        "acceptance": [
+          "Sensitive IGDB credentials are not exposed publicly; login attempts are throttled; active token signing uses a high-entropy persisted secret; the old Steam OAuth/session path is removed."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/auth.ts",
+          "server/middleware.ts",
+          "server/security.ts",
+          "server/steam-routes.ts",
+          "server/__tests__/auth-boundary.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "https://github.com/Doezer/Questarr/pull/415"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11804,10 +11867,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "304faaca2a4119046f7a8dd1b21619c3cec5a677",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "fast-xml-parser is declared at ^5.11.2 and locked at 5.11.2, beyond the requested 5.3.7 security update."
+        ],
+        "acceptance": [
+          "The parser dependency is updated beyond the vulnerable 5.3.5 version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11824,10 +11894,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "cecc3c647274a577584b3c1187cb084fab42460e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The runtime image defines a named questarr user and switches to it before startup. The entrypoint supports direct rootless UID/GID execution, checks writable data/database paths, and limits ownership correction to required paths; Compose declares the matching default user."
+        ],
+        "acceptance": [
+          "The app runs as a non-root identity with documented/configurable volume ownership handling."
+        ],
+        "evidence": [
+          "Dockerfile",
+          "docker-compose.yml",
+          "entrypoint.sh"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11844,10 +11922,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8599d7fc7d79fcb18a89ea57594f3213985e725e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "NZBGet URL retrieval uses the project safeFetch SSRF guard in both downloader entry points, preserving DNS/IP validation and redirect protections."
+        ],
+        "acceptance": [
+          "Untrusted NZB URLs are fetched only through the shared SSRF-safe fetch implementation."
+        ],
+        "evidence": [
+          "server/downloaders.ts",
+          "server/downloaders/nzbget.ts",
+          "server/ssrf.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11864,10 +11950,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9c5139bb900e18dec9080525ba05095dcb3391f6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "A scan of 120 third-party GitHub Action references across the current workflow YAML found no unpinned refs: all use immutable 40-character commit SHAs."
+        ],
+        "acceptance": [
+          "Every third-party workflow action reference is pinned to a full commit SHA."
+        ],
+        "evidence": [
+          ".github/workflows/"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11884,11 +11976,38 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2f98a0f4dd41c38d05ec6f1188389db07e6b345e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This PR is a release roll-up to Questarr 1.2.2. Its substantive dependency/security updates are reviewed in PRs #408–419, and its Docker hardening is present in the current fork. Repository and Node engine metadata are adapted to QuestarrNG. The historical version bump, release tag, and release/1.3.0 deployment trigger are superseded by the fork-specific 1.10.0 release line and its current pipeline."
+        ],
+        "acceptance": [
+          "All substantive code, security, dependency, package metadata, and container requests are present in current fork form; the old upstream release/tag event is no longer applicable."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "Dockerfile",
+          "docker-compose.yml",
+          "entrypoint.sh",
+          ".github/workflows/deploy.yml",
+          "docs/CHANGELOG.md",
+          "https://github.com/Doezer/Questarr/pull/420"
+        ],
+        "dependencies": [
+          "pr:408",
+          "pr:409",
+          "pr:410",
+          "pr:411",
+          "pr:412",
+          "pr:413",
+          "pr:414",
+          "pr:415",
+          "pr:416",
+          "pr:417",
+          "pr:418",
+          "pr:419",
+          "pr:424"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -11904,10 +12023,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "6b53b49619b7f80c4bacd879fcc4fd3f7c91497b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Production 5xx responses already replaced the error message with a generic message, but still serialized err.details. The handler now omits details for all production 5xx errors while logging the untouched error object for diagnosis. Regression coverage exercises 500 and 503 responses and verifies the original details remain in server logs."
+        ],
+        "acceptance": [
+          "Production clients receive only the generic error for 5xx responses; internal details remain in server logs; 4xx details remain available."
+        ],
+        "evidence": [
+          "server/middleware.ts",
+          "server/__tests__/security_error_handling.test.ts",
+          "release-notes/2026-10-13-production-error-details.md",
+          "https://github.com/Doezer/Questarr/pull/421"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11924,10 +12052,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "17af4c063dcc6a18eac2d5c8eb18f0b9aa4405f9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Standard and compact game cards lazy-load their details and download dialogs and show visible loading feedback while the dialogs load."
+        ],
+        "acceptance": [
+          "Dialog code is deferred until needed and users receive a loading indicator during the transition."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/src/components/CompactGameCard.tsx",
+          "client/src/components/LazyModalFallback.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "client/__tests__/CompactGameCard.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -11944,10 +12082,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "3a2c21981e82caef70096b65cee1b9f8c4f70771",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Standard and compact game cards expose contextual labels that identify the game and action/state; accessibility tests cover discovery and library card actions."
+        ],
+        "acceptance": [
+          "Assistive technology receives game-specific labels for card actions and state."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/src/components/CompactGameCard.tsx",
+          "client/__tests__/Accessibility.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

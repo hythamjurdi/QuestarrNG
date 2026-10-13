@@ -1075,3 +1075,27 @@ and [batch 41 validation](evidence/validation-batch-41.txt).
 The ledger now records **360 verified**, **36 superseded**, **742 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** records. Issue #37 remains outstanding.
+
+## Batch 42 — October 13, 2026
+
+Batch 42 reviewed PRs [#408–423](inventory.md). The requested dependency and
+GitHub Action versions are met or exceeded by the current lockfile and
+SHA-pinned workflows. Security PRs #415–419 are covered by the fork's current
+authenticated settings boundary, throttled login route, persisted random JWT
+secret, safe-fetch downloader paths, non-root container, and pinned actions.
+The old Passport/Steam OAuth session path is no longer part of the application.
+
+PR #420 was a 1.2.2 release roll-up. Its substantive dependency, security,
+metadata, and Docker changes are present in fork-adapted form, while the old
+release/tag operation is superseded by QuestarrNG's current 1.10.0 release
+line. PR #421 exposed a remaining production error leak: generic 5xx messages
+were returned, but `err.details` still reached clients. Production 5xx
+responses now omit details while server logs retain the original error. PRs
+#422 and #423 are present with lazy-loaded dialogs, visible loading feedback,
+and game-specific accessible labels in standard and compact cards. See the
+[production error security release note](../../release-notes/2026-10-13-production-error-details.md)
+and [batch 42 validation](evidence/validation-batch-42.txt).
+
+The ledger now records **375 verified**, **37 superseded**, **726 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** records. Issue #37 remains outstanding.

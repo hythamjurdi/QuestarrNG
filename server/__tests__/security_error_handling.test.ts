@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import express from "express";
 import request from "supertest";
 import { errorHandler } from "../middleware.js";
+import { expressLogger } from "../logger.js";
 
 // Mock logger to avoid actual logging during tests
 vi.mock("../logger.js", () => ({
@@ -26,6 +27,10 @@ vi.mock("../error-telemetry.js", () => ({
 }));
 
 describe("Security Error Handling", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should sanitize 500 errors in production", async () => {
     const app = express();
     app.set("env", "production");
@@ -43,6 +48,35 @@ describe("Security Error Handling", () => {
     expect(response.body.error).toBe("Internal Server Error");
     expect(response.body.error).not.toContain("Sensitive Database Info");
   });
+
+  it.each([500, 503])(
+    "should hide server error details from production clients (%i)",
+    async (status) => {
+      const app = express();
+      app.set("env", "production");
+      const details = { database: "private details", stack: "private trace" };
+
+      app.get("/error", (_req, _res, next) => {
+        const err: any = new Error("Sensitive internal failure");
+        err.status = status;
+        err.details = details;
+        next(err);
+      });
+
+      app.use(errorHandler);
+
+      const response = await request(app).get("/error");
+
+      expect(response.status).toBe(status);
+      expect(response.body).toEqual({ error: "Internal Server Error" });
+      expect(expressLogger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          err: expect.objectContaining({ message: "Sensitive internal failure", details }),
+        }),
+        "Request error"
+      );
+    }
+  );
 
   it("should show details in development", async () => {
     const app = express();

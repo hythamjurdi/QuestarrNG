@@ -759,16 +759,19 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   }
 
   // Determine the error message to show to the client
-  // Sanitize error messages in production to prevent information leakage
+  // Sanitize server-error messages and details in production to prevent information leakage.
+  // Keep the original error intact above so it remains available in server logs.
+  const isProductionServerError = req.app.get("env") === "production" && status >= 500;
   let message = err.message || "Internal Server Error";
-  if (req.app.get("env") === "production" && status >= 500) {
+  if (isProductionServerError) {
     message = "Internal Server Error";
   }
 
-  // Include details if available (e.g., validation errors)
+  // Include details for validation/client errors, but never expose server-error internals
+  // to production clients.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response: { error: string; details?: any } = { error: message };
-  if (err.details) {
+  if (err.details && !isProductionServerError) {
     response.details = err.details;
   }
 
