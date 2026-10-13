@@ -156,6 +156,12 @@ for the release commit. Historical Scorecard maturity and review indicators stay
 visible; independent approvals are enforced by branch protection.
 See [VULNERABILITY_MANAGEMENT.md](VULNERABILITY_MANAGEMENT.md#13-pre-release-gate).
 
+Release workflows use the full-SHA-pinned StepSecurity GitHub Release action, a
+secure drop-in replacement for `softprops/action-gh-release`. Checkouts in the
+release and release-recovery jobs disable credential persistence; changelog
+pull-request jobs retain checkout credentials because they push the generated
+branch.
+
 ## Repository evidence index
 
 - Project identity, fork changes, and user support: [README](../README.md)

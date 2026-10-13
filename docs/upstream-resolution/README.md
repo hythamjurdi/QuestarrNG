@@ -18,33 +18,33 @@ behavior when implementing upstream requests.
 
 ## Current ledger snapshot
 
-The latest live GitHub audit checked upstream main
-`0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 17:28
-UTC**. The refreshed inventory contains 232 issues and 931 pull requests. The
-ledger's `capturedAt` records audit generation time, not an individual GitHub
-request timestamp. Review status is independent of GitHub's open, closed, or
-merged state. Batch 66 reconfirmed the same upstream `main` SHA and live list
-counts; it regenerated the ledger and inventory from the existing sanitized
-snapshot rather than refetching every issue and PR body:
+The live audit refreshed upstream main
+`0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
+pull requests. The ledger's `capturedAt` records audit generation time, not an
+individual GitHub request timestamp. Review status is independent of GitHub's
+open, closed, or merged state. Batch 67 regenerated the full source snapshot,
+ledger, and inventory from live exports.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       583 |
-| `superseded`             |       174 |
-| `not-applicable`         |        12 |
+| `verified`               |       587 |
+| `superseded`             |       179 |
+| `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       389 |
+| `unreviewed`             |       379 |
 | **Total**                | **1,163** |
 
-The ledger now gives 774 items an assigned disposition. Four implemented
+The ledger gives 784 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 389 are unreviewed. The
-source-change flags cleared in batch 61 remain clear. These numbers describe
-the ledger, not completion of the campaign. Batch 66 is the latest completed
-review; its results are in
-[validation evidence](evidence/validation-batch-66.txt).
+currently identified item needs implementation, and 379 are unreviewed. The
+refresh found a new follow-up comment on already-verified issue #1169; review
+confirmed the reporter says the fix works on the latest release, so that source
+flag was cleared with updated evidence. PR #1194's body changed after its
+snapshot and remains flagged for its upcoming review. These counts describe the
+ledger, not completion of the campaign. Batch 67 is the latest completed review;
+see [validation evidence](evidence/validation-batch-67.txt).
 
 ## Project records
 
@@ -2032,3 +2032,33 @@ no source-change flags. Live GitHub checks reconfirmed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, 232 issues, and 931 PRs; the
 sanitized source rows remain from the October 13 17:28 UTC audit. The campaign
 remains incomplete and is not ready to merge to `main`.
+
+## Batch 67 — October 13, 2026
+
+Batch 67 reviewed upstream PRs [#786](https://github.com/Doezer/Questarr/pull/786)–
+[#795](https://github.com/Doezer/Questarr/pull/795). Four requests were verified,
+five dependency/action updates were superseded by newer versions or a security
+migration, and the TypeScript 7 request was marked not applicable while the
+current TypeScript ESLint peer range still excludes TypeScript 7.
+
+The StepSecurity request was completed by switching all release and release
+recovery publication steps from softprops to the full-SHA-pinned StepSecurity
+GitHub Release action. Those read-only checkouts now disable persisted
+credentials; changelog jobs retain them because they push generated branches.
+The existing DAST workflow and first-scan remediations were verified, including
+the CSP restrictions, exact Permissions-Policy regression check, ZAP rules file,
+and blocking behavior for unignored WARN/FAIL alerts. The production readiness
+loop was also made clean under ShellCheck.
+
+The production build and smoke test passed, and the focused security suite
+passed 14 tests. The live audit rechecked issue #1169's new reporter comment and
+kept its verified status. One later source edit remains flagged: open PR #1194
+has not yet been reviewed. Full commands, response headers, workflow checks,
+scratch cleanup, and scanner-run evidence are recorded in
+[Batch 67 evidence](evidence/validation-batch-67.txt).
+
+The ledger now records 587 verified, 179 superseded, 13 not applicable, 5
+implemented-unverified, 0 needs-implementation, and 379 unreviewed items.
+Upstream main remains `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, with 232
+issues and 931 pull requests. The campaign remains incomplete and is not ready
+to merge to `main`.

@@ -60,7 +60,7 @@ jobs:
           npm start > server.log 2>&1 &
           echo $! > server.pid
 
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl -sf http://localhost:5000/api/health > /dev/null; then
               echo "Server is up"
               exit 0

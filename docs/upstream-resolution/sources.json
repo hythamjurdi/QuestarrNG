@@ -146,6 +146,28 @@
           "reactionGroups": [],
           "url": "https://github.com/Doezer/Questarr/issues/1169#issuecomment-6111128970",
           "viewerDidAuthor": false
+        },
+        {
+          "id": "IC_kwDOP0125M8AAAABbqo6kQ",
+          "author": {
+            "login": "nmas1681"
+          },
+          "authorAssociation": "NONE",
+          "body": "Working nice now!! Moved from the 1.5.0 RC1 to latest and works as intended now. Thank you so much",
+          "createdAt": "2026-10-13T17:45:34Z",
+          "includesCreatedEdit": false,
+          "isMinimized": false,
+          "minimizedReason": "",
+          "reactionGroups": [
+            {
+              "content": "THUMBS_UP",
+              "users": {
+                "totalCount": 1
+              }
+            }
+          ],
+          "url": "https://github.com/Doezer/Questarr/issues/1169#issuecomment-6151617169",
+          "viewerDidAuthor": false
         }
       ],
       "createdAt": "2026-10-08T13:41:04Z",
@@ -178,7 +200,7 @@
       "number": 1169,
       "state": "CLOSED",
       "title": "[Support] Issue with Questarr v1.4.2",
-      "updatedAt": "2026-10-11T16:25:43Z",
+      "updatedAt": "2026-10-13T17:45:34Z",
       "url": "https://github.com/Doezer/Questarr/issues/1169"
     },
     {
@@ -16502,7 +16524,7 @@
     },
     {
       "baseRefName": "main",
-      "body": "<!-- claude-projects-attribution: {\"github_login\":\"Doezer\"} -->\n_Requested by **Vincent** · [project thread](https://claude.ai/code/project/chan_01Bbp9WkSHrxJWLwfbggk3zc?thread=cmsg_01Bbp9WkSHrxJWLwfbggk3zc6rv1VnN6DgjSV5GurwFyrH)_\n\nRefs Doezer/Questarr-mgmt#7 (milestone 1.5.1).\n\nBefore: the Media tab of the game details only showed IGDB screenshots.\n\nAfter: the Media tab also shows the game's IGDB videos (trailers, gameplay) above the screenshots, in a carousel: one video at a time, swipe or use the arrows (with a \"2 / 4\" counter) to see the others. Each slide shows the YouTube thumbnail; a click plays the video inside Questarr (youtube-nocookie embed, no redirect to YouTube). Changing slide stops the current video. The tab counter includes the videos.\n\nThe issue body is empty, so I read \"video support in medias section\" as IGDB videos only. Not included: user-uploaded videos in the Journal, or a fullscreen lightbox.\n\nHow:\n- IGDB query now requests `videos.name, videos.video_id`; `toVideos()` keeps only well-formed YouTube ids.\n- New nullable `games.videos` JSON column on both dialects (SQLite migration 0045, Postgres 0009), filled on add, library scan, Steam import and the periodic game update. Existing games get their videos on the next IGDB refresh.\n- `GameVideoCarousel` (shadcn/embla carousel) + `GameVideoCard`.\n- CSP: `frame-src` for `youtube-nocookie.com`, `img-src` for `i.ytimg.com`. Privacy note: the thumbnail is fetched from YouTube when the Media tab opens (the embed itself still only loads on click).\n- Test: `server/__tests__/igdb_videos.test.ts`. `npm run check` and the IGDB tests pass.\n\nScreenshots (thumbnails are a placeholder image because the sandbox has no internet):\n\n![desktop](https://raw.githubusercontent.com/Doezer/Questarr/274ebbf417cf95a2e37e25ab8957924d44eccbe6/.github/pr-assets/media-videos/carousel-desktop.png)\n![mobile](https://raw.githubusercontent.com/Doezer/Questarr/274ebbf417cf95a2e37e25ab8957924d44eccbe6/.github/pr-assets/media-videos/carousel-mobile.png)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nhttps://claude.ai/code/session_01SToAjHUJJFqnQ3aDv5tqJm\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n* **New Features**\n  * Added video previews and playable, privacy-enhanced YouTube embeds to the game details Media tab, with carousel navigation for multiple videos.\n  * The Media tab now counts both screenshots and videos, and shows an empty state only when neither is available.\n  * Game videos are included when game details are added or refreshed.\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+      "body": "<!-- claude-projects-attribution: {\"github_login\":\"Doezer\"} -->\n_Requested by **Vincent** · [project thread](https://claude.ai/code/project/chan_01Bbp9WkSHrxJWLwfbggk3zc?thread=cmsg_01Bbp9WkSHrxJWLwfbggk3zc6rv1VnN6DgjSV5GurwFyrH)_\n\nRefs Doezer/Questarr-mgmt#7 (milestone 1.5.1).\n\nBefore: the Media tab of the game details only showed IGDB screenshots.\n\nAfter: the Media tab also shows the game's IGDB videos (trailers, gameplay) above the screenshots, in a carousel: one video at a time, swipe or use the arrows (with a \"2 / 4\" counter) to see the others. Each slide shows the YouTube thumbnail; a click plays the video inside Questarr (youtube-nocookie embed, no redirect to YouTube). Changing slide stops the current video. The tab counter includes the videos.\n\nThe issue body is empty, so I read \"video support in medias section\" as IGDB videos only. Not included: user-uploaded videos in the Journal, or a fullscreen lightbox.\n\nHow:\n- IGDB query now requests `videos.name, videos.video_id`; `toVideos()` keeps only well-formed YouTube ids.\n- New nullable `games.videos` JSON column on both dialects (SQLite migration 0045, Postgres 0009), filled on add, library scan, Steam import and the periodic game update. Existing games get their videos on the next IGDB refresh.\n- `GameVideoCarousel` (shadcn/embla carousel) + `GameVideoCard`.\n- CSP: `frame-src` for `youtube-nocookie.com`, `img-src` for `i.ytimg.com`. Privacy note: the thumbnail is fetched from YouTube when the Media tab opens (the embed itself still only loads on click).\n- Test: `server/__tests__/igdb_videos.test.ts`. `npm run check` and the IGDB tests pass.\n\nScreenshots (thumbnails are a placeholder image because the sandbox has no internet):\n\n![desktop](https://raw.githubusercontent.com/Doezer/Questarr/274ebbf417cf95a2e37e25ab8957924d44eccbe6/.github/pr-assets/media-videos/carousel-desktop.png)\n![mobile](https://raw.githubusercontent.com/Doezer/Questarr/274ebbf417cf95a2e37e25ab8957924d44eccbe6/.github/pr-assets/media-videos/carousel-mobile.png)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nhttps://claude.ai/code/session_01SToAjHUJJFqnQ3aDv5tqJm\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **New Features**\n  * Added video previews and playable, privacy-enhanced YouTube embeds to the game details Media tab, with carousel navigation for multiple videos.\n  * The Media tab now counts both screenshots and videos, groups screenshots under an accessible heading when videos are also available, and shows an empty state only when neither is available.\n  * Game videos are included when games are added from supported sources or when game details are refreshed.\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
       "closedAt": null,
       "createdAt": "2026-10-13T05:57:14Z",
       "headRefOid": "77f2e0f26174b93df5f770cd974a19ca540f2a04",
@@ -16511,7 +16533,7 @@
       "number": 1194,
       "state": "OPEN",
       "title": "Add IGDB videos to the game Media tab",
-      "updatedAt": "2026-10-13T11:00:18Z",
+      "updatedAt": "2026-10-13T19:10:47Z",
       "url": "https://github.com/Doezer/Questarr/pull/1194"
     },
     {
