@@ -4,6 +4,9 @@ import dns from "dns/promises";
 import { Agent, fetch as undiciFetch } from "undici";
 import type { LookupFunction } from "net";
 
+type AgentOptions = { connect?: { lookup?: LookupFunction } };
+type MockAgentInstance = { options: AgentOptions; close: ReturnType<typeof vi.fn> };
+
 // Mock dns module
 vi.mock("dns/promises", () => ({
   default: {
@@ -19,17 +22,21 @@ vi.mock("undici", async () => {
   return {
     ...actual,
     fetch: vi.fn(),
-    Agent: vi.fn(),
+    Agent: vi.fn(function (this: MockAgentInstance, options: AgentOptions) {
+      this.options = options;
+      this.close = vi.fn().mockResolvedValue(undefined);
+      return this;
+    }),
   };
 });
 
-type AgentOptions = { connect?: { lookup?: LookupFunction } };
-
 function capturedLookup(): LookupFunction {
-  const options = vi.mocked(Agent).mock.calls[0][0] as AgentOptions;
+  const requestOptions = vi.mocked(undiciFetch).mock.calls.at(-1)?.[1] as
+    { dispatcher?: { options?: AgentOptions } } | undefined;
+  const options = requestOptions?.dispatcher?.options;
   const lookup = options.connect?.lookup;
   expect(lookup).toBeDefined();
-  return lookup as LookupFunction;
+  return lookup!;
 }
 
 // Queues a single resolved DNS lookup for the next safeFetch hop.
@@ -218,6 +225,38 @@ describe("safeFetch", () => {
     const callback = vi.fn();
     lookup("example.com", {}, callback);
     expect(callback).toHaveBeenCalledWith(null, [{ address: "142.250.185.46", family: 4 }]);
+  });
+
+  it("reuses pinned agents by address and closes them after the idle window", async () => {
+    vi.useFakeTimers();
+
+    try {
+      vi.mocked(dns.lookup as unknown as import("node:dns").LookupAddress[])
+        .mockResolvedValueOnce([{ address: "198.51.100.250", family: 4 }])
+        .mockResolvedValueOnce([{ address: "198.51.100.250", family: 4 }])
+        .mockResolvedValueOnce([{ address: "203.0.113.250", family: 4 }]);
+      vi.mocked(undiciFetch).mockImplementation(async () => new Response("ok") as never);
+
+      await safeFetch("http://agent-cache.example/first", { timeoutMs: 0 });
+      await vi.advanceTimersByTimeAsync(5000);
+      await safeFetch("http://agent-cache.example/second", { timeoutMs: 0 });
+      await safeFetch("http://agent-cache.example/changed-address", { timeoutMs: 0 });
+
+      expect(Agent).toHaveBeenCalledTimes(2);
+      const dispatchers = vi.mocked(undiciFetch).mock.calls.map((call) => call[1]?.dispatcher);
+      expect(dispatchers[1]).toBe(dispatchers[0]);
+      expect(dispatchers[2]).not.toBe(dispatchers[0]);
+
+      const createdAgents = vi.mocked(Agent).mock.results.map((result) => result.value);
+      await vi.advanceTimersByTimeAsync(9999);
+      expect(createdAgents[0]?.close).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(createdAgents[0]?.close).toHaveBeenCalledTimes(1);
+      expect(createdAgents[1]?.close).toHaveBeenCalledTimes(1);
+    } finally {
+      await vi.runOnlyPendingTimersAsync();
+      vi.useRealTimers();
+    }
   });
 
   it("should reject URLs that resolve to metadata service IPs", async () => {

@@ -4,6 +4,7 @@ import { Agent, fetch as undiciFetch, type RequestInit as UndiciRequestInit } fr
 
 const DEFAULT_SAFE_FETCH_TIMEOUT_MS = 30000;
 const DEFAULT_SAFE_FETCH_MAX_REDIRECTS = 5;
+const PINNED_AGENT_IDLE_TTL_MS = 10000;
 
 type SafeFetchOptions = RequestInit & {
   allowPrivate?: boolean;
@@ -22,6 +23,48 @@ interface SafeFetchTarget {
   family: number;
   hostname: string;
   isHttps: boolean;
+}
+
+interface PinnedAgentEntry {
+  agent: Agent;
+  idleTimer: ReturnType<typeof setTimeout> | null;
+}
+
+const pinnedAgents = new Map<string, PinnedAgentEntry>();
+
+function getPinnedAgent(target: SafeFetchTarget): Agent {
+  const key = `${target.family}:${target.address}`;
+  let entry = pinnedAgents.get(key);
+
+  if (!entry) {
+    // The address is freshly validated before this lookup. Keying the dispatcher by
+    // address and family allows keep-alive reuse without ever reusing a pool pinned
+    // to a different DNS result.
+    const pinnedLookup: LookupFunction = (_hostname, _options, callback) => {
+      callback(null, [{ address: target.address, family: target.family }]);
+    };
+    entry = {
+      agent: new Agent({ connect: { lookup: pinnedLookup } }),
+      idleTimer: null,
+    };
+    pinnedAgents.set(key, entry);
+  }
+
+  if (entry.idleTimer) {
+    clearTimeout(entry.idleTimer);
+  }
+
+  entry.idleTimer = setTimeout(() => {
+    if (pinnedAgents.get(key) !== entry) return;
+    pinnedAgents.delete(key);
+    entry.idleTimer = null;
+    // close() gracefully lets active responses finish, then releases the idle
+    // connection pool. The timer is only a cache eviction; it must not block fetch.
+    void entry.agent.close().catch(() => undefined);
+  }, PINNED_AGENT_IDLE_TTL_MS);
+  entry.idleTimer.unref?.();
+
+  return entry.agent;
 }
 
 export function normalizeHostname(hostname: string): string {
@@ -205,14 +248,9 @@ async function fetchValidatedOnce(
 ): Promise<Response> {
   const target = await resolveSafeFetchTarget(url, allowPrivate, allowedPrivateOrigins);
 
-  // Pin the TCP connection to the already-validated address for both HTTP and HTTPS
-  // instead of rewriting the URL/Host to the IP. The original hostname remains available
-  // for virtual hosting and TLS certificate verification, while the connection cannot
-  // be redirected by a second DNS lookup after validation.
-  const pinnedLookup: LookupFunction = (_hostname, _options, callback) => {
-    callback(null, [{ address: target.address, family: target.family }]);
-  };
-  const agent = new Agent({ connect: { lookup: pinnedLookup } });
+  // Keep the original hostname in the URL for virtual hosting and TLS certificate
+  // verification, while the cached dispatcher pins the connection to this validated IP.
+  const agent = getPinnedAgent(target);
 
   return undiciFetch(url.toString(), {
     ...fetchOptions,
