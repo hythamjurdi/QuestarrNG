@@ -377,6 +377,7 @@ describe("AddGameModal", () => {
     fireEvent.click(screen.getByTestId("open-btn"));
 
     const addButton = await screen.findByTestId("button-add-igdb-1");
+    expect(addButton).toHaveAttribute("aria-label", "Add Pending Game to collection");
     fireEvent.click(addButton);
 
     await waitFor(() => {

@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T10:46:07.577Z",
-  "forkHead": "13529cc7b59632ea05d1688f9b06e222d1f479ea",
+  "capturedAt": "2026-10-13T11:09:08.018Z",
+  "forkHead": "5548f104860ba511214a4316529ceae2709e1dde",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -15771,10 +15771,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "395e7fe8fef73ecf06d2397fa6fd8501a3da4bcc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork has the integrated Library component, dashboard entry points, and sidebar navigation requested by the PR."
+        ],
+        "acceptance": [
+          "Library functionality remains reachable through the integrated dashboard/navigation and retains collection filters and responsive behavior."
+        ],
+        "evidence": [
+          "client/src/components/Library.tsx; client/src/App.tsx; client/src/components/Sidebar.tsx; client/__tests__/Library.defaultFilters.test.tsx; client/__tests__/Library.mobile.test.tsx; client/__tests__/DashboardStats.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15791,10 +15798,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Long release titles wrap within the download dialog while the Download action remains visible and inside the dialog."
+        ],
+        "acceptance": [
+          "A long release title can be read without pushing the action outside the dialog bounds."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx; tests/e2e/long-download-title.spec.ts; docs/upstream-resolution/evidence/issue-550-long-title.png",
+          "docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15811,10 +15825,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ba9001eb82951515b32ebdc2c3f497604e36ab1d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The harden-runner action is pinned to v2.21.1 in the fork, newer than this PR's v2.17.0 target."
+        ],
+        "acceptance": [
+          "CI workflows continue to use the hash-pinned harden-runner action at a version newer than 2.17.0."
+        ],
+        "evidence": [
+          ".github/workflows/; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15831,10 +15851,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ba9001eb82951515b32ebdc2c3f497604e36ab1d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "Every dependency in the grouped update resolves to the requested version or a newer version in the current package manifest and lockfile."
+        ],
+        "acceptance": [
+          "Vitest, Vite, Prettier, TypeScript ESLint, PostCSS, and the grouped Vitest packages resolve at versions newer than the PR targets."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15851,10 +15877,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a8787e286a44da8d860d9c6dfedf5e00f533828a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "fast-xml-parser resolves to 5.11.2, newer than the PR's 5.5.12 target."
+        ],
+        "acceptance": [
+          "The locked production dependency is at or above the requested fast-xml-parser version."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15871,10 +15903,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1c2760ee39b0d300f7597371e1258a9476c70e3f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "better-sqlite3 resolves to 13.0.3, newer than the PR's 12.9.0 target."
+        ],
+        "acceptance": [
+          "The locked SQLite driver is at or above the requested version and the database regression suite passes."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; server/__tests__/; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15891,10 +15929,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5b084adc4139a3371bd655cfdbe81e8e6dff8c22",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "@tanstack/react-query resolves to 5.104.1, newer than the PR's 5.99.0 target."
+        ],
+        "acceptance": [
+          "The locked React Query dependency is at or above the requested version and the client regression suite passes."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; client/__tests__/; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15911,10 +15955,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "80d7301721c6988e4bcf494d7f8762fde6198002",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "dotenv resolves to 18.0.5, newer than the PR's 17.4.2 target."
+        ],
+        "acceptance": [
+          "The locked dotenv dependency is at or above the requested version and the application typecheck and build pass."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15931,10 +15981,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "07fc5fb3aedccff8a52016e7ef5335b8a993a284",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork includes the merged search-state, download-query invalidation, update-bundle filtering, download status, RSS, and modal fixes. Claim flows now have focused regression coverage for selected IGDB games and stale search results."
+        ],
+        "acceptance": [
+          "Download events refresh affected state; filters and summaries remain consistent; claim dialogs submit the selected game's title and clear results for short queries; regression suites pass."
+        ],
+        "evidence": [
+          "client/src/components/GameDetailsModal.tsx; client/src/components/ClaimBatchModal.tsx; client/src/components/ClaimDownloadModal.tsx; client/src/pages/downloads.tsx; client/src/components/CompactRssFeedItem.tsx; client/__tests__/ClaimModals.test.tsx; client/__tests__/CompactRssFeedItem.test.tsx; client/__tests__/DownloadsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15951,11 +16008,24 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c55b434625536a3f3e16b59b6e232b235149460a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This aggregate Dependabot PR covers the individual updates in PRs #551–556; the fork resolves the affected dependencies to newer versions."
+        ],
+        "acceptance": [
+          "All dependency updates represented by the aggregate are present at current locked versions."
+        ],
+        "evidence": [
+          "package.json; package-lock.json; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
+        "dependencies": [
+          "pr:551",
+          "pr:552",
+          "pr:553",
+          "pr:554",
+          "pr:555",
+          "pr:556"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -15971,10 +16041,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The calendar uses memoized event entries and date-key filtering to avoid repeated work while rendering the selected range."
+        ],
+        "acceptance": [
+          "Year, month, and week calendar views render the expected events and current date after filtering."
+        ],
+        "evidence": [
+          "client/src/pages/calendar.tsx; client/__tests__/CalendarPage.test.tsx; client/__tests__/calendar-utils.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -15991,10 +16068,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Add-game and RSS list actions expose title-specific accessible names; decorative icons are hidden from assistive technology. Existing safe URL handling remains covered."
+        ],
+        "acceptance": [
+          "Controls identify the game or article in their accessible name, decorative icons are ignored by screen readers, and URL validation regression tests pass."
+        ],
+        "evidence": [
+          "client/src/components/AddGameModal.tsx; client/src/components/CompactRssFeedItem.tsx; client/__tests__/AddGameModal.test.tsx; client/__tests__/CompactRssFeedItem.test.tsx; server/__tests__/safe-url.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16011,10 +16095,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "c7459e4e2ac2914844e456f56eed5bee887787bd",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Logs page, server log API, and live log delivery are present in the fork."
+        ],
+        "acceptance": [
+          "Logs load, update through the socket path, and show loading, empty, and failure states correctly."
+        ],
+        "evidence": [
+          "client/src/pages/logs.tsx; client/__tests__/LogsPage.test.tsx; client/__tests__/LogsPage.remaining.test.tsx; server/__tests__/logs.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16031,10 +16122,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The SSRF-safe fetcher resolves and pins the validated destination while preserving the original qBittorrent hostname for the HTTP Host header and TLS SNI."
+        ],
+        "acceptance": [
+          "A qBittorrent host resolving to loopback can be tested through a local server without losing the configured Host header; unsafe DNS targets remain blocked."
+        ],
+        "evidence": [
+          "server/ssrf.ts; server/__tests__/ssrf-host-header.test.ts; server/__tests__/ssrf.test.ts; server/__tests__/downloaders_ssrf.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16051,10 +16149,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6ebc8ae726908da439090fda683c05b44079ac59",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The upstream 1.3.0-to-main merge commit is an ancestor of the campaign branch."
+        ],
+        "acceptance": [
+          "The merge commit requested by the PR is present in the fork's mainline history."
+        ],
+        "evidence": [
+          "Merge commit 6ebc8ae726908da439090fda683c05b44079ac59; verified with git merge-base --is-ancestor; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16071,11 +16175,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This long-title action-clipping report is the same behavior as issue #550, whose end-to-end regression now passes."
+        ],
+        "acceptance": [
+          "The canonical long-title case in issue #550 keeps the Download action inside the dialog."
+        ],
+        "evidence": [
+          "issue:550; tests/e2e/long-download-title.spec.ts; docs/upstream-resolution/evidence/issue-550-long-title.png",
+          "docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
+        "dependencies": [
+          "issue:550"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16091,10 +16204,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "implemented-unverified",
+        "findings": [
+          "Synology Download Station configuration, default destination discovery, and request handling are implemented and pass mocked API tests; this workspace has no Synology DSM service or hardware for a live transfer check."
+        ],
+        "acceptance": [
+          "Mocked tests cover authentication, configuration, default destination, and download creation.",
+          "Still required: connect to a supported Synology DSM/Download Station instance and verify the advertised default destination and a completed download end to end."
+        ],
+        "evidence": [
+          "server/downloaders/synology.ts; server/__tests__/downloaders_synology_remaining.test.ts; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16111,10 +16231,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "implemented-unverified",
+        "findings": [
+          "The Deluge adapter and status mapping are present, including regression coverage for a benign tracker message of OK; the fork has no live Deluge daemon configured for protocol-level verification."
+        ],
+        "acceptance": [
+          "Mocked tests cover authentication, adding a torrent, status mapping, and the benign OK tracker message.",
+          "Still required: connect to a supported Deluge daemon and verify authentication, a download request, and status updates end to end."
+        ],
+        "evidence": [
+          "server/downloaders/deluge.ts; server/__tests__/downloaders_deluge.test.ts; server/__tests__/downloaders_deluge_remaining.test.ts; docs/upstream-resolution/evidence/validation-batch-52.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

@@ -20,25 +20,25 @@ behavior when implementing upstream requests.
 
 The saved source exports were collected on **October 13, 2026 at 05:20:58
 UTC**. The ledger and inventory were regenerated from those exports at
-**10:46:07 UTC**; this update did not refresh upstream sources. Review status
+**11:09:08 UTC**; this update did not refresh upstream sources. Review status
 is independent of GitHub's open, closed, or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       452 |
-| `superseded`             |        80 |
+| `verified`               |       460 |
+| `superseded`             |        88 |
 | `not-applicable`         |         9 |
-| `implemented-unverified` |         2 |
+| `implemented-unverified` |         4 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       604 |
+| `unreviewed`             |       586 |
 | **Total**                | **1,147** |
 
-The ledger now gives 541 items a completed evidence-backed disposition. Two
-implemented items still need verification, no currently identified item needs
-implementation, and 604 have not been reviewed. These numbers describe the
-ledger, not completion of the campaign. Batch 51 is the latest completed audit
-batch; its results are in
-[validation evidence](evidence/validation-batch-51.txt).
+The ledger now gives 557 items a completed evidence-backed disposition. Four
+implemented integrations still need live-service verification, no currently
+identified item needs implementation, and 586 have not been reviewed. These
+numbers describe the ledger, not completion of the campaign. Batch 52 is the
+latest completed audit batch; its results are in
+[validation evidence](evidence/validation-batch-52.txt).
 
 ## Project records
 
@@ -1373,4 +1373,41 @@ and item-by-item validation.
 
 After this batch, the ledger records 452 verified, 80 superseded, 9
 not-applicable, 2 implemented-unverified, 0 needs-implementation, and 604
+unreviewed items. The historical audit remains in progress.
+
+## Batch 52 — October 13, 2026
+
+Batch 52 reviewed PRs [#549](https://github.com/Doezer/Questarr/pull/549)–
+[#561](https://github.com/Doezer/Questarr/pull/561), PR
+[#564](https://github.com/Doezer/Questarr/pull/564), and issues
+[#550](https://github.com/Doezer/Questarr/issues/550),
+[#563](https://github.com/Doezer/Questarr/issues/563), and
+[#566](https://github.com/Doezer/Questarr/issues/566)–
+[#568](https://github.com/Doezer/Questarr/issues/568). The Library dashboard
+integration, Logs page, calendar optimization, accessible action labels,
+download-search/state fixes, and long-title dialog behavior are present and
+covered by regression tests. Dependency PRs #551–556 and aggregate PR #558 are
+superseded by newer locked versions. PR #564's merge commit is an ancestor of
+the campaign branch. Issue #563 is covered by the SSRF-safe fetcher, including
+a regression that proves a reverse-proxy hostname is preserved in the HTTP
+Host header while the validated IP is pinned.
+
+Issues #567 and #568 have working Synology Download Station and Deluge adapters
+with mocked API coverage, but remain `implemented-unverified` until a live
+Synology service and Deluge daemon can be tested. Issue #566 is recorded as
+superseded by the canonical long-title issue #550. The long-title end-to-end
+run is retained in [visual evidence](evidence/issue-550-long-title.png).
+
+The focused regression group passed 29 test files: 468 tests passed and 1 was
+skipped. The full Vitest suite passed 4,144 tests across 259 files, with 7
+skipped. Playwright passed all 50 tests. Typecheck, lint, formatting, secret
+scanning, production build, override checks, license checks, and deprecated
+dependency checks passed. Vite emitted its existing large-chunk advisory.
+Production audit found zero vulnerabilities; invoking `audit:prod` through
+`npm run` hit npm's project-scoped `EALLOWSCRIPTS` error, while running
+`node scripts/audit-prod.mjs` directly passed. Exact results and cleanup notes
+are in [batch 52 validation](evidence/validation-batch-52.txt).
+
+After this batch, the ledger records 460 verified, 88 superseded, 9
+not-applicable, 4 implemented-unverified, 0 needs-implementation, and 586
 unreviewed items. The historical audit remains in progress.
