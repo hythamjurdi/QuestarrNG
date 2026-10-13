@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 280,
+      "verified": 291,
       "needs-implementation": 1,
-      "superseded": 30,
+      "superseded": 33,
       "not-applicable": 7,
-      "unreviewed": 828,
+      "unreviewed": 814,
       "implemented-unverified": 1
     }
   },
@@ -9039,10 +9039,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b43407109a0a19bea39906fd5db9f936dd797ad3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork does not issue an indexer search for every visible GameCard. Availability uses cached search state, and GameDownloadDialog runs its manual query only while open.",
+          "Keeping the cached availability signal preserves useful download feedback while avoiding a viewport-wide request storm."
+        ],
+        "acceptance": [
+          "Scrolling library or discovery grids does not start one /api/search request per card.",
+          "Cached availability indicators remain available; manual search runs when the download dialog is opened."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "Focused UI/server Vitest run: 483 passed, 1 skipped"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9059,11 +9071,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The upstream owner closed this PR because sensitive data was present in its history and requested a history rewrite. Sanitized successor PR #322 was merged and carries the final qBittorrent-behind-VPN fix."
+        ],
+        "acceptance": [
+          "Carry forward only the rewritten successor; verify the final magnet redirect and actionable error behavior through PR #322."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/321",
+          "https://github.com/Doezer/Questarr/pull/322",
+          "docs/upstream-resolution/evidence/validation-batch-35.txt"
+        ],
+        "dependencies": [
+          "pr:322"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -9079,10 +9101,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8c4bba0d56c9581f391b3ba2637a0b9e18a46e06",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The sanitized successor is present in the fork. qBittorrent magnet redirects resolve to the downloader target and failure responses give an actionable result, covering linked issue #313."
+        ],
+        "acceptance": [
+          "Magnet redirects are followed to the actual qBittorrent target.",
+          "Missing or failed targets surface an actionable download error."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "docs/upstream-resolution/evidence/validation-batch-35.txt",
+          "https://github.com/Doezer/Questarr/issues/313",
+          "https://github.com/Doezer/Questarr/pull/322"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9099,10 +9131,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reported fresh-install failure came from running a container setup without a PostgreSQL service. The fork's default Compose deployment uses SQLite; PostgreSQL remains an explicit optional backend."
+        ],
+        "acceptance": [
+          "A default Compose installation initializes without a PostgreSQL service or external database.",
+          "Optional PostgreSQL setup is documented separately from the default SQLite deployment."
+        ],
+        "evidence": [
+          "docker-compose.yml",
+          "docs/DATABASE.md",
+          "README.md",
+          "server/db.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9119,10 +9161,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "bfde95e8b48d9d84ae99612cdb4096de7245be3d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The hardening and operational documentation are present in the fork; current TypeScript and lint checks pass."
+        ],
+        "acceptance": [
+          "The project type-checks without errors.",
+          "Repository lint passes with zero warnings.",
+          "Operational guidance is available to deployers."
+        ],
+        "evidence": [
+          "docs/OPERATIONS.md",
+          "npm run check",
+          "npm run lint"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9139,10 +9191,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The upstream reporter confirmed that the initial setup issue was fixed in v1.0.5. The current fork has an account-creation setup route and browser-tested setup journey."
+        ],
+        "acceptance": [
+          "A clean installation can submit initial configuration and create the first account.",
+          "The first account can authenticate after setup."
+        ],
+        "evidence": [
+          "client/src/__tests__/SetupPage.test.tsx",
+          "server/__tests__/auth-setup-ratelimit.test.ts",
+          "tests/e2e/setup.spec.ts",
+          "Setup Playwright project: 1 passed"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9159,10 +9221,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Although this upstream PR closed with a failed build, the fork has Playwright configuration, setup and authentication E2E coverage, and a CI workflow."
+        ],
+        "acceptance": [
+          "The clean-install setup browser journey passes.",
+          "Login, logout, and session behavior pass in browser coverage."
+        ],
+        "evidence": [
+          "playwright.config.ts",
+          ".github/workflows/e2e.yml",
+          "tests/e2e/setup.spec.ts",
+          "tests/e2e/auth.spec.ts",
+          "Setup Playwright project: 1 passed; auth E2E: 2 passed"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9179,10 +9252,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c63b6fdcb06fa0bc11f23e8240b739066ba8e4e1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The old partial PostgreSQL-to-SQLite script was removed because it covered only part of the schema and could log DATABASE_URL. This batch adds a current-schema copy path with migration guards, a read-only repeatable-read source, complete table coverage, content verification, and all-or-nothing SQLite writes."
+        ],
+        "acceptance": [
+          "The current PostgreSQL schema is copied in foreign-key order into an already migrated, empty SQLite database.",
+          "Every table's row count and canonical content are checked before commit; any mismatch rolls back all copied rows.",
+          "A non-empty or stale target is refused, and the source is not modified."
+        ],
+        "evidence": [
+          "scripts/pg-to-sqlite.ts",
+          "server/__tests__/pg_to_sqlite.test.ts",
+          "docs/DATABASE.md",
+          "npm run db:generate:pg reports no schema changes"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9199,10 +9283,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork provides a sidebar logout action and server logout endpoint; Settings also supports password changes with corresponding authenticated API handling."
+        ],
+        "acceptance": [
+          "A logged-in user can log out and the session credential is cleared.",
+          "A user can change their password through Settings and authenticate with the replacement."
+        ],
+        "evidence": [
+          "client/src/components/AppSidebar.tsx",
+          "client/src/pages/SettingsPage.tsx",
+          "client/__tests__/AppSidebar.test.tsx",
+          "client/__tests__/SettingsPage.test.tsx",
+          "server/__tests__/auth.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9219,10 +9314,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Current optional-PostgreSQL installations now have a documented, safe path back to SQLite. The tool migrates all current tables and verifies copied content; the separate pre-v1.1 archive procedure remains clearly scoped to the older schema."
+        ],
+        "acceptance": [
+          "The operator can initialize a fresh SQLite target and copy the full current PostgreSQL library.",
+          "Migration-version checks, empty-target enforcement, source read-only access, and rollback on mismatch are covered.",
+          "Documentation distinguishes the current copy from the legacy migration."
+        ],
+        "evidence": [
+          "scripts/pg-to-sqlite.ts",
+          "server/__tests__/pg_to_sqlite.test.ts",
+          "docs/DATABASE.md",
+          "docs/MIGRATION.md",
+          "release-notes/2026-10-12-current-postgres-to-sqlite-migration.md",
+          "PostgreSQL-to-SQLite tests: 4 passed"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9239,10 +9347,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The upstream reporter confirmed the initial setup flow was fixed in v1.0.5. The current fork's setup page, account-creation route, and clean-install browser journey verify the same request."
+        ],
+        "acceptance": [
+          "A new installation can complete setup and create its initial account.",
+          "Setup does not regress on an already configured installation."
+        ],
+        "evidence": [
+          "client/src/__tests__/SetupPage.test.tsx",
+          "tests/e2e/setup.spec.ts",
+          "Setup Playwright project: 1 passed"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9259,10 +9376,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "41f173de8def1203577cd74b7bd05ff62ddd8552",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The lockfile resolves react-hook-form to 7.89.0, beyond the requested 7.71.1 update."
+        ],
+        "acceptance": [
+          "The production lockfile contains a version newer than 7.71.1."
+        ],
+        "evidence": [
+          "package-lock.json: react-hook-form 7.89.0",
+          "npm run check"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9279,10 +9403,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "This closed development-dependency update has been overtaken by later dependency updates: the lockfile resolves @types/node 26.6.4 and Prettier 3.9.9, beyond the versions requested here."
+        ],
+        "acceptance": [
+          "The lockfile retains current compatible versions of both packages; no duplicate historical version bump is needed."
+        ],
+        "evidence": [
+          "package-lock.json: @types/node 26.6.4",
+          "package-lock.json: prettier 3.9.9",
+          "npm run check",
+          "npm run format:check"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9299,11 +9432,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "Dependabot explicitly superseded this pg update with PR #348. The fork's lockfile resolves pg 8.23.0, beyond both the requested 8.17.1 and replacement 8.17.2 versions."
+        ],
+        "acceptance": [
+          "Retain the current lockfile version and do not reapply the older dependency update."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/333",
+          "https://github.com/Doezer/Questarr/pull/348",
+          "package-lock.json: pg 8.23.0"
+        ],
+        "dependencies": [
+          "pr:348"
+        ]
       },
       "sourceChangedSinceReview": false
     },

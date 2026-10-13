@@ -99,6 +99,41 @@ Your SQLite file is opened read-only and is never modified, so it remains a
 working fallback: if anything looks wrong, unset `DB_DIALECT` and you are back
 where you started.
 
+## Migrating a current PostgreSQL library to SQLite
+
+This path is for the optional PostgreSQL backend in current QuestarrNG releases.
+For a pre-v1.1 installation from the older PostgreSQL-default era, follow the
+separate [legacy migration guide](./MIGRATION.md) instead.
+
+Back up both databases and stop Questarr before copying. First run the current
+application once against PostgreSQL so its source schema is fully migrated,
+then stop it. Initialize a fresh SQLite target using the same release:
+
+```bash
+DB_DIALECT=postgres DATABASE_URL="$DATABASE_URL" npm run db:migrate
+SQLITE_DB_PATH=./data/sqlite.db npm run db:migrate
+```
+
+Copy the library into that empty SQLite database:
+
+```bash
+DATABASE_URL="$DATABASE_URL" \
+SQLITE_DB_PATH=./data/sqlite.db \
+  npm run db:copy:pg-to-sqlite
+```
+
+The copy command checks that PostgreSQL and SQLite have all current migrations
+applied. It refuses a non-empty SQLite target, reads PostgreSQL in a
+repeatable-read, read-only transaction, and copies every table in foreign-key
+order. Inserts and per-table row-content checks run inside one SQLite
+transaction; any failure rolls back the whole copy and exits non-zero. The
+connection URL is never printed. `--batch-size=N` changes the number of rows
+inserted per SQLite statement (default 100).
+
+After the command reports that all tables were verified, start Questarr normally
+with SQLite, then check the library before retiring the Postgres backup. The
+source database and its contents remain unchanged.
+
 ## How the two backends stay in step
 
 Each dialect has its own schema module and migration history:

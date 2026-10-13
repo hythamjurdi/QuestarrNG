@@ -1,0 +1,34 @@
+Batch 36 validation — upstream items #320–333
+Date: October 12, 2026
+
+Full Vitest suite:
+- npm run test:run -- --reporter=dot --maxWorkers=2
+- 252 files passed, 1 skipped; 4,086 tests passed, 7 skipped.
+- The host /tmp tmpfs was full, so temporary test files used an isolated visible
+  directory outside the repository and outside the allowed file-browser root.
+  That directory was removed after the run.
+
+Focused checks:
+- PostgreSQL-to-SQLite migration tests: 4 passed.
+- Focused UI/server tests: 9 files, 483 passed, 1 skipped.
+- Playwright clean setup project: 1 passed.
+- Playwright authentication E2E: 2 passed.
+
+Repository gates:
+- npm run check — passed.
+- npm run lint — passed with zero warnings.
+- npm run format:check — passed.
+- npm run build — passed; Vite reported the existing large-chunk advisory.
+- npm run db:generate:pg — no schema changes or migrations generated.
+- npm run db:check:pg — passed.
+- docker compose config --quiet — passed.
+- git diff --check — passed.
+
+The current-schema PostgreSQL-to-SQLite copy covers all 24 application tables.
+Its tests verify migration-journal matching, representative JSON/date/boolean/
+large-integer values, non-empty-target refusal, and rollback on content mismatch.
+The PostgreSQL source is read-only; the SQLite destination transaction commits
+only after row counts and canonical content hashes match.
+
+Playwright's pre-existing authentication state was restored byte-for-byte after
+testing. Generated databases, browser output, and per-task scratch were removed.

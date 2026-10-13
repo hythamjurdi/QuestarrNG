@@ -221,6 +221,10 @@ the app as the configured `PUID:PGID` directly, so prepare the bind-mounted
    run `scripts/sqlite-to-pg.ts` to bring your library across. See
    [docs/DATABASE.md](docs/DATABASE.md).
 
+   To switch a current optional-Postgres install back to SQLite, the database
+   guide also includes a safe copy command. The old pre-v1.1 PostgreSQL
+   migration procedure remains separate because it handles a different schema.
+
 ### Publish a Docker image on demand
 
 Maintainers can publish a fresh image without waiting for the scheduled build:

@@ -34,7 +34,7 @@ import * as pgSchema from "../shared/schema.pg.js";
  * Tables in foreign-key-safe order: a table never appears before something it
  * references. Hard-coded rather than derived so the order is reviewable.
  */
-const TABLE_ORDER = [
+export const TABLE_ORDER = [
   // No foreign keys.
   "users",
   "pathMappings",

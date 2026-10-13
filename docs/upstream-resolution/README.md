@@ -970,3 +970,24 @@ tests separately, and GameDownloadDialog passed 49 tests (one skipped). The
 ledger now records **280 verified**, **30 superseded**, **828 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** records. Issue #37 remains outstanding.
+
+## Batch 36 — October 12, 2026
+
+Batch 36 reviewed [PRs #320–322 and #324, #326–327, #331–333](inventory.md)
+and [issues #323, #325, #328–330](inventory.md). The manual-download flow
+avoids automatic per-card searches while retaining cached availability. PR #321
+is superseded by the sanitized merged #322; the existing qBittorrent redirect
+fix also resolves issue #313. Setup, logout, dependency-update, and operational
+hardening requests were verified against the current fork.
+
+The current PostgreSQL-to-SQLite migration request (#329, related to PR #327)
+now has a complete-schema copy tool. It requires both databases to have current
+migrations, refuses a non-empty SQLite target, reads PostgreSQL read-only, and
+verifies every copied table in a rollback-safe transaction. The legacy pre-v1.1
+migration procedure remains separate. See the [migration guide](../DATABASE.md),
+[release note](../../release-notes/2026-10-12-current-postgres-to-sqlite-migration.md),
+and [batch 36 validation](evidence/validation-batch-36.txt).
+
+The ledger now records **291 verified**, **33 superseded**, **814 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** records. Issue #37 remains outstanding.

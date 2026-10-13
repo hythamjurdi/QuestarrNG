@@ -312,20 +312,20 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #317](https://github.com/Doezer/Questarr/pull/317) | fix(igdb): implement request queueing to prevent 429 errors | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #318](https://github.com/Doezer/Questarr/pull/318) | feat: implement auto-download rules and default manual download filters | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #319](https://github.com/Doezer/Questarr/pull/319) | feat: Hardening pass - fix linting, add operational docs, enhance CI | CLOSED | no-merge-commit | verified |
-| [pr #320](https://github.com/Doezer/Questarr/pull/320) | fix: manual download performance | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #321](https://github.com/Doezer/Questarr/pull/321) | fix: fixed qBittorrent behind VPN download handling | CLOSED | no-merge-commit | unreviewed |
-| [pr #322](https://github.com/Doezer/Questarr/pull/322) | fix: fixed qBittorrent behind VPN download handling | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #323](https://github.com/Doezer/Questarr/issues/323) | Fresh Install doesn't work | CLOSED | no-merge-commit | unreviewed |
-| [pr #324](https://github.com/Doezer/Questarr/pull/324) | Iterative Hardening: Type Safety & Documentation | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #325](https://github.com/Doezer/Questarr/issues/325) | Initial setup not working | CLOSED | no-merge-commit | unreviewed |
-| [pr #326](https://github.com/Doezer/Questarr/pull/326) | test: setup Playwright E2E infrastructure and smoke tests | CLOSED | no-merge-commit | unreviewed |
-| [pr #327](https://github.com/Doezer/Questarr/pull/327) | Migrate database from PostgreSQL to SQLite | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #328](https://github.com/Doezer/Questarr/issues/328) | Logout button | CLOSED | no-merge-commit | unreviewed |
-| [issue #329](https://github.com/Doezer/Questarr/issues/329) | Migration to SQlite | CLOSED | no-merge-commit | unreviewed |
-| [issue #330](https://github.com/Doezer/Questarr/issues/330) | Initial setup does nothing | CLOSED | no-merge-commit | unreviewed |
-| [pr #331](https://github.com/Doezer/Questarr/pull/331) | chore(deps): bump react-hook-form from 7.71.0 to 7.71.1 in the react group | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #332](https://github.com/Doezer/Questarr/pull/332) | chore(deps-dev): bump the dev-dependencies group with 2 updates | CLOSED | no-merge-commit | unreviewed |
-| [pr #333](https://github.com/Doezer/Questarr/pull/333) | chore(deps): bump pg from 8.16.3 to 8.17.1 | CLOSED | no-merge-commit | unreviewed |
+| [pr #320](https://github.com/Doezer/Questarr/pull/320) | fix: manual download performance | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #321](https://github.com/Doezer/Questarr/pull/321) | fix: fixed qBittorrent behind VPN download handling | CLOSED | no-merge-commit | superseded |
+| [pr #322](https://github.com/Doezer/Questarr/pull/322) | fix: fixed qBittorrent behind VPN download handling | MERGED | merge-commit-in-fork-history | verified |
+| [issue #323](https://github.com/Doezer/Questarr/issues/323) | Fresh Install doesn't work | CLOSED | no-merge-commit | verified |
+| [pr #324](https://github.com/Doezer/Questarr/pull/324) | Iterative Hardening: Type Safety & Documentation | MERGED | merge-commit-in-fork-history | verified |
+| [issue #325](https://github.com/Doezer/Questarr/issues/325) | Initial setup not working | CLOSED | no-merge-commit | verified |
+| [pr #326](https://github.com/Doezer/Questarr/pull/326) | test: setup Playwright E2E infrastructure and smoke tests | CLOSED | no-merge-commit | verified |
+| [pr #327](https://github.com/Doezer/Questarr/pull/327) | Migrate database from PostgreSQL to SQLite | MERGED | merge-commit-in-fork-history | verified |
+| [issue #328](https://github.com/Doezer/Questarr/issues/328) | Logout button | CLOSED | no-merge-commit | verified |
+| [issue #329](https://github.com/Doezer/Questarr/issues/329) | Migration to SQlite | CLOSED | no-merge-commit | verified |
+| [issue #330](https://github.com/Doezer/Questarr/issues/330) | Initial setup does nothing | CLOSED | no-merge-commit | verified |
+| [pr #331](https://github.com/Doezer/Questarr/pull/331) | chore(deps): bump react-hook-form from 7.71.0 to 7.71.1 in the react group | MERGED | merge-commit-in-fork-history | verified |
+| [pr #332](https://github.com/Doezer/Questarr/pull/332) | chore(deps-dev): bump the dev-dependencies group with 2 updates | CLOSED | no-merge-commit | superseded |
+| [pr #333](https://github.com/Doezer/Questarr/pull/333) | chore(deps): bump pg from 8.16.3 to 8.17.1 | CLOSED | no-merge-commit | superseded |
 | [pr #334](https://github.com/Doezer/Questarr/pull/334) | chore(deps): bump pino from 10.1.0 to 10.2.0 | MERGED | merge-commit-in-fork-history | unreviewed |
 | [pr #335](https://github.com/Doezer/Questarr/pull/335) | chore(deps): bump @tanstack/react-query from 5.90.16 to 5.90.19 | MERGED | merge-commit-in-fork-history | unreviewed |
 | [issue #336](https://github.com/Doezer/Questarr/issues/336) | Different Way to Search for Games | OPEN | no-merge-commit | verified |
