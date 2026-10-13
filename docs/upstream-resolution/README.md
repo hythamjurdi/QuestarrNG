@@ -22,29 +22,28 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The ledger's `capturedAt` records audit generation time, not an
 individual GitHub request timestamp. Review status is independent of GitHub's
-open, closed, or merged state. Batch 70 uses the live source snapshot captured
-on October 13, 2026 at 22:20 UTC and regenerates the ledger and inventory from
-that same sanitized export.
+open, closed, or merged state. The latest audit regenerated the ledger and
+inventory on October 13, 2026 at 22:51:59 UTC from the refreshed source list.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       609 |
-| `superseded`             |       186 |
+| `verified`               |       614 |
+| `superseded`             |       191 |
 | `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       350 |
+| `unreviewed`             |       340 |
 | **Total**                | **1,163** |
 
-The ledger gives 813 items an assigned disposition. Four implemented
+The ledger gives 823 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 350 are unreviewed. The
-latest live refresh retains one changed-source flag: PR #1194's body changed
-after its snapshot and still needs review. The ten Batch 69 records and ten
-Batch 70 records were unchanged from their source snapshots before disposition.
-These counts describe the ledger, not completion of the campaign. Batch 70 is
-the latest completed review; see [validation evidence](evidence/validation-batch-70.txt).
+currently identified item needs implementation, and 340 are unreviewed. The
+latest refresh retains one changed-source flag: PR #1194's body changed after
+its snapshot and still needs review. The ten Batch 71 records were unchanged
+from their source snapshots before disposition. These counts describe the
+ledger, not completion of the campaign. Batch 71 is the latest completed
+review; see [validation evidence](evidence/validation-batch-71.txt).
 
 ## Project records
 
@@ -2171,3 +2170,37 @@ implemented-unverified, 0 needs-implementation, and 350 unreviewed items.
 Upstream main remains `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, with 232
 issues and 931 pull requests. The campaign remains incomplete and must not be
 merged to `main`.
+
+## Batch 71 — October 13, 2026
+
+Batch 71 reviewed PRs [#826](https://github.com/Doezer/Questarr/pull/826)–
+[#831](https://github.com/Doezer/Questarr/pull/831) and issues
+[#832](https://github.com/Doezer/Questarr/issues/832)–
+[#835](https://github.com/Doezer/Questarr/issues/835). Five requests were
+verified; five dependency or workflow updates were superseded by current
+versions or the later corrected request. PR #828's proposed Node digest was
+the Debian image, which lacks `apk`; QuestarrNG's later pinned Alpine digest
+was confirmed from registry manifests for both amd64 and arm64.
+
+The verified behavior includes NZBGet's configured-category fallback, import
+recovery for single-file torrents and failed unpacking, and retryable failed
+imports with visible reasons. The mobile download-card fix replaces
+`break-words` with `wrap-anywhere`: a real browser check found the old card
+expanded to 778.8px at a 390px viewport despite its unit test, while the fixed
+card is 358px wide and the document remains 390px with no horizontal overflow.
+The captured [mobile screenshot](evidence/validation-batch-71-mobile-download-card.png)
+shows the running result.
+
+Focused validation passed 241 tests across nine files. TypeScript, full lint,
+Prettier, `git diff --check`, and the production build passed; the build retains
+its existing large-chunk advisory. Docker Registry metadata, rather than a
+local Docker image build, was used to verify the pinned multi-platform Node
+image. The dev server, generated test database, temporary Playwright browser
+installation, and build scratch were removed; the pre-existing `dist` output
+was restored. See [Batch 71 validation evidence](evidence/validation-batch-71.txt).
+
+The ledger now records 614 verified, 191 superseded, 13 not applicable, 5
+implemented-unverified, 0 needs-implementation, and 340 unreviewed items. The
+source snapshot still contains 232 issues and 931 pull requests, with PR #1194
+as the only changed-source flag. The campaign remains incomplete and must not
+be merged to `main`.

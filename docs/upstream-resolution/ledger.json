@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T22:34:44.183Z",
-  "forkHead": "82bcb4e1d5572152e2afd1147298a2b6917c7b1e",
+  "capturedAt": "2026-10-13T22:51:59.815Z",
+  "forkHead": "48a34502b51a69fe217e114888b996e28c3f4593",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -23928,10 +23928,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "060b515774fbaafd2435c6f4908ac1f18e13ccef",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The all-actions update is covered by current immutable workflow pins: checkout v7.0.1, setup-node v7.0.0, setup-python v7.0.0, CodeQL upload v4.38.2, and download-artifact v8.0.1. The upstream softprops/action-gh-release action is not used in this fork.",
+          "Action versions at or above the requested versions are pinned to reviewed commit SHAs in the workflows."
+        ],
+        "acceptance": [
+          "Every referenced action still used by QuestarrNG is pinned at the requested version or a later compatible version; unused actions require no added workflow."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/sast.yml",
+          ".github/workflows/codeql.yml",
+          ".github/workflows/codecov-upload.yml",
+          ".github/workflows/release.yml",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23948,11 +23960,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "Dependabot closed this production dependency group as no longer needed after a later grouped update was opened. PR #830 merged the replacement set, and the current lockfile is at the requested versions or later."
+        ],
+        "acceptance": [
+          "Production dependencies from the closed request are represented by the later grouped update or a compatible current lockfile version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
+        "dependencies": [
+          "pr:830"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -23968,11 +23990,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The proposed digest sha256:0473e7dc433a1310f436edee02aa79737ec78a4b345433ab0963d4a256f9ad85 resolved to the Debian node:26 image rather than node:26-alpine; the maintainer closed this PR after the production stage failed because apk was absent and followed it with PR #831.",
+          "QuestarrNG now pins a later node:26-alpine digest, sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019. Registry metadata identifies the Node 26 Alpine 3.24 build for linux/amd64 and linux/arm64."
+        ],
+        "acceptance": [
+          "The incorrect Debian digest is not used and the production image remains pinned to the Alpine Node 26 variant required by apk."
+        ],
+        "evidence": [
+          "Dockerfile",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
+        "dependencies": [
+          "pr:831"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -23988,10 +24020,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "29c0c427266a78cb3f5fbfab30fc7ee7c091adac",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested checkout and setup-node updates are already present at v7.0.1 and v7.0.0. The requested artifact action is pinned to v8.0.1, later than the requested release."
+        ],
+        "acceptance": [
+          "Every action still used by the fork is pinned at the requested version or a later compatible version."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/codecov-upload.yml",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24008,10 +24048,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c1d9b8a062c43217bd3b4042a97732ad346ccb38",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All 30 production package updates in the merged group are at the requested version or later in package-lock.json. The current Radix packages, TanStack Query, express-rate-limit, lucide-react, and react-hook-form exceed the requested releases; font packages remain at the requested 5.3.0."
+        ],
+        "acceptance": [
+          "Each package in the merged production update group is locked at its requested version or a later compatible version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24028,11 +24076,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5b318dc8a07dc4cb23b1648c81f2526b3a43a1a6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The fix replaces a Debian digest mistakenly labeled as node:26-alpine. QuestarrNG uses a later pinned node:26-alpine digest; Docker Registry manifest inspection reports Alpine 3.24 as its base and lists linux/amd64 and linux/arm64 variants."
+        ],
+        "acceptance": [
+          "The Node 26 base image digest resolves to an Alpine image that provides apk for the Dockerfile's production stage."
+        ],
+        "evidence": [
+          "Dockerfile",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
+        "dependencies": [
+          "pr:828"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24048,11 +24105,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "NZBGet addDownload chooses the request category first, then the configured downloader category, then an empty category. A regression test covers the exact missing-request-category case described by the issue and the configured Questarr category."
+        ],
+        "acceptance": [
+          "A download with no per-request category is submitted to NZBGet using the downloader's configured category."
+        ],
+        "evidence": [
+          "server/downloaders/nzbget.ts",
+          "server/__tests__/downloaders_comprehensive.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
+        "dependencies": [
+          "pr:851"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24068,11 +24135,30 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "For qBittorrent single-file torrents, the import path is resolved from the actual file list rather than the torrent display name. The same resolver is used for manual review and the automatic import path, and regression coverage asserts the resulting source filename.",
+          "Import failures remain in manual_review_required with a stored reason. PendingImportsCard displays that reason and offers Review, which can edit the source path and retry. The API continues to return a generic response for unexpected exceptions rather than exposing arbitrary internal error text."
+        ],
+        "acceptance": [
+          "A single-file torrent without a display-name subfolder resolves to its actual filename for import; an unpack failure stays visible and retryable with a stored reason."
+        ],
+        "evidence": [
+          "server/downloaders/utils.ts",
+          "server/services/ImportManager.ts",
+          "server/cron.ts",
+          "server/routes/import.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts",
+          "server/__tests__/import_manager_additional.test.ts",
+          "server/__tests__/import_manager.test.ts",
+          "client/src/components/PendingImportsCard.tsx",
+          "client/__tests__/PendingImportsCard.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
+        "dependencies": [
+          "pr:856",
+          "pr:840"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24088,11 +24174,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Both automatic processImport failures and user-triggered confirmImport retry failures set manual_review_required and retain the formatted error message. The pending-import endpoint and card keep the item visible; Review opens the confirmation flow again, and another failed attempt remains retryable."
+        ],
+        "acceptance": [
+          "A failed automatic or manual import remains in the Pending Manual Imports flow with a visible error and a retry action."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "server/routes/import.ts",
+          "client/src/components/PendingImportsCard.tsx",
+          "client/src/components/ImportReviewModal.tsx",
+          "server/__tests__/import_manager.test.ts",
+          "server/__tests__/import_manager_additional.test.ts",
+          "client/__tests__/PendingImportsCard.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
+        "dependencies": [
+          "pr:840"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -24108,11 +24209,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The upstream min-w-0/break-words change still let a CSS grid track expand to the title's large min-content width: a live 390px viewport rendered the card at 778.8px. Replacing break-words with Tailwind's wrap-anywhere preserves normal word breaks while allowing the min-content width to shrink. The final browser capture measures a 358px card, 390px document width, and no horizontal overflow."
+        ],
+        "acceptance": [
+          "At a 390px mobile viewport, a long unbroken release name remains inside its download card and the document has no horizontal overflow."
+        ],
+        "evidence": [
+          "client/src/pages/downloads.tsx",
+          "client/__tests__/DownloadsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-71-mobile-download-card.png",
+          "docs/upstream-resolution/evidence/validation-batch-71.txt"
+        ],
+        "dependencies": [
+          "pr:839"
+        ]
       },
       "sourceChangedSinceReview": false
     },
