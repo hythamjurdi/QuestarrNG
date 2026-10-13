@@ -1,0 +1,30 @@
+Batch 43 validation — 2026-10-13
+================================
+
+Target branch: codex/upstream-resolution
+
+Full Vitest suite:
+- `npm run test`
+- PASS: 253 files passed, 1 skipped; 4,115 tests passed, 7 skipped.
+
+Repository checks:
+- `npm run check` — PASS.
+- `npm run lint` — PASS.
+- `npm run format:check` — PASS.
+- `npm run secretlint` — PASS.
+- `npm run db:check:pg` — PASS.
+- `npm run check:overrides` — PASS; all documented overrides remain necessary.
+- `npm run check:licenses` — PASS; 418 production package versions checked.
+- Prettier check for the edited Markdown files — PASS.
+- `npm run build` — PASS; Vite emitted the existing advisory for chunks over 500 kB.
+- `git diff --check` — PASS.
+- `npm run release-notes:check` against the staged batch tree and temporary PR body — PASS; validated 2 user-facing fragments and confirmed the body includes the running-UI screenshot.
+
+Running UI evidence:
+- Started `npm run dev:test` from this checkout. Port 5100 was already used by another worktree, so a temporary Node preload selected port 5101 for this run.
+- Playwright setup and the temporary headless Discover → Download dialog journey passed (2 tests). The browser verified the accessible button name and opened its options menu.
+- Screenshot: `docs/pr-evidence/upstream-download-options-accessibility-batch-43.png`.
+- The temporary Playwright spec/configuration, test database, auth backup, preload, and output directory were removed; the pre-existing Playwright auth state was restored.
+
+Scratch cleanup:
+- No files were written to the NFS mount. The mount resolves to `kspls0:/mnt/datapool_lvm_media`, but a capacity query stalled, so task scratch stayed under `/tmp` and was removed.

@@ -2546,8 +2546,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(games.userId, userId),
           includeHidden ? undefined : eq(games.hidden, false),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          statuses && statuses.length > 0 ? inArray(games.status, statuses as any[]) : undefined
+          statuses && statuses.length > 0 ? inArray(games.status, statuses) : undefined
         )
       )
       .orderBy(desc(games.addedAt));

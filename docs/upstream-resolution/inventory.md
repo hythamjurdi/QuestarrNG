@@ -416,22 +416,22 @@ Snapshot: 2026-10-13T05:20:58.476Z. 1147 items. All ancestry observations requir
 | [pr #421](https://github.com/Doezer/Questarr/pull/421) | 🛡️ Sentinel: [MEDIUM] Fix error message information leakage | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #422](https://github.com/Doezer/Questarr/pull/422) | ⚡ Bolt: Lazy load game details and download dialogs | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #423](https://github.com/Doezer/Questarr/pull/423) | 🎨 Palette: Add contextual aria-labels to game cards | MERGED | merge-commit-not-in-either-main-history | verified |
-| [pr #424](https://github.com/Doezer/Questarr/pull/424) | Fix Docker container security by adjusting user permissions | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #425](https://github.com/Doezer/Questarr/pull/425) | Use GitHub Releases API for version check instead of package.json from main | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #426](https://github.com/Doezer/Questarr/issues/426) | Debrid Support | CLOSED | no-merge-commit | unreviewed |
-| [pr #427](https://github.com/Doezer/Questarr/pull/427) | Fix session refresh issue on page reload | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #428](https://github.com/Doezer/Questarr/pull/428) | Remove Steam sign-in button & Steam API key + Fix steam wishlist sync | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #430](https://github.com/Doezer/Questarr/pull/430) | chore(deps-dev): bump the dev-dependencies group with 6 updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #431](https://github.com/Doezer/Questarr/pull/431) | chore(deps): bump fast-xml-parser from 5.3.7 to 5.4.1 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #432](https://github.com/Doezer/Questarr/pull/432) | chore(deps): bump pg and @types/pg | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #433](https://github.com/Doezer/Questarr/pull/433) | chore(deps): bump lucide-react from 0.563.0 to 0.576.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #434](https://github.com/Doezer/Questarr/pull/434) | chore(deps): bump multer from 2.0.2 to 2.1.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #435](https://github.com/Doezer/Questarr/pull/435) | 🎨 Palette: Add missing ARIA labels to icon buttons | CLOSED | no-merge-commit | unreviewed |
-| [pr #436](https://github.com/Doezer/Questarr/pull/436) | Fix Transmission download failures: surface RPC errors and fix error log serialization | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #437](https://github.com/Doezer/Questarr/issues/437) | Transmission Issue whnd adding Torrent | CLOSED | no-merge-commit | unreviewed |
-| [pr #438](https://github.com/Doezer/Questarr/pull/438) | Refactor game update notifications and add autosearch tests | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #439](https://github.com/Doezer/Questarr/pull/439) | Refactor hidden mutation flow and add hide button to game details page | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #440](https://github.com/Doezer/Questarr/pull/440) | Refresh download search cache on indexer changes | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #424](https://github.com/Doezer/Questarr/pull/424) | Fix Docker container security by adjusting user permissions | MERGED | merge-commit-in-fork-history | verified |
+| [pr #425](https://github.com/Doezer/Questarr/pull/425) | Use GitHub Releases API for version check instead of package.json from main | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #426](https://github.com/Doezer/Questarr/issues/426) | Debrid Support | CLOSED | no-merge-commit | verified |
+| [pr #427](https://github.com/Doezer/Questarr/pull/427) | Fix session refresh issue on page reload | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #428](https://github.com/Doezer/Questarr/pull/428) | Remove Steam sign-in button & Steam API key + Fix steam wishlist sync | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #430](https://github.com/Doezer/Questarr/pull/430) | chore(deps-dev): bump the dev-dependencies group with 6 updates | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #431](https://github.com/Doezer/Questarr/pull/431) | chore(deps): bump fast-xml-parser from 5.3.7 to 5.4.1 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #432](https://github.com/Doezer/Questarr/pull/432) | chore(deps): bump pg and @types/pg | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #433](https://github.com/Doezer/Questarr/pull/433) | chore(deps): bump lucide-react from 0.563.0 to 0.576.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #434](https://github.com/Doezer/Questarr/pull/434) | chore(deps): bump multer from 2.0.2 to 2.1.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #435](https://github.com/Doezer/Questarr/pull/435) | 🎨 Palette: Add missing ARIA labels to icon buttons | CLOSED | no-merge-commit | verified |
+| [pr #436](https://github.com/Doezer/Questarr/pull/436) | Fix Transmission download failures: surface RPC errors and fix error log serialization | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #437](https://github.com/Doezer/Questarr/issues/437) | Transmission Issue whnd adding Torrent | CLOSED | no-merge-commit | verified |
+| [pr #438](https://github.com/Doezer/Questarr/pull/438) | Refactor game update notifications and add autosearch tests | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #439](https://github.com/Doezer/Questarr/pull/439) | Refactor hidden mutation flow and add hide button to game details page | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #440](https://github.com/Doezer/Questarr/pull/440) | Refresh download search cache on indexer changes | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #441](https://github.com/Doezer/Questarr/pull/441) | Add code coverage thresholds and Codecov status checks | CLOSED | no-merge-commit | unreviewed |
 | [pr #443](https://github.com/Doezer/Questarr/pull/443) | chore(deps): bump docker/setup-buildx-action from 3.12.0 to 4.0.0 | MERGED | merge-commit-in-fork-history | unreviewed |
 | [pr #444](https://github.com/Doezer/Questarr/pull/444) | chore(deps): bump docker/build-push-action from 6.19.2 to 7.0.0 | MERGED | merge-commit-in-fork-history | unreviewed |

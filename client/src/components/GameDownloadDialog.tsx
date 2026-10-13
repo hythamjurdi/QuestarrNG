@@ -1335,7 +1335,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9"
-                                aria-label="More options"
+                                aria-label="More download options"
                               >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>

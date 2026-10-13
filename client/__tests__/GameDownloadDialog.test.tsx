@@ -305,6 +305,11 @@ describe("GameDownloadDialog", () => {
       },
       { timeout: 3000 }
     );
+
+    const optionsButtons = await screen.findAllByRole("button", {
+      name: "More download options",
+    });
+    expect(optionsButtons).toHaveLength(3);
   });
 
   it.each([false, true])(

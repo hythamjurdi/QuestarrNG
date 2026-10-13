@@ -1099,3 +1099,34 @@ and [batch 42 validation](evidence/validation-batch-42.txt).
 The ledger now records **375 verified**, **37 superseded**, **726 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** records. Issue #37 remains outstanding.
+
+## Batch 43 — October 13, 2026
+
+Batch 43 reviewed issues [#426](https://github.com/Doezer/Questarr/issues/426)
+and [#437](https://github.com/Doezer/Questarr/issues/437), plus PRs #424–425,
+#427–428, #430–436, and #438–440. The five dependency PRs are superseded by
+newer locked versions. Real-Debrid is already shipped as a first-class
+downloader with device authorization, local staging, and the shared import
+flow; the PRD and product score now reflect that. Steam wishlist sync uses the
+official no-key endpoint, Steam OpenID login is gone, and unused Passport,
+Steam OpenID, and session packages have been removed. The optional Steam API
+key remains for the separate owned-game and player-achievement features.
+
+Transmission now surfaces its RPC failure reason and logs thrown errors with
+Pino's `err` serializer. PR #436 closes issue #437, so there is no separate
+issue patch. The fork's existing contextual accessibility names were retained;
+the remaining download-result menu name now says “More download options.”
+Indexer changes refresh both indexer queries and clear cached search results.
+Review-thread follow-ups for the indexer PR were also checked: IGDB settings
+are covered by the default-deny API auth boundary, timestamp fields use
+millisecond mode, and the status query no longer needs an `any[]` cast.
+
+The download-dialog menu was exercised in the running `dev:test` app. See the
+[UI screenshot](../pr-evidence/upstream-download-options-accessibility-batch-43.png),
+the [download accessibility release note](../../release-notes/2026-10-13-download-options-accessibility.md),
+the [dependency security note](../../release-notes/2026-10-13-unused-steam-auth-dependencies.md),
+and [batch 43 validation](evidence/validation-batch-43.txt).
+
+The ledger now records **386 verified**, **42 superseded**, **710 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** record. Issue #37 remains outstanding.

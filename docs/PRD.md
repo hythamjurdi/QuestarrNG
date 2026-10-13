@@ -173,16 +173,25 @@ See the [import and security details](IMPORTS.md) and the
 
 ---
 
-### P2 — Direct download support (Real-Debrid and similar) _(proposed)_
+### P2 — Direct download support (Real-Debrid shipped; other providers proposed)
+
+**Status:** QuestarrNG includes a first-class Real-Debrid downloader. Users link
+their account through device authorization, submit magnets or torrent files,
+and stage completed files locally for the normal post-processing and import
+flow. This shipped in QuestarrNG 1.10.0. Support for AllDebrid and similar
+providers remains a future proposal.
 
 **Problem:** Some users prefer direct download services (Real-Debrid, AllDebrid, etc.) over traditional torrent/usenet pipelines — no seeding required.
 
-**Feature:**
+**Delivered Real-Debrid behavior:**
 
-- New downloader type: "direct download / debrid service"
-- Resolve magnet links or torrent files through the debrid API into direct HTTP links
-- Trigger download to a local downloader or direct to server path
-- Surface in the existing downloader configuration UI
+- First-class Real-Debrid downloader type in the existing downloader UI
+- OAuth device authorization instead of manually pasting a private API token
+- Magnet and torrent-file acquisition, tracked through cloud completion
+- Local staging followed by QuestarrNG's existing post-processing/import path
+
+**Future scope:** Evaluate additional direct-download providers separately; do
+not imply that Real-Debrid support automatically covers other services.
 
 **Why:** Expands the user base to those who don't run a torrent client, and complements the existing pipeline without replacing it.
 
@@ -312,8 +321,7 @@ Community growth targets are not currently maintained in this product brief.
 The following ideas need product and implementation decisions before they are
 scheduled. Their appearance here is not a commitment to ship them:
 
-- Whether to support debrid/direct-download services, and which provider to
-  support first.
+- Whether and how to expand direct-download support beyond Real-Debrid.
 - Whether to import owned Steam or GOG libraries, and which supported APIs or
   local data sources would be appropriate.
 - Whether to add Gameyfin or user-defined webhook integrations.

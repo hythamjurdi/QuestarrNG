@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 375,
+      "verified": 386,
       "needs-implementation": 1,
-      "superseded": 37,
+      "superseded": 42,
       "not-applicable": 7,
-      "unreviewed": 726,
+      "unreviewed": 710,
       "implemented-unverified": 1
     }
   },
@@ -12110,10 +12110,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c107ca2fe10d8f20acccb7ed9e2a3f6e6d749e6b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The production image defaults to the dedicated unprivileged questarr account. The entrypoint validates the configured UID/GID and writable database, repairs ownership when it starts with the required privilege, and drops privileges with su-exec; rootless mismatches fail with an actionable message.",
+          "The upstream review's BuildKit COPY --chmod suggestion was declined because BuildKit is not guaranteed in the supported Docker setup; runtime security behavior is complete."
+        ],
+        "acceptance": [
+          "The application runs as a non-root user by default, configured volume ownership is checked before startup, and root-started containers drop privileges before exec."
+        ],
+        "evidence": [
+          "Dockerfile",
+          "entrypoint.sh",
+          "docker-compose.yml",
+          "https://github.com/Doezer/Questarr/pull/424"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12130,10 +12140,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "fe62ff979be9c527a9cf8c9055830505e7bb6382",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The version service queries the latest QuestarrNG GitHub Release, reads tag_name, normalizes the leading v, and reports rate-limit or request failures without treating the main-branch package version as a release."
+        ],
+        "acceptance": [
+          "The update check compares against the latest published release and handles malformed tags and HTTP failures."
+        ],
+        "evidence": [
+          "client/src/lib/versionService.ts",
+          "client/__tests__/versionService.test.ts",
+          "https://github.com/Doezer/Questarr/pull/425"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12150,10 +12168,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The issue discussion called Real-Debrid low priority and suggested an external rdtclient adapter to avoid duplicating an existing service. QuestarrNG instead ships first-class Real-Debrid acquisition with device authorization, magnet and torrent-file intake, local staging, and the shared post-processing/import path in version 1.10.0."
+        ],
+        "acceptance": [
+          "A user can authorize Real-Debrid, acquire supported magnets or torrent files, stage completed content locally, and hand it to the existing import pipeline."
+        ],
+        "evidence": [
+          "server/downloaders/realdebrid.ts",
+          "server/downloaders/realdebrid-auth.ts",
+          "server/downloaders/manager.ts",
+          "server/downloaders/realdebrid.test.ts",
+          "server/downloaders/realdebrid-auth.test.ts",
+          "docs/REAL-DEBRID.md",
+          "https://github.com/Doezer/Questarr/issues/426"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12170,10 +12200,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "7148e3412046e3658a795d53a8f48c58df1755f2",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Authentication state is revalidated from /api/auth/me whenever the provider mounts after a reload. Cookie-backed requests remain the source of truth, and unauthorized responses clear stale client state."
+        ],
+        "acceptance": [
+          "Reloading a signed-in page restores the authenticated user; expired or invalid sessions do not leave stale user data in the UI."
+        ],
+        "evidence": [
+          "client/src/lib/auth.tsx",
+          "client/src/__tests__/auth-provider.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/427"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12190,10 +12228,24 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "8e8209f6daa4187cb2b7bf0881190bee43ad2f97",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Steam OpenID sign-in and its UI/routes are absent. Wishlist sync uses the official IWishlistService/GetWishlist endpoint without an API key; manual Steam ID linking remains, and the optional server-side key is retained for the separate owned-game and player-achievement features.",
+          "The upstream review's Host-header and shared Passport-strategy race findings apply to the removed sign-in route. Wishlist API error mapping, failure backoff, route tests, and conditional proxy trust are present in the fork."
+        ],
+        "acceptance": [
+          "Users can sync a public Steam wishlist without Steam OpenID or a Steam API key; separate owned-game and achievement features may use a server-side key."
+        ],
+        "evidence": [
+          "server/steam.ts",
+          "server/steam-routes.ts",
+          "server/__tests__/steam_service.test.ts",
+          "server/__tests__/steam_routes.test.ts",
+          "server/__tests__/steam_wishlist.test.ts",
+          "server/cron.ts",
+          "server/index.ts",
+          "https://github.com/Doezer/Questarr/pull/428"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12210,10 +12262,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "89b0a598717228d4decb7a620e32af3b769125b3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All six proposed development dependency versions have been superseded by newer fork versions, including @tailwindcss/vite 4.3.3, @types/node 26.6.4, autoprefixer 10.6.1, lint-staged 17.6.0, tailwindcss 4.3.3, and typescript-eslint 8.71.0. Replaying the grouped historical bump would move dependencies backward."
+        ],
+        "acceptance": [
+          "The requested dependency updates are represented by current versions at or above every version in the merged upstream PR."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/430"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12230,10 +12290,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1b95e85e03c6b0ceebbd9cdda1b7e0424600735d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "fast-xml-parser 5.11.2 in the fork is newer than the requested 5.4.1."
+        ],
+        "acceptance": [
+          "The lockfile resolves fast-xml-parser above the merged upstream target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/431"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12250,10 +12318,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b71f7f5b47b3a67fa0f55bbde593ab2e07035154",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The fork resolves pg 8.23.0 and @types/pg 8.23.1, both newer than the requested pg 8.19 and @types/pg 8.18 updates."
+        ],
+        "acceptance": [
+          "Both runtime and type packages remain at or above the merged upstream versions."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/432"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12270,10 +12346,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "93b821e7bbf169ba98a497eb39fb87f5bdd6ab8b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "lucide-react 1.48.0 in the fork is newer than the requested 0.576.0."
+        ],
+        "acceptance": [
+          "The lockfile resolves lucide-react above the merged upstream target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/433"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12290,10 +12374,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "83f25807a8c622bff40171845010ed835a29f05c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "multer 2.4.0 in the fork is newer than the requested 2.1.0 security update."
+        ],
+        "acceptance": [
+          "The lockfile resolves multer at or above the merged upstream security target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/434"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12310,10 +12402,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork already has contextual names for the download, notification, RSS deletion, and sidebar controls. NotificationCenter relies on its dynamic aria-label without duplicate hidden text; SidebarTrigger relies on one sr-only label. The remaining generic download-result menu name is now More download options, and the test verifies all three result-row buttons expose it.",
+          "The upstream review raised duplicate accessible-name concerns; the current fork does not combine duplicate labels in the affected notification or sidebar controls."
+        ],
+        "acceptance": [
+          "Icon-only download-result actions expose a concise, specific accessible name in the running UI and regression test."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "client/src/components/NotificationCenter.tsx",
+          "client/src/components/ui/sidebar.tsx",
+          "docs/pr-evidence/upstream-download-options-accessibility-batch-43.png",
+          "https://github.com/Doezer/Questarr/pull/435"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12330,10 +12434,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "6a9c9ed0f0a9fa47a819edab5d434243a1f0ca91",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Transmission failure messages include response.result only when it is a non-success string, and thrown pre-fetch errors use Pino's err serializer key. Tests cover string and non-string RPC results and error logging.",
+          "The review's suggestion to normalize unrelated downloader catches is a broader consistency follow-up; the requested Transmission path uses structured error serialization."
+        ],
+        "acceptance": [
+          "A failed torrent-add reports the Transmission RPC reason when valid, and thrown errors remain diagnosable in structured logs."
+        ],
+        "evidence": [
+          "server/downloaders/transmission.ts",
+          "server/__tests__/transmission_features.test.ts",
+          "server/__tests__/downloaders_transmission_remaining.test.ts",
+          "https://github.com/Doezer/Questarr/pull/436"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12350,11 +12464,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "GitHub associates PR #436 with closing issue #437. The fork implements and tests the same Transmission add-failure diagnostics, so this issue needs no separate patch."
+        ],
+        "acceptance": [
+          "The failing add-torrent path reports its RPC reason and logs the underlying exception."
+        ],
+        "evidence": [
+          "server/downloaders/transmission.ts",
+          "server/__tests__/transmission_features.test.ts",
+          "server/__tests__/downloaders_transmission_remaining.test.ts",
+          "https://github.com/Doezer/Questarr/issues/437",
+          "https://github.com/Doezer/Questarr/pull/436"
+        ],
+        "dependencies": [
+          "pr:436"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -12370,10 +12496,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "553aad2286ad3cf068dabe3f52e361bcb772a8f0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Auto-search includes already-owned games when notifyUpdates is enabled and emits update notifications for matching releases. The shared search helper, single-pass categorization, and deterministic time-based tests address the upstream review suggestions."
+        ],
+        "acceptance": [
+          "Owned games are searched only under the update-notification setting and matching updates produce the expected notification."
+        ],
+        "evidence": [
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "https://github.com/Doezer/Questarr/pull/438"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12390,10 +12524,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "bb400f680f230bac9971f6a14c75b698c0bbaace",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Hidden-state mutations share useHiddenMutation across library and discovery surfaces, and GameDetailsModal exposes hide/unhide actions. The discovery path returns the known hidden state after a successful request without requiring a response body, as requested in review."
+        ],
+        "acceptance": [
+          "Users can hide or unhide a game from details and supported pages; cache state stays consistent after successful mutations."
+        ],
+        "evidence": [
+          "client/src/hooks/use-hidden-mutation.ts",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx",
+          "client/__tests__/PagesHiddenWiring.test.tsx",
+          "client/__tests__/discover-hidden-mutation.test.ts",
+          "client/__tests__/use-hidden-mutation.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/439"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12410,10 +12556,28 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ec03f1a2ecc0636d172def978296514e95108e4a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer mutations clear cached search results and invalidate both the indexer list and enabled-indexer query; Settings exposes the matching cache-clear action.",
+          "Related review findings were checked against the current fork: /api/settings/igdb is behind the default-deny /api authentication middleware; updatedAt uses timestamp_ms; the unsafe status-list any[] cast is removed; and unused Passport, Steam OpenID, and express-session packages/types were removed. Steam route failures use the shared structured logger and sanitized route-specific responses; the review's suggestion to delegate those errors to the central handler remains a style-level follow-up."
+        ],
+        "acceptance": [
+          "After add, edit, delete, sync, or enable/disable indexer mutations, subsequent searches use current indexer state; operators can also clear cached download searches from Settings."
+        ],
+        "evidence": [
+          "client/src/lib/queryClient.ts",
+          "client/src/lib/indexers-cache.ts",
+          "client/src/pages/indexers.tsx",
+          "client/src/pages/settings.tsx",
+          "server/routes.ts",
+          "server/steam-routes.ts",
+          "shared/schema.ts",
+          "server/storage.ts",
+          "package.json",
+          "package-lock.json",
+          "client/__tests__/indexers-cache.test.ts",
+          "https://github.com/Doezer/Questarr/pull/440"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

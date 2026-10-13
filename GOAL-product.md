@@ -22,7 +22,7 @@ Five weighted dimensions. Max score: **100**.
 
 ---
 
-## Current Score: 78.2/100
+## Current Score: 79.3/100
 
 ### Automation — 26/30
 
@@ -44,11 +44,12 @@ The full end-to-end pipeline now works. The remaining gap is version-aware upgra
   - [x] Notify when newer version found
   - [ ] Optional Auto update when newer version found
 
-### Integrations — 17.9/25
+### Integrations — 19.0/25
 
-Solid core. Debrid download and library imports are the missing pieces.
+Solid core. Real-Debrid acquisition and local staging are supported; broader
+library-source integrations remain planned.
 
-Scored as the share of checked items (15 of 21) × 25.
+Scored as the share of checked items (16 of 21) × 25.
 
 - [x] Torznab indexer support
 - [x] Newznab indexer support
@@ -62,7 +63,7 @@ Scored as the share of checked items (15 of 21) × 25.
 - [x] PCGamingWiki integration
 - [x] NexusMods trending mods
 - [x] Time to Beat (IGDB `game_time_to_beats`, #1063; replaces the HowLongToBeat item)
-- [ ] Real-Debrid / debrid download client (P2)
+- [x] Real-Debrid downloader with OAuth and local staging (P2; shipped in 1.10.0)
 - [ ] Steam library import (owned games) (P3)
 - [ ] GOG library import (P3)
 - [ ] Local filesystem scanner (P3)
@@ -139,9 +140,8 @@ Active and growing. Response time is good; structured community artifacts are th
 In priority order:
 
 1. **Mobile responsiveness pass** — thumb-first navigation, touch-safe density.
-2. **Real-Debrid downloader** — expands the user base beyond torrent/usenet.
-3. **Version-aware upgrade tracking** — auto-download newer versions of tracked games.
+2. **Version-aware upgrade tracking** — auto-download newer versions of tracked games.
 
 ---
 
-_Score last updated: 2026-09-30. The previous header said 100/100, but its own dimensions summed to 75.3; the total is now the sum of the dimensions._
+_Score last updated: 2026-10-13. Integration score reflects the shipped Real-Debrid downloader._

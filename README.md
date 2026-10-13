@@ -578,11 +578,12 @@ client IPs (see the same doc).
 
 The original upstream roadmap is now partly delivered and partly superseded by
 fork work. Post-processing, indexer links, optional PostgreSQL, RomM import
-routing, and the Playnite and SeerrNG integrations are shipped. The remaining
-product proposals are version-aware game upgrades, debrid/direct-download
-providers, importing owned Steam or GOG libraries, and possible Gameyfin or
-user-defined webhook integrations. The maintained [PRD](docs/PRD.md) marks
-what is shipped, what remains, and which ideas have no delivery commitment.
+routing, the Playnite and SeerrNG integrations, and Real-Debrid downloads are
+shipped. The remaining product proposals are version-aware game upgrades,
+additional direct-download providers, importing owned Steam or GOG libraries,
+and possible Gameyfin or user-defined webhook integrations. The maintained
+[PRD](docs/PRD.md) marks what is shipped, what remains, and which ideas have no
+delivery commitment.
 
 ## Troubleshooting
 
