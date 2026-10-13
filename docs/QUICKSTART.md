@@ -18,6 +18,16 @@ docker run -d -p 5000:5000 --user "$(id -u):$(id -g)" \
 Open [http://localhost:5000](http://localhost:5000) and follow the setup
 wizard. Keep the `./data` directory across upgrades; it contains your SQLite
 database and application data. The image supports `linux/amd64` and `linux/arm64`.
+The `latest` tag follows published releases; `dev` tracks main-branch builds for
+testing. Pin a semantic-version tag to stay on one exact release. To update
+this install, pull the current image, stop and remove the existing container,
+then rerun the `docker run` command above. Keep the `./data` directory:
+
+```sh
+docker pull ghcr.io/snapetech/questarrng:latest
+docker stop questarrng
+docker rm questarrng
+```
 
 ## Set up your library
 

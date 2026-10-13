@@ -110,13 +110,59 @@ describe("SettingsPage", () => {
   });
 
   it("renders the Settings heading", async () => {
+    const testQueryClient = createTestQueryClient();
+
     render(
-      <QueryClientProvider client={createTestQueryClient()}>
+      <QueryClientProvider client={testQueryClient}>
         <SettingsPage />
       </QueryClientProvider>
     );
 
     expect(await screen.findByText("Settings")).toBeInTheDocument();
+  });
+
+  it("explains automatic migrations and source-only recovery when settings fail to load", async () => {
+    const successfulFetch = globalThis.fetch;
+    let failSettingsRequest = true;
+    let settingsRequests = 0;
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url === "/api/settings") {
+        settingsRequests += 1;
+        if (failSettingsRequest) {
+          return {
+            ok: false,
+            status: 500,
+            text: async () => "settings unavailable",
+            json: async () => ({}),
+          } as Response;
+        }
+      }
+      return successfulFetch(input);
+    }) as typeof fetch;
+
+    const testQueryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText("Settings")).toBeInTheDocument();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Settings unavailable");
+    expect(alert).toHaveTextContent("migrations automatically at startup");
+    expect(alert).toHaveTextContent("source installations");
+    expect(alert).toHaveTextContent("npm run db:migrate");
+    expect(alert).not.toHaveTextContent("npm run db:push");
+    expect(settingsRequests).toBe(1);
+
+    failSettingsRequest = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+    expect(settingsRequests).toBe(2);
   });
 
   it("reveals interval, unreleased, and auto-download controls when auto-search is enabled", async () => {

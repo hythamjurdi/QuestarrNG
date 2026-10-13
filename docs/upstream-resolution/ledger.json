@@ -8002,10 +8002,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG already publishes a public multi-architecture GHCR image. The default Compose file now pulls it instead of building the source tree, and the install docs explain stable, testing and pinned-version tags."
+        ],
+        "acceptance": [
+          "Docker Compose resolves the default service to the GHCR image without a local build.",
+          "The published latest manifest contains linux/amd64 and linux/arm64 images."
+        ],
+        "evidence": [
+          "docker-compose.yml",
+          "README.md",
+          "docs/QUICKSTART.md",
+          ".github/workflows/fork-image.yml",
+          "docker buildx imagetools inspect ghcr.io/snapetech/questarrng:latest",
+          "docker compose config --quiet",
+          "docs/upstream-resolution/evidence/validation-batch-33.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8022,10 +8035,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested xREL integration already exists as an API client, release page, settings and scheduled release notifications."
+        ],
+        "acceptance": [
+          "xREL release data and scheduled notifications are covered by focused client, server and cron tests."
+        ],
+        "evidence": [
+          "server/xrel.ts",
+          "server/cron.ts",
+          "client/src/pages/xrel-releases.tsx",
+          "server/__tests__/xrel.test.ts",
+          "server/__tests__/cron_xrel.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-33.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8042,10 +8066,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Settings help now matches startup migration behavior, limits the manual migration command to source installs, and offers an explicit retry. Failed initial requests no longer cause repeated remount fetches."
+        ],
+        "acceptance": [
+          "A first settings request failure displays recovery guidance after one request; Try again succeeds when the endpoint recovers.",
+          "The guidance does not tell container users to run db:push or an unavailable drizzle-kit command."
+        ],
+        "evidence": [
+          "client/src/pages/settings.tsx",
+          "client/src/lib/queryClient.ts",
+          "client/src/components/PlatformsSettings.tsx",
+          "client/src/components/ImportSettings.tsx",
+          "client/__tests__/SettingsPage.test.tsx",
+          "docs/pr-evidence/upstream-settings-db-migration-help.png",
+          "docs/upstream-resolution/evidence/validation-batch-33.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8062,10 +8099,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "990ea2d240ab75a43a7ee7e5dd34cf43803dd1ad",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Torrent and Usenet search results link to the indexer's comments page when one is available, and links with unsafe schemes are excluded."
+        ],
+        "acceptance": [
+          "The GameDownloadDialog test verifies source links and rejects unsafe URL schemes."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-33.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8082,10 +8127,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "96ca3729ff37d9065a06c979de4c978fa1017e02",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The download dialog already has an indexer filter; its regression test now selects an indexer and verifies matching results remain while other sources disappear."
+        ],
+        "acceptance": [
+          "Selecting Indexer B keeps its result and removes the torrent and Usenet results from other indexers."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-33.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -8102,10 +8155,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Container installs now use the published image. Main builds use dev, versioned release tags publish both latest and the exact semantic version, and immutable commit-SHA tags remain available. The related #305 release-pattern request is tracked separately."
+        ],
+        "acceptance": [
+          "Tag helper tests verify dev for main, latest plus the exact semantic version for version tags, immutable SHA tags, and rejection of unsupported refs.",
+          "Compose and the install guides describe registry-first installation and release updates."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          "scripts/fork-image-tags.mjs",
+          "scripts/__tests__/fork-image-tags.test.mjs",
+          "docker-compose.yml",
+          "README.md",
+          "docs/QUICKSTART.md",
+          "docs/upstream-resolution/evidence/validation-batch-33.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

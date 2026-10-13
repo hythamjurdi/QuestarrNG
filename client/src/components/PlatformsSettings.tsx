@@ -36,6 +36,8 @@ export default function PlatformsSettings() {
 
   const { data: settings } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
+    // SettingsPage owns the visible retry action after an initial failure.
+    retryOnMount: false,
   });
   const { data: igdbPlatformsData, isLoading: platformsLoading } = useQuery<IgdbPlatform[]>({
     queryKey: ["/api/igdb/platforms"],

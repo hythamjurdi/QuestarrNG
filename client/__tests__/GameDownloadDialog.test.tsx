@@ -396,6 +396,15 @@ describe("GameDownloadDialog", () => {
       expect(screen.getByText("Min Seeders")).toBeInTheDocument();
       expect(screen.getByText("Categories")).toBeInTheDocument();
     });
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Indexer" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Indexer B" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Test Torrent 2").length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText("Test Torrent 1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Test Usenet NZB")).not.toBeInTheDocument();
   });
 
   it("sorts results", async () => {

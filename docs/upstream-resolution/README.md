@@ -828,3 +828,37 @@ continues to report its existing large-chunk advisory. See
 The ledger now records **247 verified**, **29 superseded**, **862 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**
 records. Issue #37 remains outstanding.
+
+## Follow-up: container installs, xREL, settings recovery and download sources (#286–291)
+
+Issue [#286](https://github.com/Doezer/Questarr/issues/286) is verified: the
+default Compose file pulls the published multi-architecture GHCR image, and the
+installation docs explain the stable, testing and pinned-version tags. Issue
+[#287](https://github.com/Doezer/Questarr/issues/287) is verified against the
+existing xREL API client, release page, settings and scheduled notifications.
+
+Issue [#288](https://github.com/Doezer/Questarr/issues/288) is verified: the
+Settings error now explains that migrations run at startup, gives the source
+install command only where it applies, stops automatic retry loops, and offers
+a **Try again** action. The running app showed the alert after one failed
+settings request; the action recovered when the endpoint became available.
+See [browser evidence](../pr-evidence/upstream-settings-db-migration-help.png).
+PR [#289](https://github.com/Doezer/Questarr/pull/289) is verified: results
+link to their source page when it is available, with unsafe URL schemes
+excluded. PR [#290](https://github.com/Doezer/Questarr/pull/290) is verified:
+the download dialog’s indexer filter now has a regression test that selects an
+indexer and checks the matching results.
+
+Issue [#291](https://github.com/Doezer/Questarr/issues/291) is verified: main
+builds publish as `dev`, versioned releases publish as both `latest` and the
+exact semantic version, and commit-SHA tags remain immutable. The default
+Compose file pulls the registry image, while the README and quick start explain
+how to update it. The linked release-pattern request #305 remains tracked for
+its own per-item review. See [batch 33 evidence](evidence/validation-batch-33.txt).
+
+Six focused suites passed (96 tests, one skipped). TypeScript, lint, Prettier,
+the production client/server build, and Docker Compose validation passed. The
+build retains its existing large-chunk advisory. The ledger now records
+**253 verified**, **29 superseded**, **856 unreviewed**, **7 not-applicable**,
+**1 implemented-unverified**, and **1 needs-implementation** records. Issue
+#37 remains outstanding.

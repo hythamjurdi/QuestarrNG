@@ -12,9 +12,10 @@ PostgreSQL, and hardened multi-architecture releases. See
 [the changelog](docs/CHANGELOG.md) for the release-by-release history.
 
 Use `ghcr.io/snapetech/questarrng:latest` or the Compose file in this
-repository; the upstream Questarr image does not contain the SeerrNG provider
-routes. The fork image is published for `linux/amd64` and `linux/arm64` from
-`main`.
+repository for the latest published release. The `dev` tag tracks main-branch
+builds for testing, and semantic-version tags pin a specific release. The
+upstream Questarr image does not contain the SeerrNG provider routes. The fork
+image is published for `linux/amd64` and `linux/arm64`.
 
 Support QuestarrNG on [Ko-fi](https://ko-fi.com/snapetech).
 
@@ -160,9 +161,15 @@ docker run -d -p 5000:5000 --user "$(id -u):$(id -g)" \
   -v ./data:/app/data --name questarrng ghcr.io/snapetech/questarrng:latest
 ```
 
+`latest` is updated only when a versioned release is published. Main-branch
+builds use `ghcr.io/snapetech/questarrng:dev`; use that tag for testing, not for
+a stable installation. Release tags are published both as `latest` and as the
+exact semantic version (for example, `1.10.0`). To update a Compose install,
+run `docker compose pull && docker compose up -d`.
+
 ### Option 2: Docker Compose (more detailed)
 
-1. **Use the [`docker-compose.yml`](https://github.com/snapetech/QuestarrNG/blob/main/docker-compose.yml) file from the repo or create a minimal one:**
+1. **Use the [`docker-compose.yml`](https://github.com/snapetech/QuestarrNG/blob/main/docker-compose.yml) file from the repo or create a minimal one.** It pulls the published GHCR image and does not need a `.env` file for the default SQLite setup:
 
    ```yaml
    services:

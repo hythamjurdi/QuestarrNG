@@ -64,6 +64,8 @@ export default function ImportSettings() {
   // Read-only mirror of the Platforms card (Appearance tab), which owns this setting.
   const { data: userSettings } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
+    // SettingsPage owns the visible retry action after an initial failure.
+    retryOnMount: false,
   });
   const selectedPlatformNames = resolveSelectedPlatformNames(
     igdbPlatforms,

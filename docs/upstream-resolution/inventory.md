@@ -278,12 +278,12 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #283](https://github.com/Doezer/Questarr/pull/283) | feat: iterative hardening and operational improvements | CLOSED | no-merge-commit | verified |
 | [issue #284](https://github.com/Doezer/Questarr/issues/284) | Add support for steam wishlist  | CLOSED | no-merge-commit | verified |
 | [pr #285](https://github.com/Doezer/Questarr/pull/285) | feat: add indexerName to DownloadItem interface | MERGED | merge-commit-not-in-either-main-history | verified |
-| [issue #286](https://github.com/Doezer/Questarr/issues/286) | Provide "ready to use" docker container | CLOSED | no-merge-commit | unreviewed |
-| [issue #287](https://github.com/Doezer/Questarr/issues/287) | Add xrel.to Integration | CLOSED | no-merge-commit | unreviewed |
-| [issue #288](https://github.com/Doezer/Questarr/issues/288) | npm run db:push -> sh: drizzle-kit: not found | CLOSED | no-merge-commit | unreviewed |
-| [pr #289](https://github.com/Doezer/Questarr/pull/289) | feat: added links to torrent on indexer if available | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #290](https://github.com/Doezer/Questarr/pull/290) | feat: add indexer filtering to download items in GameDownloadDialog | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [issue #291](https://github.com/Doezer/Questarr/issues/291) | Installation is a mess | CLOSED | no-merge-commit | unreviewed |
+| [issue #286](https://github.com/Doezer/Questarr/issues/286) | Provide "ready to use" docker container | CLOSED | no-merge-commit | verified |
+| [issue #287](https://github.com/Doezer/Questarr/issues/287) | Add xrel.to Integration | CLOSED | no-merge-commit | verified |
+| [issue #288](https://github.com/Doezer/Questarr/issues/288) | npm run db:push -> sh: drizzle-kit: not found | CLOSED | no-merge-commit | verified |
+| [pr #289](https://github.com/Doezer/Questarr/pull/289) | feat: added links to torrent on indexer if available | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #290](https://github.com/Doezer/Questarr/pull/290) | feat: add indexer filtering to download items in GameDownloadDialog | MERGED | merge-commit-not-in-either-main-history | verified |
+| [issue #291](https://github.com/Doezer/Questarr/issues/291) | Installation is a mess | CLOSED | no-merge-commit | verified |
 | [pr #292](https://github.com/Doezer/Questarr/pull/292) | 🛡️ Jules: Hardening Follow-up and Linting Fixes | CLOSED | no-merge-commit | unreviewed |
 | [issue #293](https://github.com/Doezer/Questarr/issues/293) | Add g4u.to as source | CLOSED | no-merge-commit | unreviewed |
 | [issue #294](https://github.com/Doezer/Questarr/issues/294) | Adjust width for release name column | CLOSED | no-merge-commit | unreviewed |

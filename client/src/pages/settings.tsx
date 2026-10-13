@@ -278,9 +278,14 @@ export default function SettingsPage() {
     data: userSettings,
     isLoading: settingsLoading,
     error: settingsError,
+    refetch: refetchSettings,
   } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
-    retry: 3, // Retry up to 3 times as migrations might be running
+    // Database migrations run before the server starts accepting requests, so
+    // retrying here only delays the actionable error shown below.
+    retry: false,
+    // The error alert has an explicit retry action; don't retry on remount.
+    retryOnMount: false,
   });
 
   const { data: user } = useQuery<{ id: string; username: string; steamId64?: string }>({
@@ -1013,7 +1018,7 @@ export default function SettingsPage() {
     },
   });
 
-  const isLoading = configLoading || settingsLoading;
+  const isLoading = configLoading || (settingsLoading && !settingsError);
   const error = configError;
 
   const handleSaveAutoSearch = () => {
@@ -1287,15 +1292,21 @@ export default function SettingsPage() {
       </div>
 
       <div className="w-full space-y-6">
-        {/* Database Migration Alert */}
+        {/* Settings load failure guidance */}
         {settingsError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Database Migration Required</AlertTitle>
+            <AlertTitle>Settings unavailable</AlertTitle>
             <AlertDescription>
-              The user settings table hasn't been created yet. Please run{" "}
-              <code className="px-1 py-0.5 bg-muted rounded">npm run db:migrate</code> to update the
-              database schema, then restart the server.
+              QuestarrNG applies database migrations automatically at startup. Restart the current
+              service or container to retry. For source installations, run{" "}
+              <code className="px-1 py-0.5 bg-muted rounded">npm run db:migrate</code> from the
+              project directory. If this persists, check the server logs and database connection.
+              <div className="mt-3">
+                <Button variant="outline" size="sm" onClick={() => void refetchSettings()}>
+                  Try again
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         )}
