@@ -397,6 +397,25 @@ describe("NewznabClient", () => {
       expect(res.results.items.length).toBe(2);
     });
 
+    it("keeps each source page instead of slicing the merged results by its offset again", async () => {
+      (isSafeUrl as Mock).mockResolvedValue(true);
+      (safeFetch as Mock).mockResolvedValue({
+        ok: true,
+        text: async () => mockSearchXml,
+      });
+
+      const res = await newznabClient.searchMultipleIndexers(
+        [mockIndexer, { ...mockIndexer, name: "Indexer2" }],
+        { query: "test", limit: 1, offset: 1 }
+      );
+
+      expect(res.results.items).toHaveLength(2);
+      expect(safeFetch).toHaveBeenCalledTimes(2);
+      for (const [url] of (safeFetch as Mock).mock.calls) {
+        expect(new URL(String(url)).searchParams.get("offset")).toBe("1");
+      }
+    });
+
     it("should handle errors from one indexer gracefully", async () => {
       (isSafeUrl as Mock).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
 

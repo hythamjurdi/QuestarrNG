@@ -24,11 +24,10 @@ export function setupSocketIO(httpServer: HttpServer) {
       },
     });
 
-    // Every event on this server (live logs, notifications, download and
-    // import progress) belongs to a signed-in user, so the handshake has to
-    // carry the same credential the REST API accepts: the httpOnly auth
-    // cookie a browser sends automatically, or a bearer token for a session
-    // still on the legacy localStorage flow.
+    // Every socket is available only to a signed-in user. User-owned events
+    // use that user's room; the app-wide log stream uses the same authenticated
+    // boundary as GET /api/logs. Accept the httpOnly auth cookie a browser
+    // sends automatically, or a bearer token for a legacy localStorage session.
     io.use(async (socket, next) => {
       const credential = getHandshakeCredential(socket.handshake);
       // The cookie is ambient: a page on another origin that shares this site

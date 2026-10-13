@@ -726,6 +726,19 @@ export default function SearchPage() {
                     ? "No releases match the selected date range. Try adjusting the filter."
                     : "Try adjusting your search terms or check if your indexers are properly configured."}
                 </p>
+                {!!(dateFrom || dateTo) && hasNextPage && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => void fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    data-testid="button-load-more-results"
+                  >
+                    {isFetchingNextPage ? "Loading more results…" : "Load more results"}
+                  </Button>
+                )}
               </div>
             )}
             {/* Infinite scroll sentinel — always rendered so observer reattaches after filter changes */}

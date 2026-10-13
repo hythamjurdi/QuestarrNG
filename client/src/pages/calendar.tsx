@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Game, type Config } from "@shared/schema";
 import { cn } from "@/lib/utils";
-import { Link } from "wouter";
+import { Link, type RouteComponentProps } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import GameDownloadDialog from "@/components/GameDownloadDialog";
 
@@ -82,28 +82,35 @@ export function getDaysInMonth(year: number, month: number): Date[] {
   return days;
 }
 
-export default function CalendarPage() {
+type CalendarPageProps = { today?: Date } & Partial<RouteComponentProps>;
+
+export default function CalendarPage({ today: injectedToday }: CalendarPageProps = {}) {
   const [viewMode, setViewMode] = useState<ViewMode>("year");
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() =>
+    injectedToday ? new Date(injectedToday.getTime()) : new Date()
+  );
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [today, setToday] = useState(() => new Date());
+  const [liveToday, setLiveToday] = useState(() => new Date());
+  const today = injectedToday ?? liveToday;
 
   useEffect(() => {
+    if (injectedToday) return;
+
     let timeoutId: number;
     const scheduleRefresh = () => {
       const now = new Date();
       const nextMidnight = new Date(now);
       nextMidnight.setHours(24, 0, 0, 0);
       timeoutId = window.setTimeout(() => {
-        setToday(new Date());
+        setLiveToday(new Date());
         scheduleRefresh();
       }, nextMidnight.getTime() - now.getTime());
     };
     scheduleRefresh();
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [injectedToday]);
 
   const handleGameClick = (game: Game) => {
     setSelectedGame(game);

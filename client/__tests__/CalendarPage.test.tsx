@@ -61,11 +61,11 @@ const baseGame = {
   summary: "A space adventure",
 };
 
-function renderPage() {
+function renderPage(today?: Date) {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <TooltipProvider>
-        <CalendarPage />
+        <CalendarPage today={today} />
       </TooltipProvider>
     </QueryClientProvider>
   );
@@ -167,6 +167,20 @@ describe("CalendarPage", () => {
     expect(screen.getByText("Early May Game").closest("button")).toHaveClass("opacity-50");
     expect(screen.getByText("June Game").closest("button")).not.toHaveClass("opacity-50");
     expect(screen.getByText("Datetime Game").closest("button")).toHaveClass("opacity-50");
+  });
+
+  it("uses an injected date as the calendar clock for deterministic rendering", async () => {
+    mockGamesFetch([
+      { ...baseGame, id: "before", title: "Before injected day", releaseDate: "2024-02-01" },
+      { ...baseGame, id: "after", title: "After injected day", releaseDate: "2024-02-20" },
+    ]);
+
+    renderPage(new Date(2024, 1, 15));
+
+    const before = await screen.findByText("Before injected day");
+    const after = screen.getByText("After injected day");
+    expect(before.closest("button")).toHaveClass("opacity-50");
+    expect(after.closest("button")).not.toHaveClass("opacity-50");
   });
 
   it("switches to week view and opens the download dialog from a visible game", async () => {

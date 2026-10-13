@@ -25,6 +25,15 @@ use TLS. Upgrading from 1.4.x on SQLite turns it on once for existing HTTP
 downloaders; new downloaders start with it off. See
 [SECRETS.md](SECRETS.md) for the full credential policy.
 
+## Priority and fallback
+
+When several enabled downloaders are available, Questarr tries them in
+priority order and falls back to the next client if an earlier add fails. A
+lower number is tried first. The downloader priority control accepts values
+from 1 through 100; you can clear the current value while typing a replacement.
+A blank draft keeps the saved value, and the replacement is normalized when
+you leave the field or press Enter.
+
 ## Details
 
 ### Synology Download Station

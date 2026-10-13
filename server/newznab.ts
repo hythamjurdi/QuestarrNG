@@ -354,8 +354,10 @@ class NewznabClient {
     });
 
     return {
+      // Each Newznab source already received this page's offset and limit. Slicing
+      // the merged list by offset again skips valid results from later sources.
       results: {
-        items: allResults.slice(params.offset || 0, (params.offset || 0) + (params.limit || 50)),
+        items: allResults,
         total: allResults.length,
         offset: params.offset || 0,
       },

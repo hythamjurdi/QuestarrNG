@@ -18,29 +18,30 @@ behavior when implementing upstream requests.
 
 ## Current ledger snapshot
 
-The saved issue and PR exports were refreshed against upstream main
-`0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 12:59
-UTC**. The ledger was regenerated from that saved export at **14:05 UTC**; the
-source capture time and ledger generation time are kept distinct in the audit
-record. Review status is independent of GitHub's open, closed, or merged state:
+The issue and PR lists were refreshed in a live GitHub audit against upstream
+main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 16:38
+UTC**. The ledger and inventory were regenerated from those results at the same
+time; `capturedAt` records audit generation time, not an individual GitHub
+request timestamp. Review status is independent of GitHub's open, closed, or
+merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       506 |
-| `superseded`             |       134 |
-| `not-applicable`         |         9 |
+| `verified`               |       518 |
+| `superseded`             |       142 |
+| `not-applicable`         |        10 |
 | `implemented-unverified` |         3 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       511 |
+| `unreviewed`             |       490 |
 | **Total**                | **1,163** |
 
-The ledger now gives 652 items an assigned disposition. Three implemented
+The ledger now gives 673 items an assigned disposition. Three implemented
 integrations still need live-service verification, no currently identified
-item needs implementation, and 511 are unreviewed. Four previously reviewed
-PRs (#1195, #1196, #1198, and #1202) changed in the refreshed source export and
-remain flagged for renewed triage. These numbers describe the ledger, not
-completion of the campaign. Batch 58 is the latest completed review; its results
-are in [validation evidence](evidence/validation-batch-58.txt).
+item needs implementation, and 490 are unreviewed. Eight previously reviewed
+PRs (#1192, #1195, #1196, #1198, #1199, #1201, #1202, and #1203) changed in the
+refreshed source export and remain flagged for renewed triage. These numbers describe the ledger, not
+completion of the campaign. Batch 59 is the latest completed review; its results
+are in [validation evidence](evidence/validation-batch-59.txt).
 
 ## Project records
 
@@ -618,6 +619,8 @@ suggestions. Larger extras and results with unknown sizes are left out. The
 dialog shows item sizes, supports combining selected updates and extras, and
 keeps a clear main-game-only action. The 25% cutoff is our conservative reading
 of “a lot smaller,” chosen to make the suggestion predictable and transparent.
+The [release-selection guide](../DOWNLOAD_RECOMMENDATIONS.md) documents the
+exact size checks, default selections, and user choices.
 
 PR [#207](https://github.com/Doezer/Questarr/pull/207) is superseded: all nine
 dependency updates in that PR are older than the versions declared and locked
@@ -1713,4 +1716,49 @@ After batch 58, the ledger records **506 verified**, **134 superseded**, **9
 not-applicable**, **3 implemented-unverified**, **0 needs-implementation**, and
 **511 unreviewed** items. Issue #568 is no longer awaiting live-service
 verification. The four refreshed-source flags noted above remain open for
-renewed triage, and the full audit remains in progress.
+renewed triage as of that batch; the live Batch 59 refresh found four more, so
+eight are now awaiting renewed triage. The full audit remains in progress.
+
+## Follow-up: search, settings, Home Assistant, and review-thread fixes (Batch 59)
+
+Batch 59 reviewed pull requests #662–681 and #696, plus issues #667, #668, and
+#674. It added 12 verified dispositions, 8 superseded dependency or replacement
+dispositions, and one not-applicable wiki-submodule request. The refreshed
+snapshot remains 1,163 records; after this batch the ledger has 518 verified,
+142 superseded, 10 not-applicable, 3 implemented-unverified, 0
+needs-implementation, and 490 unreviewed items.
+
+The batch fixed aggregated Newznab pagination and typed limit/offset parsing,
+so clients can continue loading results accurately. Search now offers an
+accessible **Load more results** action when a date filter hides the current
+page. The shared priority field allows the current value to be cleared while
+editing, then validates and normalizes the value on blur or Enter. Calendar
+tests can inject the current date, Copy and Send Logs are disabled when the
+active filter has no results, and Clear remains available while any lines are
+buffered. All three actions disable when the log buffer is empty. Discovery
+preserves valid provider ID `0`. The automatic-search notification path now
+sends Apprise alerts independently of the in-app notification preference.
+
+Review comments attached to PR #663 also raised an unauthenticated live-log
+socket, missing Library search filtering, and nullable game notes access. The
+socket rejects missing or invalid credentials; live logs are app-wide for
+authenticated accounts, matching the `/api/logs` access check and the project's
+documented flat-trust model. The Library filter and notes access checks are
+present. The remaining notification and interface findings are covered by this
+batch's regression tests. The wiki relocation itself is not applicable because
+this fork has no wiki submodule.
+
+For #205, the user-facing README and the new
+[release-selection guide](../DOWNLOAD_RECOMMENDATIONS.md) now explain why
+updates start selected, extras stay opt-in, unknown-size extras are excluded,
+and the “a lot smaller” threshold is a transparent 25% of the main release.
+The Home Assistant guide now documents its fixed `1000:1000` identity,
+persistent `/data` mapping, scoped ownership correction, writable checks, and
+the limits of that helper. Issue #674's author confirmed that correcting the
+Docker volume binding resolved the TerraMaster TOS startup problem; the NAS
+guide now explains how to verify host and container paths.
+
+Browser evidence for the date-filtered search, empty-filtered logs, and priority editor
+is retained under `evidence/`. The campaign validation evidence records the
+focused and full Vitest runs, Playwright coverage, add-on smoke test, security
+and format checks, and temporary-data cleanup.

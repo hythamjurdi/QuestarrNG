@@ -33,7 +33,11 @@ docker rm questarrng
 
 1. Choose a metadata provider and add games through Discover or a Steam wishlist.
 2. Add indexers or connect Prowlarr, then configure a downloader.
-3. Add games to your library and search for releases.
+3. Add games to your library and search for releases. The [release picker](DOWNLOAD_RECOMMENDATIONS.md)
+   can bundle selected updates and optional, size-qualified extras with a main game.
+   If date filters hide every result on the current page, choose **Load more
+   results** to continue through later pages. On the Logs page, Copy and Send
+   use the filtered lines, while Clear empties the whole current log buffer.
 4. Configure imports if you want QuestarrNG to organize completed downloads.
 5. Set notification preferences, add RSS feeds, or use [Backlog roulette](BACKLOG_ROULETTE.md).
 

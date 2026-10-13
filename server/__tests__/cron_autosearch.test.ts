@@ -796,6 +796,35 @@ describe("Cron - checkAutoSearch", () => {
       );
     });
 
+    it("sends an auto-download notification through Apprise when in-app delivery is disabled", async () => {
+      mockGetUserSettings.mockResolvedValue({
+        ...baseSettings,
+        autoDownloadEnabled: true,
+        notificationPreferences: JSON.stringify({ autoDownload: { inApp: false, apprise: true } }),
+      });
+      mockGetEnabledDownloaders.mockResolvedValue([
+        { id: "dl-1", name: "qBittorrent", type: "torrent", enabled: true },
+      ]);
+      mockAddDownloadWithFallback.mockResolvedValue({
+        success: true,
+        id: "hash-abc",
+        downloaderId: "dl-1",
+      });
+      mockSearchAllIndexers.mockResolvedValue({
+        items: [{ ...SKIDROW_ITEM, downloadType: "torrent" }],
+        errors: [],
+        total: 1,
+      });
+
+      await checkAutoSearch();
+
+      expect(mockAddNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Download Started" })
+      );
+      expect(mockNotifyUser).not.toHaveBeenCalled();
+      expect(mockAppriseSend).toHaveBeenCalledWith({ id: "notif-1" });
+    });
+
     it("guards the downloading status write so a status curated mid-search survives", async () => {
       const settings = { ...baseSettings, autoDownloadEnabled: true };
       const mockDownloader = { id: "dl-1", name: "qBittorrent", type: "torrent", enabled: true };

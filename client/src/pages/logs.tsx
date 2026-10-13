@@ -672,11 +672,23 @@ export default function LogsPage() {
               </>
             )}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleCopy} aria-label="Copy log lines">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            disabled={filteredLines.length === 0}
+            aria-label="Copy log lines"
+          >
             <Copy className="mr-1 h-4 w-4" />
             Copy
           </Button>
-          <Button variant="outline" size="sm" onClick={handleClear} aria-label="Clear log lines">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClear}
+            disabled={lines.length === 0}
+            aria-label="Clear log lines"
+          >
             <Trash2 className="mr-1 h-4 w-4" />
             Clear
           </Button>
@@ -684,6 +696,7 @@ export default function LogsPage() {
             variant="outline"
             size="sm"
             onClick={() => setSendLogsOpen(true)}
+            disabled={filteredLines.length === 0}
             aria-label="Send logs to support"
           >
             <Send className="mr-1 h-4 w-4" />

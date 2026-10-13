@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T14:05:15.670Z",
-  "forkHead": "f1e7d07e88b0395f1729d8833dc50e1d7e7c451a",
+  "capturedAt": "2026-10-13T16:38:20.607Z",
+  "forkHead": "5726192a15f26c272026ef07669e9a52e1c3300d",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -5829,18 +5829,19 @@
       "review": {
         "status": "verified",
         "findings": [
-          "Implemented a combined selection step for main releases with updates or size-qualified extras. Updates remain selected by default; extras no larger than 25% of the main release are suggested unchecked, with sizes shown. Larger or unmeasured extras are not suggested. Selected updates and extras are sent with the main game."
+          "When the user chooses a main release, updates start selected; extras are suggested only when their measured positive size is no more than 25% of the main release, and stay unchecked. Larger and unknown-size extras are omitted. Item sizes are shown, selected companions can be sent with the main release, and Download game only remains available. The threshold is a transparent conservative reading of “a lot smaller,” not a compatibility guarantee."
         ],
         "acceptance": [
-          "Show the bundle choice when a main release has updates or qualifying extras. Keep updates selected by default; keep extras opt-in. Include selected items together and allow downloading only the main game."
+          "Show a bundle choice when a main release has updates or size-qualified extras; default updates to selected and extras to unchecked; show sizes; allow sending selected companions or the main game alone."
         ],
         "evidence": [
           "https://github.com/Doezer/Questarr/issues/205",
           "client/src/components/GameDownloadDialog.tsx",
           "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/DOWNLOAD_RECOMMENDATIONS.md",
           "docs/pr-evidence/upstream-smart-add.png",
-          "docs/upstream-resolution/evidence/validation-batch-23.txt",
-          "docs/pr-evidence/upstream-smart-add-mobile.png"
+          "docs/pr-evidence/upstream-smart-add-mobile.png",
+          "docs/upstream-resolution/evidence/validation-batch-23.txt"
         ],
         "dependencies": []
       },
@@ -19028,10 +19029,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "36d12fc22c030016266531a63af128834b735904",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested actions/checkout 6.0.3 update is older than the pinned checkout action now used by QuestarrNG workflows. Applying this historical bump would downgrade the workflow dependency."
+        ],
+        "acceptance": [
+          "Compare the requested action version with every currently configured checkout action."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/662",
+          ".github/workflows",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19048,10 +19057,28 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The requested wiki-submodule relocation does not apply because QuestarrNG has no wiki submodule. The PR review also identified an unauthenticated live-log socket, coupled Apprise/in-app notification preferences, missing Library search filtering, nullable game-notes access, editable-priority fields that could not be cleared, empty-log actions, and nondeterministic Calendar time. The socket now rejects missing or invalid credentials; app-wide logs remain available to signed-in accounts under the same flat-trust boundary as GET /api/logs. Existing Library and notes safeguards are present; this batch fixes the notification and interface findings. Copy and Send Logs disable when the active filter has no matches; Clear remains available while the full buffer has lines and disables when it is empty."
+        ],
+        "acceptance": [
+          "Confirm the fork has no wiki submodule. Review each inline finding; verify socket authentication, existing search and notes behavior, independent notification channels, editable priority fields, filtered Copy/Send states, Clear state against the full log buffer, and injectable Calendar time."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/663",
+          "docs/ARCHITECTURE.md",
+          "server/socket.ts",
+          "server/__tests__/socket.test.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "client/src/components/Library.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/src/pages/downloaders.tsx",
+          "client/src/pages/indexers.tsx",
+          "client/src/pages/logs.tsx",
+          "client/__tests__/LogsPage.test.tsx",
+          "client/src/pages/calendar.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19068,10 +19095,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e10f4d91185064b43be203611bd4b5917c01d168",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested @types/node 20.19.42 bump is already superseded by the newer version declared and locked in the fork."
+        ],
+        "acceptance": [
+          "Verify the package manifest and lockfile resolve @types/node at or above the requested version."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/664",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19088,10 +19124,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "674a15f9e537e232e888c71013a584e842b1b27c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The 29 production dependency updates in this PR have been superseded by the fork’s newer manifest and lockfile state. Current dependency audit and policy checks pass."
+        ],
+        "acceptance": [
+          "Confirm the requested versions are no longer the active dependency state and run production dependency validation."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/665",
+          "package.json",
+          "package-lock.json",
+          "scripts/audit-prod.mjs",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19108,10 +19154,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The initial Home Assistant add-on packaging request is superseded by merged PR #696, which relocates the package to the repository root and corrects fresh-install /data ownership."
+        ],
+        "acceptance": [
+          "Verify the replacement add-on manifest, image, persistent data mapping, and runtime permission handling."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/666",
+          "https://github.com/Doezer/Questarr/pull/696",
+          "questarr/config.yaml",
+          "questarr/Dockerfile",
+          "questarr/ha-entrypoint.sh",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19128,10 +19185,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested search limitations are addressed by existing date filters, continued pagination, and library deletion. This batch fixed numeric query parsing and aggregate Newznab pagination, and adds a manual continuation action when date filtering hides the current page."
+        ],
+        "acceptance": [
+          "Search results continue across pages when the current page has no date-matching entries; pagination offsets remain numeric and aggregate sources do not prematurely truncate results."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/667",
+          "client/src/pages/search.tsx",
+          "client/__tests__/SearchPage.test.tsx",
+          "server/newznab.ts",
+          "server/routes.ts",
+          "server/__tests__/newznab.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19148,10 +19218,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The platform list is rendered through the overflow-safe shared TagList. Hidden values remain discoverable through the popover and title text; keyboard-trigger and click-propagation behavior are covered."
+        ],
+        "acceptance": [
+          "Render all platform values without clipping; make overflow discoverable and ensure its trigger does not activate the parent card."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/668",
+          "client/src/components/ui/tag-list.tsx",
+          "client/__tests__/tag-list.test.tsx",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19168,10 +19248,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested Codecov action 7.0.0 update is superseded by the newer pinned action version in the fork workflows."
+        ],
+        "acceptance": [
+          "Compare the configured Codecov action ref with the PR target version."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/669",
+          ".github/workflows",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19188,10 +19276,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested react-hook-form 7.78.0 update is superseded by the newer package version in the fork manifest and lockfile."
+        ],
+        "acceptance": [
+          "Confirm the active manifest and lockfile resolve a version newer than the PR target."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/670",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19208,10 +19305,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Discover already consolidates repeated collection work into memoized processing. This batch also replaced truthy provider-ID checks with null checks so valid IGDB/RAWG ID 0 is retained."
+        ],
+        "acceptance": [
+          "Avoid repeated full collection traversals in Discover and preserve provider ID 0 as a valid identifier."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/671",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19228,10 +19334,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "43a605c652de4ab780b9360244bf3a5962daaf25",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The download-options control already has an accessible name; the control is exercised by the existing game-download component tests."
+        ],
+        "acceptance": [
+          "Expose the download-options action with an accessible name that assistive technology can announce."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/672",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19248,10 +19363,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "438e3a9004ce9ab3404c404c51da972a89558d4d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Date filtering, continued search, and library deletion are present. This batch fixes aggregate-source pagination and string-valued query offsets, and gives users an explicit Load more action when the date filter hides all results on the current page."
+        ],
+        "acceptance": [
+          "Date filtering does not strand the user on an empty page; offset/limit pagination advances with numeric values across aggregated sources; library deletion remains available."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/673",
+          "client/src/pages/search.tsx",
+          "client/__tests__/SearchPage.test.tsx",
+          "server/newznab.ts",
+          "server/routes.ts",
+          "server/__tests__/newznab.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19268,10 +19396,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reporter confirmed the TerraMaster TOS install worked after correcting the Docker volume binding. The report points to host/container path configuration rather than a Questarr code defect; the home-server guide now explains how to verify the source path, target mount, and ownership model."
+        ],
+        "acceptance": [
+          "Record the reporter’s confirmed resolution and document checks for a correct NAS bind mount and writable application-data directory."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/674",
+          "docs/HOME_SERVER_APPS.md",
+          "README.md",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19288,10 +19425,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "591c4fe6798cd4c0ffd44089d6e0f87460dbc392",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The ten development-dependency changes requested here have been superseded by newer versions in the fork’s manifest and lockfile."
+        ],
+        "acceptance": [
+          "Confirm the current dependency state is newer than the grouped update targets and run dependency-policy checks."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/675",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19308,10 +19454,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "151f757b7d2c166e6a58269e9b3e72f1fba08011",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The four production-dependency updates requested here have been superseded by newer versions in the fork’s manifest and lockfile."
+        ],
+        "acceptance": [
+          "Confirm the active dependency state is newer than the grouped update targets and run production dependency validation."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/676",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19328,10 +19483,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "73b4e668e37a3494848b920d3f9feeb267669448",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "AddGameModal already memoizes collection status lookups. This batch also preserves provider ID 0 by distinguishing it from null/undefined and adds regression coverage."
+        ],
+        "acceptance": [
+          "Keep collection lookups memoized and treat zero-valued provider IDs as valid."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/677",
+          "client/src/components/AddGameModal.tsx",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19348,10 +19513,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0933203d2ac88869cda7a86000b575c6c542e454",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Release-group settings buttons already expose accessible names, and the settings-page component tests locate and exercise those controls by role and label."
+        ],
+        "acceptance": [
+          "Expose distinct, accessible names for release-group settings actions."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/678",
+          "client/src/pages/settings.tsx",
+          "client/__tests__/SettingsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19368,10 +19542,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "02172da5570c92708c0f7fcdc06dd659f5831ed3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The goal-scoring workflow validates that Playwright can enumerate the E2E suite and withholds E2E credit when validation fails."
+        ],
+        "acceptance": [
+          "Verify E2E validation runs before awarding goal points and that a failure produces no score credit."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/679",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt",
+          "scripts/goal-score.mjs",
+          "tests/e2e"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19388,10 +19571,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "99e0023b0e8b4670ac3f6769b2b2468974a10e2a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The shared TagList renders overflow-safe genres and platforms. The batch adds stable test IDs and titles for hidden values and regression checks for overflow activation and parent-click isolation."
+        ],
+        "acceptance": [
+          "Keep long tag lists usable, make overflow values inspectable, and isolate the overflow trigger from parent-card actions."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/680",
+          "client/src/components/ui/tag-list.tsx",
+          "client/__tests__/tag-list.test.tsx",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19408,10 +19601,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "74d53d73a8b8f1dba907b62a19d4dd4b1ff9cd2c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested Discover, Search, Settings, Stats, and E2E coverage is present. The current browser suite passes, and this batch adds targeted regression coverage for the findings exposed by those journeys."
+        ],
+        "acceptance": [
+          "Keep page-level tests and E2E journeys discoverable and passing against the running dev:test application."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/681",
+          "client/__tests__",
+          "tests/e2e",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19708,10 +19910,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ca30c2512a29d05332bd7e8801a71ef8bfaf5c3c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged add-on package is at the repository root and runs non-root as questarr:questarr. Its persistent Supervisor /data path is linked to /app/data; an isolated helper with only CAP_CHOWN corrects ownership beneath /data, does not follow symlinks, and startup verifies writability. The manifest fixes the identity at 1000:1000 and exposes no PUID/PGID options."
+        ],
+        "acceptance": [
+          "Build the add-on image; confirm its runtime user; start with root-owned persistent data; verify the volume and existing file are owned by 1000:1000 and remain writable; document fixed identity and storage boundaries."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/696",
+          "questarr/config.yaml",
+          "questarr/Dockerfile",
+          "questarr/fix-data-owner.c",
+          "questarr/ha-entrypoint.sh",
+          "questarr/README.md",
+          ".github/workflows/fork-image.yml",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -29394,8 +29609,8 @@
       "title": "Add weekly development pre-release workflow",
       "url": "https://github.com/Doezer/Questarr/pull/1192",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T10:55:00Z",
-      "sourceDigest": "9f8ae0a7f5c372a2e068e14bd7f6414246e98d8d92efc11dee6ceed0e4c4649b",
+      "upstreamUpdatedAt": "2026-10-13T15:51:14Z",
+      "sourceDigest": "e674744715a3474a71e910533e7f90e346fbfb4941450b3d4ff06a00b806654c",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -29405,7 +29620,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "pr:1193",
@@ -29454,8 +29669,8 @@
       "title": "Add System Tasks, Activity pages and leftover-archive detection (1.5.1)",
       "url": "https://github.com/Doezer/Questarr/pull/1195",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:15:58Z",
-      "sourceDigest": "98dfeb9c2b9f3bd77948a310bf8bf41cfdecb452cf25bc92c81565e3e0a6fb8e",
+      "upstreamUpdatedAt": "2026-10-13T15:56:21Z",
+      "sourceDigest": "52cabe9334fd758bd218d64ed5f11d708f089d0ded15e3e825c12d29a964ed3a",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -29474,8 +29689,8 @@
       "title": "Add release scoring: profile, custom formats, search integration, settings UI, xREL verification",
       "url": "https://github.com/Doezer/Questarr/pull/1196",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:16:39Z",
-      "sourceDigest": "61047936112c917edf56268c9d8c8b67e37817a40f66668a03b24b24365cd3cc",
+      "upstreamUpdatedAt": "2026-10-13T15:52:44Z",
+      "sourceDigest": "72ebfd31848be8c694a1c0e57f9f0974873b45db920b3f98d6bd9f602ae9c037",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -29514,8 +29729,8 @@
       "title": "Add scoped API keys, the SeerrNG provider API and a Gameyfin guide",
       "url": "https://github.com/Doezer/Questarr/pull/1198",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:20:46Z",
-      "sourceDigest": "fea3497b9c6ffd7ad5d18ff89c9253dd88bd7aa573e71cd1b4e1a310b24f537e",
+      "upstreamUpdatedAt": "2026-10-13T15:59:45Z",
+      "sourceDigest": "09c1129f85838486900d124c49d275c36c0e35a5afd5e6a42d9873483f459779",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -29534,8 +29749,8 @@
       "title": "Add custom game collections (manual and smart)",
       "url": "https://github.com/Doezer/Questarr/pull/1199",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:01:56Z",
-      "sourceDigest": "23e95211fb5d2cb9b362e4b7e291999f246d7ff94477996241911f5d9b324fce",
+      "upstreamUpdatedAt": "2026-10-13T16:03:21Z",
+      "sourceDigest": "f883f3f6c3884903baedaeb45d7752b6172d58315f9cf006c3dcd2149b485600",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -29545,7 +29760,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "pr:1200",
@@ -29574,8 +29789,8 @@
       "title": "Update documentation for the next release",
       "url": "https://github.com/Doezer/Questarr/pull/1201",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T10:56:44Z",
-      "sourceDigest": "e4896652aab469b437b3c0baeb2b19624724f47067c378795ed5cefa4ebd996c",
+      "upstreamUpdatedAt": "2026-10-13T15:55:50Z",
+      "sourceDigest": "0005a30023aca2ad5f2dd7740e51d37a6a8691436060f34650649ff1b19917b3",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -29585,7 +29800,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     },
     {
       "key": "pr:1202",
@@ -29594,8 +29809,8 @@
       "title": "Add RomM integration: platform folders, API sync and rescan",
       "url": "https://github.com/Doezer/Questarr/pull/1202",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:18:15Z",
-      "sourceDigest": "6ec23552425952566624898707cdb9e8e42fa8ba00a42c2850f6d5240e31cd91",
+      "upstreamUpdatedAt": "2026-10-13T15:55:39Z",
+      "sourceDigest": "e15e8bbcebdc166e3b6d9cea6529d92c4b0377cf739c9ada7c3c48c69a835400",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -29614,8 +29829,8 @@
       "title": "Replace the game details modal with a full page",
       "url": "https://github.com/Doezer/Questarr/pull/1203",
       "upstreamState": "OPEN",
-      "upstreamUpdatedAt": "2026-10-13T11:21:16Z",
-      "sourceDigest": "bcedefdbdd9a75081f1627fe69dfe8abac02c07feff7f6f872cd84e2a7c9bcea",
+      "upstreamUpdatedAt": "2026-10-13T16:03:36Z",
+      "sourceDigest": "5038623e31779a353812009babba669dab20d977d62e50398af676bb27f7c697",
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
@@ -29625,7 +29840,7 @@
         "evidence": [],
         "dependencies": []
       },
-      "sourceChangedSinceReview": false
+      "sourceChangedSinceReview": true
     }
   ]
 }

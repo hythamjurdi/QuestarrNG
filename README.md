@@ -90,7 +90,7 @@ links to setup, integration, API, database, and security guides.
 | **Backlog management**      | Track your collection with status indicators (Wanted, Owned, Playing, Completed, Shelved), ratings, and notes. A dedicated **Playing** page adds journal notes, a milestones checklist, screenshots, and Steam achievements per game, plus Crack status and Time to Beat (via IGDB) on the game detail page and a DLC/expansions tab. |
 | **Game Discovery**          | Browse popular, new, and upcoming titles via IGDB, RSS feeds, and xREL.to, or sync your Steam wishlist directly into the app. A per-platform **Root folder / Scan Disk** discovers games already on disk and reconciles their files.                                                                                                  |
 | **Search & Filter**         | Find games by genre, platform, and keyword, with automatic search until a release is found, plus release blacklisting and preferred release groups/platforms. A Platforms setting scopes the whole app to your platform(s) of choice, with optional filters to hide shelved/owned games and age-restricted or erotic content.         |
-| **Download Management**     | Integrates with indexers and downloaders with optional auto-download and automatic post-processing import, password-protected archive handling, optional pre-import VirusTotal/ClamAV scanning and optional, experimental "Powered by AI" workflow to improve game matches (using Typesafe's Jev, in BYOK)                            |
+| **Download Management**     | Integrates with indexers and downloaders, optional auto-download and post-processing, and a bundle picker for updates and small optional extras. Includes password-protected archive handling, optional VirusTotal/ClamAV scanning, and an experimental BYOK workflow using Typesafe's Jev to improve game matches. |
 | **Real-time Notifications** | In-app alerts for releases and downloads, plus external notifications to 100+ providers via [Apprise](https://github.com/caronc/apprise).                                                                                                                                                                                             |
 | **Rich Game Metadata**      | Details enriched with IGDB, Steam, PCGamingWiki, and NexusMods, including trending mods where available.                                                                                                                                                                                                                              |
 | **Statistics**              | Review collection and download statistics, with sharing to Discord where supported.                                                                                                                                                                                                                                                   |
@@ -101,6 +101,15 @@ links to setup, integration, API, database, and security guides.
 
 Can't decide what to play? Click **Pick a game** in your Library for
 [Backlog roulette](docs/BACKLOG_ROULETTE.md): draw a game, roll again, or mark it as Playing.
+
+### Choosing a release and its extras
+
+When a main release has updates, Questarr opens a bundle choice with updates
+selected by default. Smaller extras are shown as optional, unchecked choices
+when their measured size is no more than 25% of the main release. Larger extras
+and extras with unknown sizes are not suggested, and **Download game only**
+remains available. See [the release-selection guide](docs/DOWNLOAD_RECOMMENDATIONS.md)
+for the full behavior and the reason for the size cutoff.
 
 ### Supported Indexers/Downloaders
 
@@ -399,10 +408,17 @@ You can install Questarr as a Home Assistant add-on from this repository:
 4. Install the **Questarr** add-on and start it.
 5. Open `http://<home-assistant-host>:5000` to access the UI.
 
+The add-on stores its application state in Home Assistant's persistent `/data`
+volume and runs as UID/GID `1000:1000`; it does not expose PUID/PGID settings or
+a separate media-library mount. On startup, a narrowly scoped helper corrects
+ownership inside `/data` and checks that it is writable. A wrong or read-only
+volume binding still needs to be corrected in the host configuration. See the
+[add-on operations notes](questarr/README.md).
+
 </details>
 
-All platform definitions live in the repository and share the same mounts and ports — see
-[docs/HOME_SERVER_APPS.md](docs/HOME_SERVER_APPS.md) for details.
+Platform definitions live in the repository; mount and port behavior varies by installer. See
+[docs/HOME_SERVER_APPS.md](docs/HOME_SERVER_APPS.md) for platform-specific details.
 
 ## Screenshots
 

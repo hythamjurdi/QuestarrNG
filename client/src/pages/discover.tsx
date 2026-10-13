@@ -155,7 +155,7 @@ export default function DiscoverPage() {
     for (const g of localGames) {
       if (g.hidden) hiddenList.push(g);
 
-      if (g.igdbId) {
+      if (g.igdbId != null) {
         idMap.set(g.igdbId, g.id);
         if (g.hidden) hidden.add(g.igdbId);
         if (
@@ -166,7 +166,7 @@ export default function DiscoverPage() {
         }
         if (g.status === "wanted" && !g.hidden) wanted.add(g.igdbId);
       }
-      if (!g.rawgId) continue;
+      if (g.rawgId == null) continue;
       rawgIdMap.set(g.rawgId, g.id);
       if (g.hidden) hiddenRawg.add(g.rawgId);
       if (
@@ -246,12 +246,12 @@ export default function DiscoverPage() {
   const filterGames = useCallback(
     (games: Game[]) => {
       return games.filter((g: Game) => {
-        if (g.igdbId) {
+        if (g.igdbId != null) {
           if (hiddenIgdbIds.has(g.igdbId)) return false;
           if (hideOwned && ownedIgdbIds.has(g.igdbId)) return false;
           if (hideWanted && wantedIgdbIds.has(g.igdbId)) return false;
         }
-        if (g.rawgId) {
+        if (g.rawgId != null) {
           if (hiddenRawgIds.has(g.rawgId)) return false;
           if (hideOwned && ownedRawgIds.has(g.rawgId)) return false;
           if (hideWanted && wantedRawgIds.has(g.rawgId)) return false;
@@ -412,11 +412,12 @@ export default function DiscoverPage() {
 
   const { mutate: hideGame } = useHiddenMutation<Game>({
     mutationFn: async (game: Game) => {
-      const localId = game.igdbId
-        ? igdbToLocalIdMap.get(game.igdbId)
-        : game.rawgId
-          ? rawgToLocalIdMap.get(game.rawgId)
-          : undefined;
+      const localId =
+        game.igdbId != null
+          ? igdbToLocalIdMap.get(game.igdbId)
+          : game.rawgId != null
+            ? rawgToLocalIdMap.get(game.rawgId)
+            : undefined;
       return hideDiscoveryGame(game, localId);
     },
     hiddenSuccessMessage: "Game hidden from discovery",
@@ -506,11 +507,12 @@ export default function DiscoverPage() {
       const game = findGameInQueries();
 
       if (game) {
-        const localId = game.igdbId
-          ? igdbToLocalIdMap.get(game.igdbId)
-          : game.rawgId
-            ? rawgToLocalIdMap.get(game.rawgId)
-            : undefined;
+        const localId =
+          game.igdbId != null
+            ? igdbToLocalIdMap.get(game.igdbId)
+            : game.rawgId != null
+              ? rawgToLocalIdMap.get(game.rawgId)
+              : undefined;
 
         addGame({ game, status: newStatus, localId });
       }

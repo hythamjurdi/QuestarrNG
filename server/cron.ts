@@ -1851,7 +1851,7 @@ export async function checkAutoSearch(
                             await storage.updateGameSearchResultsAvailable(game.id, false);
 
                             const groupSuffix = item.group ? ` [${item.group}]` : "";
-                            if (prefs.autoDownload.inApp) {
+                            if (prefs.autoDownload.inApp || prefs.autoDownload.apprise) {
                               const notification = await storage.addNotification({
                                 userId,
                                 type: "success",
@@ -1859,7 +1859,9 @@ export async function checkAutoSearch(
                                 message: `Started downloading ${game.title}${groupSuffix} via ${item.downloadType === "usenet" ? "Usenet" : "Torrent"}`,
                                 link: "/",
                               });
-                              notifyUser("notification", notification, notification.userId);
+                              if (prefs.autoDownload.inApp) {
+                                notifyUser("notification", notification, notification.userId);
+                              }
                               if (prefs.autoDownload.apprise) void appriseClient.send(notification);
                             }
 

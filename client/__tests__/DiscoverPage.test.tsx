@@ -139,6 +139,7 @@ describe("DiscoverPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     carouselRenderLog.length = 0;
+    for (const key of Object.keys(storedValues)) delete storedValues[key];
     globalThis.fetch = vi.fn(async () => ({
       ok: true,
       json: async () => ({ igdb: { configured: true } }),
@@ -174,6 +175,32 @@ describe("DiscoverPage", () => {
 
     // Give some time for queries to settle to hit coverage on our new hook
     await new Promise((resolve) => setTimeout(resolve, 50));
+  });
+
+  it("preserves IGDB ID 0 in the owned-game discovery filter", async () => {
+    storedValues.discoverHideOwned = true;
+    const localGames = [{ id: "owned-zero", igdbId: 0, hidden: false, status: "owned" }];
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ igdb: { configured: true } }),
+    })) as typeof fetch;
+    vi.mocked(apiRequest).mockImplementation((_method: string, url: string) =>
+      Promise.resolve({
+        json: async () => (url.includes("includeHidden=true") ? localGames : []),
+      } as Response)
+    );
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <DiscoverPage />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText("Discover")).toBeInTheDocument();
+    await waitFor(() => {
+      const popular = carouselRenderLog.filter((entry) => entry.title === "Popular Games").at(-1);
+      expect(popular?.queryKey).toContain("0");
+    });
   });
 
   it("snaps the platform select to a listed platform when the setting excludes PC", async () => {

@@ -7,6 +7,8 @@ documentation in this repository.
 
 - Product overview and installation: [`README.md`](../README.md)
 - First install and initial setup: [`docs/QUICKSTART.md`](./QUICKSTART.md)
+- Selecting a main release, updates, and optional extras:
+  [`docs/DOWNLOAD_RECOMMENDATIONS.md`](./DOWNLOAD_RECOMMENDATIONS.md)
 - Why QuestarrNG is maintained, how it differs from upstream, and replacement
   criteria:
   [`docs/FORK_CHANGES.md`](./FORK_CHANGES.md)
@@ -30,6 +32,8 @@ documentation in this repository.
   [`docs/PROXMOX.md`](./PROXMOX.md)
 - Unraid, CasaOS, Umbrel, Cosmos Cloud, and Home Assistant definitions:
   [`docs/HOME_SERVER_APPS.md`](./HOME_SERVER_APPS.md)
+- Home Assistant add-on storage and permissions:
+  [`questarr/README.md`](../questarr/README.md)
 - Supported indexers and downloader behavior:
   [`docs/DOWNLOADERS_COMPATIBILITY.md`](./DOWNLOADERS_COMPATIBILITY.md)
 - Indexer setup, Prowlarr sync, and release blacklists:

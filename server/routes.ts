@@ -651,9 +651,9 @@ async function saveIgdbCredentialsIfProvided(
 async function handleAggregatedIndexerSearch(req: Request, res: Response) {
   try {
     const { query, category, cat } = req.query;
-    // Use validated values from middleware (already converted to integers by .toInt())
-    const limit = (req.query.limit as unknown as number) || 50;
-    const offset = (req.query.offset as unknown as number) || 0;
+    // Express may retain these as strings even after validation middleware runs.
+    const limit = Number(req.query.limit) || 50;
+    const offset = Number(req.query.offset) || 0;
 
     const categories = parseCategories(category || cat);
     const fileTypes = typeof req.query.fileTypes === "string" ? req.query.fileTypes.split(",") : [];
@@ -665,6 +665,9 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
       });
     }
     const fileTypeLimit = Math.max(1, Math.floor(20 / Math.max(1, fileTypeSources.length)));
+    // The cursor is a per-indexer offset, so advance by the requested source page
+    // size instead of the larger number of items aggregated across indexers.
+    const pageLimit = fileTypes.length ? fileTypeLimit : limit;
 
     routesLogger.info(
       { query, categories, limit, offset },
@@ -678,7 +681,7 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
     const { items, total, errors } = await searchAllIndexers({
       query: query.trim(),
       category: categories,
-      limit: fileTypes.length ? fileTypeLimit : limit,
+      limit: pageLimit,
       offset,
     });
 
@@ -747,12 +750,8 @@ async function handleAggregatedIndexerSearch(req: Request, res: Response) {
 
     return res.json({
       items: returnedItems,
-      ...(fileTypes.length
-        ? {
-            nextOffset: items.length >= fileTypeLimit ? offset + fileTypeLimit : null,
-            fileTypeFilter: "torrent-manifest-only",
-          }
-        : {}),
+      nextOffset: items.length >= pageLimit ? offset + pageLimit : null,
+      ...(fileTypes.length ? { fileTypeFilter: "torrent-manifest-only" } : {}),
       total,
       offset,
       ...(blacklistedCount > 0 ? { blacklistedCount } : {}),

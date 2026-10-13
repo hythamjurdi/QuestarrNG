@@ -2,6 +2,9 @@
 
 Open **Settings → Notifications** to choose which events create in-app alerts
 and which are forwarded through [Apprise](https://github.com/caronc/apprise).
+The channels are independent: turning off an in-app alert does not prevent its
+Apprise delivery when that external event is enabled. Likewise, an in-app alert
+does not require Apprise to be configured.
 QuestarrNG's update checks and availability badges continue to work even when
 notifications are disabled.
 

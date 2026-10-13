@@ -12,6 +12,12 @@ Choose the indexer type, enter its base URL and API key, and save it. Use
 indexer supports them. For a Prowlarr-managed tracker, use the final URL that
 Prowlarr serves; QuestarrNG does not follow redirects during sync.
 
+Lower indexer priority numbers are preferred when results are sorted by
+priority and when duplicate releases are reconciled. The priority control lets
+you clear the number while entering a replacement; a blank draft keeps the
+saved value, and the new value is normalized to the supported 1–100 range on
+blur or Enter.
+
 ## Sync from Prowlarr
 
 1. Open **Indexers → Sync from Prowlarr** and enter the Prowlarr URL and API key.

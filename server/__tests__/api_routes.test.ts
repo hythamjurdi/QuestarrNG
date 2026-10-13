@@ -3520,6 +3520,38 @@ describe("API Routes - Extended Coverage", () => {
     });
   });
 
+  describe("GET /api/search - pagination", () => {
+    it.each([
+      { itemCount: 50, nextOffset: 50 },
+      { itemCount: 2, nextOffset: null },
+    ])(
+      "returns a per-source continuation cursor for $itemCount results",
+      async ({ itemCount, nextOffset }) => {
+        const items = Array.from({ length: itemCount }, (_, index) => ({
+          title: `Game release ${index}`,
+          link: `https://example.com/${index}`,
+          pubDate: "2026-01-01T00:00:00.000Z",
+          indexerId: "source",
+          downloadType: "torrent" as const,
+        }));
+        vi.mocked(searchAllIndexers).mockResolvedValue({
+          items,
+          total: itemCount,
+          offset: 0,
+          errors: [],
+        });
+
+        const response = await request(app).get("/api/search?query=Game&limit=50&offset=0");
+
+        expect(response.status).toBe(200);
+        expect(response.body.nextOffset).toBe(nextOffset);
+        expect(searchAllIndexers).toHaveBeenCalledWith(
+          expect.objectContaining({ query: "Game", limit: 50, offset: 0 })
+        );
+      }
+    );
+  });
+
   // ─── POST /api/downloads/claim-batch ───
   describe("POST /api/downloads/claim", () => {
     it("returns 400 when the request body fails schema validation", async () => {
