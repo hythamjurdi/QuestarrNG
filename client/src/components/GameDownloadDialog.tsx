@@ -1627,7 +1627,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                         className="mt-1"
                       />
                       <label htmlFor={`update-${index}`} className="flex-1 cursor-pointer text-sm">
-                        <div className="font-medium">{update.title}</div>
+                        <div className="font-medium" lang="und" dir="auto">
+                          {update.title}
+                        </div>
                         <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
                           {update.size && <span>{formatBytes(update.size)}</span>}
                           {update.seeders !== undefined && (

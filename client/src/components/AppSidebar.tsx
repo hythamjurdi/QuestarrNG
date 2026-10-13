@@ -29,6 +29,7 @@ import {
 } from "@/components/navigation-items";
 import { withBasePath } from "@/lib/app-path";
 import { useInterfaceLanguage } from "@/lib/interface-locale";
+import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
 
 interface AppSidebarProps {
   activeItem?: string;
@@ -42,6 +43,7 @@ const EMPTY_GAMES: Game[] = [];
 export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<AppSidebarProps>) {
   const { logout, user } = useAuth();
   const { t, languageFor, directionFor } = useInterfaceLanguage();
+  useRegionalPreference();
 
   const handleNavigation = (url: string) => {
     onNavigate?.(url);
@@ -86,9 +88,9 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
   const withBadge = (item: AppNavItem): NavItemWithBadge => {
     let badge: string | undefined;
     if (item.title === "Wishlist" && wishlistCount > 0) {
-      badge = wishlistCount.toString();
+      badge = formatRegionalNumber(wishlistCount);
     } else if (item.title === "Downloads" && activeDownloadsCount > 0) {
-      badge = activeDownloadsCount.toString();
+      badge = formatRegionalNumber(activeDownloadsCount);
     }
     return { ...item, badge, children: item.children?.map(withBadge) };
   };

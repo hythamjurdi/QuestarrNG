@@ -101,6 +101,49 @@ async function expectSeparatedDownloadAccessibleName(
 }
 
 test.describe("Game download interface language", () => {
+  test("formats sidebar badges with the selected regional digits", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("questarr.interface-language", "ar");
+      localStorage.setItem("questarrng.regional-format", "ar");
+    });
+    await page.route("**/api/games*", async (route) =>
+      route.fulfill({
+        json: Array.from({ length: 2 }, (_, index) => ({
+          ...game,
+          id: `wishlist-${index + 1}`,
+          title: `Wishlist game ${index + 1}`,
+          status: "wanted",
+        })),
+      })
+    );
+    await page.route("**/api/downloads*", async (route) =>
+      route.fulfill({
+        json: {
+          downloads: [{ id: "active-download", status: "downloading" }],
+          errors: [],
+        },
+      })
+    );
+
+    await page.goto("/");
+    const wishlistButton = page.getByTestId("nav-wishlist");
+    const downloadsButton = page.getByTestId("nav-downloads");
+    const arabicTwo = await page.evaluate(() => new Intl.NumberFormat("ar").format(2));
+    const arabicOne = await page.evaluate(() => new Intl.NumberFormat("ar").format(1));
+    await expect(wishlistButton.getByText(arabicTwo, { exact: true })).toBeVisible();
+    await expect(wishlistButton).toHaveAttribute("aria-label", new RegExp(`\\(${arabicTwo}\\)$`));
+    await expect(downloadsButton.getByText(arabicOne, { exact: true })).toBeVisible();
+    await expect(downloadsButton).toHaveAttribute("aria-label", new RegExp(`\\(${arabicOne}\\)$`));
+    await expect(page.getByTestId("card-game-wishlist-1")).toBeVisible();
+
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-sidebar-regional-counts-ar.png`,
+        fullPage: true,
+      });
+    }
+  });
+
   test("keeps English when it is the highest-priority browser language", async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.removeItem("questarr.interface-language");
@@ -533,7 +576,16 @@ test.describe("Game download interface language", () => {
     await expect(bundleDialog).toContainText(
       "يتوفر تحديث واحد لهذه اللعبة. اختر ما إذا كنت تريد تنزيله مع اللعبة الأساسية."
     );
+    const latinUpdateTitle = bundleDialog.getByText("Localization Demo Update 1", { exact: true });
+    await expect(latinUpdateTitle).toHaveAttribute("lang", "und");
+    await expect(latinUpdateTitle).toHaveAttribute("dir", "auto");
     await expect(bundleDialog.getByRole("button", { name: "تنزيل مع تحديث واحد" })).toBeVisible();
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-bundle-dialog-latin-update-ar.png`,
+        fullPage: true,
+      });
+    }
   });
 
   test("localizes category headings, metrics, and relative ages", async ({ page }) => {
