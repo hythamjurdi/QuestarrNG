@@ -27,22 +27,22 @@ merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       562 |
-| `superseded`             |       156 |
+| `verified`               |       567 |
+| `superseded`             |       160 |
 | `not-applicable`         |        12 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       428 |
+| `unreviewed`             |       419 |
 | **Total**                | **1,163** |
 
-The ledger now gives 735 items an assigned disposition. Four implemented
+The ledger now gives 744 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 428 are unreviewed. The
+currently identified item needs implementation, and 419 are unreviewed. The
 source-change flags cleared in batch 61 remain clear. These numbers describe
-the ledger, not completion of the campaign. Batch 62 is the latest completed
+the ledger, not completion of the campaign. Batch 63 is the latest completed
 review; its results are in
-[validation evidence](evidence/validation-batch-62.txt).
+[validation evidence](evidence/validation-batch-63.txt).
 
 ## Project records
 
@@ -1650,7 +1650,6 @@ not-applicable, 4 implemented-unverified, 0 needs-implementation, and 527
 unreviewed items. The four refreshed-source flags noted above remain open for
 renewed triage, and the full audit remains in progress.
 
-
 ## Batch 58 — October 13, 2026
 
 Batch 58 reviewed issue [#646](https://github.com/Doezer/Questarr/issues/646)
@@ -1885,3 +1884,38 @@ the campaign can pass its merge gate.
 Focused and full validation results, source dispositions, and cleanup are
 recorded in [Batch 62 evidence](evidence/validation-batch-62.txt). The campaign
 remains in progress and has not passed the merge gate.
+
+## Batch 63 — October 13, 2026
+
+Batch 63 reviewed PRs [#746](https://github.com/Doezer/Questarr/pull/746)–
+[#748](https://github.com/Doezer/Questarr/pull/748) and [#750](https://github.com/Doezer/Questarr/pull/750)–
+[#755](https://github.com/Doezer/Questarr/pull/755). There is no #749 record in
+the refreshed issue/PR inventory. The batch added five verified and four
+superseded dispositions.
+
+The dependency-only targets in PRs #746, #747, and #755 have been replaced by
+newer locked versions: jsdom 30.1.2, @tailwindcss/vite 4.3.3, Prettier 3.9.9,
+tsx 4.23.15, typescript-eslint 8.71.1, Vite 8.3.2, and lucide-react 1.52.0.
+The full test/build validation from the current integration checkpoint passes
+with these versions.
+
+PR #748's StepSecurity hardening and PR #754's six action updates are reflected
+in current least-privilege workflow permissions and immutable SHA-pinned action
+references. PR #750's vulnerability policy and CI/release gates are present in
+the security documentation and workflows. PR #751's OpenVEX feed and scan
+workflow are active; the feed carries a justified `not_affected` assessment for
+GHSA-86w9-cpqp-85rv. PR #752's Semgrep ERROR gate and explicit AES-GCM
+authentication-tag length are present and covered by the focused security
+tests.
+
+PR #753 was closed without merging after a maintainer said the Node 26 change
+was completed in release v1.4.0. The current Dockerfile uses a digest-pinned
+Node 26 Alpine base, so the standalone version bump is superseded by the
+released implementation.
+
+Focused security tests, workflow contract checks, the production dependency
+audit, and a parse/pin scan of all 20 workflow files passed. The ledger now
+records 567 verified, 160 superseded, 12 not-applicable, five
+implemented-unverified, zero needs-implementation, and 419 unreviewed items.
+The campaign remains in progress and has not passed the merge gate; see
+[Batch 63 evidence](evidence/validation-batch-63.txt).

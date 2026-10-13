@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T18:09:52.066Z",
-  "forkHead": "1c1795c6e51777b1896c977d8115991b6e7aa241",
+  "capturedAt": "2026-10-13T19:09:06.154Z",
+  "forkHead": "32267d006e0bd26b5e7fafd46f53746ebf49e786",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -21506,10 +21506,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "7c279a83257d24cc1a77ea3c02e3aca319464336",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "Upstream PR #746 targets jsdom 29.1.1. The current manifest and lockfile use jsdom 30.1.2, so the requested test-DOM release has been replaced by a newer version."
+        ],
+        "acceptance": [
+          "Keep the newer locked jsdom version; the current unit suite and production build pass with it."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21526,10 +21534,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c0c508432622d19a101189786081e0b122e6d2a7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The merged development-dependency group requested @tailwindcss/vite 4.3.2, Prettier 3.9.4, tsx 4.22.5, typescript-eslint 8.62.1, and Vite 8.1.3. The current manifest and lockfile resolve newer versions: 4.3.3, 3.9.9, 4.23.15, 8.71.1, and 8.3.2 respectively."
+        ],
+        "acceptance": [
+          "Retain the newer locked versions; the project typecheck, formatting, lint, tests, and build pass at the current integration checkpoint."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21546,10 +21562,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f2c2677cf98747698f9b114de65401b4e365c2d9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The StepSecurity hardening is present in the current workflows: permissions default to read-only and jobs receive only the grants they need. All 133 external action/workflow references across 20 workflow files use full 40-character commit SHAs."
+        ],
+        "acceptance": [
+          "Keep explicit least-privilege workflow permissions and immutable SHA pins for every external action and reusable workflow."
+        ],
+        "evidence": [
+          ".github/dependabot.yml",
+          ".github/workflows/ci.yml",
+          ".github/workflows/dependency-review.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/scorecard.yml",
+          ".github/workflows/slash-command-listener.yml",
+          ".pre-commit-config.yaml",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21566,10 +21595,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f9ff44f1dae0833576f9c8e76cfe4d852b0f5e3f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The vulnerability-management policy, severity-based triage, and pre-release controls are present. CI and deployment run the Critical/High npm audit gate; the fork publication gate additionally checks low-severity raw audits and security alerts. The upstream security-policy cross-link is carried in docs/SECURITY.md, the recognized docs/ location, and points to docs/VULNERABILITY_MANAGEMENT.md."
+        ],
+        "acceptance": [
+          "Document SCA/SAST remediation and release policy, and enforce the required dependency audit before merge and publication."
+        ],
+        "evidence": [
+          "docs/SECURITY.md",
+          "docs/VULNERABILITY_MANAGEMENT.md",
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/fork-image.yml",
+          "scripts/check-release-security.mjs",
+          "https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21586,10 +21628,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "7d5ddf683ed5c2e3e6c422ac0a884fe58d91b7e4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork publishes an OpenVEX 0.2.0 feed with a justified not_affected statement for GHSA-86w9-cpqp-85rv / CVE-2026-85393. The scheduled vulnerability workflow applies the feed to npm and Trivy findings; the release image scans also use it. The PR's client and storage edits are type-formatting-only and remain represented in the current source."
+        ],
+        "acceptance": [
+          "Keep the machine-readable VEX assessment alongside its code-path justification and apply it in the vulnerability and image scan workflows."
+        ],
+        "evidence": [
+          "security/vex/questarr.openvex.json",
+          "docs/VEX.md",
+          ".github/workflows/vulnerability-scan.yml",
+          ".github/workflows/fork-image.yml",
+          "scripts/audit-prod.mjs",
+          "client/src/lib/downloads-utils.ts",
+          "server/storage.ts",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21606,10 +21661,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e4445740e3561a0986452dfcb8534ce9554eefa2",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The maintained Semgrep workflow uploads the unfiltered scan to Code Scanning and fails on ERROR-severity findings. Credential encryption and decryption explicitly configure AES-GCM authTagLength, and the current hash-pinned Semgrep environment and security contracts preserve that gate."
+        ],
+        "acceptance": [
+          "Block the workflow on Semgrep ERROR findings while retaining lower-severity SARIF; preserve explicit AES-GCM authentication-tag configuration and passing credential round-trip/tampering tests."
+        ],
+        "evidence": [
+          ".github/workflows/sast.yml",
+          ".github/requirements/semgrep.in",
+          ".github/requirements/semgrep.txt",
+          "server/credential-crypto.ts",
+          "server/__tests__/credential-crypto.test.ts",
+          "Dockerfile",
+          "docs/VULNERABILITY_MANAGEMENT.md",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21626,10 +21694,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "PR #753 was closed without merging. A maintainer said the Node 26 change was completed in release v1.4.0 (https://github.com/Doezer/Questarr/pull/753#issuecomment-4897720394); the current Dockerfile uses a digest-pinned node:26-alpine base for both application stages, so the standalone bump is superseded by the released implementation."
+        ],
+        "acceptance": [
+          "Keep all application Docker stages on the current digest-pinned Node 26 Alpine base."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/753#issuecomment-4897720394",
+          "Dockerfile",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21646,10 +21722,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "441464053e8a1360b90a933cbd3c7b08ef853994",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The six requested action updates are present at current or newer releases, with immutable full-SHA references. The repository-wide workflow parse found 20 valid YAML files and no external action or reusable-workflow reference pinned by a mutable tag."
+        ],
+        "acceptance": [
+          "Keep all requested GitHub Action updates current and pinned to full commit SHAs."
+        ],
+        "evidence": [
+          ".github/workflows/dependency-review.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/sast.yml",
+          ".github/workflows/scorecard.yml",
+          ".github/workflows/vulnerability-scan.yml",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21666,10 +21753,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3bd82326d5496b3d22f4ecb90383923efe293cc9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "PR #755 targets lucide-react 1.23.0. The current dependency range and lockfile resolve lucide-react 1.52.0, so the request is superseded by a newer release."
+        ],
+        "acceptance": [
+          "Retain lucide-react 1.52.0; the full test suite and production build pass at the current integration checkpoint."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-63.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

@@ -32,21 +32,21 @@ The issue and PR lists were refreshed in a live GitHub audit against upstream
 main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 17:28
 UTC**. The refreshed source contains 232 issues and 931 pull requests (1,163
 records total). The ledger's `capturedAt` records audit generation time, not an
-individual GitHub request timestamp. Its review-status counts after batch 62
+individual GitHub request timestamp. Its review-status counts after batch 63
 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   562 | Acceptance checks have evidence showing the behavior is present and works.             |
-| `superseded`             |   156 | A later request or implementation replaces the original; the relationship is recorded. |
+| `verified`               |   567 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |   160 | A later request or implementation replaces the original; the relationship is recorded. |
 | `not-applicable`         |    12 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
 | `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
 | `implemented-unverified` |     5 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   428 | No completed source-by-source disposition has been recorded yet.                       |
+| `unreviewed`             |   419 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
 The source export contains 1,163 items and the counts above reflect reviews
-through batch 62. An earlier refresh left nine `sourceChangedSinceReview` flags
+through batch 63. An earlier refresh left nine `sourceChangedSinceReview` flags
 on issue #237 and PRs #1192, #1195, #1196, #1198, #1199, #1201, #1202, and
 #1203. Batch 61 compared each current sanitized source row and digest with its
 reviewed snapshot; all nine matched, so the stale flags were cleared. The audit
