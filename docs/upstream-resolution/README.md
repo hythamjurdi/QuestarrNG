@@ -1001,3 +1001,13 @@ PR #338 is superseded by the later hardening iterations. PR #342's verification 
 The ledger now records **303 verified**, **34 superseded**, **801 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** records. Issue #37 remains outstanding.
+
+## Batch 38 — October 12, 2026
+
+Batch 38 reviewed [PRs #348–360](inventory.md) and issue [#361](https://github.com/Doezer/Questarr/issues/361). The four dependency updates are exceeded by the versions locked in this fork. The atomic setup and route typing, logout action, production security headers, Prowlarr sync hardening, keyboard focus behavior, RSS feeds, compact lists, and Apprise notifications are present. PR #354's requested 1.1.0 version bump is superseded by the current 1.10.0 release.
+
+The xREL release integration is present and SSRF-hardened. Its game-filtered latest feed now scans until it finds an extra game result before enabling Next, instead of estimating from an unreliable upstream page count. The page shows the current page without a fabricated total. See the [release note](../../release-notes/2026-10-12-xrel-release-pagination.md), [visual evidence](../pr-evidence/upstream-xrel-pagination-batch-38.png), and [batch 38 validation](evidence/validation-batch-38.txt).
+
+The ledger now records **316 verified**, **35 superseded**, **787 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** records. Issue #37 remains outstanding.

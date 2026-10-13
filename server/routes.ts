@@ -1205,8 +1205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/auth/password", authenticateToken, sensitiveEndpointLimiter, async (req, res) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const { currentPassword, newPassword } = updatePasswordSchema.parse(req.body);
 
       const user = await storage.getUser(userId);
@@ -5539,8 +5538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Settings routes
   app.get("/api/settings", async (req, res) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       let settings = await storage.getUserSettings(userId);
 
       // Create default settings if they don't exist
@@ -5557,8 +5555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/settings", async (req, res, next) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
 
       // Validate the request body
       const updates = updateUserSettingsSchema.parse(req.body);
@@ -5589,8 +5586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // xREL.to settings (API base URL in system config; scene/p2p in user settings)
   app.patch("/api/settings/xrel", async (req, res, next) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const body = req.body as {
         apiBase?: string;
         xrelSceneReleases?: boolean;
@@ -5680,8 +5676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         baseUrl,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const userGames = await storage.getUserGames(userId);
       const wantedGames = userGames.filter((g) => g.status === "wanted");
 
@@ -5877,8 +5872,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { title } = req.body;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
 
         const result = await quickAddGameByTitle(userId, title);
 

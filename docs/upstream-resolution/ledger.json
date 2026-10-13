@@ -1,16 +1,16 @@
 {
   "repository": "Doezer/Questarr",
   "capturedAt": "2026-10-13T00:36:47.597Z",
-  "forkHead": "d66a3e6df3441b6cbed31a15bd87ff83562cb649",
+  "forkHead": "9d1dc7ed262abf2371abcc81e8b6043fd20da9cc",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 291,
+      "verified": 316,
       "needs-implementation": 1,
-      "superseded": 33,
+      "superseded": 35,
       "not-applicable": 7,
-      "unreviewed": 814,
+      "unreviewed": 787,
       "implemented-unverified": 1
     }
   },
@@ -9893,10 +9893,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "477d85929393a50537d50a9c24f0be295e0154c7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested pg 8.17.2 update is exceeded; package-lock.json resolves pg 8.23.0."
+        ],
+        "acceptance": [
+          "The production pg dependency is at or beyond the requested compatible version."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/348",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9913,10 +9921,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "43b26f95a601db87b55a2a8275cc0350d9c1b096",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested Pino 10.3.0 update is exceeded; package-lock.json resolves Pino 10.3.1."
+        ],
+        "acceptance": [
+          "The production Pino dependency is at or beyond the requested compatible version."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/349",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9933,10 +9949,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "dd54c2e0185a53d67ff4b8f61d4c3b0b877284d3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested lucide-react 0.563.0 update is exceeded; package-lock.json resolves 1.48.0."
+        ],
+        "acceptance": [
+          "The production icon dependency is at or beyond the requested compatible version."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/350",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9953,10 +9977,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6cde21a24d7f02f21b4b38719d887e14f15a3108",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested @tanstack/react-query 5.90.20 update is exceeded; package-lock.json resolves 5.104.1."
+        ],
+        "acceptance": [
+          "The production query dependency is at or beyond the requested compatible version."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/351",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9973,10 +10005,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2231bfaac73d5ec0339516c68585df711388b92e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "First-user setup checks for an existing account before hashing and creates the account through the atomic storage registration path. Authenticated routes read the augmented Express req.user type instead of casting through any."
+        ],
+        "acceptance": [
+          "Setup remains race-safe, and route user IDs use the shared typed request contract."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/352",
+          "server/routes.ts",
+          "server/storage.ts",
+          "server/types.ts",
+          "server/__tests__/auth-setup-ratelimit.test.ts",
+          "npm run check"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -9993,10 +10036,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ad7d2111600d5296b6be23463620f536e675010b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The authenticated sidebar includes a logout action connected to the app's logout flow."
+        ],
+        "acceptance": [
+          "A signed-in user can end the session from the main navigation."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/353",
+          "client/src/components/AppSidebar.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10013,10 +10063,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "93af46625e658b23b170667580ba9b280e7adcdc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested 1.1.0 version bump is superseded by the fork's current 1.10.0 release metadata."
+        ],
+        "acceptance": [
+          "No older version bump remains necessary once the project is already on a later release."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/354",
+          "package.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10033,10 +10090,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "854c1c62d1e2f8f29fefe5a2aa249f2332ce2747",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The xREL release integration is present with an allowlisted API host, SSRF-safe fetching, and safe external links. Game pagination now scans raw pages until it finds one additional game result, so Next reflects actual available games rather than an unreliable upstream total-page count."
+        ],
+        "acceptance": [
+          "The xREL game-release view and notifications are integrated, safe URL boundaries are enforced, and pagination does not advertise a blank next page."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/355",
+          "server/xrel.ts",
+          "server/routes.ts",
+          "server/cron.ts",
+          "client/src/pages/xrel-releases.tsx",
+          "server/__tests__/xrel.test.ts",
+          "docs/pr-evidence/upstream-xrel-pagination-batch-38.png",
+          "https://www.xrel.to/wiki/2994/api-release-latest.html"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10053,10 +10123,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f17053cfaaca5785582f81fe6849594bbab24c25",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Helmet security headers are registered, and production CSP directives omit development-only allowances."
+        ],
+        "acceptance": [
+          "Security headers and a strict production content security policy are active."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/356",
+          "server/routes.ts",
+          "server/__tests__/security.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10073,10 +10151,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a0705908fdca1d874bdd8a7da546c771fff49a10",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Prowlarr indexer synchronization uses transactional storage operations for both supported database dialects and preserves existing user-maintained options where appropriate."
+        ],
+        "acceptance": [
+          "Synchronization updates the intended indexer fields safely without discarding manual settings."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/357",
+          "server/storage.ts",
+          "server/db/transactional-ops.sqlite.ts",
+          "server/db/transactional-ops.pg.ts",
+          "server/__tests__/prowlarr.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10093,10 +10181,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "73d7f795dc7e4ddb255f5737c0cb8026258a5196",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The GameCard action overlay becomes visible on keyboard focus through focus-within styling, and its actions remain focusable."
+        ],
+        "acceptance": [
+          "Keyboard users can reach and operate the same card actions available on hover."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/358",
+          "client/src/components/GameCard.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10113,10 +10208,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "cb47c6ec8b2a97188a6fae1c40ca13694a29a82c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "RSS feed management, display, and refresh are implemented. Feed URLs are checked before save and fetched through the shared SSRF-safe fetcher."
+        ],
+        "acceptance": [
+          "Users can manage RSS feeds and refresh their entries without allowing unsafe outbound URLs."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/359",
+          "server/rss.ts",
+          "server/routes.ts",
+          "client/src/pages/rss.tsx",
+          "server/__tests__/rss.test.ts",
+          "server/__tests__/rss-ssrf.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10133,10 +10239,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "32f251347e2496c17a77098498692ac734c0c7b4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Compact list presentation is available across the dashboard, library, and wishlist, with genre fallbacks and working game actions."
+        ],
+        "acceptance": [
+          "The compact view is usable across the requested collections and handles incomplete game metadata."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/360",
+          "client/src/components/CompactGameCard.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -10153,10 +10266,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "External provider delivery is implemented through Apprise configuration and test/send integration, which supports the requested providers without separate provider-specific adapters."
+        ],
+        "acceptance": [
+          "Users can connect external notification providers through the shared notification integration."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/361",
+          "server/apprise.ts",
+          "server/routes.ts",
+          "client/src/pages/settings.tsx",
+          "docs/NOTIFICATIONS.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

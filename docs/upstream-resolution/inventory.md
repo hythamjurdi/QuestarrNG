@@ -340,20 +340,20 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #345](https://github.com/Doezer/Questarr/pull/345) | Harden logging, fix flaky tests, and improve empty state UI | CLOSED | no-merge-commit | verified |
 | [pr #346](https://github.com/Doezer/Questarr/pull/346) | chore(deps): bump actions/checkout from 6.0.1 to 6.0.2 | MERGED | merge-commit-in-fork-history | verified |
 | [pr #347](https://github.com/Doezer/Questarr/pull/347) | chore(deps-dev): bump the dev-dependencies group with 3 updates | MERGED | merge-commit-in-fork-history | verified |
-| [pr #348](https://github.com/Doezer/Questarr/pull/348) | chore(deps): bump pg from 8.16.3 to 8.17.2 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #349](https://github.com/Doezer/Questarr/pull/349) | chore(deps): bump pino from 10.2.0 to 10.3.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #350](https://github.com/Doezer/Questarr/pull/350) | chore(deps): bump lucide-react from 0.562.0 to 0.563.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #351](https://github.com/Doezer/Questarr/pull/351) | chore(deps): bump @tanstack/react-query from 5.90.19 to 5.90.20 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #352](https://github.com/Doezer/Questarr/pull/352) | fix: atomic setup registration and server type safety | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #353](https://github.com/Doezer/Questarr/pull/353) | feat #328: logout button | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #354](https://github.com/Doezer/Questarr/pull/354) | Bump version from 1.0.5 to 1.1.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #355](https://github.com/Doezer/Questarr/pull/355) | feat: add xREL.to integration for game release notifications | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #356](https://github.com/Doezer/Questarr/pull/356) | 🛡️ Sentinel: [MEDIUM] Fix missing security headers | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #357](https://github.com/Doezer/Questarr/pull/357) | ⚡ Bolt: Optimize Prowlarr indexer synchronization | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #358](https://github.com/Doezer/Questarr/pull/358) | 🎨 Palette: Fix keyboard accessibility for GameCard overlay | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #359](https://github.com/Doezer/Questarr/pull/359) | Add RSS feed functionality | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #360](https://github.com/Doezer/Questarr/pull/360) | feat: Introduce compact lists in dashboard, library and wishlist | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #361](https://github.com/Doezer/Questarr/issues/361) | Add notification providers (Pushover, Pushbullet etc.) | CLOSED | no-merge-commit | unreviewed |
+| [pr #348](https://github.com/Doezer/Questarr/pull/348) | chore(deps): bump pg from 8.16.3 to 8.17.2 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #349](https://github.com/Doezer/Questarr/pull/349) | chore(deps): bump pino from 10.2.0 to 10.3.0 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #350](https://github.com/Doezer/Questarr/pull/350) | chore(deps): bump lucide-react from 0.562.0 to 0.563.0 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #351](https://github.com/Doezer/Questarr/pull/351) | chore(deps): bump @tanstack/react-query from 5.90.19 to 5.90.20 | MERGED | merge-commit-in-fork-history | verified |
+| [pr #352](https://github.com/Doezer/Questarr/pull/352) | fix: atomic setup registration and server type safety | MERGED | merge-commit-in-fork-history | verified |
+| [pr #353](https://github.com/Doezer/Questarr/pull/353) | feat #328: logout button | MERGED | merge-commit-in-fork-history | verified |
+| [pr #354](https://github.com/Doezer/Questarr/pull/354) | Bump version from 1.0.5 to 1.1.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #355](https://github.com/Doezer/Questarr/pull/355) | feat: add xREL.to integration for game release notifications | MERGED | merge-commit-in-fork-history | verified |
+| [pr #356](https://github.com/Doezer/Questarr/pull/356) | 🛡️ Sentinel: [MEDIUM] Fix missing security headers | MERGED | merge-commit-in-fork-history | verified |
+| [pr #357](https://github.com/Doezer/Questarr/pull/357) | ⚡ Bolt: Optimize Prowlarr indexer synchronization | MERGED | merge-commit-in-fork-history | verified |
+| [pr #358](https://github.com/Doezer/Questarr/pull/358) | 🎨 Palette: Fix keyboard accessibility for GameCard overlay | MERGED | merge-commit-in-fork-history | verified |
+| [pr #359](https://github.com/Doezer/Questarr/pull/359) | Add RSS feed functionality | MERGED | merge-commit-in-fork-history | verified |
+| [pr #360](https://github.com/Doezer/Questarr/pull/360) | feat: Introduce compact lists in dashboard, library and wishlist | MERGED | merge-commit-in-fork-history | verified |
+| [issue #361](https://github.com/Doezer/Questarr/issues/361) | Add notification providers (Pushover, Pushbullet etc.) | CLOSED | no-merge-commit | verified |
 | [pr #362](https://github.com/Doezer/Questarr/pull/362) | feat: Implement core game data integrations with IGDB and Steam | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #363](https://github.com/Doezer/Questarr/pull/363) | feat: Add RomM integration and post-processing imports with optional manual review of folder name | CLOSED | no-merge-commit | unreviewed |
 | [pr #364](https://github.com/Doezer/Questarr/pull/364) | feat: redesign of download modal | MERGED | merge-commit-in-fork-history | unreviewed |

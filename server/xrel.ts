@@ -117,8 +117,8 @@ export interface XrelSearchResponse {
 }
 
 export interface XrelLatestResponse {
-  total_count: number;
-  pagination: { current_page: number; per_page: number; total_pages: number };
+  total_count?: number;
+  pagination?: { current_page?: number; per_page?: number; total_pages?: number };
   list: XrelSceneRelease[];
 }
 
@@ -229,7 +229,8 @@ export async function getLatestReleases(
   } = {}
 ): Promise<{
   list: XrelReleaseListItem[];
-  pagination: XrelLatestResponse["pagination"];
+  pagination: NonNullable<XrelLatestResponse["pagination"]>;
+  hasMore: boolean;
   total_count: number;
 }> {
   checkHourlyLimit();
@@ -257,7 +258,8 @@ export async function getLatestReleases(
   }
 
   const data = (await res.json()) as XrelLatestResponse;
-  const gameOnly = (data.list ?? []).filter((r) => isGameRelease(r.ext_info));
+  const rawList = data.list ?? [];
+  const gameOnly = rawList.filter((r) => isGameRelease(r.ext_info));
   const list: XrelReleaseListItem[] = gameOnly.map((r) => ({
     id: r.id,
     dirname: r.dirname,
@@ -274,7 +276,10 @@ export async function getLatestReleases(
 
   return {
     list,
-    pagination: data.pagination,
+    pagination: data.pagination ?? {},
+    // The latest endpoint does not consistently provide a usable total_pages.
+    // A full page is the only reliable signal that another raw page may exist.
+    hasMore: rawList.length >= perPage,
     total_count: data.total_count ?? 0,
   };
 }
@@ -290,21 +295,26 @@ export async function getLatestGames(
   } = {}
 ): Promise<{
   list: XrelReleaseListItem[];
-  pagination: { current_page: number; per_page: number; total_pages: number };
-  total_count: number;
+  pagination: { current_page: number; per_page: number; has_next_page: boolean };
 }> {
-  const targetPage = Math.max(1, options.page ?? 1);
-  const perPage = Math.max(1, options.perPage ?? 20);
-  const targetOffset = (targetPage - 1) * perPage;
-  const targetLimit = targetOffset + perPage;
+  const targetPage =
+    Number.isFinite(options.page) && options.page !== undefined
+      ? Math.max(1, Math.floor(options.page))
+      : 1;
+  const perPage =
+    Number.isFinite(options.perPage) && options.perPage !== undefined
+      ? Math.max(1, Math.floor(options.perPage))
+      : 20;
+  const targetLimit = targetPage * perPage;
 
   const allGames: XrelReleaseListItem[] = [];
   let apiPage = 1;
-  let totalApiPages = 1;
+  let hasMoreRawPages = true;
 
-  // Fetch up to 5 pages of 100 items to find enough games
-  // This helps populate the requested page of games regardless of release density
-  while (allGames.length < targetLimit && apiPage <= 10 && apiPage <= totalApiPages) {
+  // xREL's latest endpoint can return roughly 1,000 releases and does not
+  // provide a reliable total page count. Scan until we find one extra game
+  // for the Next button, the feed ends, or we reach that documented window.
+  while (allGames.length <= targetLimit && apiPage <= 10 && hasMoreRawPages) {
     const result = await getLatestReleases({
       page: apiPage,
       perPage: 100,
@@ -312,24 +322,22 @@ export async function getLatestGames(
     });
 
     allGames.push(...result.list);
-    totalApiPages = result.pagination.total_pages;
-    // totalCountEstimate = result.total_count; // This is total releases, not total games
+    hasMoreRawPages = result.hasMore;
     apiPage++;
-
-    // If we're finding very few games, don't loop forever
-    if (apiPage > 5 && allGames.length === 0) break;
   }
 
-  const list = allGames.slice(targetOffset, targetLimit);
+  const totalPages = Math.max(1, Math.ceil(allGames.length / perPage));
+  const currentPage = Math.min(targetPage, totalPages);
+  const pageOffset = (currentPage - 1) * perPage;
+  const list = allGames.slice(pageOffset, pageOffset + perPage);
 
   return {
     list,
     pagination: {
-      current_page: targetPage,
+      current_page: currentPage,
       per_page: perPage,
-      total_pages: Math.ceil(allGames.length / perPage) + (apiPage <= totalApiPages ? 1 : 0),
+      has_next_page: currentPage < totalPages,
     },
-    total_count: allGames.length,
   };
 }
 
