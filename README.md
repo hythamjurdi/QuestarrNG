@@ -653,20 +653,21 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
-[validation evidence](docs/upstream-resolution/evidence/). At the latest ledger
-snapshot generated October 13, 2026 at 17:13 UTC, 532 items are verified, 148
-are superseded, and 11 are not applicable. Another 468 remain unreviewed, four
-implemented integrations await live-service verification, and none currently
-need implementation. Eight source records changed after their prior review
-and remain flagged for renewed triage. Batch 60 restores the Docker Compose
-PORT fallback and reviews 22 additional upstream records; results are in the
-[latest validation record](docs/upstream-resolution/evidence/validation-batch-60.txt).
-This is an active effort; the full review and validation gate must pass before
-campaign work is merged to `main`.
+[validation evidence](docs/upstream-resolution/evidence/). After Batch 62, the
+ledger records 562 verified, 156 superseded, 12 not applicable, five
+implemented-unverified, zero needing implementation, and 428 unreviewed
+records. Batch 62 reviewed PRs #726–745; its implementation and test evidence
+is in
+[the Batch 62 validation record](docs/upstream-resolution/evidence/validation-batch-62.txt).
+The DCO sign-off policy is implemented in the campaign branch, but its
+rollout still needs a maintainer decision because the campaign history includes
+unsigned commits. The full review and validation gate must pass before campaign
+work is merged to `main`.
 
 ## Contributing
 
 - See [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for guidelines on how to contribute to this project.
+- See [DCO.md](DCO.md) for the Developer Certificate of Origin and sign-off instructions.
 - See [MAINTAINERS.md](docs/MAINTAINERS.md) for how repository access and release permissions are managed.
 
 ### Contributors

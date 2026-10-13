@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T17:47:37.646Z",
-  "forkHead": "d344ec819e61966624255b49ed88c8615c8c0210",
+  "capturedAt": "2026-10-13T18:09:52.066Z",
+  "forkHead": "1c1795c6e51777b1896c977d8115991b6e7aa241",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -20923,10 +20923,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Discord webhook validation is present on both the settings-write and share-request paths. URL parsing requires HTTPS, a Discord hostname, and the webhook endpoint path; userinfo cannot spoof the hostname."
+        ],
+        "acceptance": [
+          "Settings and share requests accept valid Discord webhook URLs and reject other hosts, userinfo-based host confusion, and plaintext HTTP before persistence or outbound fetch."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20943,10 +20951,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "dbc5464cd2293144b96324633c6c0c63fc088dfe",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The current GitHub collaborator and team access lists were checked on 2026-10-13. They show @snapetech as the sole direct collaborator with administrator access; the maintainer document now records this roster and states the limits of GitHub's visibility into external infrastructure."
+        ],
+        "acceptance": [
+          "The documentation identifies the current repository owner/admin with sensitive repository access, records when the list was checked, and explains how external access is maintained."
+        ],
+        "evidence": [
+          "gh api repos/snapetech/QuestarrNG/collaborators",
+          "gh api repos/snapetech/QuestarrNG/teams",
+          "docs/MAINTAINERS.md",
+          "docs/SECURITY.md",
+          "README.md",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20963,10 +20982,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5c0284421c3e3b1d3229c0a590945580950974ae",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The repository owner and maintainer responsibilities now cover project direction, pull-request review and merge, branch protection, releases, security triage, collaborator access approval, and Code of Conduct enforcement."
+        ],
+        "acceptance": [
+          "MAINTAINERS.md describes the current formal role and responsibilities and records that no other formal maintainer or reviewer roles were listed at the time of review."
+        ],
+        "evidence": [
+          "docs/MAINTAINERS.md",
+          "docs/SECURITY.md",
+          ".github/CONTRIBUTING.md",
+          "docs/CODE_OF_CONDUCT.md",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20983,10 +21012,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "implemented-unverified",
+        "findings": [
+          "DCO 1.1, contributor instructions, a pull-request checklist, a read-only GitHub Actions workflow, and a tested checker for every non-merge commit after the merge base are implemented. The check exempts GitHub-verified bot accounts because they cannot make a human certification.",
+          "The workflow is not active from the current default branch and branch protection has not made its status required. At the B62 review, 209 of the 210 non-merge campaign commits relative to origin/main lacked a sign-off; campaign automation did not add legal attestations."
+        ],
+        "acceptance": [
+          "Synthetic Git-history tests prove that a valid footer passes, a missing or malformed sign-off fails, commits already in the base are excluded, and merge commits are ignored.",
+          "Before enforcement, a maintainer must decide how to roll out the check and handle historical unsigned campaign commits; then verify a real pull-request run and configure DCO / Verify sign-offs as a required status check."
+        ],
+        "evidence": [
+          "DCO.md",
+          ".github/CONTRIBUTING.md",
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          ".github/workflows/dco.yml",
+          "scripts/check-dco.mjs",
+          "scripts/check-dco.test.mjs",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21003,10 +21046,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9eea9e216a1886cdefdd1166b6feba739b84539b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork documents dependency selection, public registry sourcing, lockfiles, overrides, Dependabot tracking, security updates, and release-time SBOM visibility."
+        ],
+        "acceptance": [
+          "Dependency policy and tracking guidance are available for contributors and accurately describe the current package and workflow setup."
+        ],
+        "evidence": [
+          "docs/DEPENDENCIES.md",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21023,10 +21075,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "73becd49e0cdde4909894f409fb8a5b9f3cf50b8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG has fork-specific architecture, API, and security-assessment documentation."
+        ],
+        "acceptance": [
+          "The architecture/data flow, external API surface, and security risk register are documented in the linked project guides."
+        ],
+        "evidence": [
+          "docs/ARCHITECTURE.md",
+          "docs/API.md",
+          "docs/SECURITY_ASSESSMENT.md",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21043,10 +21104,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "be3789f071d337ad94ad9020757080082e6e2f7a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork has a threat model describing its attack surface, trust boundaries, and security controls, including its external integrations."
+        ],
+        "acceptance": [
+          "Threat-model documentation is present and links to the relevant security and architecture references."
+        ],
+        "evidence": [
+          "docs/THREAT_MODEL.md",
+          "docs/ARCHITECTURE.md",
+          "docs/SECURITY_ASSESSMENT.md",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21063,10 +21133,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d252c79f0d0ccddcf9c742d7ad4d5ac6c1480abc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Scorecard workflow pins current Node 24-compatible action releases, including Scorecard 2.4.4 and upload-artifact 7.0.1; the checkout and CodeQL actions are also on current Node 24-capable releases."
+        ],
+        "acceptance": [
+          "The Scorecard analysis and artifact-upload steps use immutable action SHAs at or beyond the requested runtime-compatible versions."
+        ],
+        "evidence": [
+          ".github/workflows/scorecard.yml",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21083,10 +21160,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1a5388a0aad63f068bdd05b7f18d4cba54f25400",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The affected dependency ranges are patched in the current lock: top-level esbuild is 0.28.2, the scoped nested esbuild override resolves to 0.25.12, form-data is 4.0.6, and ws is 8.21.0."
+        ],
+        "acceptance": [
+          "The vulnerable affected versions are absent from the current dependency graph; the full npm audit reports zero advisories."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "npm audit --audit-level=high (zero advisories)",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21103,11 +21189,24 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "179c3694b94ea02a8bab12e40dbb22099b6d7c70",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The consolidated Sentinel, Bolt, and Palette requests are present in QuestarrNG. The Discord validation from this consolidation is covered by the current route implementation and regression tests."
+        ],
+        "acceptance": [
+          "Consolidated behavior remains available alongside the fork's current security and filtering behavior."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-61.txt",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
+        "dependencies": [
+          "pr:724",
+          "pr:725",
+          "pr:726"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -21123,10 +21222,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d611f8c7b47883f0c6e5cbe2e41e14138442c466",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Current workflow pins meet or exceed all four requested action versions: step-security/build-push-action 7.3.0, step-security/setup-qemu-action 4.2.0, upload-artifact 7.0.1, and Scorecard 2.4.4."
+        ],
+        "acceptance": [
+          "Each action used by the relevant workflows is pinned to an immutable SHA at the requested version or later."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/vulnerability-scan.yml",
+          ".github/workflows/scorecard.yml",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21143,10 +21253,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All five requested development dependency targets are superseded by newer locked versions: @tailwindcss/vite and tailwindcss 4.3.3, prettier 3.9.9, typescript-eslint 8.71.0, and vite 8.3.1."
+        ],
+        "acceptance": [
+          "Keep the current lockfile versions; they meet or exceed every target in this closed, unmerged dependency group."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21163,10 +21281,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "61fb8ce8736f31fbf0e64f1c52bc67eb971f9107",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All 28 requested production packages are resolved at the requested version or later. Twenty-seven are newer; react-icons is at the requested 5.7.0."
+        ],
+        "acceptance": [
+          "Every package in the grouped production update remains at or beyond its requested locked version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "version comparison of all 28 requested packages",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21183,10 +21310,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "54305b2ecf638a3841be12c7a87087e296e39129",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "eslint-config-prettier is locked at the requested 10.1.8."
+        ],
+        "acceptance": [
+          "The requested lint configuration version is present in the committed package manifest and lockfile."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21203,10 +21338,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "321a4810498c4ba1d76a716c5f79fd71b0e0d825",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested Recharts 3.9.1 update is superseded by the current 3.10.1 manifest and lockfile version."
+        ],
+        "acceptance": [
+          "Keep the newer locked Recharts version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21223,10 +21366,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3139056ba96ef364c18fd285105ad20dcfd5394d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested @types/supertest 7.2.0 update is superseded by the current 7.2.1 manifest and lockfile version."
+        ],
+        "acceptance": [
+          "Keep the newer locked type package."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21243,10 +21394,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2e72391886024df5cd14dd6dac209677f7cada8d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "eslint-plugin-react-hooks is locked at the requested 7.1.1."
+        ],
+        "acceptance": [
+          "The requested lint-plugin version is present in the committed package manifest and lockfile."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21263,10 +21422,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b6a77876b0d13245cdeafd3712cbd891cf392fc7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested framer-motion 12.42.2 update is superseded by the current 13.5.1 manifest and lockfile version."
+        ],
+        "acceptance": [
+          "Keep the newer locked framer-motion version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21283,10 +21450,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5eefd9dfe145e14858f32c893c4cd13b23870684",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested lint-staged 17.0.8 update is superseded by the current 17.6.0 manifest and lockfile version."
+        ],
+        "acceptance": [
+          "Keep the newer locked lint-staged version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -21303,10 +21478,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested ESLint 10.6.0 update is superseded by the current 10.11.0 manifest and lockfile version."
+        ],
+        "acceptance": [
+          "Keep the newer locked ESLint version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-62.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

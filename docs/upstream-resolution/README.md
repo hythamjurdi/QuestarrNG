@@ -27,21 +27,22 @@ merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       549 |
-| `superseded`             |       150 |
+| `verified`               |       562 |
+| `superseded`             |       156 |
 | `not-applicable`         |        12 |
-| `implemented-unverified` |         4 |
+| `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       448 |
+| `unreviewed`             |       428 |
 | **Total**                | **1,163** |
 
-The ledger now gives 715 items an assigned disposition. Four implemented
-integrations still need live-service verification, no currently identified
-item needs implementation, and 448 are unreviewed. The eight carried PR flags
-and the issue #237 flag were cleared in batch 61 after their reviewed source
-rows and digests were confirmed unchanged. These numbers describe the ledger,
-not completion of the campaign. Batch 61 is the latest completed review; its
-results are in [validation evidence](evidence/validation-batch-61.txt).
+The ledger now gives 735 items an assigned disposition. Four implemented
+integrations still need live-service verification, and the DCO workflow needs
+maintainer rollout before it can enforce sign-off on pull requests. No
+currently identified item needs implementation, and 428 are unreviewed. The
+source-change flags cleared in batch 61 remain clear. These numbers describe
+the ledger, not completion of the campaign. Batch 62 is the latest completed
+review; its results are in
+[validation evidence](evidence/validation-batch-62.txt).
 
 ## Project records
 
@@ -1844,3 +1845,43 @@ Validation results and the sanitized-source scan are recorded in
 zero needs-implementation, and 448 unreviewed items. No source-change flags
 remain, but the full audit is still in progress and has not passed the merge
 gate.
+
+## Batch 62 — October 13, 2026
+
+Batch 62 reviewed PRs [#726](https://github.com/Doezer/Questarr/pull/726)–
+[#745](https://github.com/Doezer/Questarr/pull/745). It recorded 13 verified
+dispositions, six superseded dependency updates, and one
+implemented-but-unverified DCO rollout.
+
+The Sentinel Discord webhook validation requested in PR #726 is already
+implemented at the settings and share endpoints. It accepts only HTTPS
+Discord webhook hosts and endpoint paths, rejects userinfo-based hostname
+confusion, and has regression coverage for valid domains, malicious hosts,
+and plaintext HTTP. PRs #727–728 are now covered by a fork-specific
+MAINTAINERS.md that records the sole GitHub administrator, maintainer
+responsibilities, the check date, and the limits of GitHub's visibility into
+external access. PR #735's consolidation and the existing dependency,
+architecture, API, security, and threat-model documents also cover their
+requests.
+
+The action and dependency requests in PRs #736–745 are satisfied by current
+workflow pins or package-lock versions. The grouped production update in #738
+has all 28 requested packages at the requested or a newer version. PR #734's
+esbuild, form-data, and ws security fixes are present in the locked tree and
+were checked with the dependency audit. Closed dependency requests #737 and
+#740–741, #743–745 are superseded by later versions.
+
+PR #729 adds the DCO 1.1 text, contributor instructions, a pull-request
+checklist, and an automated check that validates every non-merge commit after
+the merge base. The checker and workflow are implemented and tested, with a
+documented exception for GitHub-verified bot accounts that cannot provide a
+human certification. The policy remains implemented-unverified because the
+workflow is not yet active on the default branch, branch protection has not
+made the check required, and existing campaign commits do not carry DCO
+sign-offs. Campaign automation does not add legal attestations on contributors'
+behalf. A maintainer must choose the safe rollout and history treatment before
+the campaign can pass its merge gate.
+
+Focused and full validation results, source dispositions, and cleanup are
+recorded in [Batch 62 evidence](evidence/validation-batch-62.txt). The campaign
+remains in progress and has not passed the merge gate.

@@ -1,0 +1,81 @@
+# Batch 62 validation evidence — October 13, 2026
+
+## Reviewed inventory
+
+Batch 62 reviewed PRs #726–745: 13 verified, six superseded, and one
+implemented-unverified disposition. The complete ledger still contains 1,163
+records: 562 verified, 156 superseded, 12 not applicable, five
+implemented-unverified, zero needing implementation, and 428 unreviewed. No
+records have a sourceChangedSinceReview flag.
+
+The saved upstream export was checked against the current upstream main ref
+0b538fe4b0a2269edcc8fd3e71e2bbc240291868; git ls-remote upstream
+refs/heads/main still returned that same commit. The offline audit round-trip
+regenerated all 1,163 inventory rows from the sanitized source snapshot and
+preserved the review dispositions and zero source-change flags.
+
+The disposition groups are:
+
+- **Verified:** #726–728, #730–736, #738–739, and #742.
+- **Superseded:** #737, #740–741, and #743–745.
+- **Implemented-unverified:** #729.
+
+PR #726's Discord webhook validation is present on the settings and share
+paths, with tests for valid Discord hosts, invalid hosts, hostname confusion
+through userinfo, and plaintext HTTP. PRs #727–728 are now documented in
+docs/MAINTAINERS.md: the GitHub collaborator and team endpoints were checked
+on October 13 and returned only @snapetech as a direct repository
+administrator, with no repository teams. The document records the maintainer
+responsibilities and distinguishes GitHub access from external infrastructure
+access that cannot be enumerated through those endpoints.
+
+PR #729's DCO 1.1 text, contributor guide, PR checklist, read-only workflow,
+and checker are implemented. The tests use a temporary Git repository to prove
+that a valid sign-off passes, a missing sign-off fails, commits already in the
+base are excluded, and merge commits are ignored. The workflow exempts
+GitHub-verified bot accounts because they cannot provide human certification.
+The item remains implemented-unverified: before Batch 62, 209 of the 210
+non-merge campaign commits relative to origin/main lacked sign-offs, the
+workflow is not active from the default branch, and the required branch
+protection check has not been configured. No legal attestation was added by
+campaign automation.
+
+PRs #730–732 are covered by the current dependency, architecture, API,
+security-assessment, and threat-model documentation. The workflow pins for
+#733 and #736 meet or exceed their requested versions. For #734, the locked
+tree has patched versions of esbuild, form-data, and ws. All 28 package targets
+in #738 are at the requested or a newer version. The remaining dependency PRs
+are at their requested version or superseded by newer lockfile versions.
+
+## Tests and checks
+
+- npm run test:run: passed, 4,196 tests across 266 files; 7 tests skipped and
+  one test file skipped.
+- npm run check (TypeScript): passed.
+- npm run lint: passed with zero warnings.
+- npm run format:check: passed.
+- npx prettier --check on the DCO checker, its tests, workflow, release note,
+  DCO text, and maintainer page: passed.
+- npm run secretlint: passed.
+- npm run check:overrides: passed; all current overrides remain necessary.
+- npm run check:licenses: passed for 418 production package versions.
+- npm audit --audit-level=high: passed with zero advisories.
+- Release-note validation passed and checked 44 fragments; the preview
+  includes the new DCO contributor-policy note. The scripts printed existing
+  missing-path diagnostics for fragments absent from tag v1.5.0 but exited
+  successfully.
+- npm run build: passed. The existing large-chunk advisory remains; the
+  largest JavaScript chunk is 868.69 kB.
+- DCO workflow YAML parsed successfully with js-yaml; node --check
+  scripts/check-dco.mjs passed. The synthetic Git-history test exercises the
+  checker's success and failure exit codes.
+
+No client/src/** files changed, so visual UI evidence was not applicable.
+
+## Temporary data and cleanup
+
+The tests removed their temporary Git repository. The offline audit snapshot
+and dependency-audit JSON were kept in task-scoped /tmp directories and
+removed after use. The build created dist/, which was absent before the build
+and removed afterward. No NFS scratch space was used; pre-existing test
+artifacts were left untouched.

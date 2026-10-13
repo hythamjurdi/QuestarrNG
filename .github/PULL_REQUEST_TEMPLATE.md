@@ -45,3 +45,4 @@ changes, include `release-note: none` in this description.
 - [ ] If the database schema changed, SQLite and Postgres are both updated: `shared/schema.ts` and `shared/schema.pg.ts` (+ `shared/schema-parity.ts`), migrations generated with `npm run db:generate` and `npm run db:generate:pg` (`migrations-pg/`), and any new table added to `TABLE_ORDER` in `scripts/sqlite-to-pg.ts`
 - [ ] For UI changes, I have included a screenshot or recording of it running
 - [ ] If AI is used to write the code (partially or entirely), provide the full model name (including version) and thinking level.
+- [ ] Every non-merge commit includes my DCO sign-off trailer, or this is a GitHub-verified automation pull request. See [DCO.md](../DCO.md).

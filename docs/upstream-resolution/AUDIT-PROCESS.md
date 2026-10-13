@@ -32,21 +32,21 @@ The issue and PR lists were refreshed in a live GitHub audit against upstream
 main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 17:28
 UTC**. The refreshed source contains 232 issues and 931 pull requests (1,163
 records total). The ledger's `capturedAt` records audit generation time, not an
-individual GitHub request timestamp. Its review-status counts after batch 61
+individual GitHub request timestamp. Its review-status counts after batch 62
 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   549 | Acceptance checks have evidence showing the behavior is present and works.             |
-| `superseded`             |   150 | A later request or implementation replaces the original; the relationship is recorded. |
+| `verified`               |   562 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |   156 | A later request or implementation replaces the original; the relationship is recorded. |
 | `not-applicable`         |    12 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
 | `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
-| `implemented-unverified` |     4 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   448 | No completed source-by-source disposition has been recorded yet.                       |
+| `implemented-unverified` |     5 | Implementation exists, but a required verification remains outstanding.                |
+| `unreviewed`             |   428 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
 The source export contains 1,163 items and the counts above reflect reviews
-through batch 61. An earlier refresh left nine `sourceChangedSinceReview` flags
+through batch 62. An earlier refresh left nine `sourceChangedSinceReview` flags
 on issue #237 and PRs #1192, #1195, #1196, #1198, #1199, #1201, #1202, and
 #1203. Batch 61 compared each current sanitized source row and digest with its
 reviewed snapshot; all nine matched, so the stale flags were cleared. The audit
@@ -56,6 +56,12 @@ moved issue #568 from `implemented-unverified` to `verified`. See `capturedAt`,
 `forkHead`, and `upstreamHead` in the ledger for inventory-generation
 metadata. The branch may contain later implementation commits; those metadata
 fields do not advance automatically as batches are added.
+
+The fifth implemented-but-unverified record is PR #729's DCO requirement. The
+checker is covered by synthetic Git history tests, but rollout is not complete:
+the workflow must reach the default branch, maintainers must decide when to
+require its status check, and historical campaign commits need a human-approved
+sign-off strategy. Never add DCO trailers on another contributor's behalf.
 
 ## Records and source of truth
 
