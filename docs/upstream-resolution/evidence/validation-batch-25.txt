@@ -1,0 +1,29 @@
+Batch 25 review and validation
+==============================
+
+Items reviewed
+--------------
+
+- PR #226 is superseded by the current npm-based repository state: @eslint/js
+  and nanoid are declared, the GameDownloadDialog test mock has the missing
+  icon, and type, lint, formatting, and focused tests pass.
+- PR #227 is superseded by existing operational/contribution guidance and the
+  current PR template. No stale pnpm policy appears in checked repository docs
+  or local memory files.
+- Issue #228 and merged PR #233 are verified: Prowlarr sync maps Usenet sources
+  to Newznab, NZB results retain their type and metadata, and routing limits
+  Usenet downloads to SABnzbd and NZBGet.
+- Issue #230 is verified: installed versions can be edited, suggested from
+  downloaded release names, and advanced only by newer completed/imported
+  base-game or edition releases. Scheduled search suppresses versions known to
+  be no newer than the installed version. Version and target-platform scope is
+  per library entry; no local binary inspection is assumed.
+
+Validation
+----------
+
+- `npm test -- --run server/__tests__/usenet_integration.test.ts server/__tests__/newznab.test.ts server/__tests__/newznab_search_request.test.ts server/__tests__/prowlarr.test.ts client/__tests__/usenet-utils.test.ts client/__tests__/GameDetailsModal.test.tsx client/__tests__/InstalledVersionField.test.tsx shared/__tests__/version-utils.test.ts server/__tests__/game-version.test.ts server/__tests__/cron_autosearch.test.ts`
+  — 10 files passed; 285 tests passed.
+- GitHub source records and conversations were checked for PRs #226/#227 and
+  the Usenet implementation PR #233. The current source and tests were checked
+  against issues #228 and #230.

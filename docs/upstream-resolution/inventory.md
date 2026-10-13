@@ -225,11 +225,11 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #223](https://github.com/Doezer/Questarr/pull/223) | Harden repository: Fix tests, update docs, and improve code style | CLOSED | no-merge-commit | superseded |
 | [pr #224](https://github.com/Doezer/Questarr/pull/224) | 🎨 Palette: [UX improvement] Add aria-labels to notification buttons | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #225](https://github.com/Doezer/Questarr/pull/225) | ⚡ Bolt: optimize metadata refresh with batched API calls | MERGED | merge-commit-not-in-either-main-history | verified |
-| [pr #226](https://github.com/Doezer/Questarr/pull/226) | Repo hardening: fix lint/format issues, repair broken test, and update dependencies | CLOSED | no-merge-commit | unreviewed |
-| [pr #227](https://github.com/Doezer/Questarr/pull/227) | Iterative Hardening: Fix tests, lint, and add docs | CLOSED | no-merge-commit | unreviewed |
-| [issue #228](https://github.com/Doezer/Questarr/issues/228) | Support for Usenet | CLOSED | no-merge-commit | unreviewed |
-| [issue #230](https://github.com/Doezer/Questarr/issues/230) | Smart release management | CLOSED | no-merge-commit | unreviewed |
-| [pr #233](https://github.com/Doezer/Questarr/pull/233) | Feature/usenet-support | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #226](https://github.com/Doezer/Questarr/pull/226) | Repo hardening: fix lint/format issues, repair broken test, and update dependencies | CLOSED | no-merge-commit | superseded |
+| [pr #227](https://github.com/Doezer/Questarr/pull/227) | Iterative Hardening: Fix tests, lint, and add docs | CLOSED | no-merge-commit | superseded |
+| [issue #228](https://github.com/Doezer/Questarr/issues/228) | Support for Usenet | CLOSED | no-merge-commit | verified |
+| [issue #230](https://github.com/Doezer/Questarr/issues/230) | Smart release management | CLOSED | no-merge-commit | verified |
+| [pr #233](https://github.com/Doezer/Questarr/pull/233) | Feature/usenet-support | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #237](https://github.com/Doezer/Questarr/issues/237) | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'nanoid' imported from /app/dist/server/vite.js | CLOSED | no-merge-commit | verified |
 | [pr #239](https://github.com/Doezer/Questarr/pull/239) | Add new logger and fix drizzle-kit dependency issue | CLOSED | no-merge-commit | unreviewed |
 | [issue #240](https://github.com/Doezer/Questarr/issues/240) | > questarr@1.0.0 db:push > drizzle-kit push sh: drizzle-kit: not found | CLOSED | no-merge-commit | unreviewed |

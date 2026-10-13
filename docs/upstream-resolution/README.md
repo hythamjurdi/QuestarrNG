@@ -633,3 +633,14 @@ PR [#223](https://github.com/Doezer/Questarr/pull/223) is superseded by the fork
 The focused GameDownloadDialog suite passed (46 tests, 1 skipped); type checking, lint, and format checks passed. Headless-browser evidence was captured from `npm run dev:test`. See [batch 24 validation](evidence/validation-batch-24.txt).
 
 The ledger now records **213 verified**, **15 superseded**, **912 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
+
+
+## Follow-up: repository hardening, Usenet, and version tracking (#226–233)
+
+PRs [#226](https://github.com/Doezer/Questarr/pull/226) and [#227](https://github.com/Doezer/Questarr/pull/227) are superseded by the current npm toolchain, passing checks, and existing contribution/operations guidance and PR template. The checked repository docs and local memory files contain no stale pnpm policy.
+
+Issue [#228](https://github.com/Doezer/Questarr/issues/228) and merged PR [#233](https://github.com/Doezer/Questarr/pull/233) are verified: Prowlarr sync and Newznab search accept Usenet indexers, results retain NZB metadata, and only SABnzbd/NZBGet are used for Usenet downloads. Issue [#230](https://github.com/Doezer/Questarr/issues/230) is also verified. Installed versions can be entered directly or learned from completed game/edition releases; scheduled searches ignore versions already installed. Version and target-platform selection are scoped to each library entry.
+
+Ten focused Usenet and version-tracking suites passed (285 tests). See [batch 25 validation](evidence/validation-batch-25.txt).
+
+The ledger now records **216 verified**, **17 superseded**, **907 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.

@@ -6369,10 +6369,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR was closed without merge. Its substantive changes are present in the current npm-based fork: @eslint/js is declared, nanoid is a production dependency, the GameDownloadDialog test mock includes SlidersHorizontal, and formatting/lint/type/test checks pass. Current npm/package-lock usage also reflects the maintainer’s follow-up request to stop using pnpm."
+        ],
+        "acceptance": [
+          "Keep the server dependency declared for production, make the test suite and lint/format/build checks pass, and use the repository’s npm toolchain."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/226",
+          "package.json",
+          "package-lock.json",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "npm run check",
+          "npm run lint",
+          "npm run format:check"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6389,10 +6401,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR was closed without merge. The current repository supplies the equivalent operational and contribution guidance in docs/OPERATIONS.md and .github/CONTRIBUTING.md, a supported .github/PULL_REQUEST_TEMPLATE.md, and an active upstream-resolution task ledger. The subsequent repository standard is npm, and no stale pnpm policy appears in the checked repository docs and local memory files."
+        ],
+        "acceptance": [
+          "Provide operational guidance and a PR template while following the maintainer’s npm decision."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/227",
+          "docs/OPERATIONS.md",
+          ".github/CONTRIBUTING.md",
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          "docs/upstream-resolution/README.md",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6409,10 +6432,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Prowlarr synchronization accepts both torrent and Usenet indexers and maps them to Torznab/Newznab. Search results preserve the download type and Usenet metadata; the download path only tries SABnzbd/NZBGet for Usenet results."
+        ],
+        "acceptance": [
+          "Support Usenet indexers in configuration and search, then route NZB results to Usenet downloaders."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/228",
+          "server/prowlarr.ts",
+          "server/newznab.ts",
+          "server/search.ts",
+          "shared/downloader-types.ts",
+          "client/src/pages/indexers.tsx",
+          "client/src/pages/downloaders.tsx",
+          "server/__tests__/usenet_integration.test.ts",
+          "server/__tests__/newznab.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6429,10 +6466,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Installed-version tracking is per library entry: users can edit it, release names suggest versions, and completed/imported base-game or edition downloads advance it only when the parsed version is newer. Scheduled searches suppress update results that are provably equal to or older than the installed version. Each game can select a target platform for matching; edition releases contribute to that game entry’s version."
+        ],
+        "acceptance": [
+          "Let users provide an installed version when it cannot be determined from files, learn versions from release names after completed downloads, and alert only when a newer update is available. Version and platform scope is per library entry; no binary inspection is assumed."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/230",
+          "shared/schema.ts",
+          "shared/version-utils.ts",
+          "server/game-version.ts",
+          "server/cron.ts",
+          "client/src/components/InstalledVersionField.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/__tests__/InstalledVersionField.test.tsx",
+          "shared/__tests__/version-utils.test.ts",
+          "server/__tests__/game-version.test.ts",
+          "server/__tests__/cron_autosearch.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6449,10 +6502,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "4fae0f88ab78df9cfb3dab8918c5c595e67f1de0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged Usenet-support PR’s core behavior is present in the fork: Newznab parsing, Usenet indexer configuration and search, SABnzbd/NZBGet downloader support, download-type routing, and the associated lifecycle/status handling."
+        ],
+        "acceptance": [
+          "Support Newznab search and route NZB results to supported Usenet clients while preserving torrent flows."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/233",
+          "server/newznab.ts",
+          "server/prowlarr.ts",
+          "server/search.ts",
+          "server/downloaders.ts",
+          "server/__tests__/usenet_integration.test.ts",
+          "server/__tests__/newznab.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
