@@ -8,6 +8,7 @@ import AppSidebar from "@/components/AppSidebar";
 import Header from "@/components/Header";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { getPageTitle } from "@/components/navigation-items";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 import { useBackgroundNotifications } from "@/hooks/use-background-notifications";
 import { useGameUpdatedSocket } from "@/hooks/use-game-updated-socket";
 import { AuthProvider } from "@/lib/auth";
@@ -153,6 +154,7 @@ function AppContent() {
 
 function AppShell() {
   const [location, navigate] = useLocation();
+  const { t } = useInterfaceLanguage();
 
   useKonamiCode(() => navigate(routePaths.play));
 
@@ -203,7 +205,7 @@ function AppShell() {
               <div className="flex h-screen w-full overflow-hidden">
                 <AppSidebar activeItem={location} onNavigate={navigate} />
                 <div className="flex flex-col flex-1 min-w-0">
-                  <Header title={getPageTitle(location)} />
+                  <Header title={t(getPageTitle(location))} />
                   <main className="flex-1 overflow-hidden pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
                     <AppContent />
                   </main>

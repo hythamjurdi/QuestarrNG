@@ -24,6 +24,14 @@ import { Lock, User, ShieldCheck, Gamepad2, Info, ExternalLink } from "lucide-re
 import { withBasePath } from "@/lib/app-path";
 import { passwordPolicySchema } from "@shared/schema";
 import { IgdbHelpPopover, IgdbTestConnectionButton } from "@/components/IgdbCredentialsHelper";
+import { INTERFACE_LANGUAGE_OPTIONS, useInterfaceLanguage } from "@/lib/interface-locale";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type SetupForm = {
   username: string;
@@ -36,6 +44,7 @@ type SetupForm = {
 export default function SetupPage() {
   const { checkSetup } = useAuth();
   const { toast } = useToast();
+  const { language, setLanguage, t } = useInterfaceLanguage();
   // const [_, setLocation] = useLocation();
 
   // GET /api/config requires authentication, which doesn't exist yet during
@@ -145,6 +154,31 @@ export default function SetupPage() {
           </div>
           <CardTitle className="text-2xl font-bold">Initial Setup</CardTitle>
           <CardDescription>Create your admin account to get started</CardDescription>
+          <div className="mt-4 space-y-2 text-left">
+            <label htmlFor="setup-interface-language" className="text-sm font-medium">
+              {t("Interface language")}
+            </label>
+            <Select
+              value={language}
+              onValueChange={(value) => setLanguage(value as typeof language)}
+            >
+              <SelectTrigger id="setup-interface-language" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INTERFACE_LANGUAGE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "Translations currently cover navigation and language settings; most other screens are still in English."
+              )}
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>

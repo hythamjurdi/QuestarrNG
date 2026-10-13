@@ -7,10 +7,10 @@ The `client/src` React application currently has English interface copy, with no
 ## Implementation plan
 
 1. Inventory and extract visible labels, help, empty states, validation, notifications, and errors from `client/src` and server-originated content rendered by the client. Include free-form API error responses and persisted notification titles/messages. Define a translation strategy for each source; prefer stable message keys with interpolation parameters for server errors and stored notifications. Preserve API values, game titles, release names, paths, and user-entered text.
-2. Add `i18next` with `react-i18next` and ICU plural support, plus a catalog-key coverage check. Keep English as the per-key fallback.
-3. Add an accessible Display Language control to the existing Settings > Appearance surface. Apply changes immediately and persist the explicit choice with the existing user preference mechanism; on first use, try the browser's preferred locale before falling back to English.
+2. Keep the initial shell catalog dependency-free with English per-key fallback and native browser Intl APIs. Add a full message framework when extraction reaches dynamic messages and plural rules.
+3. Add an accessible Display Language control to the existing Settings > Appearance surface. Apply changes immediately and persist the explicit choice in browser-local preferences; on first use, try the browser's preferred locale before falling back to English.
 4. Format dates, times, numbers, and plurals from the selected locale instead of relying on a different browser locale after a user has chosen an app language. Use that locale for user-visible sorting too, preferably through a shared `Intl.Collator`.
-5. Add the locale files in the ranked order below. Set the document `lang` to every selected locale and derive `dir` separately so right-to-left locales use RTL layout. Make calendar weekday order and week boundaries follow the selected locale. Ship Arabic only after verifying CSS logical properties and RTL behavior for settings, navigation, dialogs, and tables.
+5. Arabic shell labels set document language and direction; expand Arabic screen coverage only after reviewing logical layout and core workflows in RTL at narrow and desktop widths.
 6. For each PR that changes `client/src`, include the required running UI screenshot at desktop and narrow widths.
 
 ## First-pass locale order
@@ -39,3 +39,5 @@ Translate interface labels, help, empty states, validation, notifications, and e
 ## Implemented in this PR
 
 Settings > Appearance now lets each browser choose regional date, time, and number formatting from browser defaults or the first-pass locale list: Spanish, Simplified Chinese, Hindi, German, Japanese, French, Brazilian Portuguese, Arabic, Korean, Traditional Chinese, Vietnamese, and Indonesian. Existing date, time, number, and relative-time displays use that choice, and calendar month and week views follow the selected locale’s first day of week. This is a regional-format preference, not an interface-language translation; the app-wide catalog and RTL work in the roadmap remain outstanding.
+
+Initial Setup and Settings > Appearance now offer a browser-local interface-language selector for twelve first-wave locales. Desktop and mobile navigation, page titles, and the language and regional-format controls use translated labels with English fallback. Arabic sets document language and direction; other pages remain English and full RTL layout review is still needed.

@@ -57,6 +57,7 @@ import {
   REGIONAL_FORMAT_OPTIONS,
 } from "@/lib/regional-format";
 import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
+import { INTERFACE_LANGUAGE_OPTIONS, useInterfaceLanguage } from "@/lib/interface-locale";
 import {
   THEMES,
   THEME_CONFIGS,
@@ -217,6 +218,7 @@ function SettingsFilterCard({
  */
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { language, setLanguage, t } = useInterfaceLanguage();
   const queryClient = useQueryClient();
 
   const [ghostUnlocked] = useLocalStorageState(GHOST_UNLOCK_KEY, false);
@@ -1274,7 +1276,7 @@ export default function SettingsPage() {
   return (
     <div className="h-full overflow-auto p-4 pb-20 sm:p-6 md:pb-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("Settings")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Configure your preferences and system settings
         </p>
@@ -1302,7 +1304,7 @@ export default function SettingsPage() {
               className="mb-0 flex w-full flex-nowrap justify-start overflow-x-auto motion-safe:scroll-smooth motion-reduce:scroll-auto"
             >
               <div ref={setTabsInnerNode} className="flex w-max flex-nowrap [&>*]:shrink-0">
-                <TabsTrigger value="appearance">Appearance</TabsTrigger>
+                <TabsTrigger value="appearance">{t("Appearance")}</TabsTrigger>
                 <TabsTrigger value="discovery">Discovery & Downloads</TabsTrigger>
                 <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 <TabsTrigger value="platforms">Platforms</TabsTrigger>
@@ -1380,14 +1382,45 @@ export default function SettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Regional Format</CardTitle>
+                <CardTitle className="text-lg">{t("Interface language")}</CardTitle>
                 <CardDescription>
-                  Choose how dates, times, and numbers are displayed. Interface text remains
-                  English.
+                  {t("Choose the language used for the interface.")}{" "}
+                  {t(
+                    "Translations currently cover navigation and language settings; most other screens are still in English."
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Label htmlFor="regional-format">Date, time, and number format</Label>
+                <Label htmlFor="interface-language">{t("Select a language")}</Label>
+                <Select
+                  value={language}
+                  onValueChange={(value) => setLanguage(value as typeof language)}
+                >
+                  <SelectTrigger id="interface-language" className="w-full sm:w-80">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INTERFACE_LANGUAGE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">{t("Regional format")}</CardTitle>
+                <CardDescription>
+                  {t(
+                    "Choose how dates, times, and numbers are displayed. This setting is separate from interface language."
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Label htmlFor="regional-format">{t("Date, time, and number format")}</Label>
                 <Select value={regionalFormat} onValueChange={setRegionalFormat}>
                   <SelectTrigger id="regional-format" className="w-full sm:w-80">
                     <SelectValue placeholder="Use browser settings" />

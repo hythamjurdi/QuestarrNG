@@ -28,6 +28,7 @@ import {
   type AppNavItem,
 } from "@/components/navigation-items";
 import { withBasePath } from "@/lib/app-path";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 
 interface AppSidebarProps {
   activeItem?: string;
@@ -40,6 +41,7 @@ const EMPTY_GAMES: Game[] = [];
 
 export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<AppSidebarProps>) {
   const { logout, user } = useAuth();
+  const { t } = useInterfaceLanguage();
 
   const handleNavigation = (url: string) => {
     onNavigate?.(url);
@@ -109,7 +111,7 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("Navigation")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.map((item) =>
@@ -125,7 +127,7 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                           data-testid={`nav-${item.title.toLowerCase()}`}
                         >
                           <item.icon className="w-4 h-4" aria-hidden="true" />
-                          <span>{item.title}</span>
+                          <span>{t(item.title)}</span>
                           <ChevronRight
                             className="ml-auto h-4 w-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90"
                             aria-hidden="true"
@@ -150,7 +152,7 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                                 >
                                   <div className="flex items-center gap-2">
                                     <child.icon className="w-4 h-4" aria-hidden="true" />
-                                    <span>{child.title}</span>
+                                    <span>{t(child.title)}</span>
                                   </div>
                                   {child.badge && (
                                     <Badge
@@ -206,7 +208,7 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("Management")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {managementNavigation.map((item) => (
@@ -231,7 +233,7 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Activity</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("Activity")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {activityNavigation.map((item) => (
