@@ -1,14 +1,14 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T11:09:08.018Z",
-  "forkHead": "5548f104860ba511214a4316529ceae2709e1dde",
-  "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
+  "capturedAt": "2026-10-13T11:57:56.548Z",
+  "forkHead": "6acb0a0be89c4b20909344c701dee16b6b811fea",
+  "upstreamHead": "2715243f6c229dd48a58ba588c169d0fd6779d1c",
   "counts": {
     "issue:CLOSED": 228,
-    "pr:MERGED": 705,
+    "pr:MERGED": 711,
     "pr:CLOSED": 208,
     "issue:OPEN": 4,
-    "pr:OPEN": 2
+    "pr:OPEN": 11
   },
   "limitations": [
     "Ancestry is not behavioral verification: changes can be reverted, superseded or ported with different hashes.",
@@ -16258,11 +16258,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested step-security/setup-qemu-action 3.7.0 to 4.0.0 update is superseded by the current v4.2.0 action, pinned to its commit SHA in the fork image and deployment workflows."
+        ],
+        "acceptance": [
+          "Image and deployment workflows use a current, immutable setup-qemu-action reference."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16278,11 +16288,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested harden-runner 2.19.0 update is superseded by current v2.21.1 SHA-pinned references across active workflows."
+        ],
+        "acceptance": [
+          "Active workflows retain a newer, immutable harden-runner reference."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/e2e.yml",
+          ".github/workflows/release.yml",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16298,11 +16319,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The aggregate dependency PR #578 included this docker-login-action bump, but the current image workflows no longer invoke docker/login-action; they use the maintained fork-image and deployment buildx flows instead."
+        ],
+        "acceptance": [
+          "No active workflow depends on the outdated docker-login-action reference."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/deploy.yml",
+          "https://github.com/Doezer/Questarr/pull/578",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16318,11 +16350,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested actions/setup-node 6.4.0 update is superseded by v7.0.0, pinned by commit SHA in active test and release workflows."
+        ],
+        "acceptance": [
+          "Active workflows use the newer immutable setup-node reference."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/e2e.yml",
+          ".github/workflows/release.yml",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16338,11 +16381,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The aggregate PR #578 included this docker/build-push-action bump, but the current image workflow builds with docker buildx directly and no longer invokes docker/build-push-action."
+        ],
+        "acceptance": [
+          "The active image build does not depend on the obsolete docker/build-push-action reference."
+        ],
+        "evidence": [
+          ".github/workflows/fork-image.yml",
+          "https://github.com/Doezer/Questarr/pull/578",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16358,11 +16411,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The five requested development dependency updates are superseded by newer locked versions, including autoprefixer 10.6.1, postcss 8.5.28, prettier 3.9.9, typescript-eslint 8.71.0, and Vite 8.3.1."
+        ],
+        "acceptance": [
+          "All packages in the grouped update resolve to current versions beyond the PR targets and the project checks pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "npm ls autoprefixer postcss prettier typescript-eslint vite --depth=0",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16378,11 +16442,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested @tanstack/react-query 5.99.2 version is superseded by the current locked 5.104.1 release."
+        ],
+        "acceptance": [
+          "The installed and locked React Query version is newer than the PR target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "npm ls @tanstack/react-query --depth=0",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16398,11 +16473,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested nanoid 5.1.9 version is superseded by the current locked 6.0.1 release."
+        ],
+        "acceptance": [
+          "The installed and locked nanoid version is newer than the PR target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "npm ls nanoid --depth=0",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16418,11 +16504,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The requested fast-xml-parser 5.7.1 version is superseded by the current locked 5.11.2 release."
+        ],
+        "acceptance": [
+          "The installed and locked parser version is newer than the PR target."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "npm ls fast-xml-parser --depth=0",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
+        "dependencies": [
+          "pr:578"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -16438,10 +16535,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1b8f6126d545ef2cbe8cb186ef15d14239e3ec85",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "This merged aggregate replaced dependency PRs #569–577, and every requested package or action update has since been superseded by a newer current dependency version, a newer hash-pinned action, or a workflow that no longer uses that action."
+        ],
+        "acceptance": [
+          "The current dependency lock and active workflows satisfy the aggregate update requests at newer versions or no longer require the requested actions."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/fork-image.yml",
+          ".github/workflows/ci.yml",
+          "https://github.com/Doezer/Questarr/pull/578",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16458,10 +16566,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "RSS feed delete buttons expose a feed-specific accessible name; the action remains disabled while its delete request is pending."
+        ],
+        "acceptance": [
+          "Assistive technology can identify which feed will be deleted, and a pending delete cannot be submitted twice."
+        ],
+        "evidence": [
+          "client/src/components/RssSettings.tsx",
+          "client/__tests__/RssSettings.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16478,10 +16594,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5139e15140dcdf2b512b4330791b1dfdc1412f5a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The library statistics helper computes dashboard metrics in one linear pass and ignores missing or non-finite rating/year values instead of producing invalid averages or years."
+        ],
+        "acceptance": [
+          "Statistics are derived in O(n), valid zero ratings remain valid, and absent or NaN values do not contaminate metrics."
+        ],
+        "evidence": [
+          "client/src/lib/stats.ts",
+          "client/src/lib/__tests__/stats.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16498,10 +16622,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The RomM and post-processing pipeline is present. Source review feedback flagged platform-directory deletion for root-level single-file overwrite, directory hardlinks, and path-prefix collisions; the fork replaces only the exact conflicting file, hardlinks directory trees file by file, and matches mappings at segment boundaries."
+        ],
+        "acceptance": [
+          "Overwriting one root-level RomM file preserves other platform games; directory hardlink mode links each file and rejects overlapping source/destination roots; /downloads does not match /downloads-old or /downloads2."
+        ],
+        "evidence": [
+          "server/services/ImportStrategies.ts",
+          "server/services/ImportManager.ts",
+          "server/services/PathMappingService.ts",
+          "server/__tests__/import_manager.test.ts",
+          "server/__tests__/import_strategies.test.ts",
+          "server/__tests__/path_mapping_service.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16518,10 +16654,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "0965e749e0e957605eb3c20875ebadf6d93ea6ff",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Malformed auto-search rules are handled at the candidate boundary with a game-scoped warning and safe defaults; stale miss counters are pruned, one downloader failure is isolated, and completed/status notifications retain user ownership."
+        ],
+        "acceptance": [
+          "Malformed JSON does not crash the search loop; removed or failed downloads leave no stale miss state; failures from one downloader do not stop other downloaders."
+        ],
+        "evidence": [
+          "server/cron.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "server/__tests__/socket.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -16538,10 +16683,32 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4a20a6d57abac23c069a46e5fa1f27c845287ef3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The import review, file browser, path mapping, pending-import dashboard, and recovery pipeline are present. This batch closes the cross-user recovery gap by snapshotting each download owner, scoping recovery operations, and permitting relink only to a game owned by the same user. Upstream review feedback on traversal, single-file extensions, symlink mode, status handling, mapping boundaries, and symlink directory walks was also checked; regressions now cover the sensitive cases."
+        ],
+        "acceptance": [
+          "SQLite and PostgreSQL backfill the owner snapshot; users cannot list, skip, or relink another owner's orphaned download; same-owner recovery succeeds; symlink mode validates; traversal and sensitive system roots are rejected; single-file imports retain extensions; directory walks do not recurse through symlinked directories."
+        ],
+        "evidence": [
+          "server/routes/import.ts",
+          "server/storage.ts",
+          "server/routes/system.ts",
+          "server/path-security.ts",
+          "server/services/ImportStrategies.ts",
+          "shared/schema.ts",
+          "shared/schema.pg.ts",
+          "migrations/0052_download_owner.sql",
+          "migrations-pg/0014_download_owner.sql",
+          "server/__tests__/download_owner_migration.test.ts",
+          "server/__tests__/dialect-parity.test.ts",
+          "server/__tests__/database_storage_extended.test.ts",
+          "server/__tests__/import_routes_coverage.test.ts",
+          "server/__tests__/system_routes.test.ts",
+          "server/__tests__/import_strategies.test.ts",
+          "server/__tests__/import_routes_additional.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-53.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -28353,6 +28520,306 @@
           "server/routes.ts",
           "docs/upstream-resolution/evidence/validation-batch-8.txt"
         ],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1188",
+      "number": 1188,
+      "kind": "pr",
+      "title": "Bump the dev-dependencies group with 15 updates",
+      "url": "https://github.com/Doezer/Questarr/pull/1188",
+      "upstreamState": "MERGED",
+      "upstreamUpdatedAt": "2026-10-13T10:02:34Z",
+      "sourceDigest": "fcca5bd3a4d4241f7759cefc31a4d619678092eec060631d952c7980ed4b8146",
+      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "mergeCommit": "2715243f6c229dd48a58ba588c169d0fd6779d1c",
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1189",
+      "number": 1189,
+      "kind": "pr",
+      "title": "Bump the all-actions group with 5 updates",
+      "url": "https://github.com/Doezer/Questarr/pull/1189",
+      "upstreamState": "MERGED",
+      "upstreamUpdatedAt": "2026-10-13T10:02:18Z",
+      "sourceDigest": "0c183f67dcdc910ba754fbc168aa95b70d99cfabf8166a0b28899a383defb189",
+      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "mergeCommit": "8988f5088ff27130150e2d1b0d20f5e9c057a71d",
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1190",
+      "number": 1190,
+      "kind": "pr",
+      "title": "Bump the production group with 40 updates",
+      "url": "https://github.com/Doezer/Questarr/pull/1190",
+      "upstreamState": "MERGED",
+      "upstreamUpdatedAt": "2026-10-13T10:02:20Z",
+      "sourceDigest": "1c0f483f127d9dda1bd6bddaa0dbb3a6525062343e073d2a1da52bc6a84d5165",
+      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "mergeCommit": "2963fe6c52ccd32807159c5e6bcefa712048dab2",
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1191",
+      "number": 1191,
+      "kind": "pr",
+      "title": "Bump framer-motion from 13.4.4 to 14.0.0",
+      "url": "https://github.com/Doezer/Questarr/pull/1191",
+      "upstreamState": "MERGED",
+      "upstreamUpdatedAt": "2026-10-13T10:02:22Z",
+      "sourceDigest": "01b4d0dca3541675854a7415915fc41279d873fcb7956c1be29f27ae942a83ec",
+      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "mergeCommit": "d3c65ddac7f158970fd759e543037c994ba70598",
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1192",
+      "number": 1192,
+      "kind": "pr",
+      "title": "Add weekly development pre-release workflow",
+      "url": "https://github.com/Doezer/Questarr/pull/1192",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T10:55:00Z",
+      "sourceDigest": "9f8ae0a7f5c372a2e068e14bd7f6414246e98d8d92efc11dee6ceed0e4c4649b",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1193",
+      "number": 1193,
+      "kind": "pr",
+      "title": "Move legacy token migration out of AuthProvider render",
+      "url": "https://github.com/Doezer/Questarr/pull/1193",
+      "upstreamState": "MERGED",
+      "upstreamUpdatedAt": "2026-10-13T10:00:47Z",
+      "sourceDigest": "d66b54824e838522674b88b183f42c12fef14abc367b85991f2e23c900f5daea",
+      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "mergeCommit": "b9d7637ca4054d48df882fd31f0c7f5cd4aeabc9",
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1194",
+      "number": 1194,
+      "kind": "pr",
+      "title": "Add IGDB videos to the game Media tab",
+      "url": "https://github.com/Doezer/Questarr/pull/1194",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T11:00:18Z",
+      "sourceDigest": "a8ef001f2cd03810a327d3badc47c27d0541c4b704e8cf04a9b22b803c8ebe0e",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1195",
+      "number": 1195,
+      "kind": "pr",
+      "title": "Add System Tasks, Activity pages and leftover-archive detection (1.5.1)",
+      "url": "https://github.com/Doezer/Questarr/pull/1195",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T11:11:54Z",
+      "sourceDigest": "bf49610a8eed078a62b1c4fb1b84118fed348ce4e0ec8d3ad5d4d80650be1619",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1196",
+      "number": 1196,
+      "kind": "pr",
+      "title": "Add release scoring: profile, custom formats, search integration, settings UI, xREL verification",
+      "url": "https://github.com/Doezer/Questarr/pull/1196",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T11:12:24Z",
+      "sourceDigest": "a96388fae052843ee426e5bb980159699efe9cec03160cb6cefb1973c6fc9504",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1197",
+      "number": 1197,
+      "kind": "pr",
+      "title": "Add naming templates with live preview for imported games",
+      "url": "https://github.com/Doezer/Questarr/pull/1197",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T11:01:11Z",
+      "sourceDigest": "fd0cbc6463d5f8a12d66255c7e2914fad1f366392e983263d2b0174f9a151d3a",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1198",
+      "number": 1198,
+      "kind": "pr",
+      "title": "Add scoped API keys, the SeerrNG provider API and a Gameyfin guide",
+      "url": "https://github.com/Doezer/Questarr/pull/1198",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T11:11:09Z",
+      "sourceDigest": "ea3bda39b991db0eae187f45dfc4c7cbf77a3906cb3f17d5481fc0abd8f20d55",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1199",
+      "number": 1199,
+      "kind": "pr",
+      "title": "Add custom game collections (manual and smart)",
+      "url": "https://github.com/Doezer/Questarr/pull/1199",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T11:01:56Z",
+      "sourceDigest": "23e95211fb5d2cb9b362e4b7e291999f246d7ff94477996241911f5d9b324fce",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1200",
+      "number": 1200,
+      "kind": "pr",
+      "title": "Fix broken links",
+      "url": "https://github.com/Doezer/Questarr/pull/1200",
+      "upstreamState": "MERGED",
+      "upstreamUpdatedAt": "2026-10-13T09:59:17Z",
+      "sourceDigest": "98883605b4faac9426c887a1a34262a419fb40b34ff142fda0c45ec6db4e12a7",
+      "historyEvidence": "merge-commit-in-upstream-main-only",
+      "mergeCommit": "38feb3f4266651f854eed360aebce48c86b89ea8",
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1201",
+      "number": 1201,
+      "kind": "pr",
+      "title": "Update documentation for the next release",
+      "url": "https://github.com/Doezer/Questarr/pull/1201",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T10:56:44Z",
+      "sourceDigest": "e4896652aab469b437b3c0baeb2b19624724f47067c378795ed5cefa4ebd996c",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
+        "dependencies": []
+      },
+      "sourceChangedSinceReview": false
+    },
+    {
+      "key": "pr:1202",
+      "number": 1202,
+      "kind": "pr",
+      "title": "Add RomM integration: platform folders, API sync and rescan",
+      "url": "https://github.com/Doezer/Questarr/pull/1202",
+      "upstreamState": "OPEN",
+      "upstreamUpdatedAt": "2026-10-13T11:12:52Z",
+      "sourceDigest": "e421454ce7cc75adff41ed2c6b536de233ffa4733053f6986bd524950d21fcc9",
+      "historyEvidence": "no-merge-commit",
+      "mergeCommit": null,
+      "review": {
+        "status": "unreviewed",
+        "findings": [],
+        "acceptance": [],
+        "evidence": [],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

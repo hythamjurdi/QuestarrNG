@@ -157,6 +157,13 @@ interchangeable by two guards, both of which run in CI:
 assertions against both backends, using an in-process Postgres (PGlite) so no
 container is needed.
 
+Keep data migrations in both histories when a schema change affects both
+dialects. For example, `game_downloads.owner_user_id` is populated from each
+download's linked game during migration, then stored on new downloads so
+user-scoped import recovery does not depend on a join to a game that may need
+repair. The insert validation schema omits this owner snapshot; storage derives
+it from the game's owner.
+
 If you are changing anything database-related, read
 `.claude/skills/db-dialect-parity/SKILL.md` first.
 

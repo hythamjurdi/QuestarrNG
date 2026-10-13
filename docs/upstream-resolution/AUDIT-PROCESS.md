@@ -28,24 +28,25 @@ deployment, database, security, and user-facing behavior where applicable.
 
 ## Current snapshot
 
-The ledger was captured on **October 13, 2026 at 05:20:58 UTC** and contains
-232 issues and 915 pull requests (1,147 records total). Its review-status
-counts are:
+The source export was refreshed against upstream main
+`2715243f6c229dd48a58ba588c169d0fd6779d1c` on **October 13, 2026 at 11:13 UTC**.
+The generated ledger currently contains 232 issues and 930 pull requests
+(1,162 records total). Its review-status counts after batch 53 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   444 | Acceptance checks have evidence showing the behavior is present and works.             |
-| `superseded`             |    78 | A later request or implementation replaces the original; the relationship is recorded. |
+| `verified`               |   465 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |    98 | A later request or implementation replaces the original; the relationship is recorded. |
 | `not-applicable`         |     9 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
-| `needs-implementation`   |     1 | An actionable behavior gap remains.                                                    |
-| `implemented-unverified` |     1 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   614 | No completed source-by-source disposition has been recorded yet.                       |
+| `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
+| `implemented-unverified` |     4 | Implementation exists, but a required verification remains outstanding.                |
+| `unreviewed`             |   586 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
-The counts are a dated snapshot, not a live GitHub query. See `capturedAt`,
-`forkHead`, and `upstreamHead` in the ledger for the inventory-generation
-metadata. The branch may contain later implementation commits; those metadata
-fields do not advance automatically as batches are added.
+The source export contains 1,162 items and the counts above reflect reviews
+through batch 53. See `capturedAt`, `forkHead`, and `upstreamHead` in the ledger
+for inventory-generation metadata. The branch may contain later implementation
+commits; those metadata fields do not advance automatically as batches are added.
 
 ## Records and source of truth
 
@@ -208,6 +209,24 @@ interface is usable. A commit in either repository does not prove that a
 request survived later reverts. If a requirement cannot be tested safely or
 reliably in this environment, record it as `implemented-unverified` or
 `needs-implementation` as appropriate and state the remaining check.
+
+## Task scratch and cleanup
+
+Keep generated databases, browser output, temporary configs, downloaded test
+services, and other scratch data in a unique directory for the current batch.
+Use local temporary storage when it has enough capacity. The LVM-backed NFS
+share is available for large or speed-insensitive scratch work, but confirm the
+current host, mounted path, and available space before writing; never assume a
+mount path from an earlier session. Do not put temporary files in a shared
+unscoped directory.
+
+Run end-to-end tests against a task-owned database and a confirmed-free port.
+Do not reset or stop an already-running app or database unless the process and
+data are owned by the current task. At completion, stop only task-owned
+processes, remove only files created in the task directory, restore any
+pre-existing auth or browser state that a test temporarily touched, and leave
+ambiguous files and user data intact. Record the scratch location, what was
+removed, and any pre-existing data deliberately preserved in the batch evidence.
 
 ## Campaign completion and merge gate
 

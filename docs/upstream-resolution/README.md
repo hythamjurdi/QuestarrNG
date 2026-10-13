@@ -3,8 +3,8 @@
 ## Scope and ownership
 
 Review every issue and pull request in Doezer/Questarr, including closed issues,
-merged PRs, and closed unmerged PRs. The collected inventory has **1,147
-records**: 232 issues and 915 PRs. Implement actionable behavior that is missing
+merged PRs, and closed unmerged PRs. The refreshed inventory has **1,162
+records**: 232 issues and 930 PRs. Implement actionable behavior that is missing
 from QuestarrNG, verify behavior that already exists, and record an
 evidence-backed disposition for every source item. The user confirmed the full
 historical scope on October 12, 2026.
@@ -18,27 +18,28 @@ behavior when implementing upstream requests.
 
 ## Current ledger snapshot
 
-The saved source exports were collected on **October 13, 2026 at 05:20:58
-UTC**. The ledger and inventory were regenerated from those exports at
-**11:09:08 UTC**; this update did not refresh upstream sources. Review status
-is independent of GitHub's open, closed, or merged state:
+The saved issue and PR exports were refreshed against upstream main
+`2715243f6c229dd48a58ba588c169d0fd6779d1c` on **October 13, 2026 at 11:13
+UTC**. The ledger and generated inventory are regenerated from this export when
+review statuses change. Review status is independent of GitHub's open, closed,
+or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       460 |
-| `superseded`             |        88 |
+| `verified`               |       465 |
+| `superseded`             |        98 |
 | `not-applicable`         |         9 |
 | `implemented-unverified` |         4 |
 | `needs-implementation`   |         0 |
 | `unreviewed`             |       586 |
-| **Total**                | **1,147** |
+| **Total**                | **1,162** |
 
-The ledger now gives 557 items a completed evidence-backed disposition. Four
+The ledger now gives 572 items a completed evidence-backed disposition. Four
 implemented integrations still need live-service verification, no currently
 identified item needs implementation, and 586 have not been reviewed. These
-numbers describe the ledger, not completion of the campaign. Batch 52 is the
-latest completed audit batch; its results are in
-[validation evidence](evidence/validation-batch-52.txt).
+numbers describe the ledger, not completion of the campaign. Batch 53 is the
+latest completed review; its results are in
+[validation evidence](evidence/validation-batch-53.txt).
 
 ## Project records
 
@@ -53,6 +54,17 @@ latest completed audit batch; its results are in
 - [The audit and evidence process](AUDIT-PROCESS.md) defines source review,
   status meanings, evidence standards, refresh procedure, and the merge gate.
 - [Batch evidence](evidence/) records focused and combined validation results.
+
+## Scratch space and cleanup
+
+Validation uses a unique task directory for temporary databases, browser
+reports, and downloaded test services. Local temporary storage is used when it
+has enough room; the LVM-backed NFS share may be used for larger or
+speed-insensitive scratch only after confirming its current host, mount path,
+and free space. The [audit process](AUDIT-PROCESS.md#task-scratch-and-cleanup)
+defines the isolation, preservation, and cleanup steps. Every batch evidence
+file records what scratch was used and what was removed or deliberately left
+untouched.
 
 The `capturedAt`, `forkHead`, and `upstreamHead` fields identify the inventory
 generation. They are not a pointer to the latest campaign commit. Refresh the
@@ -1411,3 +1423,41 @@ are in [batch 52 validation](evidence/validation-batch-52.txt).
 After this batch, the ledger records 460 verified, 88 superseded, 9
 not-applicable, 4 implemented-unverified, 0 needs-implementation, and 586
 unreviewed items. The historical audit remains in progress.
+
+## Batch 53 — October 13, 2026
+
+Batch 53 reviewed upstream PRs [#569](https://github.com/Doezer/Questarr/pull/569)–
+[#583](https://github.com/Doezer/Questarr/pull/583). Dependency updates #569–578
+are superseded by newer versions pinned in QuestarrNG or by current image
+workflows that no longer use the requested actions. PR #579's RSS delete
+control has a feed-specific accessible name and pending state. PR #580's
+statistics calculation uses one linear pass and handles missing or non-finite
+ratings and years.
+
+Reviewing PR #581's comments exposed a risky single-file RomM overwrite,
+directory hardlink failures, and path-prefix collisions. The current importer
+removes only the exact conflicting file, links directory trees file by file,
+and uses segment-aware path mappings. PR #582's download-status behavior keeps
+malformed rules observable, prunes stale miss counters, and isolates downloader
+errors. Review of PR #583 found a cross-user privacy gap in recovery: pending
+downloads now retain their original game owner, and listing, skipping, and
+relinking are restricted to that owner and their games. SQLite and PostgreSQL
+migrations backfill the owner from the associated game. The review's filesystem
+traversal, symlink-mode, extension-preservation, and symlink-walk findings are
+also covered by regression tests.
+
+The focused import and mapping group passed 160 tests across five files. The
+full Vitest suite passed 4,164 tests across 261 files (7 skipped), and the
+isolated serial Playwright run passed all 50 browser journeys, including
+orphaned-download recovery. Typecheck, lint, format, secret scanning, SQLite and
+PostgreSQL schema checks, build, license, override, deprecation, and production
+audit checks passed. Vite emitted its existing large-chunk warning; the SQLite
+schema checker reported pre-existing journal timestamp-order warnings. Exact
+results and cleanup are in [batch 53 evidence](evidence/validation-batch-53.txt).
+
+After batch 53, the ledger records 465 verified, 98 superseded, 9
+not-applicable, 4 implemented-unverified, 0 needs-implementation, and 586
+unreviewed items. Validation used a task-owned local scratch directory; the
+temporary database, server, reports, and config were removed. Existing auth
+state and screenshots were restored, and the unrelated port-5100 server was
+left untouched. The full audit remains in progress.

@@ -373,6 +373,8 @@ export const gameDownloads = sqliteTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
+    // Preserve ownership if the linked game temporarily cannot be found.
+    ownerUserId: text("owner_user_id").references(() => users.id, { onDelete: "cascade" }),
     downloaderId: text("downloader_id")
       .notNull()
       .references(() => downloaders.id, { onDelete: "cascade" }),
@@ -396,6 +398,7 @@ export const gameDownloads = sqliteTable(
   (t) => [
     uniqueIndex("game_downloads_downloader_hash_idx").on(t.downloaderId, t.downloadHash),
     index("game_downloads_seerr_request_idx").on(t.seerrExternalRequestId),
+    index("game_downloads_owner_status_idx").on(t.ownerUserId, t.status),
   ]
 );
 
@@ -795,6 +798,7 @@ export const updateDownloaderSchema = downloaderInputSchema.partial();
 
 export const insertGameDownloadSchema = createInsertSchema(gameDownloads).omit({
   id: true,
+  ownerUserId: true,
   addedAt: true,
   completedAt: true,
 });

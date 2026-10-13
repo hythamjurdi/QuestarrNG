@@ -273,6 +273,73 @@ describe("Cron - checkDownloadStatus", () => {
     expect(mockUpdateGameStatus).not.toHaveBeenCalled();
   });
 
+  it("prunes miss counters for downloads that are no longer tracked", async () => {
+    const staleDownload = { ...baseDownload, id: "dlrecord-stale" };
+    const activeDownload = {
+      ...baseDownload,
+      id: "dlrecord-active",
+      downloadHash: "active-hash",
+    };
+    mockGetDownloader.mockResolvedValue(baseDownloader);
+    mockGetAllDownloads.mockResolvedValue([]);
+    mockGetDownloadStatus.mockResolvedValue(null);
+
+    mockGetDownloadingGameDownloads.mockResolvedValue([staleDownload]);
+    await checkDownloadStatus(); // one miss
+
+    mockGetDownloadingGameDownloads.mockResolvedValue([activeDownload]);
+    mockGetAllDownloads.mockResolvedValue([
+      {
+        id: activeDownload.downloadHash,
+        name: activeDownload.downloadTitle,
+        status: "downloading",
+        progress: 20,
+        downloadType: "usenet",
+      },
+    ]);
+    await checkDownloadStatus(); // staleDownload is pruned while another row remains active
+
+    mockGetAllDownloads.mockResolvedValue([]);
+    mockGetDownloadingGameDownloads.mockResolvedValue([staleDownload]);
+    await checkDownloadStatus();
+    await checkDownloadStatus();
+
+    // If the old miss survived pruning, these two checks would be misses 2 and 3
+    // and the download would be incorrectly marked failed.
+    expect(mockUpdateGameDownloadStatus).not.toHaveBeenCalledWith(
+      staleDownload.id,
+      "failed",
+      expect.any(String)
+    );
+  });
+
+  it("isolates a downloader lookup failure and continues checking other clients", async () => {
+    const failingDownload = { ...baseDownload, id: "dlrecord-failing", downloaderId: "dl-failing" };
+    const healthyDownload = { ...baseDownload, id: "dlrecord-healthy", downloaderId: "dl-healthy" };
+    const healthyDownloader = { ...baseDownloader, id: "dl-healthy" };
+    mockGetDownloadingGameDownloads.mockResolvedValue([failingDownload, healthyDownload]);
+    mockGetDownloader.mockImplementation((id: string) => {
+      if (id === "dl-failing") return Promise.reject(new Error("database unavailable"));
+      return Promise.resolve(healthyDownloader);
+    });
+    mockGetAllDownloads.mockResolvedValue([
+      {
+        id: healthyDownload.downloadHash,
+        name: healthyDownload.downloadTitle,
+        status: "downloading",
+        progress: 25,
+        downloadType: "usenet",
+      },
+    ]);
+
+    await expect(checkDownloadStatus()).resolves.toBeUndefined();
+
+    expect(mockGetAllDownloads).toHaveBeenCalledExactlyOnceWith(healthyDownloader, {
+      throwOnError: true,
+    });
+    expect(mockUpdateGameDownloadStatus).not.toHaveBeenCalled();
+  });
+
   it("should not reset the game to wanted when a sibling download is still actively downloading", async () => {
     mockGetDownloadingGameDownloads.mockResolvedValue([baseDownload]);
     mockGetDownloader.mockResolvedValue(baseDownloader);

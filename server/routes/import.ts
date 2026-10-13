@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { storage } from "../storage.js";
-import { importManager, platformMappingService } from "../services/index.js";
+import { importManager, pathMappingService, platformMappingService } from "../services/index.js";
 import {
   ARCHIVE_PASSWORD_REQUIRED_PREFIX,
   IncompleteScanError,
@@ -120,34 +120,6 @@ function resolveProposedPathWithinRoot(libraryRoot: string, rawPath: string): st
 
 function parseHostFromUrl(url?: string | null): string | null {
   return extractHostnameFromUrl(url);
-}
-
-function translatePathWithMappings(
-  remotePath: string,
-  mappings: Array<{ remotePath: string; localPath: string; remoteHost?: string | null }>,
-  remoteHost?: string | null
-): string {
-  let bestMatch: { remotePath: string; localPath: string; remoteHost?: string | null } | null =
-    null;
-
-  const candidates = mappings.filter((mapping) => {
-    if (!mapping.remoteHost) return true;
-    return !!remoteHost && mapping.remoteHost === remoteHost;
-  });
-
-  for (const mapping of candidates) {
-    const prefix = mapping.remotePath.endsWith("/") ? mapping.remotePath : mapping.remotePath + "/";
-    if (remotePath === mapping.remotePath || remotePath.startsWith(prefix)) {
-      if (!bestMatch || mapping.remotePath.length > bestMatch.remotePath.length) {
-        bestMatch = mapping;
-      }
-    }
-  }
-
-  if (!bestMatch) return remotePath;
-
-  const relative = remotePath.substring(bestMatch.remotePath.length).replace(/^[/\\]+/, "");
-  return path.join(path.resolve(bestMatch.localPath), relative);
 }
 
 async function checkHardlinkPair(
@@ -452,14 +424,16 @@ importRouter.get("/hardlink/check", async (_req, res) => {
       storage.getPathMappings(),
     ]);
 
+    const translatedRoots = await Promise.all(
+      downloaders.map((downloader) => {
+        if (!downloader.downloadPath) return null;
+        const remoteHost = parseHostFromUrl(downloader.url);
+        return pathMappingService.translatePath(downloader.downloadPath, remoteHost, mappings);
+      })
+    );
     const sourceRoots = Array.from(
       new Set(
-        downloaders
-          .map((downloader) => {
-            if (!downloader.downloadPath) return null;
-            const remoteHost = parseHostFromUrl(downloader.url);
-            return translatePathWithMappings(downloader.downloadPath, mappings, remoteHost);
-          })
+        translatedRoots
           .filter((value): value is string => !!value)
           .map((value) => path.resolve(value))
       )
@@ -518,10 +492,7 @@ importRouter.get("/pending", async (_req, res) => {
     const userId = res.locals.userId as string;
     const [pathReviews, gameLinkReviews, quarantinedReviews] = await Promise.all([
       storage.getPendingImportReviews(userId),
-      // Not scoped by userId — a download whose game record is missing has no
-      // game row left to determine ownership from. Fine for Questarr's
-      // single-user model.
-      storage.getUnlinkedImportReviews(),
+      storage.getUnlinkedImportReviews(userId),
       storage.getQuarantinedDownloads(userId),
     ]);
 
@@ -581,33 +552,23 @@ importRouter.delete("/:id", async (req, res) => {
   try {
     const userId = res.locals.userId as string;
     const download = await storage.getGameDownload(id, userId);
-    if (download) {
-      await storage.updateGameDownloadStatus(id, "completed");
-      return res.json({ success: true });
-    }
-
-    // getGameDownload(id, userId) scopes ownership by joining through the
-    // download's game — but a game_link_required download has no game row
-    // to join against (that's the whole point of the status), so it can
-    // never be found that way. Fall back to an unscoped lookup, but only
-    // accept it if the record is actually game_link_required, so this can't
-    // be used to bypass ownership scoping for any other download.
-    const unscoped = await storage.getGameDownload(id);
-    if (unscoped?.status !== GAME_LINK_REQUIRED_STATUS) {
+    if (!download) {
       return res.status(404).json({ error: "Download not found" });
     }
 
-    // Transition atomically (conditional on still being game_link_required)
-    // rather than check-then-set: a concurrent POST /:id/link could relink
-    // this same download in the gap between the check above and a plain
-    // update, and an unconditional "completed" write here would silently
-    // clobber that relink instead of just dismissing an unlinked download.
-    const skipped = await storage.completeUnlinkedGameDownload(id);
-    if (!skipped) {
-      return res
-        .status(409)
-        .json({ error: "Download was linked to a game before it could be skipped" });
+    if (download.status === GAME_LINK_REQUIRED_STATUS) {
+      // Conditional on both owner and status so another user's recovery item
+      // cannot be dismissed and a concurrent relink cannot be overwritten.
+      const skipped = await storage.completeUnlinkedGameDownload(id, userId);
+      if (!skipped) {
+        return res
+          .status(409)
+          .json({ error: "Download was linked to a game before it could be skipped" });
+      }
+      return res.json({ success: true });
     }
+
+    await storage.updateGameDownloadStatus(id, "completed");
     return res.json({ success: true });
   } catch (error) {
     logger.error({ error }, "Error skipping import");
@@ -621,9 +582,10 @@ importRouter.delete("/:id", async (req, res) => {
 importRouter.post("/:id/link", validate(linkGameDownloadBodySchema), async (req, res) => {
   const id = typeof req.params.id === "string" ? req.params.id : "";
   try {
+    const userId = res.locals.userId as string;
     const { gameId } = linkGameDownloadBodySchema.parse(req.body);
 
-    const download = await storage.getGameDownload(id);
+    const download = await storage.getGameDownload(id, userId);
     if (!download) {
       return res.status(404).json({ error: "Download not found" });
     }
@@ -635,8 +597,11 @@ importRouter.post("/:id/link", validate(linkGameDownloadBodySchema), async (req,
     if (!game) {
       return res.status(404).json({ error: "Game not found" });
     }
+    if (game.userId !== userId) {
+      return res.status(404).json({ error: "Game not found" });
+    }
 
-    const updated = await storage.relinkGameDownload(id, gameId);
+    const updated = await storage.relinkGameDownload(id, gameId, userId);
     if (!updated) {
       // Passed the game_link_required check above but the conditional update
       // still matched nothing — another request already relinked (or otherwise
@@ -645,7 +610,10 @@ importRouter.post("/:id/link", validate(linkGameDownloadBodySchema), async (req,
         .status(409)
         .json({ error: "This download was already linked to a game by another request" });
     }
-    return res.json({ success: true, download: updated });
+    return res.json({
+      success: true,
+      download: { id: updated.id, gameId: updated.gameId, status: updated.status },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: zodErrorMessage(error) });

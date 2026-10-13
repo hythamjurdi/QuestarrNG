@@ -1,0 +1,46 @@
+Batch 53 validation — October 13, 2026
+
+Scope: upstream PRs #569–583. The refreshed inventory contains 1,162 records
+(232 issues and 930 pull requests) at upstream main
+2715243f6c229dd48a58ba588c169d0fd6779d1c.
+
+- Focused import and mapping regression group: 5 test files passed, 160 tests
+  passed. Coverage includes path-segment boundary matching, preloaded shared
+  path mappings, symlink transfer validation, sensitive filesystem roots,
+  directory hardlinks, symlink-safe walks, RomM overwrite behavior, and
+  owner-scoped recovery routes.
+- Full Vitest suite: 261 files passed, 1 skipped; 4,164 tests passed, 7 skipped.
+- Playwright: all 50 browser tests passed in a serial run against an isolated
+  SQLite database on port 5101. This includes the orphaned-download recovery
+  flow. A 16-worker diagnostic run against one mutable database had 19 failures
+  and 3 tests not run after state and timing conflicts; the serial run matches
+  the project's CI worker setting and passed completely.
+- An earlier attempt connected to an already-running test server on port 5100
+  and encountered its existing account/auth state. That result was discarded;
+  the server and its database were left untouched.
+- `npm run check`, `npm run lint`, `npm run format:check`, `npm run secretlint`,
+  and `npm run build` passed. Vite reported its existing large-chunk advisory.
+- SQLite and PostgreSQL Drizzle schema checks passed. SQLite emitted existing
+  migration-journal timestamp-order warnings; the checker ended with
+  “Everything's fine.”
+- `npm run check:overrides` passed; all overrides remain needed.
+  `npm run check:licenses` allowed all 418 production package versions.
+  `npm run check:deprecated` exited successfully and reported three dependencies
+  still deprecated at their latest upstream versions.
+- `npm audit --omit=dev` found 0 vulnerabilities. Direct execution of
+  `node scripts/audit-prod.mjs` found no high-or-higher production advisories
+  outside the VEX feed.
+- PRs #569–578 are superseded by newer pinned workflow actions, current package
+  versions, or image workflows that no longer use the requested actions. PRs
+  #579–583 are verified against implementation and regression evidence. The
+  review findings on import ownership, path traversal, transfer mode, file
+  extensions, mapping boundaries, hardlinks, and symlink traversal are covered
+  in the current tests.
+- No production source under `client/src/**` changed, so the campaign's running
+  UI screenshot requirement was not triggered. The E2E run rewrote five
+  pre-existing screenshots and `playwright/.auth/user.json`; all were restored
+  byte-for-byte afterward.
+- Playwright used a unique local `/tmp` scratch directory, a temporary config,
+  its own SQLite database and report output. The port-5101 server and all task
+  scratch files were removed. The existing port-5100 server and data were not
+  touched. No NFS scratch was needed.

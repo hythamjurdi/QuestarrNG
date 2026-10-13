@@ -71,6 +71,20 @@ describe("ImportStrategies", () => {
     ).toBe("pak");
   });
 
+  it("does not recurse into symlinked directories while gathering files", async () => {
+    const source = tempDir();
+    await fs.outputFile(path.join(source, "game.rom"), "rom");
+    const loop = path.join(source, "loop");
+    await fs.symlink(source, loop, "dir");
+
+    const files = await gatherFiles(source);
+
+    expect(files).toContain(path.join(source, "game.rom"));
+    expect(files).toContain(loop);
+    expect(files).not.toContain(path.join(loop, "game.rom"));
+    expect(files).toHaveLength(2);
+  });
+
   it.each(["EXDEV", "EPERM", "EACCES", "ENOTSUP", "EOPNOTSUPP"])(
     "falls back to copy when hardlink fails with %s",
     async (code) => {

@@ -229,6 +229,14 @@ receives file contents when enabled. A flagged download is moved to a sibling
 review route. See [`docs/THREAT_MODEL.md`](THREAT_MODEL.md) §4.5 for scanner
 failure and partial-scan behavior.
 
+Downloads that need a user to choose a replacement game enter the
+`game_link_required` recovery flow. `game_downloads.owner_user_id` preserves a
+snapshot of the owning game's user when the download is first stored; both the
+pending list and its link/skip actions are scoped to that owner, and relinking
+is limited to a game in the same user's library. The SQLite and PostgreSQL
+migrations backfill this snapshot for existing downloads. This ownership check
+protects the recovery flow without promising broader multi-user support.
+
 ## 5. Request/response flow
 
 JSON REST calls follow the same path: **Client or integration → routes
@@ -354,8 +362,11 @@ per-request `req.user.id` from a JWT, and personal-library tables
 (`games`, `user_settings`, `notifications`, `import_tasks`, `api_keys`,
 `release_blacklist`) carry a `userId` column. Instance-wide config and
 shared runtime state — `indexers`, `downloaders`, `root_folders`,
-`rss_feeds`, `game_downloads` — deliberately carry **no** `userId`, since
-they represent one server's shared configuration, not per-account data.
+`rss_feeds` — deliberately carry **no** `userId`, since they represent one
+server's shared configuration, not per-account data. `game_downloads` also
+represents shared instance activity, but has an `owner_user_id` snapshot used
+only to protect the game's import-recovery actions when a game association
+needs repair.
 
 Because of this, account isolation is inconsistent by design, not a defect
 to eliminate wholesale:

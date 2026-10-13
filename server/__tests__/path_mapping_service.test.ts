@@ -264,6 +264,42 @@ describe("PathMappingService", () => {
     );
   });
 
+  it.each(["/downloads-old/game.rom", "/downloads2/game.rom"])(
+    "does not map sibling path %s as a segment-prefix match",
+    async (remotePath) => {
+      storage.getPathMappings.mockResolvedValue([
+        {
+          id: "downloads",
+          remotePath: "/downloads",
+          localPath: "/local/downloads",
+          remoteHost: null,
+        },
+      ]);
+
+      const service = new PathMappingService(storage as never);
+      await expect(service.translatePath(remotePath)).resolves.toBe(remotePath);
+    }
+  );
+
+  it("uses a supplied mapping snapshot without loading it again", async () => {
+    const mappings = [
+      {
+        id: "downloads",
+        remotePath: "/downloads",
+        localPath: "/local/downloads",
+        remoteHost: null,
+      },
+    ];
+    storage.getPathMappings.mockRejectedValue(new Error("unexpected database read"));
+
+    const service = new PathMappingService(storage as never);
+
+    await expect(
+      service.translatePath("/downloads/game.rom", undefined, mappings)
+    ).resolves.toMatch(/local[\\/]downloads[\\/]game\.rom$/);
+    expect(storage.getPathMappings).not.toHaveBeenCalled();
+  });
+
   it("addMapping() then translatePath() round-trip uses the stored mapping", async () => {
     const mapping = {
       id: "rt1",

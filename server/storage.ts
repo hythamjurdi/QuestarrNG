@@ -356,9 +356,8 @@ export interface IStorage {
   getDownloadingGameDownloads(): Promise<GameDownload[]>;
   getPendingImportReviews(userId: string): Promise<GameDownload[]>;
   // Downloads whose linked game record couldn't be found (status "game_link_required").
-  // Unlike getPendingImportReviews, this can't be scoped by userId — there's no game
-  // row left to join against to determine ownership.
-  getUnlinkedImportReviews(): Promise<GameDownload[]>;
+  // Ownership is retained on the download so recovery remains private to its user.
+  getUnlinkedImportReviews(userId: string): Promise<GameDownload[]>;
   // Downloads quarantined by the pre-import security scan (status "quarantined").
   getQuarantinedDownloads(userId: string): Promise<GameDownload[]>;
   getGameDownload(id: string, userId?: string): Promise<GameDownload | undefined>;
@@ -375,11 +374,11 @@ export interface IStorage {
   updateGameDownloadHash(id: string, downloadHash: string): Promise<UpdateGameDownloadHashOutcome>;
   // Attaches a "game_link_required" download to the given game and drops it back into
   // the normal "manual_review_required" path-review flow.
-  relinkGameDownload(id: string, gameId: string): Promise<GameDownload | undefined>;
+  relinkGameDownload(id: string, gameId: string, userId: string): Promise<GameDownload | undefined>;
   // Dismisses a "game_link_required" download without linking it to a game.
   // Conditional on the download still being game_link_required at write time,
   // so it can't race with a concurrent relinkGameDownload for the same id.
-  completeUnlinkedGameDownload(id: string): Promise<GameDownload | undefined>;
+  completeUnlinkedGameDownload(id: string, userId: string): Promise<GameDownload | undefined>;
   addGameDownload(gameDownload: InsertGameDownload): Promise<GameDownload | undefined>;
   removeGameDownload(id: string, gameId: string): Promise<boolean>;
   getDownloadSummaryByGame(userId: string): Promise<Record<string, DownloadSummary>>;
@@ -1381,9 +1380,9 @@ export class MemStorage implements IStorage {
     });
   }
 
-  async getUnlinkedImportReviews(): Promise<GameDownload[]> {
+  async getUnlinkedImportReviews(userId: string): Promise<GameDownload[]> {
     return Array.from(this.gameDownloads.values()).filter(
-      (d) => d.status === GAME_LINK_REQUIRED_STATUS
+      (d) => d.status === GAME_LINK_REQUIRED_STATUS && d.ownerUserId === userId
     );
   }
 
@@ -1395,8 +1394,14 @@ export class MemStorage implements IStorage {
     });
   }
 
-  async relinkGameDownload(id: string, gameId: string): Promise<GameDownload | undefined> {
+  async relinkGameDownload(
+    id: string,
+    gameId: string,
+    userId: string
+  ): Promise<GameDownload | undefined> {
     const gd = this.gameDownloads.get(id);
+    const game = this.games.get(gameId);
+    if (!game || game.userId !== userId || gd?.ownerUserId !== userId) return undefined;
     // Conditional on still being game_link_required, not just present, so two
     // concurrent relink requests for the same download can't race: only the
     // first to observe this status wins, the second sees it already moved on
@@ -1412,9 +1417,12 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  async completeUnlinkedGameDownload(id: string): Promise<GameDownload | undefined> {
+  async completeUnlinkedGameDownload(
+    id: string,
+    userId: string
+  ): Promise<GameDownload | undefined> {
     const gd = this.gameDownloads.get(id);
-    if (gd?.status !== GAME_LINK_REQUIRED_STATUS) return undefined;
+    if (gd?.status !== GAME_LINK_REQUIRED_STATUS || gd.ownerUserId !== userId) return undefined;
     const updated: GameDownload = { ...gd, status: "completed", completedAt: new Date() };
     this.gameDownloads.set(id, updated);
     return updated;
@@ -1423,8 +1431,7 @@ export class MemStorage implements IStorage {
   async getGameDownload(id: string, userId?: string): Promise<GameDownload | undefined> {
     const download = this.gameDownloads.get(id);
     if (download && userId !== undefined) {
-      const game = this.games.get(download.gameId);
-      if (game?.userId !== userId) return undefined;
+      if (download.ownerUserId !== userId) return undefined;
     }
     return download;
   }
@@ -1492,6 +1499,7 @@ export class MemStorage implements IStorage {
       ...insertGameDownload,
       id,
       downloadHash: normalizeDownloadHash(insertGameDownload.downloadHash),
+      ownerUserId: this.games.get(insertGameDownload.gameId)?.userId ?? null,
       seerrExternalRequestId:
         this.games.get(insertGameDownload.gameId)?.seerrExternalRequestId ?? null,
       status: insertGameDownload.status || "downloading",
@@ -3265,11 +3273,16 @@ export class DatabaseStorage implements IStorage {
     return rows.map((r) => r.gameDownloads);
   }
 
-  async getUnlinkedImportReviews(): Promise<GameDownload[]> {
+  async getUnlinkedImportReviews(userId: string): Promise<GameDownload[]> {
     return db
       .select()
       .from(gameDownloads)
-      .where(eq(gameDownloads.status, GAME_LINK_REQUIRED_STATUS));
+      .where(
+        and(
+          eq(gameDownloads.status, GAME_LINK_REQUIRED_STATUS),
+          eq(gameDownloads.ownerUserId, userId)
+        )
+      );
   }
 
   async getQuarantinedDownloads(userId: string): Promise<GameDownload[]> {
@@ -3281,7 +3294,13 @@ export class DatabaseStorage implements IStorage {
     return rows.map((r) => r.gameDownloads);
   }
 
-  async relinkGameDownload(id: string, gameId: string): Promise<GameDownload | undefined> {
+  async relinkGameDownload(
+    id: string,
+    gameId: string,
+    userId: string
+  ): Promise<GameDownload | undefined> {
+    const game = await this.getGame(gameId);
+    if (!game || game.userId !== userId) return undefined;
     // Conditional on still being game_link_required, not just id, so two
     // concurrent relink requests for the same download can't race: only the
     // first to match this predicate updates anything, the second's WHERE
@@ -3290,19 +3309,34 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db
       .update(gameDownloads)
       .set({ gameId, status: "manual_review_required", errorMessage: null })
-      .where(and(eq(gameDownloads.id, id), eq(gameDownloads.status, GAME_LINK_REQUIRED_STATUS)))
+      .where(
+        and(
+          eq(gameDownloads.id, id),
+          eq(gameDownloads.status, GAME_LINK_REQUIRED_STATUS),
+          eq(gameDownloads.ownerUserId, userId)
+        )
+      )
       .returning();
     return updated;
   }
 
-  async completeUnlinkedGameDownload(id: string): Promise<GameDownload | undefined> {
+  async completeUnlinkedGameDownload(
+    id: string,
+    userId: string
+  ): Promise<GameDownload | undefined> {
     // Same conditional-update pattern as relinkGameDownload: only transitions
     // rows still game_link_required, so this can't race with a concurrent
     // relink for the same download silently discarding it.
     const [updated] = await db
       .update(gameDownloads)
       .set({ status: "completed", completedAt: new Date() })
-      .where(and(eq(gameDownloads.id, id), eq(gameDownloads.status, GAME_LINK_REQUIRED_STATUS)))
+      .where(
+        and(
+          eq(gameDownloads.id, id),
+          eq(gameDownloads.status, GAME_LINK_REQUIRED_STATUS),
+          eq(gameDownloads.ownerUserId, userId)
+        )
+      )
       .returning();
     return updated;
   }
@@ -3312,8 +3346,7 @@ export class DatabaseStorage implements IStorage {
       const [download] = await db
         .select({ gameDownloads })
         .from(gameDownloads)
-        .innerJoin(games, eq(gameDownloads.gameId, games.id))
-        .where(and(eq(gameDownloads.id, id), eq(games.userId, userId)));
+        .where(and(eq(gameDownloads.id, id), eq(gameDownloads.ownerUserId, userId)));
       return download?.gameDownloads;
     }
     const [download] = await db.select().from(gameDownloads).where(eq(gameDownloads.id, id));
@@ -3327,6 +3360,7 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: gameDownloads.id,
         gameId: gameDownloads.gameId,
+        ownerUserId: gameDownloads.ownerUserId,
         downloaderId: gameDownloads.downloaderId,
         downloadType: gameDownloads.downloadType,
         downloadHash: gameDownloads.downloadHash,
@@ -3441,7 +3475,7 @@ export class DatabaseStorage implements IStorage {
   async addGameDownload(insertGameDownload: InsertGameDownload): Promise<GameDownload | undefined> {
     const id = randomUUID();
     const [game] = await db
-      .select({ seerrExternalRequestId: games.seerrExternalRequestId })
+      .select({ seerrExternalRequestId: games.seerrExternalRequestId, userId: games.userId })
       .from(games)
       .where(eq(games.id, insertGameDownload.gameId));
     const [gameDownload] = await db
@@ -3450,6 +3484,7 @@ export class DatabaseStorage implements IStorage {
         ...insertGameDownload,
         id,
         downloadHash: normalizeDownloadHash(insertGameDownload.downloadHash),
+        ownerUserId: game?.userId ?? null,
         seerrExternalRequestId: game?.seerrExternalRequestId ?? null,
       })
       .onConflictDoNothing()

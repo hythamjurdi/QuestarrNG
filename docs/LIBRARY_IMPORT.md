@@ -132,6 +132,11 @@ source path. With post-processing off, a job last seen near completion is
 considered completed. These decisions use the last state observed during the
 current server run; they do not prove that a vanished job finished successfully.
 
+Recovery belongs to the account that owned the original game. Pending recovery
+items are visible only to that account, and a recovered download can be linked
+only to one of the same account's games. This keeps a deleted or missing game
+recoverable without exposing another account's download metadata or library.
+
 ## Incomplete scans, disc images and extras
 
 If ClamAV is unavailable, refuses a file, cannot enumerate the full download,

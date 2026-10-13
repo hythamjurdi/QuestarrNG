@@ -71,6 +71,20 @@ describe("systemRouter /browse", () => {
     expect(response.body.error).toMatch(/traversal/i);
   });
 
+  it.each(["/etc", "/root"])(
+    "refuses to browse sensitive system root %s even when configured as a library",
+    async (libraryRoot) => {
+      mockStorage.getImportConfig.mockResolvedValue({ libraryRoot });
+      const app = createApp();
+
+      const response = await request(app).get("/api/system/browse?path=/");
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toMatch(/not allowed/i);
+      expect(fsMock.pathExists).not.toHaveBeenCalled();
+    }
+  );
+
   it("returns 404 when path does not exist", async () => {
     fsMock.pathExists.mockResolvedValue(false);
     const app = createApp();

@@ -35,8 +35,12 @@ export class PathMappingService {
     return this.storage.removePathMapping(id);
   }
 
-  async translatePath(remotePath: string, remoteHost?: string | null): Promise<string> {
-    const mappings = await this.storage.getPathMappings();
+  async translatePath(
+    remotePath: string,
+    remoteHost?: string | null,
+    configuredMappings?: PathMapping[]
+  ): Promise<string> {
+    const mappings = configuredMappings ?? (await this.storage.getPathMappings());
     // Find the mapping with the longest matching remotePath prefix (most specific match wins).
     // No path normalization is applied; mappings must use the exact path format reported by the downloader.
     let bestMatch: PathMapping | null = null;

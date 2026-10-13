@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 
-const { mockStorage, mockImportManager, mockPlatformMappingService, fsMock } = vi.hoisted(() => ({
+const {
+  mockStorage,
+  mockImportManager,
+  mockPathMappingService,
+  mockPlatformMappingService,
+  fsMock,
+} = vi.hoisted(() => ({
   mockStorage: {
     getImportConfig: vi.fn(),
     getRomMConfig: vi.fn(),
@@ -25,6 +31,9 @@ const { mockStorage, mockImportManager, mockPlatformMappingService, fsMock } = v
   mockPlatformMappingService: {
     initializeDefaults: vi.fn(),
   },
+  mockPathMappingService: {
+    translatePath: vi.fn(),
+  },
   fsMock: {
     stat: vi.fn(),
     writeFile: vi.fn(),
@@ -39,6 +48,7 @@ vi.mock("../storage.js", () => ({
 
 vi.mock("../services/index.js", () => ({
   importManager: mockImportManager,
+  pathMappingService: mockPathMappingService,
   platformMappingService: mockPlatformMappingService,
 }));
 
@@ -56,6 +66,9 @@ import {
 describe("importRouter additional coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPathMappingService.translatePath.mockImplementation(
+      async (remotePath: string) => remotePath
+    );
     mockStorage.getEnabledDownloaders.mockResolvedValue([]);
     mockStorage.getImportConfig.mockResolvedValue(makeImportConfig({ overwriteExisting: true }));
     mockStorage.getRomMConfig.mockResolvedValue(makeRomMConfig());
@@ -149,9 +162,10 @@ describe("importRouter additional coverage", () => {
       mockStorage.getGameDownload.mockResolvedValue({
         id: "d1",
         gameId: "gone",
+        ownerUserId: "user-1",
         status: "game_link_required",
       });
-      mockStorage.getGame.mockResolvedValue({ id: "g2", title: "Correct Game" });
+      mockStorage.getGame.mockResolvedValue({ id: "g2", title: "Correct Game", userId: "user-1" });
       mockStorage.relinkGameDownload.mockResolvedValue({
         id: "d1",
         gameId: "g2",
@@ -166,7 +180,8 @@ describe("importRouter additional coverage", () => {
         success: true,
         download: { id: "d1", gameId: "g2", status: "manual_review_required" },
       });
-      expect(mockStorage.relinkGameDownload).toHaveBeenCalledWith("d1", "g2");
+      expect(mockStorage.getGameDownload).toHaveBeenCalledWith("d1", "user-1");
+      expect(mockStorage.relinkGameDownload).toHaveBeenCalledWith("d1", "g2", "user-1");
     });
 
     it("returns 404 when the download does not exist", async () => {
@@ -225,9 +240,10 @@ describe("importRouter additional coverage", () => {
       mockStorage.getGameDownload.mockResolvedValue({
         id: "d1",
         gameId: "gone",
+        ownerUserId: "user-1",
         status: "game_link_required",
       });
-      mockStorage.getGame.mockResolvedValue({ id: "g2", title: "Correct Game" });
+      mockStorage.getGame.mockResolvedValue({ id: "g2", title: "Correct Game", userId: "user-1" });
       mockStorage.relinkGameDownload.mockResolvedValue(undefined);
 
       const app = createApp();
@@ -519,7 +535,7 @@ describe("importRouter additional coverage", () => {
       strategy: "pc",
       proposedPath: "/data/PC/Game",
       unpack: true,
-      password: "hunter 2",
+      password: "hunter\x002",
     });
 
     expect(response.status).toBe(400);
@@ -532,7 +548,16 @@ describe("importRouter additional coverage", () => {
     mockStorage.getEnabledDownloaders.mockResolvedValue([
       { id: "dl-1", downloadPath: "/downloads", url: "http://localhost:8080" },
     ]);
-    mockStorage.getPathMappings.mockResolvedValue([]);
+    const mappings = [
+      {
+        id: "mapping-1",
+        remotePath: "/downloads",
+        localPath: "/mapped/downloads",
+        remoteHost: "localhost",
+      },
+    ];
+    mockStorage.getPathMappings.mockResolvedValue(mappings);
+    mockPathMappingService.translatePath.mockResolvedValue("/mapped/downloads");
 
     const sharedStat = { dev: 42, isDirectory: () => true };
     fsMock.stat.mockResolvedValue(sharedStat);
@@ -547,6 +572,11 @@ describe("importRouter additional coverage", () => {
     expect(response.body.generic.supportedForAll).toBe(true);
     expect(response.body.generic.checkedSources).toHaveLength(1);
     expect(response.body.generic.checkedSources[0].sameDevice).toBe(true);
+    expect(mockPathMappingService.translatePath).toHaveBeenCalledWith(
+      "/downloads",
+      "localhost",
+      mappings
+    );
   });
 
   it("GET /hardlink/check returns sameDevice:false when paths are on different devices", async () => {

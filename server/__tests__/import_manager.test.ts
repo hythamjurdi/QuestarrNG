@@ -34,6 +34,7 @@ describe("ImportManager", () => {
     getGame: vi.fn(),
     getImportConfig: vi.fn(),
     getRomMConfig: vi.fn().mockResolvedValue(makeRomMConfig()),
+    getPlatformMapping: vi.fn(),
     getDownloader: vi.fn(),
     updateGameDownloadStatus: vi.fn(),
     updateGameStatus: vi.fn(),
@@ -68,6 +69,8 @@ describe("ImportManager", () => {
     pathService.translatePath.mockResolvedValue("/data/downloads/file.iso");
     archiveService.isArchive.mockReturnValue(false);
     storage.getImportConfig.mockResolvedValue(baseConfig);
+    storage.getRomMConfig.mockResolvedValue(makeRomMConfig());
+    storage.getPlatformMapping.mockResolvedValue(undefined);
     storage.addNotification.mockResolvedValue(undefined);
     downloadersMock.removeDownload.mockResolvedValue({ success: true, message: "ok" });
   });
@@ -1248,6 +1251,64 @@ describe("ImportManager", () => {
       planSpy.mockRestore();
     }
   );
+
+  it("overwrites a RomM root-level single file without removing its platform directory", async () => {
+    const sourcePath = "/local/downloads/Test Game.iso";
+    const platformDirectory = "/romm/library/switch";
+    const fileDestination = path.join(platformDirectory, "Test Game.iso");
+    storage.getGameDownload.mockResolvedValue({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadTitle: "Test Game",
+      status: "completed",
+    });
+    storage.getGame.mockResolvedValue(
+      makeGame({ id: "g1", title: "Test Game", userId: "u1", platforms: [42] })
+    );
+    storage.getDownloader.mockResolvedValue({
+      id: "d1",
+      name: "Downloader",
+      url: "http://remote:9091",
+    });
+    storage.getRomMConfig.mockResolvedValue(
+      makeRomMConfig({
+        enabled: true,
+        libraryRoot: "/romm/library",
+        conflictPolicy: "overwrite",
+        singleFilePlacement: "root",
+      })
+    );
+    storage.getPlatformMapping.mockResolvedValue({ rommPlatformSlug: "switch" });
+    pathService.translatePath.mockResolvedValue(sourcePath);
+
+    const { PCImportStrategy } = await import("../services/ImportStrategies.js");
+    const executeSpy = vi
+      .spyOn(PCImportStrategy.prototype, "executeImport")
+      .mockImplementation(async (plan) => ({
+        destDir: path.dirname(plan.proposedPath),
+        filesPlaced: [plan.proposedPath],
+        modeUsed: "move",
+        conflictsResolved: [],
+      }));
+    const manager = new ImportManager(
+      storage as never, // NOSONAR
+      pathService as never, // NOSONAR
+      platformService as never, // NOSONAR
+      archiveService as never // NOSONAR
+    );
+
+    await manager.processImport("dl-1", "/remote/downloads/Test Game.iso");
+
+    expect(fsMock.remove).toHaveBeenCalledWith(fileDestination);
+    expect(fsMock.remove).not.toHaveBeenCalledWith(platformDirectory);
+    expect(executeSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ strategy: "romm", proposedPath: fileDestination }),
+      "move",
+      undefined
+    );
+    executeSpy.mockRestore();
+  });
 
   // ─── processImport: needsReview → manual_review_required ────────────────────
 
