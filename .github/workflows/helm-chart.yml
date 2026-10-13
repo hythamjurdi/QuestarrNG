@@ -27,7 +27,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6.2.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Helm ships with the GitHub-hosted Ubuntu runner image, so no extra
       # action or download is needed. Fail loudly if that ever changes.

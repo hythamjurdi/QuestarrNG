@@ -244,14 +244,14 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [pr #249](https://github.com/Doezer/Questarr/pull/249) | Harden repository: Fix tests and add operational docs | CLOSED | no-merge-commit | verified |
 | [pr #250](https://github.com/Doezer/Questarr/pull/250) | chore(deps): bump docker/build-push-action from 6.10.0 to 6.18.0 | MERGED | merge-commit-not-in-either-main-history | superseded |
 | [pr #251](https://github.com/Doezer/Questarr/pull/251) | chore(deps): bump docker/metadata-action from 5.6.1 to 5.10.0 | MERGED | merge-commit-not-in-either-main-history | superseded |
-| [pr #252](https://github.com/Doezer/Questarr/pull/252) | chore(deps): bump docker/login-action from 3.3.0 to 3.6.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #253](https://github.com/Doezer/Questarr/pull/253) | chore(deps): bump docker/setup-buildx-action from 3.7.1 to 3.12.0 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #254](https://github.com/Doezer/Questarr/pull/254) | chore(deps): bump actions/checkout from 4.2.2 to 6.0.1 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #255](https://github.com/Doezer/Questarr/pull/255) | chore(deps): bump react-hook-form from 7.69.0 to 7.70.0 in the react group | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #256](https://github.com/Doezer/Questarr/pull/256) | chore(deps): bump fast-xml-parser from 5.3.2 to 5.3.3 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #257](https://github.com/Doezer/Questarr/pull/257) | chore(deps): bump @tanstack/react-query from 5.90.7 to 5.90.16 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #258](https://github.com/Doezer/Questarr/pull/258) | chore(deps): bump drizzle-orm from 0.44.7 to 0.45.1 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #259](https://github.com/Doezer/Questarr/pull/259) | chore(deps): bump recharts from 2.15.2 to 2.15.4 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #252](https://github.com/Doezer/Questarr/pull/252) | chore(deps): bump docker/login-action from 3.3.0 to 3.6.0 | MERGED | merge-commit-not-in-either-main-history | superseded |
+| [pr #253](https://github.com/Doezer/Questarr/pull/253) | chore(deps): bump docker/setup-buildx-action from 3.7.1 to 3.12.0 | MERGED | merge-commit-not-in-either-main-history | superseded |
+| [pr #254](https://github.com/Doezer/Questarr/pull/254) | chore(deps): bump actions/checkout from 4.2.2 to 6.0.1 | MERGED | merge-commit-not-in-either-main-history | superseded |
+| [pr #255](https://github.com/Doezer/Questarr/pull/255) | chore(deps): bump react-hook-form from 7.69.0 to 7.70.0 in the react group | MERGED | merge-commit-not-in-either-main-history | superseded |
+| [pr #256](https://github.com/Doezer/Questarr/pull/256) | chore(deps): bump fast-xml-parser from 5.3.2 to 5.3.3 | MERGED | merge-commit-not-in-either-main-history | superseded |
+| [pr #257](https://github.com/Doezer/Questarr/pull/257) | chore(deps): bump @tanstack/react-query from 5.90.7 to 5.90.16 | MERGED | merge-commit-not-in-either-main-history | superseded |
+| [pr #258](https://github.com/Doezer/Questarr/pull/258) | chore(deps): bump drizzle-orm from 0.44.7 to 0.45.1 | MERGED | merge-commit-not-in-either-main-history | superseded |
+| [pr #259](https://github.com/Doezer/Questarr/pull/259) | chore(deps): bump recharts from 2.15.2 to 2.15.4 | MERGED | merge-commit-not-in-either-main-history | superseded |
 | [issue #260](https://github.com/Doezer/Questarr/issues/260) | Error: Failed to connect to database. Please check your DATABASE_URL configuration. | CLOSED | no-merge-commit | not-applicable |
 | [issue #261](https://github.com/Doezer/Questarr/issues/261) | Error on startup connecting to databse | CLOSED | no-merge-commit | unreviewed |
 | [issue #262](https://github.com/Doezer/Questarr/issues/262) | Error Adding Usenet Download Via Prowlarr | CLOSED | no-merge-commit | unreviewed |

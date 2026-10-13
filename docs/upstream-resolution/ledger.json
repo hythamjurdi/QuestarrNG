@@ -6981,10 +6981,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "7ac3102d78bf3cab30e473ac1cf17d7026abacd1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested docker/login-action v3.6.0 bump is superseded by the pinned step-security/docker-login-action v4.6.0 wrapper used in the current workflows."
+        ],
+        "acceptance": [
+          "Registry login uses the maintained pinned action currently selected by the fork workflows."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/252",
+          ".github/workflows/deploy.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7001,10 +7008,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "afa5832a031164e10b9bdebd2ff0a7910bb62316",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested docker/setup-buildx-action v3.12.0 bump is superseded by the pinned step-security/setup-buildx-action v4.2.0 wrapper in CI and deploy workflows."
+        ],
+        "acceptance": [
+          "Buildx setup uses the maintained pinned action currently selected by the fork workflows."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/253",
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7021,10 +7036,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "8fa56b2bf4b5eda78b60b9399e11ba8eff2600b0",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested actions/checkout v6.0.1 bump is exceeded by the current pinned commit, which matches the official v7.0.1 tag. Several workflow comments incorrectly labeled that SHA as v6.2.0; the comments are corrected to v7.0.1."
+        ],
+        "acceptance": [
+          "Workflow checkout references are pinned to the v7.0.1 commit, newer than the requested v6.0.1 update, and their comments identify the pinned tag accurately."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/254",
+          "https://github.com/actions/checkout/tree/v7.0.1",
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          ".github/workflows/stack.yml"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7041,10 +7066,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "76832ec27c896833b41bd809b16f0eb3bacae4b1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested react-hook-form v7.70.0 update is superseded by the package manifest and lockfile at v7.89.0."
+        ],
+        "acceptance": [
+          "The installed react-hook-form version is not older than the requested update."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/255",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7061,10 +7094,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ca1502d4b1acd7e21466591554c0d1d2cf347e84",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested fast-xml-parser v5.3.3 update is superseded by the manifest and lockfile at v5.11.2."
+        ],
+        "acceptance": [
+          "The installed fast-xml-parser version is not older than the requested update."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/256",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7081,10 +7122,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ad60ff645dcb1f162ae080649b4ae2686bd1f25b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested @tanstack/react-query v5.90.16 update is superseded by the manifest at ^5.104.0 and lockfile at v5.104.1."
+        ],
+        "acceptance": [
+          "The installed TanStack Query version is not older than the requested update."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/257",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7101,10 +7150,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "b82f8b18ccf578b7656a66d52c78992f4d616fd8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested drizzle-orm v0.45.1 update is superseded by the manifest at ^0.45.3 and lockfile at v0.45.3."
+        ],
+        "acceptance": [
+          "The installed Drizzle ORM version is not older than the requested update."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/258",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -7121,10 +7178,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "93b2f478c88519aed595f30cfab5325b4b370a26",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested recharts v2.15.4 update is superseded by the manifest at ^3.10.1 and lockfile at v3.10.1."
+        ],
+        "acceptance": [
+          "The installed Recharts version is not older than the requested update."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/259",
+          "package.json",
+          "package-lock.json"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

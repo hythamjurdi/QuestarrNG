@@ -670,3 +670,18 @@ PR [#250](https://github.com/Doezer/Questarr/pull/250) is superseded: the workfl
 Four focused suites passed (386 tests), including the downloader routes and rendered accessibility names. TypeScript checking passed; the production build was also verified in [batch 26](evidence/validation-batch-26.txt). See [batch 27 validation](evidence/validation-batch-27.txt).
 
 The ledger now records **225 verified**, **20 superseded**, **895 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
+
+## Follow-up: dependency update PRs (#252–259)
+
+All eight requests are superseded by versions already in the fork. Current
+workflow pins use step-security registry-login and Buildx wrappers, and the
+checkout SHA matches upstream v7.0.1. I corrected stale workflow comments that
+called that SHA v6.2.0. The package manifest and lockfile exceed the requested
+versions of react-hook-form, fast-xml-parser, TanStack Query, Drizzle ORM, and
+Recharts. No older action or package-lock changes need to be replayed.
+
+The manifest, lockfile, and workflow pins were checked directly; no application
+code changed in this batch. See [batch 28 evidence](evidence/validation-batch-28.txt).
+
+The ledger now records **225 verified**, **28 superseded**, **887 unreviewed**,
+**5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
