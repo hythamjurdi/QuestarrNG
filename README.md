@@ -218,6 +218,13 @@ Then open `http://localhost:5100`. If you use the minimal Compose example
 above, change its port mapping from `5000:5000` to `5100:5000`; the left side
 is the host port and the right side is the port inside the container.
 
+For compatibility, a `PORT` value in the Compose `.env` file sets both sides
+when neither split variable is set. For example, `PORT=5201` maps
+`5201:5201` and makes the app listen on `5201`. Explicit
+`HOST_SIDE_PORT` and `CONTAINER_INTERNAL_SIDE_PORT` values take precedence,
+so you can still expose a different host port without changing the port inside
+the container.
+
 The image runs as a non-root user by default. Set `PUID` and `PGID` to the
 owner of the mounted data directory; the Compose file uses those values as the
 container user. Existing installs keep their data and should set these values
@@ -647,12 +654,13 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
 [validation evidence](docs/upstream-resolution/evidence/). At the latest ledger
-snapshot on October 13, 2026, 506 items are verified, 134 are superseded, and 9
-are not applicable. Another 511 remain unreviewed, three await live-service
-verification, and none currently need implementation. Four source records
-changed after their prior review and remain flagged for renewed triage. Batch
-58 includes live Deluge verification and is documented in the
-[latest validation record](docs/upstream-resolution/evidence/validation-batch-58.txt).
+snapshot generated October 13, 2026 at 17:13 UTC, 532 items are verified, 148
+are superseded, and 11 are not applicable. Another 468 remain unreviewed, four
+implemented integrations await live-service verification, and none currently
+need implementation. Eight source records changed after their prior review
+and remain flagged for renewed triage. Batch 60 restores the Docker Compose
+PORT fallback and reviews 22 additional upstream records; results are in the
+[latest validation record](docs/upstream-resolution/evidence/validation-batch-60.txt).
 This is an active effort; the full review and validation gate must pass before
 campaign work is merged to `main`.
 

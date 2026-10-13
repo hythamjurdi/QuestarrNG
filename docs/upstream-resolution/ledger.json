@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T16:38:20.607Z",
-  "forkHead": "5726192a15f26c272026ef07669e9a52e1c3300d",
+  "capturedAt": "2026-10-13T17:13:04.910Z",
+  "forkHead": "7def63e4a09c75cd2ed4b93bb95129f2b5830936",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -19630,10 +19630,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d36e52d47528d553086f383c20e437771b2dee8b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Both Codecov upload steps use codecov/codecov-action v7.1.1 pinned by full commit SHA, exceeding the PR’s v7.0.0 target. The workflow also keeps Codecov upload failures from failing the build."
+        ],
+        "acceptance": [
+          "Coverage and test-results uploads use a version at or above v7.0.0 and remain immutably pinned.",
+          "A Codecov outage does not make otherwise successful CI fail."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/682",
+          ".github/workflows/ci.yml",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19650,11 +19659,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1e43533ac0874a020477c417733b808ad419d379",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This is a release/1.4.0-only backport. The campaign follows upstream main, whose workflow already pins Codecov v7.1.1 in both upload steps; origin has no release/1.4.0 campaign branch."
+        ],
+        "acceptance": [
+          "Keep the current mainline Codecov pins; do not create a release-only backport for this campaign."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/683",
+          ".github/workflows/ci.yml",
+          "remote branch inventory",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
+        "dependencies": [
+          "pr:682"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -19670,10 +19690,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Search includes stable result keys, the shared apiRequest mutation, safe local-date parsing and invalid-date handling, and an always-mounted pagination sentinel that guards empty-filter loops and reattaches when results change. The CI change makes Codecov upload failure non-blocking."
+        ],
+        "acceptance": [
+          "Changing or clearing date filters preserves result rendering and pagination; downloads use the shared API helper; malformed dates do not break sorting."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/684",
+          "client/src/pages/search.tsx",
+          "client/__tests__/SearchPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19690,11 +19720,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The release/1.4.0 fix proposed one URL/magnet task shape, while the later comprehensive #701 work codifies separate DS2 and legacy contracts, explicit API-error fallback, documentation, and regression tests. The current implementation follows the broader contract."
+        ],
+        "acceptance": [
+          "Use the current DS2/legacy API contract and do not reintroduce the superseded single-payload workaround."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/685",
+          "https://github.com/Doezer/Questarr/pull/701",
+          "server/downloaders/synology.ts",
+          "server/__tests__/downloaders_synology_remaining.test.ts",
+          "docs/synology-download-station-api-notes.md",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
+        "dependencies": [
+          "pr:701"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -19710,10 +19753,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2db36c3c538fdb3f08fb3139f3cd419653d911c9",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The final PR scope is the goal/fitness documentation; current GOAL.md, GOAL-product.md, and scripts/goal-score.mjs provide that fitness-function contract and report measurable validation, page coverage, E2E journeys, and product guidance. Stale review comments refer to discarded post-processing work, not the final PR."
+        ],
+        "acceptance": [
+          "Keep the fitness goals explicit and scoreable, and ensure scorer credit depends on enumerated tests and journeys."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/686",
+          "GOAL.md",
+          "GOAL-product.md",
+          "scripts/goal-score.mjs",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19730,11 +19783,24 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0cf0eeec9f54e931a29ad7e05b905b919e8f1e8e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The original DS2 upload fix added an upload type field. The later #701 implementation replaces that partial contract with the required JSON-encoded type/file parameters, fileData multipart field, ordering, and legacy API handling, all covered by regression tests."
+        ],
+        "acceptance": [
+          "Use the complete DS2 multipart contract and preserve a separate legacy upload contract."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/687",
+          "https://github.com/Doezer/Questarr/pull/701",
+          "server/downloaders/synology.ts",
+          "server/__tests__/downloaders_clients_regression.test.ts",
+          "server/__tests__/downloaders_synology_remaining.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
+        "dependencies": [
+          "pr:701"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -19750,11 +19816,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This WIP Deluge pull request was completed by merged PR #697; the later #690 follow-up fixes the healthy tracker-message regression and adds the “OK” case."
+        ],
+        "acceptance": [
+          "Use the complete Deluge integration and only surface tracker messages as errors when Deluge reports an Error state."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/688",
+          "https://github.com/Doezer/Questarr/pull/697",
+          "https://github.com/Doezer/Questarr/pull/690",
+          "server/downloaders/deluge.ts",
+          "server/__tests__/downloaders_deluge.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-58.txt",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
+        "dependencies": [
+          "pr:697",
+          "pr:690"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -19770,10 +19851,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d37469ad17b38c5281bf2d28d207ad224f128439",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "g4u is registered as a Newznab-compatible protocol, routes through the Newznab client, converts spaces to Scene-style dots for searches, and returns Usenet/NZB results. Focused tests cover routing, query conversion, result type, errors, and mixed indexers."
+        ],
+        "acceptance": [
+          "A g4u search uses the Newznab API with dot-separated terms while ordinary Newznab queries remain unchanged."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/689",
+          "server/search.ts",
+          "server/__tests__/search.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19790,10 +19880,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "05bcaf2e13383ee55db7dcfd489e677b37b8a2ee",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Deluge tracker response text is treated as an error only when the torrent state is Error. Regression tests cover a healthy seeding torrent whose message is “OK” and a real error state."
+        ],
+        "acceptance": [
+          "Healthy tracker messages do not convert seeding torrents into Error status; actual Deluge errors retain their message."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/690",
+          "server/downloaders/deluge.ts",
+          "server/__tests__/downloaders_deluge.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19810,10 +19909,24 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8a841140f1db1b930288f9943d3bb7b0a88575da",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Compose now keeps legacy PORT configurations working as a fallback for both the host mapping and internal listen port, while explicit split variables take precedence. The container startup path checks directory and existing DB-file writability, and the SQLite open failure path logs the DB path and UID/GID before exiting."
+        ],
+        "acceptance": [
+          "PORT=5201 maps 5201:5201 when split variables are absent; explicit HOST_SIDE_PORT and CONTAINER_INTERNAL_SIDE_PORT override independently.",
+          "Invalid SQLite permissions fail with a clear operator-facing diagnostic rather than an unexplained connection refusal."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/691",
+          "docker-compose.yml",
+          ".env.example",
+          "entrypoint.sh",
+          "server/db.ts",
+          "server/__tests__/db-error.test.ts",
+          "docs/SECRETS.md",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19830,10 +19943,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "7d744cf0199475f95482d15ab43674e4fabc4e34",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All actions/checkout references in the CI workflow are pinned to the v7.0.1 commit SHA, newer than the PR’s v7.0.0 target."
+        ],
+        "acceptance": [
+          "Checkout steps use the requested major version or a later compatible version and remain pinned to an immutable SHA."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/692",
+          ".github/workflows/ci.yml",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19850,10 +19971,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b5c1104ffafa76a9f5e9267d4915a6d6e3d125ea",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The current lockfile already contains Playwright 1.63.0 and typescript-eslint 8.71.0, newer than the two versions requested by this merged grouped update."
+        ],
+        "acceptance": [
+          "Do not replay the older grouped update; retain the current locked versions."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/693",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19870,10 +19999,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "240a3d00b776717a3656810a7cd53c6316d00e23",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All 34 production dependency targets in the PR are already met or exceeded by package-lock.json; no older grouped update is needed."
+        ],
+        "acceptance": [
+          "Every package in the grouped request resolves to its requested version or newer in the current lockfile."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/694",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19890,10 +20027,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The issue comments identify localhost resolving to IPv6 loopback [::1] as the failure. Current hostname normalization and safeFetch preserve bracketed IPv6 authorities; regression tests cover HTTP/HTTPS IPv6 Host formatting and safe request behavior."
+        ],
+        "acceptance": [
+          "A downloader configured with localhost/IPv6 loopback reaches the service without malformed hostname parsing or a dropped port, subject to the downloader’s explicit private-network policy."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/695",
+          "docs/upstream-resolution/sources.json (issue body and discussion)",
+          "server/ssrf.ts",
+          "server/__tests__/ssrf.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19943,10 +20090,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "72e41e2f1939c59f769d8a7916462db220762c4e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The complete Deluge JSON-RPC downloader is registered, handles magnet and torrent-file adds, daemon connection, status and labels, and has broad regression coverage. Batch 58 also validated it against a live Deluge 2.2.0 service."
+        ],
+        "acceptance": [
+          "Deluge can be configured and used for acquisition; session renewal and RPC actions behave correctly, and ordinary tracker messages do not become errors."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/697",
+          "server/downloaders/deluge.ts",
+          "server/downloaders/index.ts",
+          "server/__tests__/downloaders_deluge.test.ts",
+          "server/__tests__/downloaders_deluge_remaining.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-58.txt",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19963,10 +20122,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0fbf0fc5d5236558441313e93c3756103f7c5871",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Outbound HTTP requests use safeFetch with DNS validation and pinned resolved addresses where required; the original hostname and port remain available for Host/TLS routing. Tests cover IPv6 authority formatting, rebinding protection, and downloader TLS fallback."
+        ],
+        "acceptance": [
+          "A rebinding response cannot change the validated destination, while virtual-host requests retain the configured hostname and port."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/698",
+          "server/ssrf.ts",
+          "server/igdb.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/downloaders_ssl_fallback.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -19983,10 +20154,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "023138cae33b53506d2a1ec5ecf4b07d75945f6c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The PR’s page and E2E coverage goals are present: all 10 required surfaces and all 8 journeys score full points, and validation checks pass. The expanded current GOAL rubric scores 92.5/100, above its documented stop threshold of 90; coverage depth is 22.5/30 and remains below its aspirational metric targets, so the result is not reported as 100/100."
+        ],
+        "acceptance": [
+          "All required page surfaces and E2E journeys are measured by the script, and listed journeys correspond to actual Playwright specs.",
+          "The current score satisfies GOAL.md’s stop threshold (at least 90) without claiming that every aspirational coverage target is met."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/699",
+          "scripts/goal-score.mjs",
+          "GOAL.md",
+          "GOAL-product.md",
+          "docs/upstream-resolution/evidence/validation-batch-59.txt",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20003,10 +20186,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "55bf97af3e39b83ec2bb8e3daeba87a85e04b04d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "This is an administrative synchronization of upstream release/1.4.0 with upstream main, not an application behavior request. The campaign targets main and the fork has no origin/release/1.4.0 branch to synchronize."
+        ],
+        "acceptance": [
+          "Do not create a release-branch merge as part of the mainline full-history campaign."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/700",
+          "remote branch inventory",
+          "docs/upstream-resolution/README.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20023,10 +20214,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d66d86bb3d68351d537fd5ef9d15f9b5248ddc3c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "implemented-unverified",
+        "findings": [
+          "The full DS2 and legacy Synology task/upload contracts, explicit API-error-only fallback, technical notes, and mocked regression cases are implemented. No compatible live Synology Download Station service is available in this validation environment, so hardware/API compatibility remains unverified."
+        ],
+        "acceptance": [
+          "Mocked cases confirm DS2 and legacy URL/magnet and multipart upload contracts, session handling, field ordering, and no retry on transport failure.",
+          "A live Synology Download Station test confirms task creation and upload behavior before this item can become verified."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/701",
+          "server/downloaders/synology.ts",
+          "server/__tests__/downloaders_clients_regression.test.ts",
+          "server/__tests__/downloaders_synology_remaining.test.ts",
+          "docs/synology-download-station-api-notes.md",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20043,10 +20246,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e2db123d48ca728dc9a9732f2028676084cc01fb",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The root .gitignore excludes .sofa/; git check-ignore confirms .sofa/credentials.json is ignored."
+        ],
+        "acceptance": [
+          "Credential files below .sofa/ are not tracked by Git."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/702",
+          ".gitignore",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20063,10 +20274,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ad2e2624368ff5c86a0e20182a4f41f4eb6fd3cd",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "RSS grid/list controls have explicit accessible names, and article links include the article title. Decorative icons alone are hidden from assistive technology; visible text is not hidden. A focused rendered component test now guards these names."
+        ],
+        "acceptance": [
+          "Multiple article links are distinguishable by accessible name, view controls are named, and their decorative SVGs do not create duplicate announcements."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/703",
+          "client/src/components/RssFeedList.tsx",
+          "client/src/components/CompactRssFeedItem.tsx",
+          "client/__tests__/RssFeedList.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -20083,10 +20304,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "48278e714a9852b859ff727e6d5b34aba0e5676c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Discord share endpoint calls safeFetch with allowPrivate:false, preventing webhook requests to loopback/private destinations. The route test explicitly asserts POST and the restrictive option."
+        ],
+        "acceptance": [
+          "Discord webhook URLs are validated through the SSRF-safe client and private-network destinations are rejected."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/704",
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/ssrf.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-60.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

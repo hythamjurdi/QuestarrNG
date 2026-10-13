@@ -4183,7 +4183,7 @@ describe("API Routes - Extended Coverage", () => {
       expect(response.body).toEqual({ success: true });
       expect(safeFetchMock).toHaveBeenCalledWith(
         "https://discord.com/api/webhooks/123/abc",
-        expect.objectContaining({ method: "POST" })
+        expect.objectContaining({ method: "POST", allowPrivate: false })
       );
     });
 

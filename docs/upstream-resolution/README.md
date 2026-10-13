@@ -19,29 +19,29 @@ behavior when implementing upstream requests.
 ## Current ledger snapshot
 
 The issue and PR lists were refreshed in a live GitHub audit against upstream
-main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 16:38
-UTC**. The ledger and inventory were regenerated from those results at the same
-time; `capturedAt` records audit generation time, not an individual GitHub
-request timestamp. Review status is independent of GitHub's open, closed, or
-merged state:
+main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 17:08
+UTC**. The live export was collected then; the ledger and inventory were
+regenerated from that export at **17:13 UTC**. The capturedAt field records
+generation time, not an individual GitHub request timestamp. Review status is
+independent of GitHub's open, closed, or merged state:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       518 |
-| `superseded`             |       142 |
-| `not-applicable`         |        10 |
-| `implemented-unverified` |         3 |
+| `verified`               |       532 |
+| `superseded`             |       148 |
+| `not-applicable`         |        11 |
+| `implemented-unverified` |         4 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       490 |
+| `unreviewed`             |       468 |
 | **Total**                | **1,163** |
 
-The ledger now gives 673 items an assigned disposition. Three implemented
+The ledger now gives 695 items an assigned disposition. Four implemented
 integrations still need live-service verification, no currently identified
-item needs implementation, and 490 are unreviewed. Eight previously reviewed
+item needs implementation, and 468 are unreviewed. Eight previously reviewed
 PRs (#1192, #1195, #1196, #1198, #1199, #1201, #1202, and #1203) changed in the
-refreshed source export and remain flagged for renewed triage. These numbers describe the ledger, not
-completion of the campaign. Batch 59 is the latest completed review; its results
-are in [validation evidence](evidence/validation-batch-59.txt).
+refreshed source export and remain flagged for renewed triage. These numbers
+describe the ledger, not completion of the campaign. Batch 60 is the latest completed review; its results
+are in [validation evidence](evidence/validation-batch-60.txt).
 
 ## Project records
 
@@ -1762,3 +1762,34 @@ Browser evidence for the date-filtered search, empty-filtered logs, and priority
 is retained under `evidence/`. The campaign validation evidence records the
 focused and full Vitest runs, Playwright coverage, add-on smoke test, security
 and format checks, and temporary-data cleanup.
+
+## Batch 60: downloader, security, accessibility, dependencies, and deployment
+
+Batch 60 reviewed the 21 unreviewed PRs from #682–704 (excluding previously
+verified #696) and issue #695. It added 14 verified dispositions, six
+superseded requests, one not-applicable release-branch synchronization, and one
+implemented-but-unverified Synology integration. The source snapshot remains
+1,163 items; the ledger now records 532 verified, 148 superseded, 11
+not-applicable, four implemented-unverified, zero needs-implementation, and
+468 unreviewed items.
+
+The main new behavior restores backwards compatibility for Docker Compose users
+who still set PORT: it now supplies both the host and container HTTP port
+unless either explicit split variable overrides that side. docker compose config
+was checked with defaults, PORT=5201, and separate host/internal values. SQLite
+startup diagnostics and existing database-file checks were reviewed alongside
+that port fix.
+
+The source review confirmed the current search pagination and date handling,
+g4u Newznab query format, Deluge status handling, IPv6 loopback normalization,
+SSRF-safe Discord webhook, RSS accessible names, and current immutable CI action
+pins. Older grouped dependency updates are superseded by the lockfile; the
+release/1.4.0-only synchronization PR does not apply to this mainline campaign.
+The full Synology DS2 and legacy contract remains implemented-unverified until
+it can be exercised against a live Download Station service.
+
+The focused RSS accessible-name regression test and Discord SSRF option
+assertion, Compose interpolation smoke checks, and full validation outcomes are
+recorded in [Batch 60 evidence](evidence/validation-batch-60.txt). Eight source
+records remain flagged for renewed triage. This campaign is still in progress
+and has not passed the merge gate.

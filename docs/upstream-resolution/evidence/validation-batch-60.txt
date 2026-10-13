@@ -1,0 +1,58 @@
+# Batch 60 validation
+
+Date: 2026-10-13
+Campaign branch: codex/upstream-resolution
+Base commit: 7def63e4a09c75cd2ed4b93bb95129f2b5830936
+Upstream main: 0b538fe4b0a2269edcc8fd3e71e2bbc240291868
+Source list export: live GitHub audit collected at 17:08 UTC; ledger and generated inventory refreshed at 17:13 UTC from that export.
+
+## Review scope and result
+
+This batch reviewed 21 previously unreviewed pull requests in #682–#704 (excluding already verified #696) plus issue #695. The 1,163-item ledger now records:
+
+- 532 verified
+- 148 superseded
+- 11 not applicable
+- 4 implemented but unverified
+- 0 needing implementation
+- 468 unreviewed
+
+The eight PRs whose source changed since their earlier review remain flagged: #1192, #1195, #1196, #1198, #1199, #1201, #1202, and #1203.
+
+The 22 new dispositions are 14 verified (#682, #684, #686, #689–692, #695, #697–699, and #702–704), six superseded (#683, #685, #687, #688, #693, and #694), one not applicable (#700), and one implemented but unverified (#701). The latter has a comprehensive mocked DS2/legacy Synology contract and regression coverage, but a live Synology Download Station service was unavailable.
+
+## Behavior and source checks
+
+- Restored Docker Compose compatibility for PORT: when split values are absent, PORT now supplies both the published host port and the container's listening port. HOST_SIDE_PORT and CONTAINER_INTERNAL_SIDE_PORT override their respective values independently.
+- Ran docker compose config without starting containers for four cases:
+  - defaults: 5000:5000 and PORT=5000
+  - PORT=5201: 5201:5201 and PORT=5201
+  - PORT=5201 with host/internal overrides 5300/5301: 5300:5301 and PORT=5301
+  - PORT=5201 with host override 5300 only: 5300:5201 and PORT=5201
+- The first assertion harness looked for service key questarr; the Compose service is named app. Correcting the harness to read app made all four configuration assertions pass. No container or port was started.
+- Compared all 34 package targets in PR #694 with package-lock.json; none were missing or below the requested version. The current @playwright/test and typescript-eslint versions are 1.63.0 and 8.71.0.
+- Confirmed .sofa/credentials.json is ignored by Git.
+- Added a rendered RSS component regression test for the descriptive view-control and article-link accessible names. The full Vitest run includes it and the Discord webhook assertion enforcing allowPrivate:false.
+- Refreshed the goal-score run: 92.5/100. Validation scored 30/30, page coverage 20/20, E2E journeys 20/20, and coverage depth 22.5/30. All eight required journeys were enumerated. GOAL.md defines a stop threshold of 90; the current result clears that threshold, while four coverage-depth metrics remain below aspirational targets. The full 50-case Playwright run was last completed in Batch 59; no client/src files changed in Batch 60.
+- Batch 60 added an operator release note for the Compose PORT fallback. The release-note metadata validator passed for this fragment against the final batch commit before push.
+
+## Validation
+
+- rtk npm run test:run -- --maxWorkers=8: 264 files passed, 1 skipped; 4,188 tests passed, 7 skipped.
+- Focused client/__tests__/RssFeedList.test.tsx run: 1 test passed.
+- rtk npm run check: passed.
+- rtk npm run lint: passed with zero warnings.
+- rtk npm run format:check: passed.
+- rtk npm run secretlint: passed.
+- rtk npm run build: passed. Vite reported the existing large-chunk advisory; the largest entry chunk was about 869 KB.
+- rtk node scripts/goal-score.mjs --json: passed with the 92.5/100 score described above; its validation, page, and E2E enumeration checks passed.
+- rtk git diff --check: passed before final staging.
+
+## Scratch and limits
+
+The refreshed source export was reconstructed in the task-only local directory /home/keith/Documents/code/questarr-batch60-scratch so the generated inventory could preserve the exact live snapshot. That directory was removed after regeneration. The goal-score coverage output and its generated Playwright HTML report, along
+with the ignored campaign dist/ build output, were removed after verification.
+The pre-existing test-results/ directory was preserved. Local disk was
+sufficient; the LVM-backed NFS share was not used. No app server, Docker container, or host port was started. The live checkout and its port 5100 were not touched.
+
+Batch 60 does not complete the campaign. The eight changed-source records, 468 unreviewed records, four live-service verification items, and the final campaign merge gate remain open.
