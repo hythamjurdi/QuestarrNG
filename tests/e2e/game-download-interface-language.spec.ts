@@ -142,8 +142,8 @@ test.describe("Game download interface language", () => {
     const releaseCountButton = page.locator(`button[aria-labelledby~="${releaseCountLabelId}"]`);
     await expect(releaseCountButton).toHaveCount(1);
     await expect(releaseCountButton).toHaveAccessibleName(/إصدار/u);
-    await expect(releaseCountButton).toHaveAttribute("lang", "ja");
-    await expect(releaseCountButton).toHaveAttribute("dir", "ltr");
+    await expect(releaseCountButton).not.toHaveAttribute("lang");
+    await expect(releaseCountButton).toHaveAttribute("dir", "auto");
     const labelledByIds = (await releaseCountButton.getAttribute("aria-labelledby"))
       ?.split(/\s+/)
       .filter(Boolean);
