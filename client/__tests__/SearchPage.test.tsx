@@ -361,6 +361,7 @@ describe("SearchPage", () => {
       await waitFor(() => expect(screen.getByTestId("card-torrent-0")).toBeInTheDocument());
       const btn = screen.getByTestId("button-download-0");
       expect(btn).not.toBeDisabled();
+      expect(btn).toHaveAccessibleName(`Start download for ${TORRENT_ITEM.title}`);
 
       fireEvent.click(btn);
 

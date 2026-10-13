@@ -372,8 +372,10 @@ describe("Downloads page", () => {
 
     renderPage();
 
-    expect(await screen.findByTestId("button-pause-dl-active")).toBeInTheDocument();
-    expect(screen.getByTestId("button-resume-dl-paused")).toBeInTheDocument();
+    const pauseButton = await screen.findByTestId("button-pause-dl-active");
+    const resumeButton = screen.getByTestId("button-resume-dl-paused");
+    expect(pauseButton).toHaveAccessibleName("Pause Active Download");
+    expect(resumeButton).toHaveAccessibleName("Resume Paused Download");
 
     fireEvent.click(screen.getByTestId("button-pause-dl-active"));
     fireEvent.click(screen.getByTestId("button-resume-dl-paused"));

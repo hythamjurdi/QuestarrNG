@@ -21,6 +21,7 @@ import {
 
 const UNCONFIRMED_ADD_MESSAGE =
   "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.";
+const QB_HASH_RESOLUTION_TIMEOUT_MS = 15_000;
 
 interface QBittorrentTorrent {
   hash: string;
@@ -189,11 +190,20 @@ export class QBittorrentClient implements DownloaderClient {
       }
 
       const findRecentlyAddedDownload = async (
-        options: { skipInitialWait?: boolean; correlationTag?: string | undefined } = {}
+        options: {
+          skipInitialWait?: boolean;
+          correlationTag?: string | undefined;
+          signal?: AbortSignal | undefined;
+        } = {}
       ): Promise<{
         hash: string;
         name?: string;
       } | null> => {
+        const getInfo = (path: string) =>
+          options.signal
+            ? this.makeRequest("GET", path, undefined, undefined, options.signal)
+            : this.makeRequest("GET", path);
+
         // Wait a bit for qBittorrent to process the add (URL add or torrent upload).
         // Callers that already pace their own waits between attempts (e.g. a
         // retry loop) can skip this to avoid stacking an extra delay on top.
@@ -206,8 +216,7 @@ export class QBittorrentClient implements DownloaderClient {
         // which matters most here since polling can now span several seconds
         // during which other downloads may also be added.
         if (options.correlationTag) {
-          const taggedResponse = await this.makeRequest(
-            "GET",
+          const taggedResponse = await getInfo(
             `/api/v2/torrents/info?tag=${encodeURIComponent(options.correlationTag)}`
           );
           const tagged = (await taggedResponse.json()) as QBittorrentTorrent[];
@@ -221,8 +230,7 @@ export class QBittorrentClient implements DownloaderClient {
           );
         }
 
-        const allTorrentsResponse = await this.makeRequest(
-          "GET",
+        const allTorrentsResponse = await getInfo(
           "/api/v2/torrents/info?sort=added_on&reverse=true"
         );
         const allDownloads = (await allTorrentsResponse.json()) as QBittorrentTorrent[];
@@ -354,16 +362,29 @@ export class QBittorrentClient implements DownloaderClient {
               const maxAttempts = 10;
               let successfulPolls = 0;
               if (!resolvedHash) {
+                const resolutionDeadline = Date.now() + QB_HASH_RESOLUTION_TIMEOUT_MS;
+                const resolutionSignal = AbortSignal.timeout(QB_HASH_RESOLUTION_TIMEOUT_MS);
                 for (let attempt = 0; attempt < maxAttempts && !resolvedHash; attempt++) {
-                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                  const remainingMs = resolutionDeadline - Date.now();
+                  if (remainingMs <= 0 || resolutionSignal.aborted) break;
+                  await new Promise((resolve) => setTimeout(resolve, Math.min(1000, remainingMs)));
+                  if (resolutionSignal.aborted || Date.now() >= resolutionDeadline) break;
                   try {
                     const recent = await findRecentlyAddedDownload({
                       skipInitialWait: true,
                       correlationTag,
+                      signal: resolutionSignal,
                     });
                     successfulPolls++;
                     if (recent?.hash) resolvedHash = recent.hash;
                   } catch (error) {
+                    if (resolutionSignal.aborted || Date.now() >= resolutionDeadline) {
+                      downloadersLogger.warn(
+                        { url: request.url, timeoutMs: QB_HASH_RESOLUTION_TIMEOUT_MS },
+                        "Stopped waiting for qBittorrent to resolve the accepted download"
+                      );
+                      break;
+                    }
                     downloadersLogger.warn(
                       { error, url: request.url },
                       "Failed to poll qBittorrent for the newly added torrent; will retry"
@@ -1371,7 +1392,7 @@ export class QBittorrentClient implements DownloaderClient {
    * @throws If the transport policy forbids the configured credentials, or the login
    * request itself fails.
    */
-  private async authenticate(force = false): Promise<void> {
+  private async authenticate(force = false, requestSignal?: AbortSignal): Promise<void> {
     if (this.cookie && !force) {
       return; // Already authenticated
     }
@@ -1403,7 +1424,7 @@ export class QBittorrentClient implements DownloaderClient {
           "User-Agent": "Questarr/1.0",
         },
         body: formData.toString(),
-        signal: AbortSignal.timeout(30000),
+        signal: requestSignal ?? AbortSignal.timeout(30000),
         // The login request body carries the plaintext password -- once the guard above
         // has permitted an HTTPS connection, don't let a redirect downgrade it mid-flight.
         requireHttps: isHttpsUrl(url),
@@ -1522,7 +1543,8 @@ export class QBittorrentClient implements DownloaderClient {
     method: string,
     path: string,
     body?: string | Buffer,
-    additionalHeaders?: Record<string, string>
+    additionalHeaders?: Record<string, string>,
+    requestSignal?: AbortSignal
   ): Promise<Response> {
     const url = this.getBaseUrl() + path;
 
@@ -1556,7 +1578,7 @@ export class QBittorrentClient implements DownloaderClient {
       method,
       headers,
       ...(requestBody !== undefined ? { body: requestBody } : {}),
-      signal: AbortSignal.timeout(30000),
+      signal: requestSignal ?? AbortSignal.timeout(30000),
       requireHttps: isHttpsUrl(url),
     });
     await logDownloaderDebugResponse("qBittorrent", method, url, response);
@@ -1565,7 +1587,8 @@ export class QBittorrentClient implements DownloaderClient {
       // Session expired or unauthorized, re-authenticate
       downloadersLogger.debug({ status: response.status, path }, "Got 403/401, re-authenticating");
       this.cookie = null;
-      await this.authenticate(true);
+      if (requestSignal) await this.authenticate(true, requestSignal);
+      else await this.authenticate(true);
 
       // Retry with new cookie
       const retryHeaders = { ...headers };
@@ -1577,7 +1600,7 @@ export class QBittorrentClient implements DownloaderClient {
         method,
         headers: retryHeaders,
         ...(requestBody !== undefined ? { body: requestBody } : {}),
-        signal: AbortSignal.timeout(30000),
+        signal: requestSignal ?? AbortSignal.timeout(30000),
         requireHttps: isHttpsUrl(url),
       });
       await logDownloaderDebugResponse("qBittorrent", method, url, response);

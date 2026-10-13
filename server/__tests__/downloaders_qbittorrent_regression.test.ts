@@ -1530,6 +1530,76 @@ describe("qbittorrent regression coverage", () => {
     }
   });
 
+  it("bounds accepted URL hash polling and leaves the download tracked when the budget expires", async () => {
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      callback: TimerHandler,
+      _delay?: number,
+      ...args: unknown[]
+    ) => {
+      if (typeof callback === "function") {
+        callback(...args);
+      }
+      return 0 as unknown as ReturnType<typeof setTimeout>;
+    }) as typeof setTimeout);
+    let now = 0;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => now);
+
+    try {
+      const client = new QBittorrentClient(createDownloader());
+      const privateClient = client as unknown as {
+        authenticate(force?: boolean): Promise<void>;
+        makeRequest(
+          method: string,
+          path: string,
+          body?: string | Buffer,
+          additionalHeaders?: Record<string, string>,
+          requestSignal?: AbortSignal
+        ): Promise<Response>;
+      };
+
+      vi.spyOn(privateClient, "authenticate").mockResolvedValue(undefined);
+      let pollSignal: AbortSignal | undefined;
+      const makeRequestSpy = vi
+        .spyOn(privateClient, "makeRequest")
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 202,
+          text: async () =>
+            JSON.stringify({
+              added_torrent_ids: [],
+              failure_count: 0,
+              pending_count: 1,
+              success_count: 0,
+            }),
+          headers: jsonHeaders,
+        } as unknown as Response)
+        .mockImplementationOnce(async (_method, path, _body, _headers, requestSignal) => {
+          expect(path).toMatch(/^\/api\/v2\/torrents\/info\?tag=questarr-add-/);
+          pollSignal = requestSignal;
+          // Model a request that uses the remaining overall budget before timing out.
+          now = 15_000;
+          throw new DOMException("The operation timed out", "TimeoutError");
+        });
+
+      const result = await client.addDownload({
+        url: "http://indexer.local/slow-pending.torrent",
+        title: "Queued via URL",
+      });
+
+      expect(result).toMatchObject({
+        success: true,
+        correlationTag: expect.stringMatching(/^questarr-add-/),
+        message:
+          "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.",
+      });
+      expect(pollSignal).toBeInstanceOf(AbortSignal);
+      expect(makeRequestSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      dateNowSpy.mockRestore();
+      setTimeoutSpy.mockRestore();
+    }
+  });
+
   it("covers torrent-download failure, free-space fallbacks, and request error branches", async () => {
     const client = new QBittorrentClient(createDownloader());
     const privateClient = client as unknown as {

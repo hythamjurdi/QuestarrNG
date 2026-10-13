@@ -1,4 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Writable } from "node:stream";
+
+function createTransportStub(): Writable {
+  return new Writable({
+    write(_chunk, _encoding, callback) {
+      callback();
+    },
+  });
+}
 
 describe("Logger Module", () => {
   const originalEnv = process.env.NODE_ENV;
@@ -10,6 +19,7 @@ describe("Logger Module", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     process.env.NODE_ENV = originalEnv;
     if (originalLogLevel !== undefined) {
       process.env.LOG_LEVEL = originalLogLevel;
@@ -114,7 +124,9 @@ describe("Logger Module", () => {
     process.env.NODE_ENV = "development";
 
     const pinoModule = await import("pino");
-    const transportSpy = vi.spyOn(pinoModule.default, "transport");
+    const transportSpy = vi
+      .spyOn(pinoModule.default, "transport")
+      .mockReturnValue(createTransportStub() as never);
 
     await import("../logger.js");
 
@@ -129,7 +141,9 @@ describe("Logger Module", () => {
     process.env.NODE_ENV = "production";
 
     const pinoModule = await import("pino");
-    const transportSpy = vi.spyOn(pinoModule.default, "transport");
+    const transportSpy = vi
+      .spyOn(pinoModule.default, "transport")
+      .mockReturnValue(createTransportStub() as never);
 
     await import("../logger.js");
 
@@ -150,7 +164,9 @@ describe("Logger Module", () => {
     process.env.QUESTARR_LOG_FILE = "/tmp/questarr-logs/server.log";
 
     const pinoModule = await import("pino");
-    const transportSpy = vi.spyOn(pinoModule.default, "transport");
+    const transportSpy = vi
+      .spyOn(pinoModule.default, "transport")
+      .mockReturnValue(createTransportStub() as never);
 
     await import("../logger.js");
 
