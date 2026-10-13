@@ -6,4 +6,4 @@ action: none
 breaking: false
 ---
 
-Calendar headings, weekday names, navigation controls, and empty states now follow the selected interface language where translated, while dates and counts use the regional format. Settings applies regional-format changes across open screens.
+The Release Calendar and game download dialog now translate headings, controls, search filters, empty states, release categories, result guidance, and update actions where catalog entries are available. Dates and counts use the selected regional format. Missing text falls back to English; Arabic labels use local direction metadata, with full RTL review still outstanding.
