@@ -508,3 +508,21 @@ advisory. The ledger now records **178 verified**, **6 superseded**, **957
 unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and **1
 needs-implementation** record. Issue #37 remains outstanding. See
 [batch 19 evidence](evidence/validation-batch-19.txt).
+
+## Follow-up: upstream PRs #176–182
+
+No application changes were needed for this group. The disabled-carousel
+navigation tooltip (#176), IGDB search-result cache (#178), sidebar-trigger
+tooltip (#179), and background refresh feedback in the Library grid (#182) are
+already present and covered by tests. The traversal proposals (#177 and #181)
+are duplicates of the protections recorded in batch 19; #177 has no file diff,
+and the maintainer explicitly called #181 a duplicate. The old development
+dependency group bump (#180) was closed as no longer needed, and the fork
+already declares newer versions.
+
+Focused tests passed: 3 carousel tests and 5 GameGrid tests. There were no
+additional actionable review comments; the remaining comments were generic
+Jules greetings. The ledger now records **182 verified**, **9 superseded**,
+**950 unreviewed**, **4 not-applicable**, **1 implemented-but-unverified**, and
+**1 needs-implementation** record. Issue #37 remains outstanding. See
+[batch 20 evidence](evidence/validation-batch-20.txt).

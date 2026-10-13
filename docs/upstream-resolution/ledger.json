@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T00:22:17.221Z",
-  "forkHead": "e4fd82732e20b39704c030e6d57b0be1b7dffffd",
+  "capturedAt": "2026-10-13T00:27:26.087Z",
+  "forkHead": "580abeba6ea0fe62ebf8ebfdaf0b04938b487697",
   "upstreamHead": "ad69b8ca44c7456d9183422fbdfdefbb67a771e9",
   "counts": {
     "issue:CLOSED": 228,
@@ -5017,10 +5017,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Disabled carousel navigation already exposes its contextual tooltip, including keyboard focus through the trigger wrapper."
+        ],
+        "acceptance": [
+          "A disabled previous/next control remains discoverable and explains why navigation is unavailable."
+        ],
+        "evidence": [
+          "client/src/components/GameCarouselSection.tsx",
+          "client/__tests__/GameCarouselSection.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-20.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5037,11 +5045,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The closed upstream PR contains no file changes; its traversal request is covered by the previously verified request validation and downloader path checks."
+        ],
+        "acceptance": [
+          "Absolute and parent-traversing download overrides are rejected before a downloader request is made."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/177",
+          "server/middleware.ts",
+          "server/downloaders/path-safety.ts",
+          "server/__tests__/middleware.test.ts",
+          "server/__tests__/downloaders.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-19.txt"
+        ],
+        "dependencies": [
+          "pr:171",
+          "pr:174"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -5057,11 +5079,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "IGDB search results are cached by sanitized query, limit, and local filter options; successful results use a 15-minute TTL and empty results use 5 minutes."
+        ],
+        "acceptance": [
+          "Repeated equivalent searches reuse results, distinct local options do not collide, and failed API calls do not create empty cache entries."
+        ],
+        "evidence": [
+          "server/igdb.ts",
+          "server/__tests__/igdb_extended.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-19.txt",
+          "docs/upstream-resolution/evidence/validation-batch-20.txt"
+        ],
+        "dependencies": [
+          "pr:175"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -5077,10 +5110,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Header wraps its sidebar trigger in a tooltip that labels the action “Toggle Sidebar”; this behavior was already present."
+        ],
+        "acceptance": [
+          "The sidebar trigger exposes a readable tooltip label."
+        ],
+        "evidence": [
+          "client/src/components/Header.tsx",
+          "client/src/components/ui/sidebar.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-20.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5097,10 +5138,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR was closed by Dependabot as no longer needed. The proposed development dependency versions are superseded by newer versions already declared and locked in the fork."
+        ],
+        "acceptance": [
+          "Keep the newer dependency updates already present in the fork rather than applying this older grouped bump."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/180",
+          "package.json",
+          "package-lock.json",
+          "pnpm-lock.yaml",
+          "docs/upstream-resolution/evidence/validation-batch-20.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5117,11 +5168,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The upstream maintainer explicitly closed this high-severity traversal PR as a duplicate; the equivalent protections are covered by the verified path-validation and downloader-request checks."
+        ],
+        "acceptance": [
+          "Absolute and traversing user overrides are blocked while configured absolute download roots remain supported."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/181",
+          "server/middleware.ts",
+          "server/downloaders/path-safety.ts",
+          "server/__tests__/middleware.test.ts",
+          "server/__tests__/downloaders.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-19.txt"
+        ],
+        "dependencies": [
+          "pr:171",
+          "pr:174",
+          "pr:177"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -5137,10 +5203,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Library retains existing grid results during background refetches and marks the grid busy with reduced-opacity, non-interactive styling."
+        ],
+        "acceptance": [
+          "A background refresh keeps current cards visible and signals that the grid is updating."
+        ],
+        "evidence": [
+          "client/src/components/GameGrid.tsx",
+          "client/src/components/Library.tsx",
+          "client/__tests__/GameGrid.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-20.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
