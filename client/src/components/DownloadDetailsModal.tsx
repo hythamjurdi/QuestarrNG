@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -44,7 +45,7 @@ interface DownloadDetailsModalProps {
 function formatDate(isoString: string | undefined): string {
   if (!isoString) return "N/A";
   try {
-    return new Date(isoString).toLocaleString();
+    return new Date(isoString).toLocaleString(getRegionalLocale());
   } catch {
     return "N/A";
   }

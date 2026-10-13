@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
@@ -35,7 +36,7 @@ import {
 function formatDate(value: string | null): string {
   if (!value) return "Never";
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleString(getRegionalLocale());
 }
 
 /**

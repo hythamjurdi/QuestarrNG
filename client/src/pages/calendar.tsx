@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -33,7 +34,7 @@ export function formatDate(date: Date): string {
 }
 
 function getMonthName(month: number): string {
-  return new Date(2000, month, 1).toLocaleDateString(undefined, { month: "long" });
+  return new Date(2000, month, 1).toLocaleDateString(getRegionalLocale(), { month: "long" });
 }
 
 export function getWeekDays(date: Date): Date[] {
@@ -347,7 +348,7 @@ function YearView({
                 gamesInMonth.map(([date, games]) => (
                   <div key={date} className="text-sm">
                     <div className="text-muted-foreground mb-1">
-                      {new Date(date).toLocaleDateString(undefined, {
+                      {new Date(date).toLocaleDateString(getRegionalLocale(), {
                         month: "short",
                         day: "numeric",
                       })}
@@ -417,7 +418,7 @@ function MonthView({
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
           const isSelected = selectedDayKey === dateKey;
-          const formattedDayLabel = day.toLocaleDateString(undefined, {
+          const formattedDayLabel = day.toLocaleDateString(getRegionalLocale(), {
             weekday: "long",
             month: "long",
             day: "numeric",
@@ -498,7 +499,7 @@ function MonthView({
       {selectedDayKey && selectedGames.length > 0 && (
         <div className="mt-3 p-3 bg-muted/50 rounded-lg md:hidden">
           <p className="text-xs font-semibold text-muted-foreground mb-2">
-            {new Date(selectedDayKey).toLocaleDateString(undefined, {
+            {new Date(selectedDayKey).toLocaleDateString(getRegionalLocale(), {
               weekday: "long",
               month: "long",
               day: "numeric",
@@ -543,8 +544,8 @@ function WeekView({
           const gamesOnDay = gamesByDate[dateKey] || [];
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
-          const dayName = day.toLocaleDateString(undefined, { weekday: "short" });
-          const monthName = day.toLocaleDateString(undefined, { month: "short" });
+          const dayName = day.toLocaleDateString(getRegionalLocale(), { weekday: "short" });
+          const monthName = day.toLocaleDateString(getRegionalLocale(), { month: "short" });
 
           return (
             <div
@@ -601,7 +602,7 @@ function WeekView({
           const gamesOnDay = gamesByDate[dateKey] || [];
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
-          const dayName = day.toLocaleDateString(undefined, { weekday: "short" });
+          const dayName = day.toLocaleDateString(getRegionalLocale(), { weekday: "short" });
 
           return (
             <div
@@ -618,7 +619,7 @@ function WeekView({
                   {day.getDate()}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {day.toLocaleDateString(undefined, { month: "short" })}
+                  {day.toLocaleDateString(getRegionalLocale(), { month: "short" })}
                 </div>
               </div>
               <div className="space-y-2">
@@ -723,7 +724,7 @@ function GameBadge({
             )}
             <p className="text-xs text-muted-foreground mt-1">
               {game.releaseDate &&
-                new Date(game.releaseDate).toLocaleDateString(undefined, {
+                new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -732,7 +733,7 @@ function GameBadge({
             {isDelayed && game.originalReleaseDate && (
               <p className="text-xs text-muted-foreground">
                 Original:{" "}
-                {new Date(game.originalReleaseDate).toLocaleDateString(undefined, {
+                {new Date(game.originalReleaseDate).toLocaleDateString(getRegionalLocale(), {
                   month: "short",
                   day: "numeric",
                 })}
@@ -775,7 +776,7 @@ function GameBadge({
             {!hideDate && (
               <p className="text-xs text-muted-foreground">
                 {game.releaseDate &&
-                  new Date(game.releaseDate).toLocaleDateString(undefined, {
+                  new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -792,7 +793,7 @@ function GameBadge({
             {hideDate
               ? "Release date TBD"
               : game.releaseDate
-                ? new Date(game.releaseDate).toLocaleDateString(undefined, {
+                ? new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                     month: "long",
                     day: "numeric",
                     year: "numeric",
@@ -807,7 +808,7 @@ function GameBadge({
               {game.originalReleaseDate && (
                 <p className="text-xs text-muted-foreground">
                   Was originally scheduled for:{" "}
-                  {new Date(game.originalReleaseDate).toLocaleDateString(undefined, {
+                  {new Date(game.originalReleaseDate).toLocaleDateString(getRegionalLocale(), {
                     month: "long",
                     day: "numeric",
                     year: "numeric",

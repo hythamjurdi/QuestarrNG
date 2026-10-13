@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -57,7 +58,7 @@ function formatDate(value: string | Date | null): string {
   if (!value) return "";
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString(undefined, {
+  return date.toLocaleString(getRegionalLocale(), {
     dateStyle: "medium",
     timeStyle: "short",
   });

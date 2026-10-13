@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw, Loader2, Plus } from "lucide-react";
@@ -29,7 +30,7 @@ interface XrelLatestResponse {
 }
 
 function formatDate(ts: number): string {
-  return new Date(ts * 1000).toLocaleString(undefined, {
+  return new Date(ts * 1000).toLocaleString(getRegionalLocale(), {
     dateStyle: "short",
     timeStyle: "short",
   });

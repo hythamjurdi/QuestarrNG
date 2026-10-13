@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, PauseCircle, PlayCircle, ScrollText, Search, Send, Trash2 } from "lucide-react";
@@ -201,13 +202,13 @@ function parseLogLine(raw: string): ParsedLogLine {
 function formatTime(time: string): string {
   if (!time) return "";
   const parsed = new Date(time);
-  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleTimeString();
+  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleTimeString(getRegionalLocale());
 }
 
 function formatDateTime(time: string): string {
   if (!time) return "No timestamp";
   const parsed = new Date(time);
-  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleString();
+  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleString(getRegionalLocale());
 }
 
 function buildSummaryText(fields: LogField[]): string {

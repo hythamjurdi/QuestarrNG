@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -136,7 +137,7 @@ type ReleaseMetadata = ReturnType<typeof parseReleaseMetadata>;
 
 function formatDate(dateString: string): string {
   try {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getRegionalLocale());
   } catch {
     return dateString;
   }

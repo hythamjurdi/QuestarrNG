@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { useState, useRef } from "react";
 import { toPng } from "html-to-image";
 import { Share2, Loader2, Download } from "lucide-react";
@@ -166,7 +167,7 @@ export default function ShareDiscordDialog({
               <div>
                 <div style={{ fontSize: 18, fontWeight: 700 }}>Questarr Library Stats</div>
                 <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                  {displayDate.toLocaleDateString(undefined, {
+                  {displayDate.toLocaleDateString(getRegionalLocale(), {
                     month: "long",
                     day: "numeric",
                     year: "numeric",

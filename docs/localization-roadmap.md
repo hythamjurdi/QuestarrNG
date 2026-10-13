@@ -35,3 +35,7 @@ The World Bank's 2025 report estimates Mandarin Chinese, Hindi, and Spanish at 1
 ## Translation boundaries and acceptance
 
 Translate interface labels, help, empty states, validation, notifications, and errors, including server-originated content shown by the client. For free-form API errors and persisted notifications, use stable translatable message keys with parameters or otherwise ensure those messages are covered by the catalogs. Keep media titles, user names, filenames and paths, commands, API identifiers, protocol values, and other user-supplied content unchanged. Every locale must update document `lang`; derive `dir` separately. Use the selected UI language for date, time, number, plural, and collation behavior, and use its first day of week and weekday order in the calendar. Every locale must fall back to English for a missing key; CI should check placeholder parity and report missing strings. Arabic ships only after logical layout properties and core workflows are verified in RTL at narrow and desktop widths.
+
+## Implemented in this PR
+
+Settings > Appearance now lets each browser choose regional date, time, and number formatting from browser defaults or the first-pass locale list: Spanish, Simplified Chinese, Hindi, German, Japanese, French, Brazilian Portuguese, Arabic, Korean, Traditional Chinese, Vietnamese, and Indonesian. Existing locale-aware displays use that choice. This is a regional-format preference, not an interface-language translation; the app-wide catalog and RTL work in the roadmap remain outstanding.

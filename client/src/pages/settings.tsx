@@ -51,6 +51,11 @@ import AutoDownloadRulesSettings from "@/components/AutoDownloadRulesSettings";
 import PreferredReleaseGroupsSettings from "@/components/PreferredReleaseGroupsSettings";
 import ReleaseNameBlacklistSettings from "@/components/ReleaseNameBlacklistSettings";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
+import {
+  getRegionalLocale,
+  REGIONAL_FORMAT_KEY,
+  REGIONAL_FORMAT_OPTIONS,
+} from "@/lib/regional-format";
 import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
 import {
   THEMES,
@@ -215,6 +220,20 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
 
   const [ghostUnlocked] = useLocalStorageState(GHOST_UNLOCK_KEY, false);
+  const [storedRegionalFormat, setRegionalFormat] = useLocalStorageState(
+    REGIONAL_FORMAT_KEY,
+    "system"
+  );
+  const regionalFormat = REGIONAL_FORMAT_OPTIONS.some(
+    (option) => option.value === storedRegionalFormat
+  )
+    ? storedRegionalFormat
+    : "system";
+  useEffect(() => {
+    if (regionalFormat !== storedRegionalFormat) {
+      setRegionalFormat(regionalFormat);
+    }
+  }, [regionalFormat, setRegionalFormat, storedRegionalFormat]);
   const [selectedTheme, setSelectedTheme] = useLocalStorageState<Theme>(
     THEME_KEY,
     getCurrentTheme(ghostUnlocked)
@@ -1356,6 +1375,31 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Regional Format</CardTitle>
+                <CardDescription>
+                  Choose how dates, times, and numbers are displayed. Interface text remains
+                  English.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Label htmlFor="regional-format">Date, time, and number format</Label>
+                <Select value={regionalFormat} onValueChange={setRegionalFormat}>
+                  <SelectTrigger id="regional-format" className="w-full sm:w-80">
+                    <SelectValue placeholder="Use browser settings" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REGIONAL_FORMAT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
 
@@ -2848,7 +2892,9 @@ export default function SettingsPage() {
                                   </div>
                                   <span>
                                     {certInfo.validTo
-                                      ? new Date(certInfo.validTo).toLocaleDateString()
+                                      ? new Date(certInfo.validTo).toLocaleDateString(
+                                          getRegionalLocale()
+                                        )
                                       : "Unknown"}
                                   </span>
                                 </div>

@@ -1,3 +1,4 @@
+import { getRegionalLocale } from "@/lib/regional-format";
 import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
 import { useQuery, useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
@@ -97,7 +98,7 @@ type DownloadForm = z.infer<typeof downloadSchema>;
 
 function formatDate(dateString: string): string {
   try {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getRegionalLocale());
   } catch {
     return dateString;
   }
