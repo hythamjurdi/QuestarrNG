@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T19:45:46.274Z",
-  "forkHead": "781be8ba884314b07881962d0cda78c160e8b6f0",
+  "capturedAt": "2026-10-13T20:26:31.097Z",
+  "forkHead": "7311877acadcd05da2e0832fb22ebdd9dd8dc403",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -22393,10 +22393,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3c2c3ec4deefd1a406c5607c672bdad0403c6193",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested zod-validation-error 5.0.0 release is present in the manifest and lockfile; the complete current test suite and TypeScript check pass."
+        ],
+        "acceptance": [
+          "zod-validation-error resolves to 5.0.0, and the application tests and TypeScript check pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/776",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22413,11 +22422,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The closed, unmerged request for Zod 4.4.3 is superseded by the combined Zod v4 migration in PR #781 and the current zod 4.6.5 release."
+        ],
+        "acceptance": [
+          "The requested Zod v4 migration is present at a newer version, with SetupPage resolver and full-suite checks passing."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/777",
+          "https://github.com/Doezer/Questarr/pull/781",
+          "package.json",
+          "package-lock.json",
+          "client/src/__tests__/SetupPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
+        "dependencies": [
+          "pr:781"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -22433,11 +22455,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The closed, unmerged request for react-resizable-panels 4.12.1 is superseded by the v4 migration in PR #781 and the current 4.14.2 release."
+        ],
+        "acceptance": [
+          "The v4 Group/Separator wrapper and orientation behavior are present at a newer installed version, and the full test suite passes."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/778",
+          "https://github.com/Doezer/Questarr/pull/781",
+          "package.json",
+          "package-lock.json",
+          "client/src/components/ui/resizable.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
+        "dependencies": [
+          "pr:781"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -22453,10 +22488,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The closed, unmerged React DOM and type-definition request for 19.2.7 is superseded by the current 19.3.0 releases."
+        ],
+        "acceptance": [
+          "react-dom and @types/react-dom resolve to versions newer than the requested 19.2.7, and the application test suite and TypeScript check pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/779",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22473,10 +22517,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "fc2ee895b3ac08d246d86922508175ab78c50b63",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Auto-search records the pre-cycle availability and notifies only on a false-to-true availability transition. Leaving wanted status clears availability flags in both storage implementations, so stale availability cannot suppress the next transition. Preferred-release-group filtering is applied before notifications and explained in Settings."
+        ],
+        "acceptance": [
+          "Repeated positive search cycles do not duplicate availability notifications; leaving wanted resets availability; preferred-group filtering is clear in the UI and tested."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/780",
+          "server/cron.ts",
+          "server/storage.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "server/__tests__/storage.test.ts",
+          "client/src/components/PreferredReleaseGroupsSettings.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22493,10 +22549,24 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9ececfd9ef155a90002c9f95a7d077abde775bc6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The combined migration uses Zod v4 issue data, a current @hookform/resolvers v5 adapter, and react-resizable-panels v4 Group/Separator/orientation APIs. SetupPage tests cover successful submission and invalid required fields; the full suite, lint, and TypeScript check pass."
+        ],
+        "acceptance": [
+          "Zod v4 validation issues reach the form, panel groups use the v4 API with horizontal/vertical orientation handling, and the affected test suites pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/781",
+          "package.json",
+          "package-lock.json",
+          "client/src/components/ui/resizable.tsx",
+          "client/src/lib/utils.ts",
+          "client/src/pages/auth/setup.tsx",
+          "server/routes.ts",
+          "client/src/__tests__/SetupPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22513,10 +22583,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ed5f196721e9796e048be2bd4fd3027bb9e820e3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Calendar grouping is performed in one useMemo pass, with the search query lowercased once and release dates grouped directly. Year-only and undated games remain in their existing sections, and local-day handling for timestamp dates is preserved."
+        ],
+        "acceptance": [
+          "The calendar grouping loop processes the games once and the calendar page and date utility tests pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/782",
+          "client/src/pages/calendar.tsx",
+          "client/__tests__/CalendarPage.test.tsx",
+          "client/__tests__/calendar-utils.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22533,10 +22613,27 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "c9a224c016184296d072511a43f5d8e8b18ea5aa",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG provides an evolved isometric, click-to-move stealth game at /play, with deterministic seeded layouts, patrol and line-of-sight detection, a keycard-gated terminal, distractions, pause/resume, and a Ghost Mode unlock on victory. The headless browser run created a disposable test account, loaded seed 1234, rendered the briefing and active canvas, exercised pause/resume, and reported no uncaught page errors. This interaction model avoids pointer lock while preserving the stealth objective."
+        ],
+        "acceptance": [
+          "The authenticated /play route renders and runs a deterministic game, controls are visible, pause/resume works, the PlayPage regression covers the seeded start, win and Ghost Mode persistence, caught notice, and engine disposal, game-generation/pathfinding/detection unit suites pass, and visual evidence is retained."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/783",
+          "client/src/App.tsx",
+          "client/src/pages/play.tsx",
+          "client/__tests__/PlayPage.test.tsx",
+          "client/src/game/infiltration-game.ts",
+          "client/src/game/level.ts",
+          "client/src/game/__tests__/level.test.ts",
+          "client/src/game/__tests__/pathfinding.test.ts",
+          "client/src/game/__tests__/detection.test.ts",
+          "docs/upstream-resolution/evidence/upstream-pr-783-ghost-the-terminal-briefing-2026-10-13.png",
+          "docs/upstream-resolution/evidence/upstream-pr-783-ghost-the-terminal-running-2026-10-13.png",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22553,10 +22650,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "058043ec7d01a3671225863be920ade78052f458",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The captured full coverage run passed 4,230 tests with 7 skipped across 270 passed and 1 skipped test file. Coverage reached 83.51% statements, 76.14% branches, 80.41% functions, and 84.95% lines, clearing both the configured 83/76/79/84 thresholds and the upstream request for more than 75% on every metric. The test review also replaced SettingsPage's direct fetch overwrite with a restored spy and pinned the API test date."
+        ],
+        "acceptance": [
+          "All four full-suite coverage metrics exceed 75% and configured thresholds; the reviewed test changes pass the full suite, lint, formatting, and TypeScript check."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/784",
+          "vitest.config.ts",
+          "client/__tests__/SettingsPage.test.tsx",
+          "server/__tests__/api_routes_extended.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -22573,10 +22680,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6001f1d090d3fd40a9623052c00c40757432b659",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All six requested development dependency updates are superseded by newer installed releases: @types/node 26.6.4, postcss 8.5.29, prettier 3.9.9, tsx 4.23.15, typescript-eslint 8.71.1, and vite 8.3.2."
+        ],
+        "acceptance": [
+          "Each requested dependency resolves to a newer version in the manifest/lockfile, and the current full test suite, lint, TypeScript check, and formatting check pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/785",
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-65.txt",
+          "docs/upstream-resolution/evidence/validation-batch-66.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

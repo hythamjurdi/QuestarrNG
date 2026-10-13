@@ -1,0 +1,60 @@
+# Batch 66 validation evidence
+
+Date: October 13, 2026
+Branch: `codex/upstream-resolution`
+Base commit: `7311877acadcd05da2e0832fb22ebdd9dd8dc403` (Batch 65)
+
+## Upstream snapshot
+
+- Reconfirmed `Doezer/Questarr` `main` at
+  `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`.
+- Reconfirmed 232 issues and 931 pull requests (1,163 total).
+- Reused the existing sanitized item snapshot captured at October 13, 2026,
+  17:28 UTC. The live check verified the `main` SHA and list counts; it did not
+  refetch every issue and pull-request body.
+- Regenerated `ledger.json` and `inventory.md` from those sanitized rows.
+- `sourceChangedSinceReview` flags: 0.
+
+## Reviewed records
+
+| Upstream item | Disposition | Result |
+| --- | --- | --- |
+| [PR #776](https://github.com/Doezer/Questarr/pull/776) | Verified | `zod-validation-error` resolves to the requested 5.0.0. |
+| [PR #777](https://github.com/Doezer/Questarr/pull/777) | Superseded | Zod 4.4.3 is superseded by the combined v4 migration in #781 and current 4.6.5. |
+| [PR #778](https://github.com/Doezer/Questarr/pull/778) | Superseded | Panel 4.12.1 is superseded by the v4 migration in #781 and current 4.14.2. |
+| [PR #779](https://github.com/Doezer/Questarr/pull/779) | Superseded | React DOM and its types are at 19.3.0, newer than the requested 19.2.7. |
+| [PR #780](https://github.com/Doezer/Questarr/pull/780) | Verified | Auto-search notifications are gated on a false-to-true availability transition; leaving `wanted` clears stale availability, and preferred-group filtering is applied and described in Settings. |
+| [PR #781](https://github.com/Doezer/Questarr/pull/781) | Verified | Zod v4 and `react-resizable-panels` v4 use the migrated validation and `Group`/`Separator` APIs. |
+| [PR #782](https://github.com/Doezer/Questarr/pull/782) | Verified | Calendar grouping uses one pass, lowercases the query once, and preserves date-only, year-only, and local-day behavior. |
+| [PR #783](https://github.com/Doezer/Questarr/pull/783) | Verified | The `/play` stealth game runs with deterministic layouts, visible controls, and working pause/resume. QuestarrNG uses an isometric click-to-move version, preserving the stealth objective without pointer lock. |
+| [PR #784](https://github.com/Doezer/Questarr/pull/784) | Verified | Full coverage exceeds 75% on statements, branches, functions, and lines, as well as the repository thresholds. |
+| [PR #785](https://github.com/Doezer/Questarr/pull/785) | Superseded | All six development dependencies resolve to releases newer than the requested versions. |
+
+## Automated validation
+
+- Full coverage command: `npm run test:coverage -- --maxWorkers=1 --coverage.reportsDirectory=/tmp/questarr-b66-coverage`.
+- Result: 4,230 passed, 7 skipped; 270 test files passed and 1 was skipped.
+- Coverage: 83.51% statements, 76.14% branches, 80.41% functions, 84.95% lines. These exceed the configured 83/76/79/84 thresholds and PR #784's 75% target on each metric.
+- Focused feature and PR suites: 574 tests passed across 23 files, covering notifications/storage, Zod and panel migration, calendar, the coverage PR's changed tests, and game generation/pathfinding/detection.
+- After the final deterministic-date fixture adjustment, the API-route and SetupPage suites passed 91 tests across 2 files.
+- The SettingsPage suite passed all 20 tests after its `fetch` mock was changed to a restorable spy. API-route test data now uses a fixed timestamp. The new PlayPage component test passed and covers the game-start transition, win callback and Ghost Mode persistence, caught notice, and engine disposal.
+- `npm run lint`, `npx tsc --noEmit`, `git diff --check`, and Prettier checks for the changed tests and authored Markdown/JSON files passed.
+- Installed dependency versions were checked with `npm ls`: `zod-validation-error` 5.0.0, `zod` 4.6.5, `react-resizable-panels` 4.14.2, `react-dom` and `@types/react-dom` 19.3.0, `@types/node` 26.6.4, `postcss` 8.5.29, `prettier` 3.9.9, `tsx` 4.23.15, `typescript-eslint` 8.71.1, and `vite` 8.3.2.
+
+## Browser verification for PR #783
+
+- Ran `npm run dev:test` in a task-owned worktree with its own SQLite database.
+- Created and authenticated a disposable test account, opened `/play?seed=1234`, and verified the briefing, live canvas, and pause/resume interaction.
+- The Playwright run reported zero uncaught page errors.
+- Retained visual evidence:
+  - `upstream-pr-783-ghost-the-terminal-briefing-2026-10-13.png`
+  - `upstream-pr-783-ghost-the-terminal-running-2026-10-13.png`
+- The first browser attempt used a `node_modules` symlink and Vite rejected a font request outside its serving allow-list. The successful rerun used a task-owned dependency copy; no application change was needed for this environment issue.
+
+## Cleanup and campaign state
+
+- Stopped the test server and confirmed port 5100 was free.
+- Removed the temporary worktree, copied dependencies, SQLite database, auth state, source-import scratch directory, and coverage output. The two screenshots above are the retained browser artifacts.
+- No NFS scratch was used.
+- Final ledger counts: 583 verified, 174 superseded, 12 not applicable, 5 implemented-unverified, 0 needs-implementation, and 389 unreviewed (1,163 total).
+- The campaign remains incomplete and was not merged to `main`.

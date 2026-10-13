@@ -30,23 +30,25 @@ deployment, database, security, and user-facing behavior where applicable.
 
 The issue and PR lists were refreshed in a live GitHub audit against upstream
 main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 17:28
-UTC**. The refreshed source contains 232 issues and 931 pull requests (1,163
-records total). The ledger's `capturedAt` records audit generation time, not an
-individual GitHub request timestamp. Its review-status counts after batch 65
-are:
+UTC**. That sanitized source snapshot contains 232 issues and 931 pull requests
+(1,163 records total). Batch 66 reconfirmed the same upstream `main` SHA and
+live list counts, then regenerated the review ledger and inventory from the
+existing sanitized rows; it did not refetch every source body. The ledger's
+`capturedAt` records ledger-generation time, not an individual GitHub request
+timestamp. Its review-status counts after batch 66 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   577 | Acceptance checks have evidence showing the behavior is present and works.             |
-| `superseded`             |   170 | A later request or implementation replaces the original; the relationship is recorded. |
+| `verified`               |   583 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |   174 | A later request or implementation replaces the original; the relationship is recorded. |
 | `not-applicable`         |    12 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
 | `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
 | `implemented-unverified` |     5 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   399 | No completed source-by-source disposition has been recorded yet.                       |
+| `unreviewed`             |   389 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
 The source export contains 1,163 items and the counts above reflect reviews
-through batch 65. Batch 64 reused the complete sanitized source-list export and
+through batch 66. Batch 64 reused the complete sanitized source-list export and
 refreshed the generated ledger and inventory; its ten reviewed PR source digests
 match, and no `sourceChangedSinceReview` flags are set. An earlier refresh left
 nine `sourceChangedSinceReview` flags

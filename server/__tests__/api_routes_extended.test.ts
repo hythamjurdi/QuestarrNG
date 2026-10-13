@@ -956,7 +956,14 @@ describe("API Routes - Additional Coverage", () => {
     const gameId = "22222222-2222-4222-8222-222222222222";
 
     it("lists only the current user's lists", async () => {
-      const lists = [{ id: listId, userId: "user-1", name: "Co-op", createdAt: new Date() }];
+      const lists = [
+        {
+          id: listId,
+          userId: "user-1",
+          name: "Co-op",
+          createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        },
+      ];
       vi.mocked(storage.getGameLists).mockResolvedValue(lists as never);
 
       const res = await request(app).get("/api/game-lists");

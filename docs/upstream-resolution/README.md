@@ -23,26 +23,28 @@ The latest live GitHub audit checked upstream main
 UTC**. The refreshed inventory contains 232 issues and 931 pull requests. The
 ledger's `capturedAt` records audit generation time, not an individual GitHub
 request timestamp. Review status is independent of GitHub's open, closed, or
-merged state:
+merged state. Batch 66 reconfirmed the same upstream `main` SHA and live list
+counts; it regenerated the ledger and inventory from the existing sanitized
+snapshot rather than refetching every issue and PR body:
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       577 |
-| `superseded`             |       170 |
+| `verified`               |       583 |
+| `superseded`             |       174 |
 | `not-applicable`         |        12 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       399 |
+| `unreviewed`             |       389 |
 | **Total**                | **1,163** |
 
-The ledger now gives 764 items an assigned disposition. Four implemented
+The ledger now gives 774 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 399 are unreviewed. The
+currently identified item needs implementation, and 389 are unreviewed. The
 source-change flags cleared in batch 61 remain clear. These numbers describe
-the ledger, not completion of the campaign. Batch 65 is the latest completed
+the ledger, not completion of the campaign. Batch 66 is the latest completed
 review; its results are in
-[validation evidence](evidence/validation-batch-65.txt).
+[validation evidence](evidence/validation-batch-66.txt).
 
 ## Project records
 
@@ -1992,3 +1994,41 @@ The ledger now records 577 verified, 170 superseded, 12 not applicable, 5
 implemented-unverified, 0 needs-implementation, and 399 unreviewed items, with
 no source-change flags. The campaign remains incomplete and is not ready to
 merge to `main`.
+
+## Batch 66 — October 13, 2026
+
+Batch 66 reviewed upstream PRs [#776](https://github.com/Doezer/Questarr/pull/776)–
+[#785](https://github.com/Doezer/Questarr/pull/785). Six items were verified
+and four dependency requests were superseded by newer releases or the combined
+Zod/panel migration in PR #781. The merged Zod validation-error upgrade is at
+the requested 5.0.0; the current Zod, panel, React DOM, and development-tool
+versions are newer than their individual PR targets.
+
+The batch verified auto-search availability notifications on false-to-true
+transitions, reset behavior when a game leaves `wanted`, and the preferred
+release-group filter; confirmed the combined Zod v4 and panel v4 migration; and
+checked the Calendar's single-pass grouping. PR #783's game is QuestarrNG's
+isometric, click-to-move stealth adaptation, with a deterministic seed, patrols,
+line-of-sight detection, a keycard-gated terminal, distractions, pause/resume,
+and Ghost Mode unlock on victory. A new PlayPage component test covers the
+seeded start, win callback and Ghost Mode persistence, caught notice, and engine
+cleanup. The real browser run rendered the briefing and active game, exercised
+pause/resume, and produced no uncaught page errors. See
+the [briefing screenshot](evidence/upstream-pr-783-ghost-the-terminal-briefing-2026-10-13.png)
+and [running-game screenshot](evidence/upstream-pr-783-ghost-the-terminal-running-2026-10-13.png).
+
+The full Vitest coverage run passed 4,230 tests with 7 skipped across 270
+passing and 1 skipped test file. Coverage reached 83.51% statements, 76.14%
+branches, 80.41% functions, and 84.95% lines, clearing both the configured
+83/76/79/84 thresholds and PR #784's 75% target on every metric. Test review
+also isolated `fetch` mocks with restorable spies and replaced a moving date
+fixture with a fixed timestamp. Lint, TypeScript checking, formatting, focused
+tests, and the browser run passed. Full details are in
+[Batch 66 evidence](evidence/validation-batch-66.txt).
+
+The ledger now records 583 verified, 174 superseded, 12 not applicable, 5
+implemented-unverified, 0 needs-implementation, and 389 unreviewed items, with
+no source-change flags. Live GitHub checks reconfirmed upstream main
+`0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, 232 issues, and 931 PRs; the
+sanitized source rows remain from the October 13 17:28 UTC audit. The campaign
+remains incomplete and is not ready to merge to `main`.
