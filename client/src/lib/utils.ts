@@ -101,13 +101,19 @@ export type EnabledPriorityNamed = {
  * @param b - The second value to compare.
  * @returns A negative number if a should come before b, a positive number if a should come after b, or 0 if they are considered equal.
  */
-export function compareEnabledPriorityName<T extends EnabledPriorityNamed>(a: T, b: T): number {
+const defaultEnabledNameCollator = new Intl.Collator(undefined, { sensitivity: "base" });
+
+export function compareEnabledPriorityName<T extends EnabledPriorityNamed>(
+  a: T,
+  b: T,
+  collator = defaultEnabledNameCollator
+): number {
   if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
 
   const priorityDiff = a.priority - b.priority;
   if (priorityDiff !== 0) return priorityDiff;
 
-  return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  return collator.compare(a.name, b.name);
 }
 
 /**

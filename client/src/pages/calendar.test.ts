@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { getDaysInMonth, getWeekDays, formatDate } from "./calendar";
-import { REGIONAL_FORMAT_KEY } from "@/lib/regional-format";
+import { setRegionalPreference } from "@/lib/regional-format";
 
 describe("calendar locale week structure", () => {
   beforeEach(() => {
     localStorage.clear();
+    setRegionalPreference("system");
   });
 
   it("starts the week view on the selected locale's first weekday", () => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, "ja");
+    setRegionalPreference("ja");
 
     expect(getWeekDays(new Date(2024, 0, 10)).map(formatDate)).toEqual([
       "2024-01-07",
@@ -22,7 +23,7 @@ describe("calendar locale week structure", () => {
   });
 
   it("aligns the month grid and its trailing days to a Sunday-first locale", () => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, "pt-BR");
+    setRegionalPreference("pt-BR");
     const days = getDaysInMonth(2024, 0);
 
     expect(formatDate(days[0]!)).toBe("2023-12-31");

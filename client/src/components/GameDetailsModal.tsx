@@ -1,4 +1,8 @@
-import { formatRegionalNumber, getRegionalLocale } from "@/lib/regional-format";
+import {
+  formatRegionalNumber,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import React, { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -474,6 +478,7 @@ function StarRatingInput({
 }
 
 export default function GameDetailsModal({ game, open, onOpenChange }: GameDetailsModalProps) {
+  useRegionalPreference();
   const isMobile = useIsMobile();
   const [selectedScreenshotIndex, setSelectedScreenshotIndex] = useState<number | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);

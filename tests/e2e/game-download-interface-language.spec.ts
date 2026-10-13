@@ -142,6 +142,26 @@ test.describe("Game download interface language", () => {
     await expect(bundleDialog.getByRole("button", { name: "تنزيل مع تحديث واحد" })).toBeVisible();
   });
 
+  test("localizes category headings, metrics, and relative ages", async ({ page }) => {
+    await openLocalizedBundle(page, 1);
+
+    const updateHeading = page.getByRole("heading", {
+      name: "التحديثات والتصحيحات",
+      exact: true,
+    });
+    await expect(updateHeading).toBeVisible();
+    const localizedHeading = updateHeading.locator('span[lang="ar"][dir="rtl"]');
+    await expect(localizedHeading).toBeVisible();
+
+    const seedersLabel = page.getByText("بذور", { exact: true }).first();
+    await expect(seedersLabel).toBeVisible();
+    await expect(seedersLabel).toHaveAttribute("lang", "ar");
+    await expect(seedersLabel).toHaveAttribute("dir", "rtl");
+
+    const relativeAge = page.locator('span[lang="ar"][dir="rtl"]').filter({ hasText: "قبل" });
+    await expect(relativeAge.first()).toBeVisible();
+  });
+
   test("uses the dual form when two updates are available and selected", async ({ page }) => {
     const downloadButton = await openLocalizedBundle(page, 2);
     await expect(downloadButton).toBeVisible();

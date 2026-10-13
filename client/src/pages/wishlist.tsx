@@ -1,4 +1,4 @@
-import { getRegionalCollator, useRegionalPreference } from "@/lib/regional-format";
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
 import React, { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Eye, EyeOff } from "lucide-react";
@@ -35,11 +35,11 @@ const SORT_OPTIONS = [
 export const sortGames = (
   gameList: Game[],
   currentSortBy: SortOption,
-  regionalPreference: string
+  interfaceLanguage: ReturnType<typeof useInterfaceLanguage>["language"]
 ): Game[] => {
   const sorted = [...gameList];
   const titleCollator =
-    currentSortBy === "title-asc" ? getRegionalCollator(undefined, regionalPreference) : null;
+    currentSortBy === "title-asc" ? getInterfaceCollator(interfaceLanguage) : null;
 
   return sorted.sort((a, b) => {
     switch (currentSortBy) {
@@ -58,7 +58,7 @@ export const sortGames = (
 };
 
 export default function WishlistPage() {
-  const regionalPreference = useRegionalPreference();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
   const [sortBy, setSortBy] = useState<SortOption>("release-desc");
   const { viewMode, setViewMode, listDensity, setListDensity } = useViewControls("wishlist");
   const [showUnreleased, setShowUnreleased] = useLocalStorageState("wishlistShowUnreleased", true);
@@ -114,16 +114,16 @@ export default function WishlistPage() {
 
   // 笞｡ Bolt: Memoize the sorted arrays to prevent re-sorting on every render
   const sortedUpcomingGames = useMemo(() => {
-    return sortGames(upcomingGames, sortBy, regionalPreference);
-  }, [upcomingGames, sortBy, regionalPreference]);
+    return sortGames(upcomingGames, sortBy, interfaceLanguage);
+  }, [upcomingGames, sortBy, interfaceLanguage]);
 
   const sortedReleasedGames = useMemo(() => {
-    return sortGames(releasedGames, sortBy, regionalPreference);
-  }, [releasedGames, sortBy, regionalPreference]);
+    return sortGames(releasedGames, sortBy, interfaceLanguage);
+  }, [releasedGames, sortBy, interfaceLanguage]);
 
   const sortedTbaGames = useMemo(() => {
-    return sortGames(tbaGames, sortBy, regionalPreference);
-  }, [tbaGames, sortBy, regionalPreference]);
+    return sortGames(tbaGames, sortBy, interfaceLanguage);
+  }, [tbaGames, sortBy, interfaceLanguage]);
 
   const isMobile = useIsMobile();
 

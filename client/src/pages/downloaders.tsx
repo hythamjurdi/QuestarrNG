@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch, queryClient } from "@/lib/queryClient";
 import { asZodType, cn, compareEnabledPriorityName } from "@/lib/utils";
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
 import { Plus, Edit, Trash2, Check, X, Activity, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -240,6 +241,8 @@ function PriorityControl({
  * Manages configured downloader clients, including creation, editing, deletion, status changes, priority updates, and connection testing.
  */
 export default function DownloadersPage() {
+  const { language: interfaceLanguage } = useInterfaceLanguage();
+  const nameCollator = useMemo(() => getInterfaceCollator(interfaceLanguage), [interfaceLanguage]);
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDownloader, setEditingDownloader] = useState<Downloader | null>(null);
@@ -258,8 +261,8 @@ export default function DownloadersPage() {
   });
 
   const sortedActiveDownloaders = useMemo(() => {
-    return [...downloaders].sort(compareEnabledPriorityName);
-  }, [downloaders]);
+    return [...downloaders].sort((a, b) => compareEnabledPriorityName(a, b, nameCollator));
+  }, [downloaders, nameCollator]);
 
   const addMutation = useMutation({
     mutationFn: async (data: InsertDownloader) => {

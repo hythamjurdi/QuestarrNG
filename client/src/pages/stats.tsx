@@ -1,4 +1,5 @@
 import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -38,6 +39,7 @@ import DiscordWebhookSettings from "@/components/DiscordWebhookSettings";
 export default function StatsPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const regionalPreference = useRegionalPreference();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
     queryKey: ["/api/games", "", true], // Empty search, include hidden
@@ -57,8 +59,8 @@ export default function StatsPage() {
 
   const isMobile = useIsMobile();
   const stats = useMemo(
-    () => calculateLibraryStats(games, regionalPreference),
-    [games, regionalPreference]
+    () => calculateLibraryStats(games, regionalPreference, interfaceLanguage),
+    [games, regionalPreference, interfaceLanguage]
   );
 
   const pieData = useMemo(() => {

@@ -21,6 +21,13 @@ export type InterfaceLanguage = (typeof INTERFACE_LANGUAGE_OPTIONS)[number]["val
 const STORAGE_KEY = "questarr.interface-language";
 const listeners = new Set<() => void>();
 
+export function getInterfaceCollator(
+  language: InterfaceLanguage = "en",
+  options?: Intl.CollatorOptions
+): Intl.Collator {
+  return new Intl.Collator(language, { sensitivity: "base", ...options });
+}
+
 function isInterfaceLanguage(value: string | null): value is InterfaceLanguage {
   return INTERFACE_LANGUAGE_OPTIONS.some((option) => option.value === value);
 }

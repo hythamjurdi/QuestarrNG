@@ -1,4 +1,4 @@
-import { getRegionalCollator } from "@/lib/regional-format";
+import { getInterfaceCollator, type InterfaceLanguage } from "@/lib/interface-locale";
 import { type Game } from "@shared/schema";
 
 export type LibrarySortOption =
@@ -64,11 +64,11 @@ const compareNumbers = (
 export function sortLibraryGames(
   gameList: Game[],
   sortBy: LibrarySortOption,
-  regionalPreference?: string
+  interfaceLanguage: InterfaceLanguage = "en"
 ): Game[] {
   const sorted = [...gameList];
   const titleCollator =
-    sortBy === "title-asc" ? getRegionalCollator(undefined, regionalPreference) : undefined;
+    sortBy === "title-asc" ? getInterfaceCollator(interfaceLanguage) : undefined;
 
   return sorted.sort((a, b) => {
     switch (sortBy) {

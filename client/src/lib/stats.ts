@@ -1,4 +1,5 @@
-import { getRegionalCollator, formatRegionalNumber } from "@/lib/regional-format";
+import { getInterfaceCollator, type InterfaceLanguage } from "@/lib/interface-locale";
+import { formatRegionalNumber } from "@/lib/regional-format";
 import { type Game } from "@shared/schema";
 
 export interface LibraryStats {
@@ -22,7 +23,11 @@ export interface LibraryStats {
   completionRate: number;
 }
 
-export function calculateLibraryStats(games: Game[], regionalPreference?: string): LibraryStats {
+export function calculateLibraryStats(
+  games: Game[],
+  regionalPreference?: string,
+  interfaceLanguage: InterfaceLanguage = "en"
+): LibraryStats {
   const totalGames = games.length;
 
   if (totalGames === 0) {
@@ -158,7 +163,7 @@ export function calculateLibraryStats(games: Game[], regionalPreference?: string
   const getTopItemFromCounts = (counts: Record<string, number>) => {
     const entries = Object.entries(counts);
     if (entries.length === 0) return null;
-    const collator = getRegionalCollator(undefined, regionalPreference);
+    const collator = getInterfaceCollator(interfaceLanguage);
     entries.sort((a, b) => b[1] - a[1] || collator.compare(a[0], b[0]));
     const [name, count] = entries[0]!;
     return { name, count };

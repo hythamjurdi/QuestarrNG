@@ -1,4 +1,5 @@
-import { getRegionalLocale } from "@/lib/regional-format";
+import { getRegionalLocale, useRegionalPreference } from "@/lib/regional-format";
+import { getInterfaceCollator } from "@/lib/interface-locale";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -234,7 +235,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const { t, languageFor, directionFor } = useInterfaceLanguage();
+  const { t, language, languageFor, directionFor } = useInterfaceLanguage();
+  useRegionalPreference();
+  const interfaceCollator = useMemo(() => getInterfaceCollator(language), [language]);
   const translateText = (source: string, values: Record<string, string | number> = {}) => {
     let message = t(source);
     for (const [key, value] of Object.entries(values))
@@ -246,6 +249,15 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       {translateText(source, values)}
     </span>
   );
+  const localizedAge = (days?: number) => {
+    if (days === undefined) return null;
+    if (days === 0) return localizedText("Today");
+    return (
+      <span lang={languageFor("Today")} dir={directionFor("Today")}>
+        {formatAge(days, language)}
+      </span>
+    );
+  };
   const localizedMultiSelectProps = (placeholderSource: string) => ({
     placeholder: t(placeholderSource),
     lang: languageFor(placeholderSource),
@@ -443,10 +455,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       const enabledNames = new Set(enabledIndexers.map((i) => i.name));
       return resultIndexerNames
         .filter((name) => enabledNames.has(name))
-        .sort((a, b) => a.localeCompare(b));
+        .sort(interfaceCollator.compare);
     }
-    return [...resultIndexerNames].sort((a, b) => a.localeCompare(b));
-  }, [resultIndexerNames, enabledIndexers]);
+    return [...resultIndexerNames].sort(interfaceCollator.compare);
+  }, [resultIndexerNames, enabledIndexers, interfaceCollator]);
 
   const availableGroups = useMemo(() => {
     if (!searchResults?.items) return [];
@@ -455,8 +467,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         .map((item) => item.group)
         .filter((group): group is string => Boolean(group))
     );
-    return Array.from(groups).sort((a, b) => a.localeCompare(b));
-  }, [searchResults?.items]);
+    return Array.from(groups).sort(interfaceCollator.compare);
+  }, [searchResults?.items, interfaceCollator]);
 
   // Pre-calculate release metadata once per item to avoid repeated regex operations
   const itemsMetadata = useMemo(() => {
@@ -480,9 +492,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     const allowed = new Set<string>(canonicalPlatformsForIgdbIds(userSettings?.importPlatformIds));
     return Array.from(platforms)
       .filter((p) => allowed.size === 0 || allowed.has(p))
-      .sort((a, b) => a.localeCompare(b))
+      .sort(interfaceCollator.compare)
       .map((p) => ({ label: p, value: p }));
-  }, [itemsMetadata, userSettings?.importPlatformIds]);
+  }, [itemsMetadata, userSettings?.importPlatformIds, interfaceCollator]);
 
   const itemPubDateTimestamps = useMemo(() => {
     if (!searchResults?.items) return new Map<string, number>();
@@ -1325,7 +1337,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                       {isUsenet
                                         ? (download.grabs ?? 0)
                                         : (download.seeders ?? 0)}{" "}
-                                      {isUsenet ? "grabs" : "seeds"}
+                                      {localizedText(isUsenet ? "grabs" : "seeders")}
                                     </span>
                                     <span>•</span>
                                     <span>{formatDate(download.pubDate)}</span>
@@ -1432,7 +1444,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                     {formatDate(download.pubDate)}
                                   </div>
                                   <div className="text-xs text-muted-foreground/50">
-                                    {formatAge(isUsenet ? download.age : hoursOld / 24)}
+                                    {localizedAge(isUsenet ? download.age : hoursOld / 24)}
                                   </div>
                                 </div>
 
@@ -1451,7 +1463,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                     {isUsenet ? (download.grabs ?? 0) : (download.seeders ?? 0)}
                                   </div>
                                   <div className="text-xs uppercase font-bold opacity-70">
-                                    {isUsenet ? "Grabs" : "Seeds"}
+                                    {localizedText(isUsenet ? "grabs" : "seeders")}
                                   </div>
                                   {!isUsenet && download.leechers != null && (
                                     <div className="text-[10px] text-muted-foreground/60">

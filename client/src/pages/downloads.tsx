@@ -1,8 +1,5 @@
-import {
-  getRegionalCollator,
-  formatRegionalNumber,
-  useRegionalPreference,
-} from "@/lib/regional-format";
+import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiFetch } from "@/lib/queryClient";
@@ -134,6 +131,7 @@ const STATUS_COLORS: Record<DownloadStatusType, string> = {
 
 export default function Downloads() {
   const regionalPreference = useRegionalPreference();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
   const { toast } = useToast();
   const hasShownErrorsRef = useRef<Set<string>>(new Set());
   const [selectedDownload, setSelectedDownload] = useState<DownloadStatus | null>(null);
@@ -363,9 +361,9 @@ export default function Downloads() {
       const entry = map.get(d.downloaderId)!;
       entry.counts[d.status] = (entry.counts[d.status] ?? 0) + 1;
     }
-    const collator = getRegionalCollator(undefined, regionalPreference);
+    const collator = getInterfaceCollator(interfaceLanguage);
     return Array.from(map.values()).sort((a, b) => collator.compare(a.name, b.name));
-  }, [filteredDownloads, regionalPreference]);
+  }, [filteredDownloads, interfaceLanguage]);
 
   if (isLoading) {
     return (
@@ -790,13 +788,17 @@ export default function Downloads() {
                             <Badge
                               variant="outline"
                               data-testid={`badge-ratio-${download.id}`}
-                              aria-label={`Share ratio: ${formatRegionalNumber(download.ratio ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                              aria-label={`Share ratio: ${formatRegionalNumber(download.ratio ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 }, regionalPreference)}`}
                             >
                               Ratio:{" "}
-                              {formatRegionalNumber(download.ratio ?? 0, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
+                              {formatRegionalNumber(
+                                download.ratio ?? 0,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                                regionalPreference
+                              )}
                             </Badge>
                           )}
                         {importConfig?.enablePostProcessing && download.gameStatus === "owned" && (
@@ -905,17 +907,21 @@ export default function Downloads() {
                   <div className="flex justify-between text-sm">
                     <span data-testid={`text-progress-label-${download.id}`}>Progress</span>
                     <span data-testid={`text-progress-value-${download.id}`}>
-                      {formatRegionalNumber(download.progress, {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 1,
-                      })}
+                      {formatRegionalNumber(
+                        download.progress,
+                        {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        },
+                        regionalPreference
+                      )}
                       %
                     </span>
                   </div>
                   <Progress
                     value={download.progress}
                     className="h-2"
-                    aria-label={`Download progress: ${formatRegionalNumber(download.progress, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`}
+                    aria-label={`Download progress: ${formatRegionalNumber(download.progress, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, regionalPreference)}%`}
                     data-testid={`progress-bar-${download.id}`}
                   />
                   {download.error && (

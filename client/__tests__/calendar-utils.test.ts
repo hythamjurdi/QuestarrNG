@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { formatDate, getDaysInMonth, getWeekDays } from "../src/pages/calendar";
-import { REGIONAL_FORMAT_KEY } from "../src/lib/regional-format";
+import { setRegionalPreference } from "../src/lib/regional-format";
 
 describe("calendar date helpers", () => {
   beforeEach(() => {
-    localStorage.setItem(REGIONAL_FORMAT_KEY, "es");
+    setRegionalPreference("es");
   });
   it("formats dates as yyyy-mm-dd", () => {
     expect(formatDate(new Date("2026-05-28T12:00:00.000Z"))).toBe("2026-05-28");

@@ -266,8 +266,23 @@ export function formatUnpackStatus(unpackStatus?: "unpacking" | "completed" | "f
 /**
  * Format age in days to human-readable string
  */
-export function formatAge(days?: number): string {
+export function formatAge(days?: number, locale?: string): string {
   if (days === undefined) return "";
+  if (locale !== undefined) {
+    const ageInDays = Math.max(0, days);
+    if (ageInDays === 0)
+      return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(0, "day");
+
+    const wholeDays = Math.floor(ageInDays);
+    const relativeTime = new Intl.RelativeTimeFormat(locale, { numeric: "always" });
+    if (wholeDays < 1) {
+      const wholeHours = Math.max(1, Math.floor(ageInDays * 24));
+      return relativeTime.format(-wholeHours, "hour");
+    }
+
+    return relativeTime.format(-wholeDays, "day");
+  }
+
   if (days === 0) return "Today";
   const wholeDays = Math.floor(days);
   if (wholeDays < 1) return "< 1 day";

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   INTERFACE_LANGUAGE_OPTIONS,
   applyInitialInterfaceLanguage,
+  getInterfaceCollator,
   getInterfaceTextDirection,
   getInterfaceTextLanguage,
 } from "@/lib/interface-locale";
@@ -29,6 +30,13 @@ describe("interface text language metadata", () => {
     expect(getInterfaceTextDirection("Navigation", "ar")).toBe("rtl");
   });
 
+  it("uses the selected interface language for alphabetical collation", () => {
+    const names = ["ñandú", "nube"];
+
+    expect([...names].sort(getInterfaceCollator("es").compare)).toEqual(["nube", "ñandú"]);
+    expect([...names].sort(getInterfaceCollator("en").compare)).toEqual(["ñandú", "nube"]);
+  });
+
   it("provides download-dialog and nested filter translations for every supported language", () => {
     const sources = [
       "Search...",
@@ -46,6 +54,12 @@ describe("interface text language metadata", () => {
       "releases",
       "two releases",
       "Extras",
+      "Updates & Patches",
+      "DLC & Expansions",
+      "Packs/Addons",
+      "grabs",
+      "seeders",
+      "Today",
       "No Release Date",
       "Release date TBD",
       "Delayed",

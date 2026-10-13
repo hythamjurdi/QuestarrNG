@@ -1,4 +1,5 @@
-import { getRegionalCollator, useRegionalPreference } from "@/lib/regional-format";
+import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
+import { useRegionalPreference } from "@/lib/regional-format";
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -71,6 +72,8 @@ function LabeledSwitch({
 
 export default function Library() {
   const regionalPreference = useRegionalPreference();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
+  const nameCollator = useMemo(() => getInterfaceCollator(interfaceLanguage), [interfaceLanguage]);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [showFilters, setShowFilters] = useState(false);
@@ -162,7 +165,6 @@ export default function Library() {
   // ⚡ Bolt: Consolidate multiple array traversals into a single pass to
   // optimize render performance and reduce unnecessary allocations.
   const { uniqueGenres, uniquePlatforms } = useMemo(() => {
-    const collator = getRegionalCollator(undefined, regionalPreference);
     const genreSet = new Set<string>();
     const platformSet = new Set<string>();
 
@@ -180,10 +182,10 @@ export default function Library() {
     }
 
     return {
-      uniqueGenres: Array.from(genreSet).sort((a, b) => collator.compare(a, b)),
-      uniquePlatforms: Array.from(platformSet).sort((a, b) => collator.compare(a, b)),
+      uniqueGenres: Array.from(genreSet).sort(nameCollator.compare),
+      uniquePlatforms: Array.from(platformSet).sort(nameCollator.compare),
     };
-  }, [games, regionalPreference]);
+  }, [games, nameCollator]);
 
   const visiblePlatforms = useMemo(() => {
     // The platform setting stores IGDB ids, while `games.platforms` holds IGDB
@@ -233,7 +235,7 @@ export default function Library() {
         return false;
       return true;
     });
-    return sortLibraryGames(filtered, sortBy, regionalPreference);
+    return sortLibraryGames(filtered, sortBy, interfaceLanguage);
   }, [
     games,
     statusFilter,
@@ -247,7 +249,7 @@ export default function Library() {
     minRating,
     showUnratedOnly,
     sortBy,
-    regionalPreference,
+    interfaceLanguage,
   ]);
 
   const activeFilters = useMemo(() => {
@@ -296,8 +298,8 @@ export default function Library() {
   ]);
 
   const libStats = useMemo(
-    () => calculateLibraryStats(games, regionalPreference),
-    [games, regionalPreference]
+    () => calculateLibraryStats(games, regionalPreference, interfaceLanguage),
+    [games, regionalPreference, interfaceLanguage]
   );
 
   // Keep the last known non-empty stats so the header line doesn't vanish
