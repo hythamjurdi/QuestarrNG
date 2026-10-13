@@ -12,7 +12,9 @@ export function cn(...inputs: ClassValue[]) {
  * Formats bytes to a human-readable string (e.g., "1.5 GB")
  */
 export function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) {
+    return formatRegionalNumber(0, { maximumFractionDigits: 2 }) + " B";
+  }
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -188,7 +190,15 @@ export function parseReleaseDate(
   fullDate: string | null;
 } {
   if (!isoDate) return { year: "TBA", fullDate: null };
-  const year = isoDate.slice(0, 4);
+  const rawYear = isoDate.slice(0, 4);
+  const yearNumber = Number(rawYear);
+  const year = Number.isFinite(yearNumber)
+    ? formatRegionalNumber(
+        yearNumber,
+        { minimumIntegerDigits: rawYear.length, useGrouping: false },
+        preference
+      )
+    : rawYear;
   if (isoDate.endsWith("-12-31")) return { year, fullDate: null };
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return { year, fullDate: null };

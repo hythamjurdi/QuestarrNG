@@ -1,4 +1,4 @@
-import { formatRegionalNumber } from "@/lib/regional-format";
+import { formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Plus, Moon, Sun, HardDrive, AlertCircle, Loader2 } from "lucide-react";
@@ -40,16 +40,6 @@ interface StorageInfo {
   downloaderName: string;
   freeSpace: number;
   error?: string;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return (
-    formatRegionalNumber(bytes / Math.pow(k, i), { maximumFractionDigits: 2 }) + " " + sizes[i]
-  );
 }
 
 export default function Header({

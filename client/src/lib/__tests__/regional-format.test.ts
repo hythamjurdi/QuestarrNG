@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { createElement } from "react";
 import { setInterfaceLanguage } from "../interface-locale";
+import { formatBytes as formatDownloadsBytes, formatSpeed } from "../downloads-utils";
+import { formatBytes as formatGeneralBytes, parseReleaseDate } from "../utils";
 import {
   formatRegionalDistanceToNow,
   getRegionalCollator,
@@ -65,6 +67,37 @@ describe("regional formatting locale", () => {
     expect(formatRegionalDistanceToNow(new Date(Date.now() - 60 * 60 * 1000))).toBe(
       `about ${new Intl.NumberFormat("ar", { useGrouping: false }).format(1)} hour ago`
     );
+  });
+
+  it("formats release years with the system locale's digits for dated and year-only releases", () => {
+    setRegionalPreference("system");
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "fa-IR" } as Intl.ResolvedDateTimeFormatOptions);
+
+    try {
+      const expectedYear = new Intl.NumberFormat("fa-IR", { useGrouping: false }).format(2026);
+      expect(parseReleaseDate("2026-12-31").year).toBe(expectedYear);
+      expect(parseReleaseDate("2026-10-13").year).toBe(expectedYear);
+    } finally {
+      resolvedOptions.mockRestore();
+    }
+  });
+
+  it("formats zero-byte sizes and speeds with the system locale's digits", () => {
+    setRegionalPreference("system");
+    const resolvedOptions = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ locale: "ar-EG" } as Intl.ResolvedDateTimeFormatOptions);
+
+    try {
+      const zero = new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2 }).format(0);
+      expect(formatGeneralBytes(0)).toBe(zero + " B");
+      expect(formatDownloadsBytes(0)).toBe(zero + " B");
+      expect(formatSpeed(0)).toBe(zero + " B/s");
+    } finally {
+      resolvedOptions.mockRestore();
+    }
   });
 
   it.each(["fr", "de", "ar"])(

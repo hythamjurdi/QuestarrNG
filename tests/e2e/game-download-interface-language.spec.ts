@@ -16,7 +16,8 @@ async function openLocalizedBundle(
   page: Page,
   updateCount: number,
   regionalFormat?: string,
-  ageDays?: number
+  ageDays?: number,
+  gameTitle = game.title
 ) {
   const pubDate =
     ageDays === undefined
@@ -29,7 +30,7 @@ async function openLocalizedBundle(
   }, regionalFormat);
 
   await page.route("/api/games*", async (route) => {
-    await route.fulfill({ json: [game] });
+    await route.fulfill({ json: [{ ...game, title: gameTitle }] });
   });
   await page.route("**/api/indexers/enabled", async (route) => {
     await route.fulfill({ json: [] });
@@ -39,8 +40,8 @@ async function openLocalizedBundle(
   });
   await page.route("**/api/search?*", async (route) => {
     const updates = Array.from({ length: updateCount }, (_, index) => ({
-      title: `Localization Demo Update ${index + 1}`,
-      link: `magnet:?xt=urn:btih:UPDATE${index + 1}`,
+      title: gameTitle + " Update " + (index + 1),
+      link: "magnet:?xt=urn:btih:UPDATE" + (index + 1),
       pubDate,
       seeders: 10,
       group: "Example Group",
@@ -50,7 +51,7 @@ async function openLocalizedBundle(
       json: {
         items: [
           {
-            title: "Localization Demo Full",
+            title: gameTitle + " Full",
             link: "magnet:?xt=urn:btih:MAIN",
             pubDate,
             seeders: 12345,
@@ -70,18 +71,27 @@ async function openLocalizedBundle(
   await page.getByTestId(`card-game-${game.id}`).click();
   await page.getByTestId("button-download-game").click();
   const downloadDialog = page.getByRole("dialog", {
-    name: "تنزيل Localization Demo",
+    name: "تنزيل " + gameTitle,
     exact: true,
   });
   await expect(downloadDialog).toHaveAttribute("dir", "rtl");
-  await downloadDialog.getByRole("button", { name: "تنزيل Localization Demo Full" }).waitFor();
-  return downloadDialog.getByRole("button", { name: "تنزيل Localization Demo Full" });
+  const dialogTitle = downloadDialog.getByRole("heading", {
+    name: "تنزيل " + gameTitle,
+    exact: true,
+  });
+  await expect(dialogTitle.locator('span[lang="und"][dir="auto"]')).toHaveText(gameTitle);
+  const downloadButton = downloadDialog.getByRole("button", {
+    name: "تنزيل " + gameTitle + " Full",
+  });
+  await downloadButton.waitFor();
+  return downloadButton;
 }
 
 async function expectSeparatedDownloadAccessibleName(
   page: Page,
   button: Locator,
-  actionText: string
+  actionText: string,
+  gameTitle = "Localization Demo"
 ) {
   const labelIds = (await button.getAttribute("aria-labelledby"))?.split(/\s+/) ?? [];
   expect(labelIds).toHaveLength(2);
@@ -89,13 +99,14 @@ async function expectSeparatedDownloadAccessibleName(
   const actionLabel = page.locator(`[id="${actionLabelId}"]`);
   const titleLabel = page.locator(`[id="${titleLabelId}"]`);
 
-  await expect(button).toHaveAccessibleName(`${actionText} Localization Demo Full`);
+  const fullTitle = `${gameTitle} Full`;
+  await expect(button).toHaveAccessibleName(`${actionText} ${fullTitle}`);
   await expect(button).not.toHaveAttribute("lang");
   await expect(button).not.toHaveAttribute("dir");
   await expect(actionLabel).toHaveText(actionText);
   await expect(actionLabel).toHaveAttribute("lang", "ar");
   await expect(actionLabel).toHaveAttribute("dir", "rtl");
-  await expect(titleLabel).toHaveText("Localization Demo Full");
+  await expect(titleLabel).toHaveText(fullTitle);
   await expect(titleLabel).toHaveAttribute("lang", "und");
   await expect(titleLabel).toHaveAttribute("dir", "auto");
 }
@@ -588,6 +599,21 @@ test.describe("Game download interface language", () => {
     }
   });
 
+  test("isolates Latin game-title direction in the desktop RTL download dialog", async ({
+    page,
+  }) => {
+    const gameTitle = "Portal: The Lost Crown (PC)";
+    const downloadButton = await openLocalizedBundle(page, 0, "ar", undefined, gameTitle);
+    await expect(downloadButton).toBeVisible();
+
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: process.env.PR47_VISUAL_EVIDENCE_DIR + "/pr47-rtl-download-title-desktop.png",
+        fullPage: true,
+      });
+    }
+  });
+
   test("localizes category headings, metrics, and relative ages", async ({ page }) => {
     await openLocalizedBundle(page, 1, "ar");
 
@@ -629,16 +655,23 @@ test.describe("Game download interface language", () => {
 
   test("sets RTL direction on the mobile download drawer", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    const downloadButton = await openLocalizedBundle(page, 1, "ar");
-    await expectSeparatedDownloadAccessibleName(page, downloadButton, "تنزيل");
+    const gameTitle = "Portal: The Lost Crown (PC)";
+    const downloadButton = await openLocalizedBundle(page, 1, "ar", undefined, gameTitle);
+    await expectSeparatedDownloadAccessibleName(page, downloadButton, "تنزيل", gameTitle);
 
     const downloadDrawer = page.getByRole("dialog", {
-      name: "تنزيل Localization Demo",
+      name: "تنزيل " + gameTitle,
       exact: true,
     });
     await expect(downloadDrawer).toHaveAttribute("dir", "rtl");
     const regionalSeeders = await page.evaluate(() => new Intl.NumberFormat("ar").format(12345));
     await expect(downloadDrawer.getByText(regionalSeeders, { exact: false })).toBeVisible();
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: process.env.PR47_VISUAL_EVIDENCE_DIR + "/pr47-rtl-download-title-mobile.png",
+        fullPage: true,
+      });
+    }
   });
 
   test("keeps numeric formatting tied to the regional preference", async ({ page }) => {

@@ -1697,7 +1697,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
           <DrawerContent className="h-[95vh] flex flex-col" dir={directionFor("Download")}>
             <DrawerHeader className="pt-2 pb-0 px-4 flex-shrink-0">
               <DrawerTitle className="text-base font-bold truncate">
-                {localizedText("Download")} {game.title}
+                {localizedText("Download")}{" "}
+                <span lang="und" dir="auto">
+                  {game.title}
+                </span>
               </DrawerTitle>
               <DrawerDescription className="sr-only">
                 {localizedText("Search results for torrents and NZBs matching this game.")}
@@ -1729,7 +1732,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         >
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>
-              {localizedText("Download")} {game.title}
+              {localizedText("Download")}{" "}
+              <span lang="und" dir="auto">
+                {game.title}
+              </span>
             </DialogTitle>
             <DialogDescription>
               {localizedText("Search results for torrents and NZBs matching this game.")}{" "}

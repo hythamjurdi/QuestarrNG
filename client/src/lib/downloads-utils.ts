@@ -1,4 +1,6 @@
+import { formatBytes } from "@/lib/utils";
 import { formatRegionalNumber } from "@/lib/regional-format";
+export { formatBytes } from "@/lib/utils";
 /**
  * Download status type for torrent and usenet clients
  */
@@ -37,19 +39,6 @@ export interface DownloadData {
   error?: string;
   downloaderId: string;
   downloaderName: string;
-}
-
-/**
- * Format bytes to human-readable string
- */
-export function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return (
-    formatRegionalNumber(bytes / Math.pow(k, i), { maximumFractionDigits: 2 }) + " " + sizes[i]
-  );
 }
 
 /**

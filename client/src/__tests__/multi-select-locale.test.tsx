@@ -39,4 +39,33 @@ describe("MultiSelect localized content", () => {
     expect(emptyState).toHaveAttribute("lang", "ar");
     expect(emptyState).toHaveAttribute("dir", "rtl");
   });
+
+  it("keeps upstream option values auto-directed inside translated RTL controls", () => {
+    render(
+      <MultiSelect
+        options={[{ value: "FitGirl", label: "FitGirl" }]}
+        selected={["FitGirl"]}
+        onChange={vi.fn()}
+        placeholder="اختر المجموعات..."
+        lang="ar"
+        dir="rtl"
+        searchPlaceholder="بحث..."
+        searchLang="ar"
+        searchDir="rtl"
+        emptyMessage="لم يتم العثور على عناصر."
+        emptyLang="ar"
+        emptyDir="rtl"
+      />
+    );
+
+    const selectedValue = screen.getByText("FitGirl", { exact: true });
+    expect(selectedValue).toHaveAttribute("lang", "und");
+    expect(selectedValue).toHaveAttribute("dir", "auto");
+
+    fireEvent.click(screen.getByRole("combobox"));
+    const optionValue = screen.getByRole("option", { name: "FitGirl" }).querySelector("span");
+    expect(optionValue).toHaveTextContent("FitGirl");
+    expect(optionValue).toHaveAttribute("lang", "und");
+    expect(optionValue).toHaveAttribute("dir", "auto");
+  });
 });

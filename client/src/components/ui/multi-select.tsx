@@ -93,7 +93,9 @@ export function MultiSelect({
             {selectedOptions.length > 0 ? (
               selectedOptions.map((option) => (
                 <Badge variant="secondary" key={option.value} className="flex items-center">
-                  {option.label}
+                  <span lang="und" dir="auto">
+                    {option.label}
+                  </span>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -141,7 +143,9 @@ export function MultiSelect({
                     <Check
                       className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}
                     />
-                    {option.label}
+                    <span lang="und" dir="auto">
+                      {option.label}
+                    </span>
                   </CommandItem>
                 );
               })}

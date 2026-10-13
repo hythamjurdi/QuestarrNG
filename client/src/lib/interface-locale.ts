@@ -42,7 +42,14 @@ export function getBrowserInterfaceLanguage(
     const normalized = candidate.toLowerCase();
     const base = normalized.split(/[-_]/)[0];
     if (base === "en") return "en";
-    if (base === "zh") return /(?:hant|tw|hk|mo)/.test(normalized) ? "zh-Hant" : "zh-Hans";
+    if (base === "zh") {
+      const subtags = normalized.split(/[-_]/);
+      if (subtags.includes("hans")) return "zh-Hans";
+      if (subtags.includes("hant")) return "zh-Hant";
+      return subtags.some((subtag) => subtag === "tw" || subtag === "hk" || subtag === "mo")
+        ? "zh-Hant"
+        : "zh-Hans";
+    }
     if (base === "pt") return "pt-BR";
     if (
       base === "es" ||
