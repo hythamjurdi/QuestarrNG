@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -289,5 +289,42 @@ describe("WishlistPage mobile sections", () => {
 
     expect(await screen.findByText("No games match your search")).toBeInTheDocument();
     expect(screen.getByText('No wishlist games found for "Metroid".')).toBeInTheDocument();
+  });
+
+  it("moves an upcoming game into Released after its release time passes", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-13T23:59:30.000Z"));
+
+    try {
+      const queryClient = createTestQueryClient();
+      const queryKey = ["/api/games", "?status=wanted"];
+      queryClient.setQueryDefaults(queryKey, { staleTime: Infinity });
+      queryClient.setQueryData(queryKey, [
+        { id: "released", title: "Released Game", status: "wanted", releaseDate: "2026-10-12" },
+        {
+          id: "upcoming",
+          title: "Upcoming Game",
+          status: "wanted",
+          releaseDate: "2026-10-13T23:59:40.000Z",
+        },
+      ]);
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <WishlistPage />
+        </QueryClientProvider>
+      );
+
+      expect(screen.getByRole("button", { name: /Upcoming/ })).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
+
+      expect(screen.queryByRole("button", { name: /Upcoming/ })).not.toBeInTheDocument();
+      expect(screen.getByTestId("wishlist-grid")).toHaveTextContent("Upcoming Game");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

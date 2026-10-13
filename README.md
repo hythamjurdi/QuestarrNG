@@ -195,6 +195,17 @@ run `docker compose pull && docker compose up -d`.
 3. **Access the application:**
    Open your browser to `http://localhost:5000`
 
+If port `5000` is already in use, the repository Compose file lets you change
+the host-side port while keeping the app on its internal port:
+
+```bash
+HOST_SIDE_PORT=5100 docker compose up -d
+```
+
+Then open `http://localhost:5100`. If you use the minimal Compose example
+above, change its port mapping from `5000:5000` to `5100:5000`; the left side
+is the host port and the right side is the port inside the container.
+
 The image runs as a non-root user by default. Set `PUID` and `PGID` to the
 owner of the mounted data directory; the Compose file uses those values as the
 container user. Existing installs keep their data and should set these values

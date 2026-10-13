@@ -432,22 +432,22 @@ Snapshot: 2026-10-13T05:20:58.476Z. 1147 items. All ancestry observations requir
 | [pr #438](https://github.com/Doezer/Questarr/pull/438) | Refactor game update notifications and add autosearch tests | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #439](https://github.com/Doezer/Questarr/pull/439) | Refactor hidden mutation flow and add hide button to game details page | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #440](https://github.com/Doezer/Questarr/pull/440) | Refresh download search cache on indexer changes | MERGED | merge-commit-not-in-either-main-history | verified |
-| [pr #441](https://github.com/Doezer/Questarr/pull/441) | Add code coverage thresholds and Codecov status checks | CLOSED | no-merge-commit | unreviewed |
-| [pr #443](https://github.com/Doezer/Questarr/pull/443) | chore(deps): bump docker/setup-buildx-action from 3.12.0 to 4.0.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #444](https://github.com/Doezer/Questarr/pull/444) | chore(deps): bump docker/build-push-action from 6.19.2 to 7.0.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #445](https://github.com/Doezer/Questarr/pull/445) | chore(deps): bump docker/setup-qemu-action from 3.7.0 to 4.0.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #446](https://github.com/Doezer/Questarr/pull/446) | chore(deps): bump docker/login-action from 3.7.0 to 4.0.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #447](https://github.com/Doezer/Questarr/pull/447) | chore(deps): bump docker/metadata-action from 5.10.0 to 6.0.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #448](https://github.com/Doezer/Questarr/pull/448) | chore(deps): bump react-icons from 5.5.0 to 5.6.0 in the react group | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #449](https://github.com/Doezer/Questarr/pull/449) | chore(deps-dev): bump the dev-dependencies group with 5 updates | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #450](https://github.com/Doezer/Questarr/pull/450) | chore(deps): bump express-rate-limit from 8.2.1 to 8.3.0 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #451](https://github.com/Doezer/Questarr/pull/451) | chore(deps): bump multer and @types/multer | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #452](https://github.com/Doezer/Questarr/pull/452) | chore(deps): bump fast-xml-parser from 5.4.1 to 5.4.2 | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #453](https://github.com/Doezer/Questarr/issues/453) | Download screen does not scale with long release names. Unable to see download button. | CLOSED | no-merge-commit | unreviewed |
-| [issue #454](https://github.com/Doezer/Questarr/issues/454) | Can't use port 5000 but it still tries to use it. | CLOSED | no-merge-commit | unreviewed |
-| [pr #455](https://github.com/Doezer/Questarr/pull/455) | 🛡️ Sentinel: [HIGH] Fix missing rate limit on login | MERGED | merge-commit-in-fork-history | unreviewed |
-| [pr #456](https://github.com/Doezer/Questarr/pull/456) | ⚡ Bolt: Memoize expensive array filtering in Library and Wishlist pages | CLOSED | no-merge-commit | unreviewed |
-| [pr #457](https://github.com/Doezer/Questarr/pull/457) | 🎨 Palette: Improve screen reader context for Sidebar and Notifications | MERGED | merge-commit-in-fork-history | unreviewed |
+| [pr #441](https://github.com/Doezer/Questarr/pull/441) | Add code coverage thresholds and Codecov status checks | CLOSED | no-merge-commit | verified |
+| [pr #443](https://github.com/Doezer/Questarr/pull/443) | chore(deps): bump docker/setup-buildx-action from 3.12.0 to 4.0.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #444](https://github.com/Doezer/Questarr/pull/444) | chore(deps): bump docker/build-push-action from 6.19.2 to 7.0.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #445](https://github.com/Doezer/Questarr/pull/445) | chore(deps): bump docker/setup-qemu-action from 3.7.0 to 4.0.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #446](https://github.com/Doezer/Questarr/pull/446) | chore(deps): bump docker/login-action from 3.7.0 to 4.0.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #447](https://github.com/Doezer/Questarr/pull/447) | chore(deps): bump docker/metadata-action from 5.10.0 to 6.0.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #448](https://github.com/Doezer/Questarr/pull/448) | chore(deps): bump react-icons from 5.5.0 to 5.6.0 in the react group | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #449](https://github.com/Doezer/Questarr/pull/449) | chore(deps-dev): bump the dev-dependencies group with 5 updates | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #450](https://github.com/Doezer/Questarr/pull/450) | chore(deps): bump express-rate-limit from 8.2.1 to 8.3.0 | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #451](https://github.com/Doezer/Questarr/pull/451) | chore(deps): bump multer and @types/multer | MERGED | merge-commit-in-fork-history | superseded |
+| [pr #452](https://github.com/Doezer/Questarr/pull/452) | chore(deps): bump fast-xml-parser from 5.4.1 to 5.4.2 | MERGED | merge-commit-in-fork-history | superseded |
+| [issue #453](https://github.com/Doezer/Questarr/issues/453) | Download screen does not scale with long release names. Unable to see download button. | CLOSED | no-merge-commit | verified |
+| [issue #454](https://github.com/Doezer/Questarr/issues/454) | Can't use port 5000 but it still tries to use it. | CLOSED | no-merge-commit | verified |
+| [pr #455](https://github.com/Doezer/Questarr/pull/455) | 🛡️ Sentinel: [HIGH] Fix missing rate limit on login | MERGED | merge-commit-in-fork-history | verified |
+| [pr #456](https://github.com/Doezer/Questarr/pull/456) | ⚡ Bolt: Memoize expensive array filtering in Library and Wishlist pages | CLOSED | no-merge-commit | verified |
+| [pr #457](https://github.com/Doezer/Questarr/pull/457) | 🎨 Palette: Improve screen reader context for Sidebar and Notifications | MERGED | merge-commit-in-fork-history | verified |
 | [issue #458](https://github.com/Doezer/Questarr/issues/458) | Downloads tab shows all Transmission torrents instead of filtering by category/label | CLOSED | no-merge-commit | unreviewed |
 | [issue #459](https://github.com/Doezer/Questarr/issues/459) | Torrent file downloads from Cloudflare-protected indexers fail (bypasses Prowlarr's FlareSolverr proxy) | CLOSED | no-merge-commit | unreviewed |
 | [pr #460](https://github.com/Doezer/Questarr/pull/460) | Feat: Add toggle for showing unreleased games in wishlist + reorder sections | MERGED | merge-commit-not-in-either-main-history | unreviewed |

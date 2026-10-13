@@ -58,8 +58,20 @@ export default function WishlistPage() {
   const downloadSummaries = useDownloadSummary();
   const [showSearchResultsOnly, setShowSearchResultsOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentTime, setCurrentTime] = useState(() => new Date().toISOString());
   const { gridColumns: safeGridColumns, handleGridColumnsChange } =
     useGridColumns("wishlistGridColumns");
+
+  useEffect(() => {
+    const refreshCurrentTime = () => setCurrentTime(new Date().toISOString());
+    const intervalId = window.setInterval(refreshCurrentTime, 60_000);
+    document.addEventListener("visibilitychange", refreshCurrentTime);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshCurrentTime);
+    };
+  }, []);
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
     queryKey: ["/api/games", "?status=wanted"],
@@ -68,7 +80,7 @@ export default function WishlistPage() {
   const { releasedGames, upcomingGames, tbaGames, filteredCount } = useMemo(() => {
     // 笞｡ Bolt: Use a string comparison for dates instead of new Date() allocations
     // Since releaseDate is an ISO string like "2024-05-23T00:00:00Z"
-    const nowStr = new Date().toISOString();
+    const nowStr = currentTime;
 
     const released: Game[] = [];
     const upcoming: Game[] = [];
@@ -102,7 +114,14 @@ export default function WishlistPage() {
       tbaGames: tba,
       filteredCount: count,
     };
-  }, [games, showSearchResultsOnly, showDownloadsOnly, downloadSummaries, searchQuery]);
+  }, [
+    games,
+    showSearchResultsOnly,
+    showDownloadsOnly,
+    downloadSummaries,
+    searchQuery,
+    currentTime,
+  ]);
 
   // 笞｡ Bolt: Memoize the sorted arrays to prevent re-sorting on every render
   const sortedUpcomingGames = useMemo(() => {

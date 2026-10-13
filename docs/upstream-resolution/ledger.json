@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 386,
+      "verified": 392,
       "needs-implementation": 1,
-      "superseded": 42,
+      "superseded": 52,
       "not-applicable": 7,
-      "unreviewed": 710,
+      "unreviewed": 694,
       "implemented-unverified": 1
     }
   },
@@ -12594,10 +12594,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Vitest coverage gates are already materially above the requested 45/37/41/46 baseline (83/76/79/84); an LCOV reporter now emits coverage for Codecov uploads.",
+          "Codecov uses an auto-baseline project status with the requested 1% tolerance, a 65% patch target, per-file PR comments, and explicit ignores for generated, browser-test, and config files. CI uploads coverage and test results."
+        ],
+        "acceptance": [
+          "Coverage regression below the established local floors fails npm run test:coverage; Codecov has project/patch status configuration and an LCOV report to publish."
+        ],
+        "evidence": [
+          "vitest.config.ts",
+          "codecov.yml",
+          ".github/workflows/ci.yml",
+          "docs/upstream-resolution/evidence/validation-batch-44.txt",
+          "https://github.com/Doezer/Questarr/pull/441"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12614,10 +12625,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b5d125c0ea9340bca70c1d04cc38bd4366138d79",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The pinned step-security/setup-buildx-action is v4.2.0, newer than the requested v4.0.0, so the Dependabot bump is already exceeded while retaining the hardened wrapper."
+        ],
+        "acceptance": [
+          "Keep setup-buildx-action at or above v4.0.0 and pinned by full commit SHA."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          "https://github.com/Doezer/Questarr/pull/443"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12634,10 +12653,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2d007920b2cac17820c617c5e57f99c1dad4a431",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The pinned step-security/docker-build-push-action is v7.3.0, newer than the requested v7.0.0, so this dependency bump is already exceeded."
+        ],
+        "acceptance": [
+          "Keep docker-build-push-action at or above v7.0.0 and pinned by full commit SHA."
+        ],
+        "evidence": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/deploy.yml",
+          "https://github.com/Doezer/Questarr/pull/444"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12654,10 +12681,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9cfe87e049ee68ebb5c97d723dafde19fe64a201",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The pinned step-security/setup-qemu-action is v4.2.0, newer than the requested v4.0.0, so this dependency bump is already exceeded."
+        ],
+        "acceptance": [
+          "Keep setup-qemu-action at or above v4.0.0 and pinned by full commit SHA."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          ".github/workflows/fork-image.yml",
+          "https://github.com/Doezer/Questarr/pull/445"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12674,10 +12709,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b8cc2fa9371a625549343d5342a88c1548fefcfc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The pinned step-security/docker-login-action is v4.6.0, newer than the requested v4.0.0, so this dependency bump is already exceeded."
+        ],
+        "acceptance": [
+          "Keep docker-login-action at or above v4.0.0 and pinned by full commit SHA."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          ".github/workflows/fork-image.yml",
+          "https://github.com/Doezer/Questarr/pull/446"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12694,10 +12737,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0f9f476c66d8ed975fa1fbdf2cb01b5ad85481d8",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The pinned docker/metadata-action is v6.2.0, newer than the requested v6.0.0, so this dependency bump is already exceeded."
+        ],
+        "acceptance": [
+          "Keep docker/metadata-action at or above v6.0.0 and pinned by full commit SHA."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          "https://github.com/Doezer/Questarr/pull/447"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12714,10 +12764,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6e4065f21adfa6a409caf10506dbf2fee051bd58",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "react-icons is already declared at ^5.7.0, beyond the requested 5.6.0 release."
+        ],
+        "acceptance": [
+          "Keep react-icons at or above 5.6.0."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/448"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12734,10 +12792,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "75312a2a83d6bbb75a6566cebb39d6283ed528cc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The current development dependency ranges and lockfile exceed the versions requested by the grouped bump for @eslint/js, @types/node, eslint, lint-staged, and postcss."
+        ],
+        "acceptance": [
+          "Keep each development dependency at or above the requested grouped-bump version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/449"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12754,10 +12820,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4dcce8d5ed06e3f4a9da40d5ad71fa75788168e1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "express-rate-limit is already declared at ^8.7.0, beyond the requested 8.3.0 release."
+        ],
+        "acceptance": [
+          "Keep express-rate-limit at or above 8.3.0."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/450"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12774,10 +12848,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "55802f941315b06528f7fa9f59e15ad73bcb4972",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "multer 2.4.0 and @types/multer 2.3.0 exceed the requested 2.1.1 updates."
+        ],
+        "acceptance": [
+          "Keep multer and @types/multer at or above the requested patched versions."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/451"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12794,10 +12876,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b801de687c7cb741d0af3a3b17bcf6f2d69aa92b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "fast-xml-parser is already declared at ^5.11.2, beyond the requested 5.4.2 release."
+        ],
+        "acceptance": [
+          "Keep fast-xml-parser at or above 5.4.2."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/452"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12814,10 +12904,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The mobile download dialog shows the full release title without a two-line clamp; the narrow-screen regression test and running screenshot confirm the release actions remain available."
+        ],
+        "acceptance": [
+          "On narrow screens, a long release title wraps without hiding the download actions."
+        ],
+        "evidence": [
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/pr-evidence/upstream-release-name-mobile-full.png",
+          "https://github.com/Doezer/Questarr/issues/453"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12834,10 +12932,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Docker Compose separates the host-side port from the app's internal listener; the README now explains changing the host mapping while keeping port 5000 inside the container. Indexer URL input is trimmed before validation, including NZBGeek URLs with trailing spaces."
+        ],
+        "acceptance": [
+          "With bridge networking, operators can use an available host port without changing the internal app port, and trailing spaces do not invalidate an indexer URL."
+        ],
+        "evidence": [
+          "docker-compose.yml",
+          "README.md",
+          "server/middleware.ts",
+          "server/__tests__/middleware.test.ts",
+          "https://github.com/Doezer/Questarr/issues/454"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12854,10 +12962,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "fa58abbcc4bbb171e91af4040d8623a307294779",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The shared authRateLimiter is applied to POST /api/auth/login. Its per-IP ceiling is also covered by the auth rate-limit tests, and the login route uses the same limiter as setup endpoints."
+        ],
+        "acceptance": [
+          "Excess login attempts are throttled before credential processing."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/middleware.ts",
+          "server/__tests__/auth-setup-ratelimit.test.ts",
+          "https://github.com/Doezer/Questarr/pull/455"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12874,10 +12991,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Library and Wishlist derived filters are memoized in the current fork. Wishlist release grouping also refreshes once a minute and when the tab becomes visible again, preventing time-dependent Upcoming/Released categories from going stale. A fake-clock regression test crosses a release boundary."
+        ],
+        "acceptance": [
+          "Library and Wishlist filter results remain stable across unrelated renders, and Wishlist moves a game into Released after its release time passes."
+        ],
+        "evidence": [
+          "client/src/components/Library.tsx",
+          "client/src/pages/wishlist.tsx",
+          "client/__tests__/WishlistPage.mobile.test.tsx",
+          "docs/pr-evidence/upstream-wishlist-date-rollover-batch-44.png",
+          "release-notes/2026-10-13-wishlist-release-categories.md",
+          "https://github.com/Doezer/Questarr/pull/456"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -12894,10 +13022,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1a94647d964de19407df792bc8a980b38a49c624",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Sidebar buttons distinguish item counts from active download counts. NotificationItem announces read state and title while leaving the message in the accessible name; a regression test verifies that the message is included."
+        ],
+        "acceptance": [
+          "Screen readers receive clear Sidebar count labels and the notification state, title, and message."
+        ],
+        "evidence": [
+          "client/src/components/AppSidebar.tsx",
+          "client/src/components/NotificationItem.tsx",
+          "client/__tests__/AppSidebar.test.tsx",
+          "client/__tests__/NotificationItem.accessibility.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/457"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

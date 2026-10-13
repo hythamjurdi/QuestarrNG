@@ -1130,3 +1130,27 @@ and [batch 43 validation](evidence/validation-batch-43.txt).
 The ledger now records **386 verified**, **42 superseded**, **710 unreviewed**,
 **7 not-applicable**, **1 implemented-unverified**, and **1
 needs-implementation** record. Issue #37 remains outstanding.
+
+## Batch 44 — October 13, 2026
+
+Batch 44 reviewed PR #441, PRs #443–452, issues [#453](https://github.com/Doezer/Questarr/issues/453)
+and [#454](https://github.com/Doezer/Questarr/issues/454), and PRs #455–457. The
+ten dependency requests are superseded by newer locked package versions or
+newer SHA-pinned Docker actions. Coverage now emits LCOV, keeps the stronger
+local floors, tightens the Codecov project tolerance to 1%, and configures
+per-file PR comments and generated/test/config ignores.
+
+Issue #453 is covered by the narrow-screen release-title test and existing
+running screenshot. Issue #454's bridge-mode port split was already in Compose;
+the README now explains changing the host port, and indexer URL validation
+trims trailing spaces. Login throttling and the sidebar/notification screen
+reader context are present with regression coverage. The Wishlist filter
+memoization was already present; this batch fixes stale release categories by
+refreshing time-dependent grouping and when a backgrounded tab becomes visible.
+See the [running Wishlist screenshot](../pr-evidence/upstream-wishlist-date-rollover-batch-44.png),
+the [release note](../../release-notes/2026-10-13-wishlist-release-categories.md),
+and [batch 44 validation](evidence/validation-batch-44.txt).
+
+The ledger now records **392 verified**, **52 superseded**, **694 unreviewed**,
+**7 not-applicable**, **1 implemented-unverified**, and **1
+needs-implementation** record. Issue #37 remains outstanding.
