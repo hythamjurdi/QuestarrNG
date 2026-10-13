@@ -99,7 +99,7 @@ test.describe("Game download interface language", () => {
     const year = new Date().getFullYear();
     await page.addInitScript(() => {
       localStorage.setItem("questarr.interface-language", "ar");
-      localStorage.setItem("questarrng.regional-format", "ar");
+      localStorage.setItem("questarrng.regional-format", "ja");
     });
     await page.route("**/api/config", async (route) =>
       route.fulfill({ json: { igdb: { configured: true } } })
@@ -133,9 +133,39 @@ test.describe("Game download interface language", () => {
     for (let index = 0; index < monthsToDecember; index += 1) {
       await page.getByRole("button", { name: "الفترة التالية" }).click();
     }
-    const releaseCountButton = page.locator('button[aria-label*="إصدار"]').first();
-    await expect(releaseCountButton).toHaveAttribute("lang", "ar");
-    await expect(releaseCountButton).toHaveAttribute("dir", "rtl");
+    const releaseCountLabel = page.locator('span[id$="-releases"]').first();
+    await expect(releaseCountLabel).not.toBeEmpty();
+    await expect(releaseCountLabel).toHaveAttribute("lang", "ar");
+    await expect(releaseCountLabel).toHaveAttribute("dir", "rtl");
+    const releaseCountLabelId = await releaseCountLabel.getAttribute("id");
+    expect(releaseCountLabelId).toBeTruthy();
+    const releaseCountButton = page.locator(`button[aria-labelledby~="${releaseCountLabelId}"]`);
+    await expect(releaseCountButton).toHaveCount(1);
+    await expect(releaseCountButton).toHaveAccessibleName(/إصدار/u);
+    await expect(releaseCountButton).toHaveAttribute("lang", "ja");
+    await expect(releaseCountButton).toHaveAttribute("dir", "ltr");
+    const labelledByIds = (await releaseCountButton.getAttribute("aria-labelledby"))
+      ?.split(/\s+/)
+      .filter(Boolean);
+    expect(labelledByIds).toContain(releaseCountLabelId);
+    const dateLabelId = labelledByIds?.find((id) => id.endsWith("-date"));
+    expect(dateLabelId).toBeTruthy();
+    const calendarDate = dateLabelId?.match(/-(\d{4}-\d{2}-\d{2})-date$/u)?.[1];
+    expect(calendarDate).toBeTruthy();
+    if (!calendarDate) throw new Error("Calendar date label did not include a date.");
+    const dateLabel = page.locator(`[id="${dateLabelId}"]`);
+    await expect(dateLabel).toHaveAttribute("lang", "ja");
+    await expect(dateLabel).toHaveAttribute("dir", "ltr");
+    const expectedDateLabel = await page.evaluate((dateKey) => {
+      const [year, month, day] = dateKey.split("-").map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString("ja", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      });
+    }, calendarDate);
+    await expect(dateLabel).toHaveText(expectedDateLabel);
+    await expect(releaseCountButton).toHaveAccessibleName(new RegExp(expectedDateLabel, "u"));
   });
 
   test("localizes nested filter controls and singular update copy", async ({ page }) => {
