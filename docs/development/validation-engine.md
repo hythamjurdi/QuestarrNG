@@ -32,25 +32,34 @@ control-character-stripped diagnostic excerpt of at most 16 KiB to standard
 error, with each output line prefixed so test output cannot issue GitHub Actions
 workflow commands. It does not upload the private task log.
 
-Runtime probes inherit only the executable path, platform process variables,
-locale, and timezone. They use a private temporary home and separate empty npm
-configuration files, so the npm version check cannot read a project or host
-`.npmrc`. Each task receives run-owned home,
-temporary, and XDG configuration/cache directories; registered task settings
-remain task-scoped. Unapproved `passEnv` requests fail during planning. `CI` is
-forced to `true`, and test tasks use
-`NODE_ENV=test` so ambient credentials, proxy settings, loader options, and
-workflow context do not leak into test processes. Task environment directories
-are removed when each command finishes, leaving logs and the receipt as the
-run's retained evidence. Hosted CI restores the runner-local npm cache, then the
-trusted launcher copies it into a private run directory. It validates the
-candidate lockfile and prefetches packages inside Bubblewrap with lifecycle
-scripts disabled; the actual validation run uses the private cache offline.
-Only dependency installation can reach the network. Its sandbox has no secrets
-or host data paths and uses synthetic hosts/NSS files plus a copy of the host
-resolver configuration for registry DNS. Validation runs with synthetic
-resolver settings and no network. Local runs without an explicit cache create
-one under their temporary home, which is removed with the task environment.
+Runtime probes and child commands use a sanitized environment with `PATH`,
+platform variables, locale and timezone settings, and the version-manager paths
+needed to find host-installed runtimes (`ASDF_DIR`, `ASDF_DATA_DIR`,
+`MISE_HOME`, `MISE_DATA_DIR`, `NVM_DIR`, and `VOLTA_HOME`). When these data
+directories are unset, the engine uses the original home's `.asdf` directory
+for ASDF when it exists, otherwise `ASDF_DIR` or the same default path. It
+derives mise's from `XDG_DATA_HOME`, `LOCALAPPDATA`, or the original home as
+appropriate. Task-specific values come from that task's configuration;
+inherited values outside the base allowlist require an approved task-scoped
+`passEnv` entry. Runtime probes use a private temporary home and separate empty
+npm configuration files, preventing the npm version check from reading a
+project or host `.npmrc`. Each task receives
+run-owned home, temporary, and XDG configuration/cache directories. `CI` is
+forced to `true`, and test tasks use `NODE_ENV=test` so ambient credentials,
+proxy settings, loader options, and workflow context do not leak into test
+processes. Task environment directories are removed when each command finishes,
+leaving logs and the receipt as the run's retained evidence.
+
+Hosted CI uses a runner-local npm cache with `setup-node` and passes its path
+only to the dependency-install task. The trusted launcher copies the cache into
+a private run directory, validates the candidate lockfile, and prefetches
+packages inside Bubblewrap with lifecycle scripts disabled; the actual
+validation run uses the private cache offline. Only dependency installation can
+reach the network. Its sandbox has no secrets or host data paths and uses
+synthetic hosts/NSS files plus a copy of the host resolver configuration for
+registry DNS. Validation runs with synthetic resolver settings and no network.
+Local runs without an explicit cache create one under their temporary home,
+which is removed with the task environment.
 
 The in-repository CLI imports candidate JavaScript before task subprocesses
 start. For an unreviewed checkout, do not run its CLI directly on the host.
