@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Downloads from "../src/pages/downloads";
 import { createTestQueryClient, getRequestUrl } from "./test-utils";
 import { formatRegionalPercent, setRegionalPreference } from "@/lib/regional-format";
+import { setInterfaceLanguage } from "@/lib/interface-locale";
 
 const toastSpy = vi.fn();
 
@@ -88,11 +89,13 @@ describe("Downloads page", () => {
     vi.clearAllMocks();
     toastSpy.mockReset();
     act(() => setRegionalPreference("system"));
+    act(() => setInterfaceLanguage("en"));
     mockDownloadsFetch({ downloads: [], errors: [] });
   });
 
   afterEach(() => {
     act(() => setRegionalPreference("system"));
+    act(() => setInterfaceLanguage("en"));
   });
 
   const renderPage = () =>
@@ -232,6 +235,35 @@ describe("Downloads page", () => {
     expect(progressValue.textContent).toBe(
       formatRegionalPercent(55, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, "es")
     );
+  });
+
+  it("formats download ages with the interface language and regional digits", async () => {
+    act(() => setInterfaceLanguage("ar"));
+    act(() => setRegionalPreference("es"));
+    mockDownloadsFetch({
+      downloads: [
+        {
+          id: "dl-age-locale",
+          name: "Localized age",
+          status: "completed",
+          progress: 100,
+          downloaderId: "downloader-2",
+          downloaderName: "SABnzbd",
+          downloadType: "usenet",
+          age: 5,
+        },
+      ],
+      errors: [],
+    });
+
+    renderPage();
+
+    const expectedAge = new Intl.RelativeTimeFormat("ar")
+      .format(-5, "day")
+      .replace(new Intl.NumberFormat("ar").format(5), new Intl.NumberFormat("es").format(5));
+    const ageBadge = await screen.findByTestId("badge-age-dl-age-locale");
+    expect(ageBadge).toHaveTextContent(expectedAge);
+    expect(ageBadge.querySelector('[lang="ar"][dir="rtl"]')).toHaveTextContent(expectedAge);
   });
 
   it("shows the loading skeleton before downloads resolve", async () => {

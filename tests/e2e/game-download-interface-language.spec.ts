@@ -221,6 +221,125 @@ test.describe("Game download interface language", () => {
     }
   });
 
+  test.describe("calendar under a Persian browser locale", () => {
+    test.use({ locale: "fa-IR" });
+
+    test("formats the Gregorian calendar grid with the Gregorian month and year", async ({
+      page,
+    }) => {
+      await page.addInitScript(() => {
+        localStorage.setItem("questarr.interface-language", "en");
+        localStorage.setItem("questarrng.regional-format", "system");
+      });
+      await page.route("**/api/config", async (route) =>
+        route.fulfill({ json: { igdb: { configured: true } } })
+      );
+      await page.route("**/api/games*", async (route) =>
+        route.fulfill({ json: [{ ...game, releaseDate: "2026-10-15" }] })
+      );
+
+      await page.goto("/calendar");
+      await page.getByRole("combobox").click();
+      await page.getByRole("option").nth(1).click();
+
+      const expectedTitle = await page.evaluate(() =>
+        new Intl.DateTimeFormat(undefined, {
+          calendar: "gregory",
+          month: "long",
+          year: "numeric",
+        }).format(new Date())
+      );
+      const title = page.locator("span.text-base.font-semibold");
+      await expect(title).toHaveText(expectedTitle);
+      await expect(title).toHaveAttribute("lang", "fa-IR");
+      if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+        await page.screenshot({
+          path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-calendar-gregorian-grid-fa-IR.png`,
+          fullPage: true,
+        });
+      }
+    });
+  });
+
+  test("localizes download ages on the Downloads and Search pages", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("questarr.interface-language", "ar");
+      localStorage.setItem("questarrng.regional-format", "es");
+    });
+    await page.route("**/api/downloads", async (route) =>
+      route.fulfill({
+        json: {
+          downloads: [
+            {
+              id: "e2e-age-download",
+              name: "Localized age fixture",
+              status: "completed",
+              progress: 100,
+              downloaderId: "downloader-1",
+              downloaderName: "SABnzbd",
+              downloadType: "usenet",
+              age: 5,
+              grabs: 12,
+            },
+          ],
+          errors: [],
+        },
+      })
+    );
+
+    await page.goto("/downloads");
+    const expectedAge = await page.evaluate(() =>
+      new Intl.RelativeTimeFormat("ar")
+        .format(-5, "day")
+        .replace(new Intl.NumberFormat("ar").format(5), new Intl.NumberFormat("es").format(5))
+    );
+    const downloadsAge = page.getByTestId("badge-age-e2e-age-download");
+    await expect(downloadsAge).toContainText(expectedAge);
+    await expect(downloadsAge.locator('[lang="ar"][dir="rtl"]')).toHaveText(expectedAge);
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-downloads-localized-age.png`,
+        fullPage: true,
+      });
+    }
+
+    await page.route("**/api/games*", async (route) => route.fulfill({ json: [game] }));
+    await page.route("**/api/indexers/enabled", async (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/downloaders/enabled", async (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/search?*", async (route) =>
+      route.fulfill({
+        json: {
+          items: [
+            {
+              title: "Localized Search Age",
+              link: "https://example.com/release/age",
+              guid: "e2e-age-search",
+              pubDate: "2026-10-01T00:00:00.000Z",
+              size: 1024,
+              grabs: 12,
+              age: 5,
+              downloadType: "usenet",
+            },
+          ],
+          total: 1,
+          offset: 0,
+        },
+      })
+    );
+
+    await page.goto("/search");
+    await page.getByPlaceholder("Enter game title...").fill("Localized");
+    const searchAge = page.getByText(expectedAge, { exact: true });
+    await expect(searchAge).toHaveAttribute("lang", "ar");
+    await expect(searchAge).toHaveAttribute("dir", "rtl");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-search-localized-age.png`,
+        fullPage: true,
+      });
+    }
+  });
+
   test("formats translated calendar counts with regional digits", async ({ page }) => {
     const year = new Date().getFullYear();
     await page.addInitScript(() => {

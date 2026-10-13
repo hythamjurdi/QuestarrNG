@@ -3,7 +3,11 @@ import {
   formatRegionalPercent,
   useRegionalPreference,
 } from "@/lib/regional-format";
-import { getInterfaceCollator, useInterfaceLanguage } from "@/lib/interface-locale";
+import {
+  getInterfaceCollator,
+  getInterfaceLanguageDirection,
+  useInterfaceLanguage,
+} from "@/lib/interface-locale";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiFetch } from "@/lib/queryClient";
@@ -772,9 +776,15 @@ export default function Downloads() {
                           <Badge
                             variant="outline"
                             data-testid={`badge-age-${download.id}`}
-                            aria-label={`Age: ${formatAge(download.age)}`}
+                            aria-label={`Age: ${formatAge(download.age, interfaceLanguage, regionalPreference)}`}
                           >
-                            Age: {formatAge(download.age)}
+                            Age:{" "}
+                            <span
+                              lang={interfaceLanguage}
+                              dir={getInterfaceLanguageDirection(interfaceLanguage)}
+                            >
+                              {formatAge(download.age, interfaceLanguage, regionalPreference)}
+                            </span>
                           </Badge>
                         )}
                         {/* Usenet-specific: Grabs */}

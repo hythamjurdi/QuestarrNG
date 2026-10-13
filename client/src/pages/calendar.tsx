@@ -47,6 +47,36 @@ export function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export function formatCalendarTitle(
+  currentDate: Date,
+  viewMode: ViewMode,
+  locale?: string
+): string {
+  if (viewMode === "year") {
+    return new Intl.DateTimeFormat(locale, {
+      calendar: "gregory",
+      year: "numeric",
+    }).format(currentDate);
+  }
+
+  if (viewMode === "month") {
+    return new Intl.DateTimeFormat(locale, {
+      calendar: "gregory",
+      month: "long",
+      year: "numeric",
+    }).format(currentDate);
+  }
+
+  const weekDays = getWeekDays(new Date(currentDate));
+  const formatter = new Intl.DateTimeFormat(locale, {
+    calendar: "gregory",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+  return formatter.format(weekDays[0]!) + " – " + formatter.format(weekDays[6]!);
+}
+
 function getMonthName(month: number): string {
   return new Date(2000, month, 1).toLocaleDateString(getRegionalLocale(), { month: "long" });
 }
@@ -218,22 +248,7 @@ export default function CalendarPage() {
 
   const currentYearStr = currentDate.getFullYear().toString();
 
-  const getTitle = () => {
-    const locale = getRegionalLocale();
-    if (viewMode === "year")
-      return new Intl.DateTimeFormat(locale, { year: "numeric" }).format(currentDate);
-    if (viewMode === "month")
-      return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(
-        currentDate
-      );
-    const weekDays = getWeekDays(new Date(currentDate));
-    const formatter = new Intl.DateTimeFormat(locale, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-    return formatter.format(weekDays[0]!) + " – " + formatter.format(weekDays[6]!);
-  };
+  const getTitle = () => formatCalendarTitle(currentDate, viewMode, getRegionalLocale());
   const viewModeLabel = viewMode === "year" ? "Year" : viewMode === "month" ? "Month" : "Week";
 
   if (config && !config.igdb.configured) {

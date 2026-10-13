@@ -9,6 +9,7 @@ import type { InfiniteData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { formatBytes, formatAge, isUsenetItem, getDownloadTypeColor } from "@/lib/downloads-utils";
+import { getInterfaceLanguageDirection, useInterfaceLanguage } from "@/lib/interface-locale";
 import { isTorrentDownloaderType, isUsenetDownloaderType } from "@shared/downloader-types";
 import { cleanReleaseName } from "@shared/title-utils";
 import {
@@ -118,6 +119,7 @@ const AI_LEGITIMACY_WARNING_THRESHOLD = 0.5;
  */
 export default function SearchPage() {
   const { toast } = useToast();
+  const { language: interfaceLanguage } = useInterfaceLanguage();
   const regionalPreference = useRegionalPreference();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -633,12 +635,13 @@ export default function SearchPage() {
                                 </>
                               )}
                               {download.age !== undefined && (
-                                <>
-                                  <span className="text-muted-foreground font-medium">
-                                    {formatAge(download.age)}
-                                  </span>
-                                  <span>old</span>
-                                </>
+                                <span
+                                  className="text-muted-foreground font-medium"
+                                  lang={interfaceLanguage}
+                                  dir={getInterfaceLanguageDirection(interfaceLanguage)}
+                                >
+                                  {formatAge(download.age, interfaceLanguage, regionalPreference)}
+                                </span>
                               )}
                             </>
                           ) : (

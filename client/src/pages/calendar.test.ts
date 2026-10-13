@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { getDaysInMonth, getWeekDays, formatDate, formatReleaseCount } from "./calendar";
+import {
+  formatCalendarTitle,
+  formatDate,
+  formatReleaseCount,
+  getDaysInMonth,
+  getWeekDays,
+} from "./calendar";
 import { setRegionalPreference } from "@/lib/regional-format";
 
 describe("calendar locale week structure", () => {
@@ -53,5 +59,25 @@ describe("calendar locale week structure", () => {
     setRegionalPreference("ar");
 
     expect(formatReleaseCount(2, () => "إصداران")).toBe("إصداران");
+  });
+
+  it("keeps calendar titles on the Gregorian grid for non-Gregorian system locales", () => {
+    const date = new Date(2026, 9, 1);
+
+    for (const locale of ["fa-IR", "th-TH"]) {
+      const title = formatCalendarTitle(date, "month", locale);
+      const gregorianTitle = new Intl.DateTimeFormat(locale, {
+        calendar: "gregory",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+      const localeDefaultTitle = new Intl.DateTimeFormat(locale, {
+        month: "long",
+        year: "numeric",
+      }).format(date);
+
+      expect(title).toBe(gregorianTitle);
+      expect(title).not.toBe(localeDefaultTitle);
+    }
   });
 });
