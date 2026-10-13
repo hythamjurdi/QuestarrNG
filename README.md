@@ -90,7 +90,7 @@ links to setup, integration, API, database, and security guides.
 | **Backlog management**      | Track your collection with status indicators (Wanted, Owned, Playing, Completed, Shelved), ratings, and notes. A dedicated **Playing** page adds journal notes, a milestones checklist, screenshots, and Steam achievements per game, plus Crack status and Time to Beat (via IGDB) on the game detail page and a DLC/expansions tab. |
 | **Game Discovery**          | Browse popular, new, and upcoming titles via IGDB, RSS feeds, and xREL.to, or sync your Steam wishlist directly into the app. A per-platform **Root folder / Scan Disk** discovers games already on disk and reconciles their files.                                                                                                  |
 | **Search & Filter**         | Find games by genre, platform, and keyword, with automatic search until a release is found, plus release blacklisting and preferred release groups/platforms. A Platforms setting scopes the whole app to your platform(s) of choice, with optional filters to hide shelved/owned games and age-restricted or erotic content.         |
-| **Download Management**     | Integrates with indexers and downloaders, optional auto-download and post-processing, and a bundle picker for updates and small optional extras. Includes password-protected archive handling, optional VirusTotal/ClamAV scanning, and an experimental BYOK workflow using Typesafe's Jev to improve game matches. |
+| **Download Management**     | Integrates with indexers and downloaders, optional auto-download and post-processing, and a bundle picker for updates and small optional extras. Includes password-protected archive handling, optional VirusTotal/ClamAV scanning, and an experimental BYOK workflow using Typesafe's Jev to improve game matches.                   |
 | **Real-time Notifications** | In-app alerts for releases and downloads, plus external notifications to 100+ providers via [Apprise](https://github.com/caronc/apprise).                                                                                                                                                                                             |
 | **Rich Game Metadata**      | Details enriched with IGDB, Steam, PCGamingWiki, and NexusMods, including trending mods where available.                                                                                                                                                                                                                              |
 | **Statistics**              | Review collection and download statistics, with sharing to Discord where supported.                                                                                                                                                                                                                                                   |
@@ -653,12 +653,13 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
-[validation evidence](docs/upstream-resolution/evidence/). After Batch 62, the
-ledger records 562 verified, 156 superseded, 12 not applicable, five
-implemented-unverified, zero needing implementation, and 428 unreviewed
-records. Batch 62 reviewed PRs #726–745; its implementation and test evidence
-is in
-[the Batch 62 validation record](docs/upstream-resolution/evidence/validation-batch-62.txt).
+[validation evidence](docs/upstream-resolution/evidence/). After Batch 68, the
+ledger records 595 verified, 180 superseded, 13 not applicable, five
+implemented-unverified, zero needing implementation, and 370 unreviewed
+records. Batch 68 reviewed PRs #796, #798–800, #804–805 and issues #797 and
+#802; PR #803 was superseded by the fuller archive handling for #802. Its
+implementation, DAST, and test evidence is in
+[the Batch 68 validation record](docs/upstream-resolution/evidence/validation-batch-68.txt).
 The DCO sign-off policy is implemented in the campaign branch, but its
 rollout still needs a maintainer decision because the campaign history includes
 unsigned commits. The full review and validation gate must pass before campaign

@@ -47,7 +47,7 @@ of the system — by writing data, triggering a request, or emitting an event.
 | SQLite / PostgreSQL database                                                                                                                                 | Persists all app state                                                                     | Read and written by server modules through `storage.ts`                                                                                                                   |
 | Server — `ssrf.ts` (`safeFetch`)                                                                                                                             | Validates and pins outbound URLs                                                           | Every outbound HTTP(S) call to indexers, downloaders, and most metadata services                                                                                          |
 | Server — `cron.ts` (scheduler)                                                                                                                               | Runs unattended background jobs                                                            | Storage, IGDB, indexers (via `search.ts`), downloaders, Socket.io                                                                                                         |
-| Server — `socket.ts` (Socket.io)                                                                                                                             | Pushes authenticated real-time events                                                      | Client SPA (`user:<id>` rooms for owned events; app-wide log lines go to authenticated sockets)                                                                              |
+| Server — `socket.ts` (Socket.io)                                                                                                                             | Pushes authenticated real-time events                                                      | Client SPA (`user:<id>` rooms for owned events; app-wide log lines go to authenticated sockets)                                                                           |
 | Server — `search.ts`                                                                                                                                         | Orchestrates indexer search, applies filtering/dedup                                       | Torznab/Newznab indexers (read), routes/cron (results)                                                                                                                    |
 | Server — `downloaders.ts` (`DownloaderManager`)                                                                                                              | Abstracts the 5 download-client integrations                                               | qBittorrent/Transmission/rTorrent/SABnzbd/NZBGet (write: submit; read: status)                                                                                            |
 | Server — `library-scanner.ts` / `root-folders.ts`                                                                                                            | Discovers games already on disk in user-configured root folders (outside the library root) | Reads the local filesystem directly (not via `safeFetch` — local paths, not URLs); queries IGDB for matching; writes `games`/`game_files`/`root_folders` via `storage.ts` |
@@ -324,7 +324,11 @@ on-demand when a user explicitly triggers it via
 `POST /api/steam/wishlist/sync` (`server/steam-routes.ts:37-56`). The
 scheduled path is opt-in per user (`userSettings.steamSyncEnabled`, default
 `false`) with a configurable interval (`userSettings.steamSyncIntervalHours`,
-default 24) tracked via `userSettings.lastSteamSync`.
+default 24) tracked via `userSettings.lastSteamSync`. The API accepts only
+integer intervals from 1 through 168 hours. The hourly scheduler allows one
+check at a time across users, catches individual account failures so other
+users still run, and advances `lastSteamSync` only after a successful sync;
+failed syncs remain eligible for retry on a later scheduler pass.
 
 ## 8. Trust boundaries
 

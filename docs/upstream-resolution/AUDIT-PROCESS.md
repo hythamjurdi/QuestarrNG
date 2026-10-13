@@ -29,35 +29,30 @@ deployment, database, security, and user-facing behavior where applicable.
 ## Current snapshot
 
 The issue and PR lists were refreshed in a live GitHub audit against upstream
-main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 17:28
+main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 13, 2026 at 21:43
 UTC**. That sanitized source snapshot contains 232 issues and 931 pull requests
-(1,163 records total). Batch 66 reconfirmed the same upstream `main` SHA and
-live list counts, then regenerated the review ledger and inventory from the
-existing sanitized rows; it did not refetch every source body. The ledger's
-`capturedAt` records ledger-generation time, not an individual GitHub request
-timestamp. Its review-status counts after batch 66 are:
+(1,163 records total). The refresh regenerated the ledger and inventory from
+live exports; the full discussion, review threads, and diffs for the B68 source
+records were then rechecked individually. The ledger's `capturedAt` records
+audit generation time, not an individual GitHub request timestamp. Its
+review-status counts after batch 68 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   583 | Acceptance checks have evidence showing the behavior is present and works.             |
-| `superseded`             |   174 | A later request or implementation replaces the original; the relationship is recorded. |
-| `not-applicable`         |    12 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
+| `verified`               |   595 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |   180 | A later request or implementation replaces the original; the relationship is recorded. |
+| `not-applicable`         |    13 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
 | `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
 | `implemented-unverified` |     5 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   389 | No completed source-by-source disposition has been recorded yet.                       |
+| `unreviewed`             |   370 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
-The source export contains 1,163 items and the counts above reflect reviews
-through batch 66. Batch 64 reused the complete sanitized source-list export and
-refreshed the generated ledger and inventory; its ten reviewed PR source digests
-match, and no `sourceChangedSinceReview` flags are set. An earlier refresh left
-nine `sourceChangedSinceReview` flags
-on issue #237 and PRs #1192, #1195, #1196, #1198, #1199, #1201, #1202, and
-#1203. Batch 61 compared each current sanitized source row and digest with its
-reviewed snapshot; all nine matched, so the stale flags were cleared. The audit
-now serializes object keys in a stable order to prevent JSON property ordering
-from changing future digests. The live Deluge 2.2.0 protocol run in batch 58
-moved issue #568 from `implemented-unverified` to `verified`. See `capturedAt`,
+After Batch 68, the ledger has 793 assigned dispositions and no
+`needs-implementation` records. The only `sourceChangedSinceReview` flag is
+open PR #1194, whose updated body remains queued for its chronological review.
+All nine B68 records were confirmed unchanged from their source snapshots
+before disposition. The audit serializes object keys in a stable order to
+prevent JSON property ordering from changing future digests. See `capturedAt`,
 `forkHead`, and `upstreamHead` in the ledger for inventory-generation
 metadata. The branch may contain later implementation commits; those metadata
 fields do not advance automatically as batches are added.

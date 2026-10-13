@@ -22,29 +22,27 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The ledger's `capturedAt` records audit generation time, not an
 individual GitHub request timestamp. Review status is independent of GitHub's
-open, closed, or merged state. Batch 67 regenerated the full source snapshot,
-ledger, and inventory from live exports.
+open, closed, or merged state. Batch 68 refreshed the live source snapshot,
+ledger, and inventory before reviewing the next source records.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       587 |
-| `superseded`             |       179 |
+| `verified`               |       595 |
+| `superseded`             |       180 |
 | `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       379 |
+| `unreviewed`             |       370 |
 | **Total**                | **1,163** |
 
-The ledger gives 784 items an assigned disposition. Four implemented
+The ledger gives 793 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 379 are unreviewed. The
-refresh found a new follow-up comment on already-verified issue #1169; review
-confirmed the reporter says the fix works on the latest release, so that source
-flag was cleared with updated evidence. PR #1194's body changed after its
-snapshot and remains flagged for its upcoming review. These counts describe the
-ledger, not completion of the campaign. Batch 67 is the latest completed review;
-see [validation evidence](evidence/validation-batch-67.txt).
+currently identified item needs implementation, and 370 are unreviewed. The
+latest live refresh retains one changed-source flag: PR #1194's body changed
+after its snapshot and still needs review. These counts describe the ledger,
+not completion of the campaign. Batch 68 is the latest completed review; see
+[validation evidence](evidence/validation-batch-68.txt).
 
 ## Project records
 
@@ -2062,3 +2060,33 @@ implemented-unverified, 0 needs-implementation, and 379 unreviewed items.
 Upstream main remains `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, with 232
 issues and 931 pull requests. The campaign remains incomplete and is not ready
 to merge to `main`.
+
+## Batch 68 — October 13, 2026
+
+Batch 68 reviewed upstream PRs [#796](https://github.com/Doezer/Questarr/pull/796),
+[#798](https://github.com/Doezer/Questarr/pull/798)–
+[#800](https://github.com/Doezer/Questarr/pull/800), issue
+[#802](https://github.com/Doezer/Questarr/issues/802), and PRs
+[#804](https://github.com/Doezer/Questarr/pull/804)–
+[#805](https://github.com/Doezer/Questarr/pull/805). PR
+[#803](https://github.com/Doezer/Questarr/pull/803) was superseded by the
+RARLAB-backed archive handling that addresses issue #802. Issue #797's
+qBittorrent 5.2 response handling was verified in the current fork. A fresh
+live refresh retained PR #1194 as the only changed-source record awaiting
+review.
+
+The batch closes a DAST false-positive gap from rule 10110 with an AST-based
+check over the production bundles, validates Steam sync intervals server-side
+to the supported 1–168 hour range, and strengthens Steam scheduling tests. It
+also records the RARLAB archive digest and a real archive list/extract smoke
+test. Focused validation passed 624 tests across 12 files; TypeScript, lint,
+formatting, the production build, and the built-bundle guard passed. A ZAP
+baseline scan of the running production build returned zero new WARN/FAIL
+alerts. The GitHub-hosted follow-up remained queued when recorded; both results
+and the cleanup record are in [Batch 68 evidence](evidence/validation-batch-68.txt).
+
+The ledger now records 595 verified, 180 superseded, 13 not applicable, 5
+implemented-unverified, 0 needs-implementation, and 370 unreviewed items.
+Upstream main remains `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, with 232
+issues and 931 pull requests. The campaign remains incomplete and must not be
+merged to `main`.

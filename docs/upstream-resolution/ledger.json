@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T21:12:01.602Z",
-  "forkHead": "16fa93826c1b2c4c2dc7692a90c88d4ad1021e11",
+  "capturedAt": "2026-10-13T21:43:11.083Z",
+  "forkHead": "c883a87603804735370f5a128eeab34472ab01eb",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -23012,10 +23012,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d60ab96876a1bf4f60505ac0992c2df8ed4a904a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested SonarCloud S6564 cleanup is present: single-header security assertions are parameterized while preserving the expected response-header values."
+        ],
+        "acceptance": [
+          "The focused security suite passes and continues to assert the individual security headers."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/796",
+          "server/__tests__/security.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23032,10 +23040,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The qBittorrent 5.2 add-torrent endpoint can return a JSON success body; the adapter parses that response instead of treating it as an unexpected failure."
+        ],
+        "acceptance": [
+          "Regression coverage exercises qBittorrent 5.2 response handling and the focused downloader suite passes."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/797",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23052,10 +23068,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "54cb75e27027edaeb13f30031596369f47b2d572",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Discover page uses a stable empty-games value and a single memoized local-games derivation that includes hidden games, avoiding repeated array traversals."
+        ],
+        "acceptance": [
+          "Discover page regression tests pass with the optimized derived data and existing filtering behavior intact."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/798",
+          "client/src/pages/discover.tsx",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23072,10 +23097,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6f4a6efcb491a17dc3e4b2e39ffce276d2a91ea6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "NotificationCenter uses the project's tooltip components instead of browser-native title tooltips; disabled controls remain hoverable and keyboard-focusable through wrapper elements."
+        ],
+        "acceptance": [
+          "Accessibility tests cover tooltip labels and the disabled-control trigger behavior."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/799",
+          "client/src/components/NotificationCenter.tsx",
+          "client/__tests__/NotificationItem.accessibility.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23092,10 +23126,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8ace5ff67a72ec20254a6d8657629f9c9ae921ad",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The DAST gate retains its documented style-src unsafe-inline accepted risk and blocks unignored WARN/FAIL alerts. The production-bundle AST check compensates for ZAP rule 10110's text-only false positive on RE2JS's instance method named eval."
+        ],
+        "acceptance": [
+          "The production bundle guard passes, and a ZAP 2.17.0 baseline scan of the exact production build with the checked-in rules returns zero new WARN/FAIL alerts. The GitHub-hosted follow-up run is tracked separately in the batch evidence."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/800",
+          ".github/workflows/dast.yml",
+          ".zap/rules.tsv",
+          "docs/VULNERABILITY_MANAGEMENT.md",
+          "scripts/check-built-js-security.mjs",
+          "scripts/__tests__/check-built-js-security.test.mjs",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23112,10 +23158,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The current image provides RARLAB unrar for RAR archives and Alpine-native 7-Zip for other supported formats. ArchiveService lists and extracts a real RAR archive successfully. Successful move-mode imports remove archive volumes and the emptied source directory; copy and hardlink modes preserve their source data by design."
+        ],
+        "acceptance": [
+          "The pinned RARLAB archive checksum matches the downloaded vendor archive, a real archive list/extract smoke test succeeds, and the ImportManager move-mode regression tests verify cleanup."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/802",
+          "Dockerfile",
+          "server/archive-service.ts",
+          "server/import-manager.ts",
+          "server/__tests__/archive_service.test.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23132,11 +23190,24 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3505e30fd23b56132f5378bb5b17459e1a6cc0a5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The PR's chmod change targeted the npm 7zip-bin executable, which does not run correctly on Alpine/musl and lacks RAR support. The current implementation installs Alpine-native 7-Zip for supported non-RAR formats and pinned RARLAB unrar for RAR, superseding the proposed binary-permission fix."
+        ],
+        "acceptance": [
+          "Issue #802's RAR import behavior is covered by the actual RAR smoke test and archive-import regression tests."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/803",
+          "https://github.com/Doezer/Questarr/issues/802",
+          "Dockerfile",
+          "server/archive-service.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
+        "dependencies": [
+          "issue:802"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -23152,10 +23223,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "7954066fe4c4950ddb4aa4853240ee3f20c348f6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The screenshot lightbox carousel wraps through screenshots, supports keyboard and touch navigation, resets safely when the screenshot list changes, and exposes accessible controls and a counter."
+        ],
+        "acceptance": [
+          "Game details modal tests cover carousel navigation, wrapping, keyboard behavior, touch interaction, reset behavior, and empty-list guards."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/804",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -23172,10 +23252,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1b84bbac2946516c7e9545ba52ffe7fe53af2f8b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Steam wishlist auto-sync is opt-in per user, configurable from 1 to 168 hours, protected against overlapping scheduler runs, and records the last-sync time only on success. User settings are validated server-side, and background refresh does not overwrite unsaved settings edits."
+        ],
+        "acceptance": [
+          "Focused tests cover interval boundaries and invalid API values, opt-in scheduling, single-flight behavior, success-only timestamps, and preservation of user edits."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/805",
+          "shared/schema.ts",
+          "server/cron.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/steam_wishlist.test.ts",
+          "client/__tests__/SettingsPage.test.tsx",
+          "docs/ARCHITECTURE.md",
+          "docs/upstream-resolution/evidence/validation-batch-68.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

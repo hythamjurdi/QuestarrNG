@@ -39,7 +39,8 @@ The ledger has 587 verified, 179 superseded, 13 not applicable, 5 implemented-un
   regression coverage in `docs/VULNERABILITY_MANAGEMENT.md`.
 - The ZAP report was downloaded for triage to
   `/tmp/questarrng-b67-zap-report`; Batch 68 evidence records the passing
-  follow-up scan and scratch cleanup.
+  local production scan, the still-queued GitHub-hosted follow-up, and scratch
+  cleanup.
 
 ## Scratch cleanup
 
