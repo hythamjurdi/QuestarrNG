@@ -98,6 +98,29 @@ describe("browser interface language detection", () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it("keeps translated two-release labels interpolatable and preserves Arabic dual form", () => {
+    function TranslationProbe() {
+      const { language, t } = useInterfaceLanguage();
+      return createElement(
+        "span",
+        { "data-testid": "translation-probe" },
+        `${language}:${t("two releases")}`
+      );
+    }
+
+    render(createElement(TranslationProbe));
+    const probe = screen.getByTestId("translation-probe");
+    for (const { value } of INTERFACE_LANGUAGE_OPTIONS) {
+      act(() => setInterfaceLanguage(value));
+      const text = probe.textContent ?? "";
+      if (value === "en") expect(text).toBe("en:two releases");
+      else if (value === "ar") expect(text).toBe("ar:إصداران");
+      else expect(text).toContain("{count}");
+    }
+
+    setInterfaceLanguage("en");
+  });
 });
 
 describe("interface text language metadata", () => {

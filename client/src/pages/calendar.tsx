@@ -33,6 +33,13 @@ interface GamesByDate {
   [date: string]: Game[];
 }
 
+export function formatReleaseCount(count: number, translate: (source: string) => string): string {
+  const source = count === 1 ? "release" : count === 2 ? "two releases" : "releases";
+  const label = translate(source);
+  if (count === 2) return label.replaceAll("{count}", formatRegionalNumber(count));
+  return `${formatRegionalNumber(count)} ${label}`;
+}
+
 export function formatDate(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -538,10 +545,7 @@ function MonthView({
               : gamesOnDay.length === 2
                 ? "two releases"
                 : "releases";
-          const releaseLabel =
-            gamesOnDay.length === 2
-              ? t(releaseCountSource)
-              : `${formatRegionalNumber(gamesOnDay.length)} ${t(releaseCountSource)}`;
+          const releaseLabel = formatReleaseCount(gamesOnDay.length, t);
           const dateLabelId = `${labelIdPrefix}-${dateKey}-date`;
           const releaseLabelId = `${labelIdPrefix}-${dateKey}-releases`;
           const mobileLabelledBy =

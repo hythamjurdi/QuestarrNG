@@ -1,4 +1,5 @@
-import { formatRegionalNumber, getRegionalLocale } from "@/lib/regional-format";
+import { getRegionalLocale } from "@/lib/regional-format";
+import { formatXrelSize } from "@/lib/xrel-format";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw, Loader2, Plus } from "lucide-react";
@@ -34,15 +35,6 @@ function formatDate(ts: number): string {
     dateStyle: "short",
     timeStyle: "short",
   });
-}
-
-function formatSize(mb?: number, unit?: string): string {
-  if (mb == null) return "—";
-  if (unit === "GB")
-    return `${formatRegionalNumber(mb, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
-  if (mb >= 1024 && !unit)
-    return `${formatRegionalNumber(mb / 1024, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
-  return `${mb} ${unit || "MB"}`;
 }
 
 function safeUrl(url: string | undefined): string {
@@ -206,7 +198,7 @@ export default function XrelReleasesPage() {
                       </span>
                       {rel.sizeMb != null && (
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatSize(rel.sizeMb, rel.sizeUnit)}
+                          {formatXrelSize(rel.sizeMb, rel.sizeUnit)}
                         </span>
                       )}
                       <Badge variant="secondary" className="text-[10px] h-4 px-1.5">

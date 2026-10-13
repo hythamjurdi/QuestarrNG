@@ -113,6 +113,12 @@ test.describe("Game download interface language", () => {
             title: "Calendar Localization Demo",
             releaseDate: `${year}-12-15`,
           },
+          {
+            ...game,
+            id: "calendar-game-two",
+            title: "Calendar Localization Demo Two",
+            releaseDate: `${year}-12-15`,
+          },
         ],
       })
     );
@@ -135,6 +141,7 @@ test.describe("Game download interface language", () => {
     }
     const releaseCountLabel = page.locator('span[id$="-releases"]').first();
     await expect(releaseCountLabel).not.toBeEmpty();
+    await expect(releaseCountLabel).toHaveText("إصداران");
     await expect(releaseCountLabel).toHaveAttribute("lang", "ar");
     await expect(releaseCountLabel).toHaveAttribute("dir", "rtl");
     const releaseCountLabelId = await releaseCountLabel.getAttribute("id");
@@ -166,6 +173,99 @@ test.describe("Game download interface language", () => {
     }, calendarDate);
     await expect(dateLabel).toHaveText(expectedDateLabel);
     await expect(releaseCountButton).toHaveAccessibleName(new RegExp(expectedDateLabel, "u"));
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-calendar-arabic-dual.png`,
+        fullPage: true,
+      });
+    }
+  });
+
+  test("formats translated calendar counts with regional digits", async ({ page }) => {
+    const year = new Date().getFullYear();
+    await page.addInitScript(() => {
+      localStorage.setItem("questarr.interface-language", "es");
+      localStorage.setItem("questarrng.regional-format", "ar");
+    });
+    await page.route("**/api/config", async (route) =>
+      route.fulfill({ json: { igdb: { configured: true } } })
+    );
+    await page.route("**/api/games*", async (route) =>
+      route.fulfill({
+        json: [
+          {
+            ...game,
+            id: "spanish-calendar-game-one",
+            title: "Spanish Calendar Localization Demo One",
+            releaseDate: `${year}-12-15`,
+          },
+          {
+            ...game,
+            id: "spanish-calendar-game-two",
+            title: "Spanish Calendar Localization Demo Two",
+            releaseDate: `${year}-12-15`,
+          },
+        ],
+      })
+    );
+
+    await page.goto("/calendar");
+    await page.getByRole("combobox").click();
+    await page.getByRole("option").nth(1).click();
+    const monthsToDecember = (11 - new Date().getMonth() + 12) % 12;
+    for (let index = 0; index < monthsToDecember; index += 1) {
+      await page.getByRole("button", { name: "Período siguiente" }).click();
+    }
+
+    const releaseCountLabel = page.locator('span[id$="-releases"]').first();
+    const regionalTwo = await page.evaluate(() => new Intl.NumberFormat("ar").format(2));
+    await expect(releaseCountLabel).toHaveText(`${regionalTwo} lanzamientos`);
+    await expect(releaseCountLabel).toHaveAttribute("lang", "es");
+    await expect(releaseCountLabel).toHaveAttribute("dir", "ltr");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-calendar-spanish-regional-count.png`,
+        fullPage: true,
+      });
+    }
+  });
+
+  test("formats xREL megabyte sizes with regional digits", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("questarrng.regional-format", "ar");
+    });
+    await page.route("**/api/xrel/latest*", async (route) =>
+      route.fulfill({
+        json: {
+          list: [
+            {
+              id: "xrel-regional-mb-size",
+              dirname: "Example.Release-P2P",
+              time: Math.floor(Date.now() / 1000),
+              sizeMb: 1536.5,
+              sizeUnit: "MB",
+              source: "P2P",
+              link_href: "https://xrel.to/example",
+              group_name: "Example",
+            },
+          ],
+          pagination: { current_page: 1, per_page: 10, total_pages: 1 },
+          total_count: 1,
+        },
+      })
+    );
+
+    await page.goto("/xrel");
+    const regionalSize = await page.evaluate(() =>
+      new Intl.NumberFormat("ar", { maximumFractionDigits: 1 }).format(1536.5)
+    );
+    await expect(page.getByText(`${regionalSize} MB`, { exact: true })).toBeVisible();
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-xrel-regional-mb-size.png`,
+        fullPage: true,
+      });
+    }
   });
 
   test("localizes nested filter controls and singular update copy", async ({ page }) => {

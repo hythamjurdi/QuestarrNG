@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { getDaysInMonth, getWeekDays, formatDate } from "./calendar";
+import { getDaysInMonth, getWeekDays, formatDate, formatReleaseCount } from "./calendar";
 import { setRegionalPreference } from "@/lib/regional-format";
 
 describe("calendar locale week structure", () => {
@@ -37,5 +37,21 @@ describe("calendar locale week structure", () => {
     expect(days[0]!.getDay()).toBe(6);
     expect(days.at(-1)!.getDay()).toBe(5);
     expect(days.filter((day) => day.getMonth() === 3)).toHaveLength(30);
+  });
+
+  it("formats the two-release count with regional digits in translated labels", () => {
+    setRegionalPreference("ar");
+
+    expect(
+      formatReleaseCount(2, (source) =>
+        source === "two releases" ? "{count} lanzamientos" : source
+      )
+    ).toBe(`${new Intl.NumberFormat("ar").format(2)} lanzamientos`);
+  });
+
+  it("preserves a translated dual form without adding a numeric count", () => {
+    setRegionalPreference("ar");
+
+    expect(formatReleaseCount(2, () => "إصداران")).toBe("إصداران");
   });
 });
