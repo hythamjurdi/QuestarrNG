@@ -1,4 +1,8 @@
-import { getRegionalLocale, getRegionalWeekStartsOn } from "@/lib/regional-format";
+import {
+  formatRegionalNumber,
+  getRegionalLocale,
+  getRegionalWeekStartsOn,
+} from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import GameDownloadDialog from "@/components/GameDownloadDialog";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 
 type ViewMode = "year" | "month" | "week";
 
@@ -81,6 +86,7 @@ export function getDaysInMonth(
 }
 
 export default function CalendarPage() {
+  const { language, t } = useInterfaceLanguage();
   const [viewMode, setViewMode] = useState<ViewMode>("year");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
@@ -182,11 +188,20 @@ export default function CalendarPage() {
   const currentYearStr = currentDate.getFullYear().toString();
 
   const getTitle = () => {
-    if (viewMode === "year") return currentDate.getFullYear().toString();
+    const locale = getRegionalLocale();
+    if (viewMode === "year")
+      return new Intl.DateTimeFormat(locale, { year: "numeric" }).format(currentDate);
     if (viewMode === "month")
-      return `${getMonthName(currentDate.getMonth())} ${currentDate.getFullYear()}`;
+      return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(
+        currentDate
+      );
     const weekDays = getWeekDays(new Date(currentDate));
-    return `${formatDate(weekDays[0]!)} - ${formatDate(weekDays[6]!)}`;
+    const formatter = new Intl.DateTimeFormat(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+    return formatter.format(weekDays[0]!) + " – " + formatter.format(weekDays[6]!);
   };
 
   if (config && !config.igdb.configured) {
@@ -195,13 +210,14 @@ export default function CalendarPage() {
         <div className="bg-muted p-4 rounded-full">
           <AlertCircle className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h2 className="text-2xl font-bold">IGDB Configuration Required</h2>
+        <h2 className="text-2xl font-bold">{t("IGDB Configuration Required")}</h2>
         <p className="text-muted-foreground max-w-md">
-          To track game release dates and view the calendar, you need to configure your IGDB
-          credentials in the settings.
+          {t(
+            "To track game release dates and view the calendar, you need to configure your IGDB credentials in the settings."
+          )}
         </p>
         <Link href="/settings">
-          <Button>Go to Settings</Button>
+          <Button>{t("Go to Settings")}</Button>
         </Link>
       </div>
     );
@@ -211,13 +227,15 @@ export default function CalendarPage() {
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="space-y-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Release Calendar</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Track upcoming game releases</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("Release Calendar")}</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            {t("Track upcoming game releases.")}
+          </p>
         </div>
         <PageToolbar
           search={searchQuery}
           onSearchChange={setSearchQuery}
-          searchPlaceholder="Filter games..."
+          searchPlaceholder={t("Filter games...")}
           filterPills={<span className="text-base font-semibold">{getTitle()}</span>}
           actions={
             <>
@@ -225,25 +243,38 @@ export default function CalendarPage() {
                 variant="ghost"
                 size="icon"
                 onClick={navigatePrevious}
-                aria-label="Previous period"
+                aria-label={t("Previous period")}
               >
-                <ChevronLeft className="h-5 w-5" />
+                {language === "ar" ? (
+                  <ChevronRight className="h-5 w-5" />
+                ) : (
+                  <ChevronLeft className="h-5 w-5" />
+                )}
               </Button>
-              <Button variant="ghost" size="icon" onClick={navigateNext} aria-label="Next period">
-                <ChevronRight className="h-5 w-5" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={navigateNext}
+                aria-label={t("Next period")}
+              >
+                {language === "ar" ? (
+                  <ChevronLeft className="h-5 w-5" />
+                ) : (
+                  <ChevronRight className="h-5 w-5" />
+                )}
               </Button>
               <div className="w-px h-5 bg-border" />
               <Button variant="outline" size="sm" onClick={goToToday}>
-                Today
+                {t("Today")}
               </Button>
               <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
                 <SelectTrigger className="w-[110px] h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="year">Year</SelectItem>
-                  <SelectItem value="month">Month</SelectItem>
-                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="year">{t("Year")}</SelectItem>
+                  <SelectItem value="month">{t("Month")}</SelectItem>
+                  <SelectItem value="week">{t("Week")}</SelectItem>
                 </SelectContent>
               </Select>
             </>
@@ -252,10 +283,10 @@ export default function CalendarPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">Loading calendar...</div>
+        <div className="text-center py-12 text-muted-foreground">{t("Loading calendar...")}</div>
       ) : wantedGames.length === 0 && undatedGames.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          No games in your wishlist. Add games to track their release dates.
+          {t("No games in your wishlist. Add games to track their release dates.")}
         </div>
       ) : (
         <div className="space-y-6">
@@ -314,6 +345,7 @@ function YearView({
   gamesByDate: GamesByDate;
   onGameClick: (game: Game) => void;
 }) {
+  const { t } = useInterfaceLanguage();
   const year = currentDate.getFullYear();
   const months = Array.from({ length: 12 }, (_, i) => i);
 
@@ -342,7 +374,7 @@ function YearView({
               <h3 className="font-semibold">{getMonthName(month)}</h3>
               {gameCount > 0 && (
                 <Badge variant="secondary" className="text-xs">
-                  {gameCount}
+                  {formatRegionalNumber(gameCount)}
                 </Badge>
               )}
             </div>
@@ -362,7 +394,7 @@ function YearView({
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-muted-foreground">No releases</p>
+                <p className="text-xs text-muted-foreground">{t("No releases")}</p>
               )}
             </div>
           </div>
@@ -383,15 +415,17 @@ function MonthView({
   onGameClick: (game: Game) => void;
   today: Date;
 }) {
+  const { t } = useInterfaceLanguage();
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const weekStartsOn = getRegionalWeekStartsOn();
   const days = getDaysInMonth(year, month, weekStartsOn);
-  const weekDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const weekDays = Array.from(
-    { length: 7 },
-    (_, index) => weekDayNames[(weekStartsOn + index) % 7]!
-  );
+  const weekdayShort = new Intl.DateTimeFormat(getRegionalLocale(), { weekday: "short" });
+  const weekdayNarrow = new Intl.DateTimeFormat(getRegionalLocale(), { weekday: "narrow" });
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(2023, 0, 1 + ((weekStartsOn + index) % 7));
+    return { short: weekdayShort.format(date), narrow: weekdayNarrow.format(date) };
+  });
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const todayKey = formatDate(today);
 
@@ -410,11 +444,11 @@ function MonthView({
       <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
         {weekDays.map((day) => (
           <div
-            key={day}
+            key={day.short}
             className="text-center font-semibold text-xs md:text-sm text-muted-foreground py-1 md:py-2"
           >
-            <span className="md:hidden">{day[0]}</span>
-            <span className="hidden md:inline">{day}</span>
+            <span className="md:hidden">{day.narrow}</span>
+            <span className="hidden md:inline">{day.short}</span>
           </div>
         ))}
       </div>
@@ -432,9 +466,11 @@ function MonthView({
             day: "numeric",
           });
           const releaseLabel =
-            gamesOnDay.length === 1 ? "1 release" : `${gamesOnDay.length} releases`;
+            gamesOnDay.length === 1
+              ? "1 " + t("release")
+              : formatRegionalNumber(gamesOnDay.length) + " " + t("releases");
           const mobileButtonLabel =
-            gamesOnDay.length > 0 ? `${formattedDayLabel}, ${releaseLabel}` : formattedDayLabel;
+            gamesOnDay.length > 0 ? formattedDayLabel + ", " + releaseLabel : formattedDayLabel;
 
           return (
             <div
@@ -451,7 +487,7 @@ function MonthView({
                 type="button"
                 onClick={() => handleCellClick(dateKey, gamesOnDay)}
                 className={cn(
-                  "w-full text-left md:pointer-events-none",
+                  "w-full text-start md:pointer-events-none",
                   gamesOnDay.length > 0 ? "cursor-pointer" : "cursor-default"
                 )}
                 aria-label={mobileButtonLabel}
@@ -463,7 +499,7 @@ function MonthView({
                     isToday && "text-primary font-bold"
                   )}
                 >
-                  {day.getDate()}
+                  {formatRegionalNumber(day.getDate(), { useGrouping: false })}
                 </div>
                 {/* Mobile: colored dots per game */}
                 {gamesOnDay.length > 0 && (
@@ -479,7 +515,7 @@ function MonthView({
                     ))}
                     {gamesOnDay.length > 3 && (
                       <span className="text-[9px] leading-none text-muted-foreground">
-                        +{gamesOnDay.length - 3}
+                        +{formatRegionalNumber(gamesOnDay.length - 3)}
                       </span>
                     )}
                   </div>
@@ -540,6 +576,7 @@ function WeekView({
   onGameClick: (game: Game) => void;
   today: Date;
 }) {
+  const { t } = useInterfaceLanguage();
   const weekDays = getWeekDays(new Date(currentDate));
   const todayKey = formatDate(today);
 
@@ -576,7 +613,7 @@ function WeekView({
                   {dayName}
                 </span>
                 <span className={cn("text-xl font-bold leading-tight", isToday && "text-primary")}>
-                  {day.getDate()}
+                  {formatRegionalNumber(day.getDate(), { useGrouping: false })}
                 </span>
                 <span className="text-xs text-muted-foreground">{monthName}</span>
               </div>
@@ -595,7 +632,7 @@ function WeekView({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">No releases</p>
+                  <p className="text-xs text-muted-foreground">{t("No releases")}</p>
                 )}
               </div>
             </div>
@@ -624,7 +661,7 @@ function WeekView({
               <div className="text-center mb-3">
                 <div className={cn("font-semibold", isToday && "text-primary")}>{dayName}</div>
                 <div className={cn("text-2xl font-bold", isToday && "text-primary")}>
-                  {day.getDate()}
+                  {formatRegionalNumber(day.getDate(), { useGrouping: false })}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {day.toLocaleDateString(getRegionalLocale(), { month: "short" })}
@@ -641,7 +678,7 @@ function WeekView({
                     />
                   ))
                 ) : (
-                  <p className="text-xs text-muted-foreground text-center">No releases</p>
+                  <p className="text-xs text-muted-foreground text-center">{t("No releases")}</p>
                 )}
               </div>
             </div>
@@ -661,14 +698,17 @@ function UndatedSection({
   games: Game[];
   onGameClick: (game: Game) => void;
 }) {
+  const { t } = useInterfaceLanguage();
   if (games.length === 0) return null;
 
   return (
     <div>
       <div className="flex items-center gap-3 mb-3">
-        <h2 className="text-base font-semibold text-muted-foreground">No Release Date — {year}</h2>
+        <h2 className="text-base font-semibold text-muted-foreground">
+          {t("No Release Date")} — {formatRegionalNumber(year)}
+        </h2>
         <Badge variant="secondary" className="text-xs">
-          {games.length}
+          {formatRegionalNumber(games.length)}
         </Badge>
         <div className="flex-1 h-px bg-border" />
       </div>
@@ -694,6 +734,7 @@ function GameBadge({
   muted?: boolean;
   onClick?: () => void;
 }) {
+  const { t } = useInterfaceLanguage();
   const isDelayed = game.releaseStatus === "delayed";
 
   if (compact) {
@@ -704,7 +745,7 @@ function GameBadge({
             type="button"
             onClick={onClick}
             className={cn(
-              "flex items-center gap-1 p-1 rounded hover:opacity-80 transition-opacity w-full text-left",
+              "flex items-center gap-1 p-1 rounded hover:opacity-80 transition-opacity w-full text-start",
               isDelayed ? "bg-destructive/20 border border-destructive/30" : "bg-muted",
               muted && "opacity-50 grayscale-[0.5]"
             )}
@@ -760,7 +801,7 @@ function GameBadge({
           type="button"
           onClick={onClick}
           className={cn(
-            "flex items-center gap-2 p-2 rounded hover:opacity-80 transition-all w-full text-left",
+            "flex items-center gap-2 p-2 rounded hover:opacity-80 transition-all w-full text-start",
             isDelayed ? "bg-destructive/10 border border-destructive/20" : "bg-muted",
             muted && "opacity-50 grayscale-[0.5]"
           )}
@@ -799,7 +840,7 @@ function GameBadge({
           <p className="font-semibold">{game.title}</p>
           <p className="text-xs text-muted-foreground mt-0.5">
             {hideDate
-              ? "Release date TBD"
+              ? t("Release date TBD")
               : game.releaseDate
                 ? new Date(game.releaseDate).toLocaleDateString(getRegionalLocale(), {
                     month: "long",

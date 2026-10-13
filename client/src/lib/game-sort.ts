@@ -1,3 +1,4 @@
+import { getRegionalCollator } from "@/lib/regional-format";
 import { type Game } from "@shared/schema";
 
 export type LibrarySortOption =
@@ -76,7 +77,7 @@ export function sortLibraryGames(gameList: Game[], sortBy: LibrarySortOption): G
       case "rating-desc":
         return compareNumbers(a.userRating, b.userRating, false);
       case "title-asc":
-        return a.title.localeCompare(b.title);
+        return getRegionalCollator().compare(a.title, b.title);
       default:
         return 0;
     }

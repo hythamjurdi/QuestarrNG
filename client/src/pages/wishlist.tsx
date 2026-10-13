@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState, useEffect } from "react";
+import { getRegionalCollator } from "@/lib/regional-format";
+import React, { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Eye, EyeOff } from "lucide-react";
 import GameStatusGrid from "@/components/GameStatusGrid";
@@ -43,7 +44,7 @@ export const sortGames = (gameList: Game[], currentSortBy: SortOption): Game[] =
       case "added-desc":
         return compareDates(a.addedAt, b.addedAt, false);
       case "title-asc":
-        return a.title.localeCompare(b.title);
+        return getRegionalCollator().compare(a.title, b.title);
       default:
         return 0;
     }

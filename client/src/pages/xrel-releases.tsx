@@ -1,4 +1,4 @@
-import { getRegionalLocale } from "@/lib/regional-format";
+import { formatRegionalNumber, getRegionalLocale } from "@/lib/regional-format";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw, Loader2, Plus } from "lucide-react";
@@ -38,8 +38,10 @@ function formatDate(ts: number): string {
 
 function formatSize(mb?: number, unit?: string): string {
   if (mb == null) return "—";
-  if (unit === "GB") return `${mb.toFixed(1)} GB`;
-  if (mb >= 1024 && !unit) return `${(mb / 1024).toFixed(1)} GB`;
+  if (unit === "GB")
+    return `${formatRegionalNumber(mb, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
+  if (mb >= 1024 && !unit)
+    return `${formatRegionalNumber(mb / 1024, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
   return `${mb} ${unit || "MB"}`;
 }
 

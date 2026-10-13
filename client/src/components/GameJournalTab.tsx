@@ -1,4 +1,4 @@
-import { getRegionalLocale } from "@/lib/regional-format";
+import { formatRegionalNumber, getRegionalLocale } from "@/lib/regional-format";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -223,7 +223,11 @@ export default function GameJournalTab({ gameId, steamAppId }: Readonly<GameJour
                       )}
                       {achievement.globalPercent !== null && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {achievement.globalPercent.toFixed(1)}% of players
+                          {formatRegionalNumber(achievement.globalPercent, {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          })}
+                          % of players
                         </p>
                       )}
                     </div>

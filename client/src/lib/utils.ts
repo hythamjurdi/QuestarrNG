@@ -1,3 +1,4 @@
+import { formatRegionalNumber } from "@/lib/regional-format";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type Game, type InsertGame } from "@shared/schema";
@@ -15,7 +16,9 @@ export function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  return (
+    formatRegionalNumber(bytes / Math.pow(k, i), { maximumFractionDigits: 2 }) + " " + sizes[i]
+  );
 }
 
 /**

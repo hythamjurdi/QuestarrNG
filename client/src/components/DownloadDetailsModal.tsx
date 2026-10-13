@@ -1,4 +1,4 @@
-import { getRegionalLocale } from "@/lib/regional-format";
+import { formatRegionalNumber, getRegionalLocale } from "@/lib/regional-format";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -240,7 +240,13 @@ export default function DownloadDetailsModal({
                       <div>
                         <div className="flex justify-between text-sm mb-2">
                           <span>Progress</span>
-                          <span data-testid="detail-progress">{details.progress.toFixed(1)}%</span>
+                          <span data-testid="detail-progress">
+                            {formatRegionalNumber(details.progress, {
+                              minimumFractionDigits: 1,
+                              maximumFractionDigits: 1,
+                            })}
+                            %
+                          </span>
                         </div>
                         <Progress value={details.progress} className="h-2" />
                       </div>
@@ -324,7 +330,11 @@ export default function DownloadDetailsModal({
                             <div className="flex items-center gap-2">
                               <Progress value={file.progress} className="h-1 flex-1" />
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {file.progress.toFixed(1)}%
+                                {formatRegionalNumber(file.progress, {
+                                  minimumFractionDigits: 1,
+                                  maximumFractionDigits: 1,
+                                })}
+                                %
                               </span>
                             </div>
                             {!file.wanted && (

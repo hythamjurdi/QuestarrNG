@@ -1,3 +1,4 @@
+import { getRegionalCollator } from "@/lib/regional-format";
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -177,8 +178,8 @@ export default function Library() {
     }
 
     return {
-      uniqueGenres: Array.from(genreSet).sort((a, b) => a.localeCompare(b)),
-      uniquePlatforms: Array.from(platformSet).sort((a, b) => a.localeCompare(b)),
+      uniqueGenres: Array.from(genreSet).sort((a, b) => getRegionalCollator().compare(a, b)),
+      uniquePlatforms: Array.from(platformSet).sort((a, b) => getRegionalCollator().compare(a, b)),
     };
   }, [games]);
 

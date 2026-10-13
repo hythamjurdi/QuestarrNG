@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
+import { useSyncExternalStore } from "react";
 import {
   ar,
   de,
@@ -42,6 +43,62 @@ export const REGIONAL_FORMAT_OPTIONS = [
 const supportedRegionalFormats = new Set<string>(
   REGIONAL_FORMAT_OPTIONS.map((option) => option.value)
 );
+
+const regionalPreferenceListeners = new Set<() => void>();
+
+function normalizeRegionalPreference(value: string | null): string {
+  return value && supportedRegionalFormats.has(value) ? value : "system";
+}
+
+function readRegionalPreference(): string {
+  try {
+    return typeof localStorage === "undefined"
+      ? "system"
+      : normalizeRegionalPreference(localStorage.getItem(REGIONAL_FORMAT_KEY));
+  } catch {
+    return "system";
+  }
+}
+
+let activeRegionalPreference = readRegionalPreference();
+
+function notifyRegionalPreferenceListeners() {
+  regionalPreferenceListeners.forEach((listener) => listener());
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key !== REGIONAL_FORMAT_KEY && event.key !== null) return;
+    activeRegionalPreference = readRegionalPreference();
+    notifyRegionalPreferenceListeners();
+  });
+}
+
+export function getRegionalPreference(): string {
+  return activeRegionalPreference;
+}
+
+export function setRegionalPreference(value: string): void {
+  if (!supportedRegionalFormats.has(value)) return;
+  activeRegionalPreference = value;
+  try {
+    localStorage.setItem(REGIONAL_FORMAT_KEY, value);
+  } catch {
+    // Keep this tab's chosen format active when browser storage is unavailable.
+  }
+  notifyRegionalPreferenceListeners();
+}
+
+export function useRegionalPreference(): string {
+  return useSyncExternalStore(
+    (listener) => {
+      regionalPreferenceListeners.add(listener);
+      return () => regionalPreferenceListeners.delete(listener);
+    },
+    getRegionalPreference,
+    () => "system"
+  );
+}
 
 const dateFnsLocales = {
   ar,
@@ -129,12 +186,15 @@ function getDateFnsLocale(locale: string): RegionalDateFnsLocale | undefined {
 }
 
 export function getRegionalLocale(): string | undefined {
-  try {
-    const value = localStorage.getItem(REGIONAL_FORMAT_KEY);
-    return value && supportedRegionalFormats.has(value) && value !== "system" ? value : undefined;
-  } catch {
-    return undefined;
-  }
+  return activeRegionalPreference === "system" ? undefined : activeRegionalPreference;
+}
+
+export function getRegionalCollator(options?: Intl.CollatorOptions): Intl.Collator {
+  return new Intl.Collator(getCurrentLocale(), { sensitivity: "base", ...options });
+}
+
+export function formatRegionalNumber(value: number, options?: Intl.NumberFormatOptions): string {
+  return new Intl.NumberFormat(getCurrentLocale(), options).format(value);
 }
 
 export function getRegionalDateFnsLocale(): RegionalDateFnsLocale | undefined {

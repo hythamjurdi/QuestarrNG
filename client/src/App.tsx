@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { getPageTitle } from "@/components/navigation-items";
 import { useInterfaceLanguage } from "@/lib/interface-locale";
+import { useRegionalPreference } from "@/lib/regional-format";
 import { useBackgroundNotifications } from "@/hooks/use-background-notifications";
 import { useGameUpdatedSocket } from "@/hooks/use-game-updated-socket";
 import { AuthProvider } from "@/lib/auth";
@@ -155,6 +156,7 @@ function AppContent() {
 function AppShell() {
   const [location, navigate] = useLocation();
   const { t, languageFor, directionFor } = useInterfaceLanguage();
+  const regionalFormat = useRegionalPreference();
 
   useKonamiCode(() => navigate(routePaths.play));
 
@@ -202,7 +204,10 @@ function AppShell() {
         <AuthProvider>
           <TooltipProvider>
             <SidebarProvider style={style as React.CSSProperties}>
-              <div className="flex h-screen w-full overflow-hidden">
+              <div
+                className="flex h-screen w-full overflow-hidden"
+                data-regional-format={regionalFormat}
+              >
                 <AppSidebar activeItem={location} onNavigate={navigate} />
                 <div className="flex flex-col flex-1 min-w-0">
                   <Header

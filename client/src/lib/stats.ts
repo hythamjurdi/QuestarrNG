@@ -1,3 +1,4 @@
+import { getRegionalCollator, formatRegionalNumber } from "@/lib/regional-format";
 import { type Game } from "@shared/schema";
 
 export interface LibraryStats {
@@ -131,13 +132,25 @@ export function calculateLibraryStats(games: Game[]): LibraryStats {
     else if (g.status === "downloading") statusBreakdown.downloading++;
   }
 
-  const avgRating = ratedCount > 0 ? (ratingSum / ratedCount).toFixed(1) : "N/A";
-  const avgUserRating = userRatedCount > 0 ? (userRatingSum / userRatedCount).toFixed(1) : "N/A";
+  const avgRating =
+    ratedCount > 0
+      ? formatRegionalNumber(ratingSum / ratedCount, {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })
+      : "N/A";
+  const avgUserRating =
+    userRatedCount > 0
+      ? formatRegionalNumber(userRatingSum / userRatedCount, {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })
+      : "N/A";
 
   const getTopItemFromCounts = (counts: Record<string, number>) => {
     const entries = Object.entries(counts);
     if (entries.length === 0) return null;
-    entries.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    entries.sort((a, b) => b[1] - a[1] || getRegionalCollator().compare(a[0], b[0]));
     const [name, count] = entries[0]!;
     return { name, count };
   };

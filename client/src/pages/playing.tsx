@@ -1,3 +1,4 @@
+import { getRegionalCollator } from "@/lib/regional-format";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Gamepad2 } from "lucide-react";
@@ -31,7 +32,7 @@ function sortGames(gameList: Game[], currentSortBy: SortOption): Game[] {
       case "added-asc":
         return compareDates(a.addedAt, b.addedAt, true);
       case "title-asc":
-        return a.title.localeCompare(b.title);
+        return getRegionalCollator().compare(a.title, b.title);
       default:
         return 0;
     }

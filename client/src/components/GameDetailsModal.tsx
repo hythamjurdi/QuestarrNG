@@ -1,4 +1,4 @@
-import { getRegionalLocale } from "@/lib/regional-format";
+import { formatRegionalNumber, getRegionalLocale } from "@/lib/regional-format";
 import React, { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -1582,7 +1582,10 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                       <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${scoreColor(game.rating)}`}
                       >
-                        {game.rating.toFixed(1)}
+                        {formatRegionalNumber(game.rating, {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5 text-sm font-medium">
@@ -1598,7 +1601,10 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                       <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${scoreColor(game.aggregatedRating)}`}
                       >
-                        {game.aggregatedRating.toFixed(1)}
+                        {formatRegionalNumber(game.aggregatedRating, {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5 text-sm font-medium">
@@ -1636,7 +1642,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                       .map((entry) => (
                         <div key={entry.label} className="flex items-center gap-3">
                           <div className="w-14 h-14 rounded-xl flex items-center justify-center text-sm font-bold bg-muted">
-                            {entry.value % 1 === 0 ? entry.value : entry.value.toFixed(1)}h
+                            {formatRegionalNumber(entry.value, { maximumFractionDigits: 1 })}h
                           </div>
                           <div>
                             <div className="text-sm font-medium">{entry.label}</div>

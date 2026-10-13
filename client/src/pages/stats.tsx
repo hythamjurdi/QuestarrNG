@@ -1,3 +1,4 @@
+import { formatRegionalNumber } from "@/lib/regional-format";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -164,7 +165,7 @@ export default function StatsPage() {
                     ? {}
                     : {
                         label: ({ name, percent }: PieLabelRenderProps) =>
-                          `${name} ${((percent ?? 0) * 100).toFixed(0)}%`,
+                          `${name} ${formatRegionalNumber((percent ?? 0) * 100, { maximumFractionDigits: 0 })}%`,
                       })}
                 >
                   {pieData.map((entry, index) => (

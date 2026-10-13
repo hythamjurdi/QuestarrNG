@@ -1,3 +1,4 @@
+import { formatRegionalNumber } from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
 import React, { memo, useState, useEffect, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,10 @@ const CompactGameCard = ({
   };
   const handleToggleHidden = () => onToggleHidden?.(game.id, !game.hidden);
   const { year: releaseYear, fullDate: releaseFullDate } = parseReleaseDate(game.releaseDate);
-  const ratingDisplay = game.rating === null ? null : game.rating.toFixed(1);
+  const ratingDisplay =
+    game.rating === null
+      ? null
+      : formatRegionalNumber(game.rating, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   if (mobileLayout) {
     return (
       <>
@@ -223,7 +227,9 @@ const CompactGameCard = ({
                 {!isDiscovery && (
                   <span className="inline-flex items-center gap-1">
                     <Star className="h-3 w-3 fill-primary text-primary" />
-                    {game.userRating === null ? "—" : `${game.userRating.toFixed(1)}/10`}
+                    {game.userRating === null
+                      ? "—"
+                      : `${formatRegionalNumber(game.userRating, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}/10`}
                   </span>
                 )}
                 <span className="inline-flex items-center gap-1">
@@ -434,7 +440,10 @@ const CompactGameCard = ({
                     {game.userRating == null ? (
                       <span className="opacity-40">—</span>
                     ) : (
-                      game.userRating.toFixed(1)
+                      formatRegionalNumber(game.userRating, {
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                      })
                     )}
                   </span>
                 </button>
@@ -477,7 +486,10 @@ const CompactGameCard = ({
                 <div className="flex items-center gap-1 tabular-nums">
                   <Star className="w-3 h-3 fill-primary text-primary flex-shrink-0" />
                   <span className="text-xs text-muted-foreground">
-                    {game.userRating.toFixed(1)}
+                    {formatRegionalNumber(game.userRating, {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })}
                   </span>
                 </div>
               ) : (

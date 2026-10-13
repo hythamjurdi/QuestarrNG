@@ -53,8 +53,9 @@ import ReleaseNameBlacklistSettings from "@/components/ReleaseNameBlacklistSetti
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import {
   getRegionalLocale,
-  REGIONAL_FORMAT_KEY,
   REGIONAL_FORMAT_OPTIONS,
+  setRegionalPreference,
+  useRegionalPreference,
 } from "@/lib/regional-format";
 import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
 import { INTERFACE_LANGUAGE_OPTIONS, useInterfaceLanguage } from "@/lib/interface-locale";
@@ -222,20 +223,7 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
 
   const [ghostUnlocked] = useLocalStorageState(GHOST_UNLOCK_KEY, false);
-  const [storedRegionalFormat, setRegionalFormat] = useLocalStorageState<string>(
-    REGIONAL_FORMAT_KEY,
-    "system"
-  );
-  const regionalFormat = REGIONAL_FORMAT_OPTIONS.some(
-    (option) => option.value === storedRegionalFormat
-  )
-    ? storedRegionalFormat
-    : "system";
-  useEffect(() => {
-    if (regionalFormat !== storedRegionalFormat) {
-      setRegionalFormat(regionalFormat);
-    }
-  }, [regionalFormat, setRegionalFormat, storedRegionalFormat]);
+  const regionalFormat = useRegionalPreference();
   const [selectedTheme, setSelectedTheme] = useLocalStorageState<Theme>(
     THEME_KEY,
     getCurrentTheme(ghostUnlocked)
@@ -1480,9 +1468,9 @@ export default function SettingsPage() {
                 >
                   {t("Date, time, and number format")}
                 </Label>
-                <Select value={regionalFormat} onValueChange={setRegionalFormat}>
+                <Select value={regionalFormat} onValueChange={setRegionalPreference}>
                   <SelectTrigger id="regional-format" className="w-full sm:w-80">
-                    <SelectValue placeholder="Use browser settings" />
+                    <SelectValue placeholder={t("Use browser settings")} />
                   </SelectTrigger>
                   <SelectContent>
                     {REGIONAL_FORMAT_OPTIONS.map((option) => (
