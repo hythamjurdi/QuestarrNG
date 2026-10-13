@@ -51,6 +51,7 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { Label } from "@/components/ui/label";
 import {
   Download,
+  FileDown,
   Loader2,
   PackagePlus,
   SlidersHorizontal,
@@ -843,6 +844,36 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     downloadMutation.mutate([download]);
   };
 
+  const handleDirectDownload = (download: DownloadItem) => {
+    if (!safeUrl(download.link, "")) {
+      toast({
+        title: "Direct download unavailable",
+        description: "This release does not have a downloadable file URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const downloadCategory = groupDownloadsByCategory([download]);
+    const smallExtras = getSmallExtras(download, filteredCategorizedDownloads.extra);
+    if (
+      downloadCategory.main.length > 0 &&
+      (filteredCategorizedDownloads.update.length > 0 || smallExtras.length > 0)
+    ) {
+      setSelectedMainDownload(download);
+      setIsDirectDownloadMode(true);
+      setSelectedUpdateIndices(new Set(filteredCategorizedDownloads.update.map((_, i) => i)));
+      setSelectedExtraIndices(new Set());
+      setShowBundleDialog(true);
+      return;
+    }
+
+    if (downloadFile(download)) {
+      const fileType = isUsenetItem(download) ? "NZB" : "torrent";
+      toast({ title: "Download started", description: `${fileType} file download initiated` });
+    }
+  };
+
   const handleBundleDownload = (includeSelectedAddons: boolean) => {
     if (!selectedMainDownload) return;
     const guid = selectedMainDownload.guid || selectedMainDownload.link;
@@ -853,15 +884,19 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     ]);
   };
 
-  const downloadFile = (download: DownloadItem) => {
+  const downloadFile = (download: DownloadItem): boolean => {
+    const url = safeUrl(download.link, "");
+    if (!url) return false;
+
     const link = document.createElement("a");
-    link.href = download.link;
+    link.href = url;
     const isUsenet = isUsenetItem(download);
     link.download = `${download.title}.${isUsenet ? "nzb" : "torrent"}`;
     link.target = "_blank";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    return true;
   };
 
   const handleBundleDirectDownload = async (includeSelectedAddons: boolean) => {
@@ -894,8 +929,16 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         });
       }
     } else {
-      downloadFile(selectedMainDownload);
-      toast({ title: "Download started", description: "File download initiated" });
+      if (downloadFile(selectedMainDownload)) {
+        const fileType = isUsenetItem(selectedMainDownload) ? "NZB" : "torrent";
+        toast({ title: "Download started", description: `${fileType} file download initiated` });
+      } else {
+        toast({
+          title: "Direct download unavailable",
+          description: "This release does not have a downloadable file URL.",
+          variant: "destructive",
+        });
+      }
     }
     setShowBundleDialog(false);
     setSelectedMainDownload(null);
@@ -1241,7 +1284,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                               label="Health"
                               className="min-w-[70px] justify-end"
                             />
-                            <div className="w-[80px] text-right text-muted-foreground/70 uppercase tracking-widest">
+                            <div className="w-[112px] text-right text-muted-foreground/70 uppercase tracking-widest">
                               Actions
                             </div>
                           </div>
@@ -1349,6 +1392,25 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                           </DropdownMenu>
                         );
 
+                        const directDownloadAction = safeUrl(download.link, "") ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9"
+                                aria-label={`Download ${isUsenet ? "NZB" : "torrent"} file for ${download.title.replace(/[._]/g, " ")}`}
+                                onClick={() => handleDirectDownload(download)}
+                              >
+                                <FileDown className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Download {isUsenet ? ".nzb" : ".torrent"} file
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : null;
+
                         // ── Mobile: stacked card ────────────────────────────
                         if (isMobile) {
                           return (
@@ -1376,7 +1438,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-start gap-1.5 min-w-0">
-                                        <h4 className="font-semibold text-sm leading-snug break-all line-clamp-2 min-w-0 flex-1">
+                                        <h4 className="font-semibold text-sm leading-snug break-words line-clamp-2 min-w-0 flex-1">
                                           {download.comments ? (
                                             <a
                                               href={safeUrl(download.comments)}
@@ -1404,7 +1466,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                         />
                                       </div>
                                     </div>
-                                    <div className="flex items-center flex-shrink-0 self-start">
+                                    <div className="flex items-center gap-1 flex-shrink-0 self-start">
+                                      {directDownloadAction}
                                       <Button
                                         variant="ghost"
                                         size={isCurrentDownload ? "sm" : "icon"}
@@ -1605,9 +1668,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                 <div
                                   className={cn(
                                     "flex items-center justify-end gap-1",
-                                    isCurrentDownload ? "w-[160px]" : "w-[80px]"
+                                    isCurrentDownload ? "w-[200px]" : "w-[112px]"
                                   )}
                                 >
+                                  {directDownloadAction}
                                   <Button
                                     variant="ghost"
                                     size={isCurrentDownload ? "sm" : "icon"}

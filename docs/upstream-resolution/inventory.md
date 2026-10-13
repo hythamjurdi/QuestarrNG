@@ -208,23 +208,23 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [issue #203](https://github.com/Doezer/Questarr/issues/203) | dark/light mode button doesn't switch styling | CLOSED | no-merge-commit | verified |
 | [issue #205](https://github.com/Doezer/Questarr/issues/205) | Support smart adding of game | CLOSED | no-merge-commit | verified |
 | [pr #207](https://github.com/Doezer/Questarr/pull/207) | chore(deps-dev): bump the dev-dependencies group across 1 directory with 11 updates | MERGED | merge-commit-not-in-either-main-history | superseded |
-| [issue #208](https://github.com/Doezer/Questarr/issues/208) | Allow scrolling when list of torrents is longer than modal | CLOSED | no-merge-commit | unreviewed |
-| [issue #209](https://github.com/Doezer/Questarr/issues/209) | Allow extended search | CLOSED | no-merge-commit | unreviewed |
-| [issue #210](https://github.com/Doezer/Questarr/issues/210) | Add issue templates | CLOSED | no-merge-commit | unreviewed |
-| [issue #211](https://github.com/Doezer/Questarr/issues/211) | Add a readme | CLOSED | no-merge-commit | unreviewed |
-| [issue #212](https://github.com/Doezer/Questarr/issues/212) | Calendar page | CLOSED | no-merge-commit | unreviewed |
-| [issue #213](https://github.com/Doezer/Questarr/issues/213) | Trending page | CLOSED | no-merge-commit | unreviewed |
-| [issue #214](https://github.com/Doezer/Questarr/issues/214) | Wishlist page: separate games that are out and not | CLOSED | no-merge-commit | unreviewed |
-| [issue #215](https://github.com/Doezer/Questarr/issues/215) | add license, contributing, documentation | CLOSED | no-merge-commit | unreviewed |
-| [issue #216](https://github.com/Doezer/Questarr/issues/216) | auto own when torrent is completed | CLOSED | no-merge-commit | unreviewed |
-| [issue #217](https://github.com/Doezer/Questarr/issues/217) | allow direct download of torrent | CLOSED | no-merge-commit | unreviewed |
-| [issue #219](https://github.com/Doezer/Questarr/issues/219) | Delayed games | CLOSED | no-merge-commit | unreviewed |
-| [issue #220](https://github.com/Doezer/Questarr/issues/220) | display downloaders free storage in header | CLOSED | no-merge-commit | unreviewed |
-| [issue #221](https://github.com/Doezer/Questarr/issues/221) | Implement a scheduled search for game torrents | CLOSED | no-merge-commit | unreviewed |
-| [issue #222](https://github.com/Doezer/Questarr/issues/222) | Review the UI of the game details | CLOSED | no-merge-commit | unreviewed |
-| [pr #223](https://github.com/Doezer/Questarr/pull/223) | Harden repository: Fix tests, update docs, and improve code style | CLOSED | no-merge-commit | unreviewed |
-| [pr #224](https://github.com/Doezer/Questarr/pull/224) | 🎨 Palette: [UX improvement] Add aria-labels to notification buttons | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #225](https://github.com/Doezer/Questarr/pull/225) | ⚡ Bolt: optimize metadata refresh with batched API calls | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [issue #208](https://github.com/Doezer/Questarr/issues/208) | Allow scrolling when list of torrents is longer than modal | CLOSED | no-merge-commit | verified |
+| [issue #209](https://github.com/Doezer/Questarr/issues/209) | Allow extended search | CLOSED | no-merge-commit | verified |
+| [issue #210](https://github.com/Doezer/Questarr/issues/210) | Add issue templates | CLOSED | no-merge-commit | verified |
+| [issue #211](https://github.com/Doezer/Questarr/issues/211) | Add a readme | CLOSED | no-merge-commit | verified |
+| [issue #212](https://github.com/Doezer/Questarr/issues/212) | Calendar page | CLOSED | no-merge-commit | verified |
+| [issue #213](https://github.com/Doezer/Questarr/issues/213) | Trending page | CLOSED | no-merge-commit | superseded |
+| [issue #214](https://github.com/Doezer/Questarr/issues/214) | Wishlist page: separate games that are out and not | CLOSED | no-merge-commit | verified |
+| [issue #215](https://github.com/Doezer/Questarr/issues/215) | add license, contributing, documentation | CLOSED | no-merge-commit | verified |
+| [issue #216](https://github.com/Doezer/Questarr/issues/216) | auto own when torrent is completed | CLOSED | no-merge-commit | verified |
+| [issue #217](https://github.com/Doezer/Questarr/issues/217) | allow direct download of torrent | CLOSED | no-merge-commit | verified |
+| [issue #219](https://github.com/Doezer/Questarr/issues/219) | Delayed games | CLOSED | no-merge-commit | verified |
+| [issue #220](https://github.com/Doezer/Questarr/issues/220) | display downloaders free storage in header | CLOSED | no-merge-commit | verified |
+| [issue #221](https://github.com/Doezer/Questarr/issues/221) | Implement a scheduled search for game torrents | CLOSED | no-merge-commit | verified |
+| [issue #222](https://github.com/Doezer/Questarr/issues/222) | Review the UI of the game details | CLOSED | no-merge-commit | verified |
+| [pr #223](https://github.com/Doezer/Questarr/pull/223) | Harden repository: Fix tests, update docs, and improve code style | CLOSED | no-merge-commit | superseded |
+| [pr #224](https://github.com/Doezer/Questarr/pull/224) | 🎨 Palette: [UX improvement] Add aria-labels to notification buttons | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #225](https://github.com/Doezer/Questarr/pull/225) | ⚡ Bolt: optimize metadata refresh with batched API calls | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #226](https://github.com/Doezer/Questarr/pull/226) | Repo hardening: fix lint/format issues, repair broken test, and update dependencies | CLOSED | no-merge-commit | unreviewed |
 | [pr #227](https://github.com/Doezer/Questarr/pull/227) | Iterative Hardening: Fix tests, lint, and add docs | CLOSED | no-merge-commit | unreviewed |
 | [issue #228](https://github.com/Doezer/Questarr/issues/228) | Support for Usenet | CLOSED | no-merge-commit | unreviewed |

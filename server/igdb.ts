@@ -55,6 +55,10 @@ export interface IGDBGame {
     url: string;
   };
   first_release_date?: number;
+  release_dates?: Array<{
+    date?: number;
+    status?: { name?: string };
+  }>;
   rating?: number;
   aggregated_rating?: number;
   aggregated_rating_count?: number;
@@ -1204,7 +1208,10 @@ class IGDBClient {
     return result;
   }
 
-  async getGamesByIds(ids: number[]): Promise<IGDBGame[]> {
+  async getGamesByIds(
+    ids: number[],
+    options: { includeReleaseDateStatuses?: boolean } = {}
+  ): Promise<IGDBGame[]> {
     if (!(await this.ensureConfigured())) return [];
     if (ids.length === 0) return [];
 
@@ -1226,6 +1233,9 @@ class IGDBClient {
     }
 
     const allResults: IGDBGame[] = [];
+    const fields = options.includeReleaseDateStatuses
+      ? `${IGDB_GAME_FIELDS}, release_dates.date, release_dates.status.name`
+      : IGDB_GAME_FIELDS;
 
     // Process chunks in batches respecting rate limit
     for (let i = 0; i < chunks.length; i += rateLimit) {
@@ -1235,7 +1245,7 @@ class IGDBClient {
       const batch = chunks.slice(i, i + rateLimit);
       const promises = batch.map((chunk) => {
         const igdbQuery = `
-        fields ${IGDB_GAME_FIELDS};
+        fields ${fields};
         where id = (${chunk.join(",")});
         limit 100;
       `;

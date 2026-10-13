@@ -5878,10 +5878,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Download results stay inside scrollable result regions on desktop and mobile, so long result lists remain reachable without pushing the modal offscreen."
+        ],
+        "acceptance": [
+          "Users can scroll through all torrent/NZB results while retaining access to the dialog controls."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/208",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5898,10 +5906,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The extended search dialog supports an editable query plus platform, indexer, group, minimum-seeder, category, and sort controls."
+        ],
+        "acceptance": [
+          "Users can refine a game search using additional filters and ordering."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/209",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5918,10 +5934,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Bug and feature templates are present, and a question template was added with prompts for help details, steps, environment, and safe log sharing."
+        ],
+        "acceptance": [
+          "The issue chooser offers bug, feature request, and question templates."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/210",
+          ".github/ISSUE_TEMPLATE/bug_report.md",
+          ".github/ISSUE_TEMPLATE/feature_request.md",
+          ".github/ISSUE_TEMPLATE/question.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5938,10 +5963,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The repository includes a README with setup, configuration, and usage guidance."
+        ],
+        "acceptance": [
+          "New users can find project and setup information in the repository README."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/211",
+          "README.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5958,10 +5990,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Calendar supports year, month, and week modes, defaults to year view, and includes games with undated/TBA release dates. Delayed-state display and notification behavior are covered separately by issue #219."
+        ],
+        "acceptance": [
+          "Users can switch among year/month/week views and see wanted games with announced or TBA dates."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/212",
+          "client/src/pages/calendar.tsx",
+          "client/__tests__/CalendarPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5978,10 +6018,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The upstream maintainer later removed the Trending route, page, and navigation in commits ef839c0 and b2f8f16; the fork has no Trending entry to restore."
+        ],
+        "acceptance": [
+          "Treat the request as withdrawn by the project’s subsequent removal of Trending."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/213",
+          "https://github.com/Doezer/Questarr/commit/ef839c0",
+          "https://github.com/Doezer/Questarr/commit/b2f8f16"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -5998,10 +6046,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Wishlist separates released games from upcoming games and keeps TBA/undated games visible."
+        ],
+        "acceptance": [
+          "Users can distinguish games already released from future and TBA wishlist entries."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/214",
+          "client/src/pages/wishlist.tsx",
+          "client/__tests__/WishlistPage.mobile.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6018,10 +6074,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The repository includes a license, contribution instructions, and project documentation."
+        ],
+        "acceptance": [
+          "License terms, contribution guidance, and documentation are available in the repository."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/215",
+          "LICENSE",
+          ".github/CONTRIBUTING.md",
+          "README.md",
+          "docs/"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6038,10 +6104,17 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "When a completed download is categorized as the main game, the API updates a wanted/downloading game to owned."
+        ],
+        "acceptance": [
+          "Completing the main-game download automatically marks the game as owned."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/216",
+          "server/__tests__/api_routes.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6058,10 +6131,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Search results now expose a clearly labeled direct file-download action for safe HTTP(S) torrent/NZB links, separately from sending the release to a configured downloader. Magnet-only results do not show the file action. Selecting a main game with updates retains the update-choice step; mobile release titles now wrap at word boundaries."
+        ],
+        "acceptance": [
+          "Users can download a torrent/NZB file from a result, distinguish that action from adding to a downloader, and still choose whether to include updates."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/217",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/pr-evidence/upstream-direct-download.png",
+          "docs/pr-evidence/upstream-direct-download-bundle.png",
+          "docs/pr-evidence/upstream-direct-download-mobile.png",
+          "docs/upstream-resolution/evidence/validation-batch-24.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6078,10 +6163,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Scheduled release checks request IGDB release-date status names, recognize an explicit future Delayed status, preserve date-shift detection as a fallback, and notify when the game transitions to delayed."
+        ],
+        "acceptance": [
+          "Delayed games have a distinct calendar state and users receive a notification when a release becomes delayed."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/219",
+          "https://api-docs.igdb.com/",
+          "server/igdb.ts",
+          "server/cron.ts",
+          "server/__tests__/cron_updates.test.ts",
+          "release-notes/2026-10-12-igdb-delayed-release-status.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6098,10 +6194,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The header displays free storage for configured downloaders using the existing storage API."
+        ],
+        "acceptance": [
+          "Users can see configured download targets’ available storage from the application header."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/220",
+          "client/src/components/Header.tsx",
+          "server/routes.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6118,10 +6222,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Optional scheduled search targets wanted games that are neither owned nor already downloading; interval, enablement, auto-download, and user notifications are configurable."
+        ],
+        "acceptance": [
+          "Users can enable scheduled searches, configure their interval and auto-download preference, and be notified when multiple main results or owned-game updates are found."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/221",
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "client/src/pages/settings.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6138,10 +6251,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The details dialog reserves space for the close control and uses a compact inline cover to avoid overlap and excessive empty space."
+        ],
+        "acceptance": [
+          "The game image does not cover the close control, and the title-to-details layout avoids large blank areas."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/222",
+          "client/src/components/GameDetailsModal.tsx",
+          "client/__tests__/GameDetailsModal.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6158,10 +6279,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The PR was closed without merge. Its applicable dependency, test-mock, contribution-guide, and PR-template work is already present in the fork. The fork intentionally uses npm/package-lock, so its later tooling state supersedes the PR’s pnpm-only documentation change; format, lint, type-check, and focused test checks pass."
+        ],
+        "acceptance": [
+          "Keep the required dependency and test mock current, provide contribution and PR templates, and maintain passing formatting/lint/type/test checks using the fork’s npm toolchain."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/223",
+          "package.json",
+          "package-lock.json",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          ".github/CONTRIBUTING.md",
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          "npm run check",
+          "npm run lint",
+          "npm run format:check"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6178,10 +6313,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "586b1a1af6ee67d5bb09a1531e9811fc7d830b54",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Notification Center icon-only actions have explicit accessible names: “Mark all notifications as read” and “Clear all notifications.”"
+        ],
+        "acceptance": [
+          "Screen-reader users can identify the bulk mark-read and clear actions."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/224",
+          "client/src/components/NotificationCenter.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6198,10 +6340,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e6bdfb0d1aa705613d2c33a76700d36e2aacb047",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The metadata refresh endpoint uses one IGDB getGamesByIds request per batch and writes updates in bounded chunks instead of issuing one metadata request per game."
+        ],
+        "acceptance": [
+          "Refresh library metadata without N+1 IGDB requests and limit concurrent database updates."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/225",
+          "server/routes.ts",
+          "server/igdb.ts",
+          "server/__tests__/api_routes.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

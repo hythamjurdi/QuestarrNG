@@ -618,3 +618,18 @@ See [batch 23 validation](evidence/validation-batch-23.txt).
 The ledger now records **198 verified**, **13 superseded**, **929 unreviewed**,
 **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**.
 Issue #37 remains outstanding.
+
+
+## Follow-up: search, calendar, and download items (#208–225)
+
+Issues [#208](https://github.com/Doezer/Questarr/issues/208) and [#209](https://github.com/Doezer/Questarr/issues/209) are verified: download results remain scrollable on desktop and mobile, and extended search supports the query and filtering controls requested. Issue [#210](https://github.com/Doezer/Questarr/issues/210) now has bug, feature, and question templates; #211 and #215 are covered by the existing README, license, contribution guide, and docs.
+
+Issues [#212](https://github.com/Doezer/Questarr/issues/212), [#214](https://github.com/Doezer/Questarr/issues/214), and [#222](https://github.com/Doezer/Questarr/issues/222) are verified against the current calendar, wishlist, and details layouts. Issue [#213](https://github.com/Doezer/Questarr/issues/213) is superseded: upstream later removed the Trending page and its navigation. Issue [#216](https://github.com/Doezer/Questarr/issues/216) marks a game owned when its main download completes.
+
+Issue [#217](https://github.com/Doezer/Questarr/issues/217) now has a visible direct torrent/NZB file action separate from adding a release to a downloader. The action is limited to safe file URLs, preserves the update-selection step, and release titles wrap cleanly on mobile. Running-app screenshots show the desktop result list, update choice, and mobile layout in [desktop](../pr-evidence/upstream-direct-download.png), [update-choice](../pr-evidence/upstream-direct-download-bundle.png), and [mobile](../pr-evidence/upstream-direct-download-mobile.png) views. Issue [#219](https://github.com/Doezer/Questarr/issues/219) recognizes IGDB’s explicit delayed status with date-shift fallback and notifications. Issues [#220](https://github.com/Doezer/Questarr/issues/220) and [#221](https://github.com/Doezer/Questarr/issues/221) are covered by header storage reporting and configurable scheduled searches.
+
+PR [#223](https://github.com/Doezer/Questarr/pull/223) is superseded by the fork’s current npm tooling and existing dependency, mock, documentation, and template state. PRs [#224](https://github.com/Doezer/Questarr/pull/224) and [#225](https://github.com/Doezer/Questarr/pull/225) are verified: notification actions have accessible names, and metadata refresh batches IGDB requests and database writes.
+
+The focused GameDownloadDialog suite passed (46 tests, 1 skipped); type checking, lint, and format checks passed. Headless-browser evidence was captured from `npm run dev:test`. See [batch 24 validation](evidence/validation-batch-24.txt).
+
+The ledger now records **213 verified**, **15 superseded**, **912 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.

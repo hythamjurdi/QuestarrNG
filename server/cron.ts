@@ -623,7 +623,7 @@ export async function checkGameUpdates() {
   // Batch fetch from IGDB
   let igdbGames;
   try {
-    igdbGames = await igdbClient.getGamesByIds(igdbIds);
+    igdbGames = await igdbClient.getGamesByIds(igdbIds, { includeReleaseDateStatuses: true });
   } catch (error) {
     if (error instanceof Error) {
       const err = error as Error & { code?: string };
@@ -698,13 +698,23 @@ export async function checkGameUpdates() {
       }
     }
 
-    if (!igdbGame.first_release_date) continue;
+    const now = new Date();
+    const hasUpcomingDelayedRelease =
+      igdbGame.release_dates?.some(
+        (releaseDate) =>
+          releaseDate.status?.name?.trim().toLowerCase() === "delayed" &&
+          (releaseDate.date === undefined || releaseDate.date * 1000 > now.getTime())
+      ) ?? false;
 
-    const currentReleaseDate = new Date(igdbGame.first_release_date * 1000);
-    const currentReleaseDateStr = currentReleaseDate.toISOString().split("T")[0]!;
+    if (!igdbGame.first_release_date && !hasUpcomingDelayedRelease) continue;
+
+    const currentReleaseDate = igdbGame.first_release_date
+      ? new Date(igdbGame.first_release_date * 1000)
+      : null;
+    const currentReleaseDateStr = currentReleaseDate?.toISOString().split("T")[0] ?? null;
 
     // Initialize originalReleaseDate if not set
-    if (!game.originalReleaseDate) {
+    if (!game.originalReleaseDate && currentReleaseDateStr) {
       if (game.releaseDate) {
         queueUpdate({ originalReleaseDate: game.releaseDate });
         game.originalReleaseDate = game.releaseDate;
@@ -713,21 +723,24 @@ export async function checkGameUpdates() {
           releaseDate: currentReleaseDateStr,
           originalReleaseDate: currentReleaseDateStr,
         });
-        continue;
+        if (!hasUpcomingDelayedRelease) continue;
+        game.originalReleaseDate = currentReleaseDateStr;
       }
     }
 
-    // Now compare
-    const storedOriginalDate = new Date(game.originalReleaseDate!);
-    const diffTime = currentReleaseDate.getTime() - storedOriginalDate.getTime();
+    // Keep the date-shift check as a fallback for IGDB records without a status.
+    const storedOriginalDate = game.originalReleaseDate ? new Date(game.originalReleaseDate) : null;
+    const diffTime =
+      currentReleaseDate && storedOriginalDate
+        ? currentReleaseDate.getTime() - storedOriginalDate.getTime()
+        : 0;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     let newReleaseStatus: "released" | "upcoming" | "delayed" | "tbd";
-    const now = new Date();
 
-    if (currentReleaseDate <= now) {
+    if (currentReleaseDate && currentReleaseDate <= now) {
       newReleaseStatus = "released";
-    } else if (diffDays > DELAY_THRESHOLD_DAYS) {
+    } else if (hasUpcomingDelayedRelease || diffDays > DELAY_THRESHOLD_DAYS) {
       newReleaseStatus = "delayed";
     } else {
       newReleaseStatus = "upcoming";
@@ -749,7 +762,9 @@ export async function checkGameUpdates() {
     }
 
     // If release date or status changed, update DB
-    if (game.releaseDate !== currentReleaseDateStr || game.releaseStatus !== newReleaseStatus) {
+    const releaseDateChanged =
+      currentReleaseDateStr !== null && game.releaseDate !== currentReleaseDateStr;
+    if (releaseDateChanged || game.releaseStatus !== newReleaseStatus) {
       igdbLogger.info(
         {
           game: game.title,
@@ -763,13 +778,15 @@ export async function checkGameUpdates() {
       );
 
       queueUpdate({
-        releaseDate: currentReleaseDateStr,
+        ...(currentReleaseDateStr ? { releaseDate: currentReleaseDateStr } : {}),
         releaseStatus: newReleaseStatus,
       });
 
       // Send notification if game is delayed
       if (newReleaseStatus === "delayed" && game.releaseStatus !== "delayed") {
-        const message = `${game.title} has been delayed to ${currentReleaseDateStr}`;
+        const message = currentReleaseDateStr
+          ? `${game.title} has been delayed to ${currentReleaseDateStr}`
+          : `${game.title} has been delayed`;
         const prefs = await getGameUpdatePrefs(game.userId!);
         if (prefs.gameDelayed.inApp) {
           notificationsToSend.push({

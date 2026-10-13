@@ -731,6 +731,97 @@ describe("GameDownloadDialog", () => {
     });
   });
 
+  it.each([false, true])(
+    "offers a direct torrent file download from the result actions when mobile is %s",
+    async (isMobile) => {
+      mockIsMobile = isMobile;
+      const fetchMock = createFetchMock({
+        search: makeSearchResult([
+          makeTorrentItem({
+            title: "Direct Torrent Release",
+            link: "https://indexer.example/download/123.torrent",
+          }),
+        ]),
+      });
+      globalThis.fetch = fetchMock;
+      const anchorClick = vi
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(() => {});
+
+      renderComponent();
+
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: "Download torrent file for Direct Torrent Release",
+        })
+      );
+
+      await waitFor(() => expect(anchorClick).toHaveBeenCalledOnce());
+      expect(fetchMock).not.toHaveBeenCalledWith(
+        "/api/downloads",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(mockToast).toHaveBeenCalledWith({
+        title: "Download started",
+        description: "torrent file download initiated",
+      });
+    }
+  );
+
+  it("keeps the bundle choice when directly downloading a main release with updates", async () => {
+    const fetchMock = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({
+          title: "Test Game SKIDROW",
+          link: "https://indexer.example/download/main.torrent",
+        }),
+        makeTorrentItem({
+          title: "Test Game Update v1.1",
+          link: "https://indexer.example/download/update.torrent",
+        }),
+      ]),
+    });
+    globalThis.fetch = fetchMock;
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    renderComponent();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Download torrent file for Test Game SKIDROW" })
+    );
+    expect(await screen.findByText("Download with Updates?")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /Test Game Update v1\.1/ })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    fireEvent.click(screen.getByText("Download game only"));
+
+    await waitFor(() => expect(anchorClick).toHaveBeenCalledOnce());
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/downloads",
+      expect.objectContaining({ method: "POST" })
+    );
+    expect(mockToast).toHaveBeenCalledWith({
+      title: "Download started",
+      description: "torrent file download initiated",
+    });
+  });
+
+  it("keeps direct-file download out of the menu for magnet links", async () => {
+    globalThis.fetch = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({
+          title: "Magnet Only Release",
+          link: "magnet:?xt=urn:btih:0123456789abcdef",
+        }),
+      ]),
+    });
+
+    renderComponent();
+
+    expect(screen.queryByRole("button", { name: "Download torrent file" })).toBeNull();
+  });
+
   it("suggests optional extras at or below a quarter of the main release size", async () => {
     const fetchMock = createFetchMock({
       search: makeSearchResult([
