@@ -278,7 +278,7 @@ export default function SearchPage() {
     }: {
       download: DownloadItem;
       formData: DownloadForm;
-    }): Promise<{ success: boolean; message?: string }> => {
+    }): Promise<{ success: boolean; message?: string; correlationTag?: string }> => {
       const r = await apiRequest("POST", `/api/downloaders/${formData.downloaderId}/downloads`, {
         url: download.link,
         title: download.title,
@@ -292,7 +292,17 @@ export default function SearchPage() {
     },
     onSuccess: (result) => {
       if (result.success) {
-        toast({ title: "Download started successfully" });
+        const awaitingConfirmation = Boolean(result.correlationTag);
+        toast({
+          title: awaitingConfirmation ? "Checking qBittorrent" : "Download started successfully",
+          ...(awaitingConfirmation
+            ? {
+                description:
+                  result.message ||
+                  "The request was accepted, but qBittorrent has not confirmed the download yet. Check qBittorrent before retrying to avoid a duplicate.",
+              }
+            : {}),
+        });
         setIsDownloadDialogOpen(false);
         setSelectedDownload(null);
         void queryClient.invalidateQueries({ queryKey: ["/api/downloads"] });

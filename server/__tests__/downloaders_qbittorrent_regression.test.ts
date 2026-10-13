@@ -1397,7 +1397,11 @@ describe("qbittorrent regression coverage", () => {
         url: "http://prowlarr.local/1/api?t=download&id=unavailable",
         title: "Unavailable polling",
       })
-    ).resolves.toMatchObject({ success: true, message: "Download queued in qBittorrent" });
+    ).resolves.toMatchObject({
+      success: true,
+      message:
+        "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.",
+    });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(
       makeRequestSpy.mock.calls.some(
@@ -1515,7 +1519,8 @@ describe("qbittorrent regression coverage", () => {
       ).resolves.toEqual({
         success: true,
         correlationTag: expect.stringMatching(/^questarr-add-/),
-        message: "Download queued in qBittorrent",
+        message:
+          "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.",
       });
 
       // 1 add request + 10 failed polling attempts, no upload fallback request.

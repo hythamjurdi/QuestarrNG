@@ -848,16 +848,17 @@ describe("qbittorrent remaining regression coverage", () => {
       } as Response,
     });
 
-    await expect(
-      client.addDownload({
-        url: "http://indexer.local/upload-unknown.torrent",
-        title: "Unknown Upload",
-      })
-    ).resolves.toEqual({
-      success: true,
-      id: "Unknown Upload",
-      message: "Download added but hash could not be verified",
+    const result = await client.addDownload({
+      url: "http://indexer.local/upload-unknown.torrent",
+      title: "Unknown Upload",
     });
+    expect(result).toMatchObject({
+      success: true,
+      correlationTag: expect.stringMatching(/^questarr-(add|fallback)-/),
+      message:
+        "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.",
+    });
+    expect(result.id).toBeUndefined();
 
     makeRequestSpy.mockReset();
     makeRequestSpy

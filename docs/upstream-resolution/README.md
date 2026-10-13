@@ -644,3 +644,15 @@ Issue [#228](https://github.com/Doezer/Questarr/issues/228) and merged PR [#233]
 Ten focused Usenet and version-tracking suites passed (285 tests). See [batch 25 validation](evidence/validation-batch-25.txt).
 
 The ledger now records **216 verified**, **17 superseded**, **907 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.
+
+## Follow-up: startup, qBittorrent, search and accessibility (#239–244)
+
+PR [#239](https://github.com/Doezer/Questarr/pull/239) is superseded by the fork’s current startup design: the app uses its own SQLite/PostgreSQL migration runners and existing structured logger, so production startup does not need to ship or invoke `drizzle-kit`. Issues [#240](https://github.com/Doezer/Questarr/issues/240) and [#241](https://github.com/Doezer/Questarr/issues/241) are verified: the container starts the compiled app, which applies migrations itself, and the logger import and production TypeScript build pass.
+
+Issue [#242](https://github.com/Doezer/Questarr/issues/242) is verified against the qBittorrent VPN fix later delivered in [PR #276](https://github.com/Doezer/Questarr/pull/276). When qBittorrent cannot fetch an indexer URL through its VPN network, the client can fetch the torrent file and upload it to qBittorrent. If the add is accepted but the torrent cannot be confirmed yet, Questarr keeps its correlation tag and shows a “Checking qBittorrent” message that asks users to check the client before retrying. The free-space lookup also falls back to qBittorrent server-state data. A headless screenshot of the running pending-confirmation state is in [PR evidence](../pr-evidence/upstream-qbittorrent-pending.png).
+
+PR [#243](https://github.com/Doezer/Questarr/pull/243) is verified: IGDB fallback searches run concurrently, with regexes compiled once and the five-request cap preserved. PR [#244](https://github.com/Doezer/Questarr/pull/244) is verified: notification rows are semantic buttons with native keyboard activation and an explicit button type.
+
+Ten focused test suites passed (211 tests, one skipped). Type checking, lint, formatting, and the production Vite/TypeScript builds passed. See [batch 26 validation](evidence/validation-batch-26.txt).
+
+The ledger now records **221 verified**, **18 superseded**, **901 unreviewed**, **5 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37 remains outstanding.

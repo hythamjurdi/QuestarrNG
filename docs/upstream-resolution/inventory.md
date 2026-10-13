@@ -231,12 +231,12 @@ Snapshot: 2026-10-13T00:36:47.597Z. 1147 items. All ancestry observations requir
 | [issue #230](https://github.com/Doezer/Questarr/issues/230) | Smart release management | CLOSED | no-merge-commit | verified |
 | [pr #233](https://github.com/Doezer/Questarr/pull/233) | Feature/usenet-support | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #237](https://github.com/Doezer/Questarr/issues/237) | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'nanoid' imported from /app/dist/server/vite.js | CLOSED | no-merge-commit | verified |
-| [pr #239](https://github.com/Doezer/Questarr/pull/239) | Add new logger and fix drizzle-kit dependency issue | CLOSED | no-merge-commit | unreviewed |
-| [issue #240](https://github.com/Doezer/Questarr/issues/240) | > questarr@1.0.0 db:push > drizzle-kit push sh: drizzle-kit: not found | CLOSED | no-merge-commit | unreviewed |
-| [issue #241](https://github.com/Doezer/Questarr/issues/241) | ./logger.js has no exported member named 'applogger' | CLOSED | no-merge-commit | unreviewed |
-| [issue #242](https://github.com/Doezer/Questarr/issues/242) | Not adding to qBittorrent behind Gluetun VPN | CLOSED | no-merge-commit | unreviewed |
-| [pr #243](https://github.com/Doezer/Questarr/pull/243) | ⚡ Bolt: Parallelize fallback search in IGDB client | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #244](https://github.com/Doezer/Questarr/pull/244) | 🎨 Palette: [UX improvement] Fix NotificationItem accessibility | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [pr #239](https://github.com/Doezer/Questarr/pull/239) | Add new logger and fix drizzle-kit dependency issue | CLOSED | no-merge-commit | superseded |
+| [issue #240](https://github.com/Doezer/Questarr/issues/240) | > questarr@1.0.0 db:push > drizzle-kit push sh: drizzle-kit: not found | CLOSED | no-merge-commit | verified |
+| [issue #241](https://github.com/Doezer/Questarr/issues/241) | ./logger.js has no exported member named 'applogger' | CLOSED | no-merge-commit | verified |
+| [issue #242](https://github.com/Doezer/Questarr/issues/242) | Not adding to qBittorrent behind Gluetun VPN | CLOSED | no-merge-commit | verified |
+| [pr #243](https://github.com/Doezer/Questarr/pull/243) | ⚡ Bolt: Parallelize fallback search in IGDB client | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #244](https://github.com/Doezer/Questarr/pull/244) | 🎨 Palette: [UX improvement] Fix NotificationItem accessibility | MERGED | merge-commit-not-in-either-main-history | verified |
 | [issue #245](https://github.com/Doezer/Questarr/issues/245) | App container has issues when first starting | CLOSED | no-merge-commit | verified |
 | [issue #246](https://github.com/Doezer/Questarr/issues/246) | Fresh install from readme "does not exist on type" | CLOSED | no-merge-commit | unreviewed |
 | [pr #247](https://github.com/Doezer/Questarr/pull/247) | ⚡ Bolt: parallelize downloader requests in routes | MERGED | merge-commit-not-in-either-main-history | unreviewed |

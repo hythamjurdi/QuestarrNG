@@ -19,6 +19,9 @@ import {
   logDownloaderDebugResponse,
 } from "./utils.js";
 
+const UNCONFIRMED_ADD_MESSAGE =
+  "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.";
+
 interface QBittorrentTorrent {
   hash: string;
   name: string;
@@ -389,9 +392,11 @@ export class QBittorrentClient implements DownloaderClient {
                 return {
                   success: true,
                   ...(resolvedHash ? { id: resolvedHash } : { correlationTag }),
-                  message: isPending
-                    ? "Download queued in qBittorrent"
-                    : "Download added successfully",
+                  message: resolvedHash
+                    ? isPending
+                      ? "Download queued in qBittorrent"
+                      : "Download added successfully"
+                    : UNCONFIRMED_ADD_MESSAGE,
                 };
               }
 
@@ -801,13 +806,19 @@ export class QBittorrentClient implements DownloaderClient {
           }
 
           downloadersLogger.warn(
-            { title: request.title },
+            {
+              title: request.title,
+              correlationTag: pendingFallbackCorrelationTag ?? pendingUrlCorrelationTag,
+            },
             "Could not find matching download after adding"
           );
           return {
             success: true,
-            id: request.title || "added",
-            message: "Download added but hash could not be verified",
+            correlationTag:
+              pendingFallbackCorrelationTag ??
+              pendingUrlCorrelationTag ??
+              `questarr-add-${randomUUID()}`,
+            message: UNCONFIRMED_ADD_MESSAGE,
           };
         }
 

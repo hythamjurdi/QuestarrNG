@@ -229,11 +229,12 @@ type FetchOverrides = {
   settings?: object;
   downloads?: object;
   blacklist?: object;
+  downloadResult?: object;
 };
 
 /** Creates a fetch mock with sensible defaults, overridable per-endpoint. */
 const createFetchMock = (overrides: FetchOverrides = {}) =>
-  vi.fn(async (url: RequestInfo | URL) => {
+  vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
     const urlString = getRequestUrl(url);
     if (urlString.includes("/api/search")) {
       return { ok: true, json: async () => overrides.search ?? mockTorrents };
@@ -243,6 +244,13 @@ const createFetchMock = (overrides: FetchOverrides = {}) =>
     }
     if (urlString.includes("/api/downloaders/enabled")) {
       return { ok: true, json: async () => mockDownloaders };
+    }
+    if (
+      urlString.includes("/api/downloaders/") &&
+      urlString.endsWith("/downloads") &&
+      init?.method === "POST"
+    ) {
+      return { ok: true, json: async () => overrides.downloadResult ?? { success: true } };
     }
     if (urlString.includes("/api/settings")) {
       return { ok: true, json: async () => overrides.settings ?? {} };
@@ -1428,6 +1436,58 @@ describe("GameDownloadDialog", () => {
       );
       expect(mockToast).toHaveBeenCalledWith(
         expect.objectContaining({ title: "Download sent to Transmission" })
+      );
+    });
+  });
+
+  it("shows a confirmation warning for an unverified qBittorrent add", async () => {
+    const message =
+      "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.";
+    globalThis.fetch = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const target = getRequestUrl(url);
+      if (target.includes("/api/search")) {
+        return { ok: true, json: async () => mockTorrents } as Response;
+      }
+      if (target.includes("/api/indexers/enabled")) {
+        return { ok: true, json: async () => mockEnabledIndexers } as Response;
+      }
+      if (target.includes("/api/downloaders/enabled")) {
+        return {
+          ok: true,
+          json: async () => [
+            { id: "1", name: "qBittorrent", enabled: true, type: "qbittorrent" },
+            { id: "2", name: "Transmission", enabled: true, type: "transmission" },
+            { id: "3", name: "SABnzbd", enabled: true, type: "sabnzbd" },
+          ],
+        } as Response;
+      }
+      if (target.includes("/api/settings")) {
+        return { ok: true, json: async () => ({}) } as Response;
+      }
+      if (target.includes("/api/downloaders/1/downloads") && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({ success: true, correlationTag: "questarr-add-pending", message }),
+        } as Response;
+      }
+      if (target.includes("/api/downloaders/")) {
+        return { ok: true, json: async () => ({ success: true }) } as Response;
+      }
+      return { ok: true, json: async () => ({ success: true }) } as Response;
+    }) as typeof fetch;
+
+    renderComponent();
+
+    expect(await screen.findAllByText("Copy Torrent Link")).not.toHaveLength(0);
+    fireEvent.click(screen.getAllByText("qBittorrent")[0]);
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/downloaders/1/downloads",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Checking qBittorrent", description: message })
       );
     });
   });

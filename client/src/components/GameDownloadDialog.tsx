@@ -776,7 +776,19 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     },
     onSuccess: (result, variables) => {
       if (result.success) {
-        toast({ title: `Download sent to ${variables.downloaderName}` });
+        const awaitingConfirmation = Boolean(result.correlationTag);
+        toast({
+          title: awaitingConfirmation
+            ? "Checking qBittorrent"
+            : `Download sent to ${variables.downloaderName}`,
+          ...(awaitingConfirmation
+            ? {
+                description:
+                  result.message ||
+                  "The request was accepted, but qBittorrent has not confirmed the download yet. Check qBittorrent before retrying to avoid a duplicate.",
+              }
+            : {}),
+        });
         queryClient.invalidateQueries({ queryKey: ["/api/downloads"] });
         queryClient.invalidateQueries({ queryKey: ["/api/downloads/summary"] });
         const gameId = currentGameId();

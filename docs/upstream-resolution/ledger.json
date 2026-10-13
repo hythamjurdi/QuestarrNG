@@ -6567,10 +6567,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "PR #239 proposed adding an appLogger export and shipping drizzle-kit at runtime for startup schema pushes. The fork instead applies versioned SQLite/PostgreSQL migrations through its own startup migration runners and uses the existing structured logger, so neither proposed change is needed in production."
+        ],
+        "acceptance": [
+          "Production startup applies the app migrations without invoking drizzle-kit.",
+          "The migration module imports an exported logger and the production TypeScript build passes."
+        ],
+        "evidence": [
+          "server/index.ts",
+          "server/logger.ts",
+          "server/migrate.ts",
+          "server/db/migrate-sqlite.ts",
+          "server/db/migrate-pg.ts",
+          "package.json",
+          "Dockerfile",
+          "server/__tests__/migrate.test.ts",
+          "https://github.com/Doezer/Questarr/pull/239"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6587,11 +6602,27 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The reported production image ran npm run db:push without a drizzle-kit binary. The current container starts the compiled server directly; server startup applies its own tracked SQLite/PostgreSQL migrations, and drizzle-kit remains a development-only schema authoring tool."
+        ],
+        "acceptance": [
+          "The production entrypoint does not invoke db:push or require drizzle-kit.",
+          "Application startup migration behavior is covered by migration tests."
+        ],
+        "evidence": [
+          "Dockerfile",
+          "entrypoint.sh",
+          "server/index.ts",
+          "server/migrate.ts",
+          "server/db/migrate-sqlite.ts",
+          "server/db/migrate-pg.ts",
+          "server/__tests__/migrate.test.ts",
+          "https://github.com/Doezer/Questarr/issues/240"
+        ],
+        "dependencies": [
+          "pr:239"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -6607,11 +6638,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The current migration module imports the exported logger rather than the missing appLogger symbol. The reported follow-up cron.ts downloadHash/downloadTitle type errors are also absent from the current production TypeScript build."
+        ],
+        "acceptance": [
+          "The compiled server type-checks with the current migration logger import and cron types."
+        ],
+        "evidence": [
+          "server/logger.ts",
+          "server/migrate.ts",
+          "server/cron.ts",
+          "tsconfig.build.json",
+          "npm run check",
+          "https://github.com/Doezer/Questarr/issues/241"
+        ],
+        "dependencies": [
+          "pr:239"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -6627,10 +6671,29 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The upstream follow-up in PR #276 supports VPN-isolated qBittorrent clients by fetching the torrent file in Questarr and uploading it to qBittorrent. If qBittorrent accepts a request but Questarr cannot confirm the torrent yet, the client now returns its correlation tag and an explicit unconfirmed message instead of a fabricated title-as-ID success; both download entry points show a checking message that tells users to inspect qBittorrent before retrying. Free-space lookup falls back to server-state data when the path-specific API is unavailable."
+        ],
+        "acceptance": [
+          "A qBittorrent instance that cannot fetch the indexer URL can receive an uploaded torrent file from Questarr.",
+          "An accepted but unconfirmed add stays identifiable by correlation tag and is presented as pending confirmation, with guidance to check qBittorrent before retrying.",
+          "Free-space lookup has a server-state fallback for unsupported path-specific responses."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/downloaders/types.ts",
+          "server/routes.ts",
+          "server/__tests__/qbittorrent_features.test.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/downloaders_qbittorrent_remaining.test.ts",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/src/pages/search.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "client/__tests__/SearchPage.test.tsx",
+          "https://github.com/Doezer/Questarr/issues/242",
+          "https://github.com/Doezer/Questarr/pull/276"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6647,10 +6710,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "5e60c7aaaa36205a8f37d9feed0a6a9a3511f504",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "IGDB fallback word searches use Promise.all, input-sanitizing regexes are module-level constants, and only the remaining portion of the five-attempt budget is searched."
+        ],
+        "acceptance": [
+          "Fallback requests run concurrently and the total request-attempt cap remains five."
+        ],
+        "evidence": [
+          "server/igdb.ts",
+          "server/__tests__/igdb.test.ts",
+          "server/__tests__/igdb_extended.test.ts",
+          "https://github.com/Doezer/Questarr/pull/243"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -6667,10 +6739,17 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "96fbc21d450c437781bb8d3c68543ad65cb212c2",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "NotificationItem renders its clickable notification as a semantic button with type=\"button\", preserving the full-width text-aligned layout and providing native keyboard activation."
+        ],
+        "acceptance": [
+          "Notification rows are focusable and activatable with Enter/Space without acting as form-submit buttons."
+        ],
+        "evidence": [
+          "client/src/components/NotificationItem.tsx",
+          "https://github.com/Doezer/Questarr/pull/244"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

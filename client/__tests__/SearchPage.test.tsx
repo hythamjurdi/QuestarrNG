@@ -130,12 +130,14 @@ function setupApiRequest({
   errors,
   libraryGames = [],
   downloaders = [],
+  downloadResult = { success: true },
 }: {
   items?: object[];
   total?: number;
   errors?: string[];
   libraryGames?: object[];
   downloaders?: object[];
+  downloadResult?: object;
 } = {}) {
   mockApiRequest.mockImplementation((_method: string, url: string) => {
     if (url.startsWith("/api/search"))
@@ -143,7 +145,7 @@ function setupApiRequest({
     if (url.startsWith("/api/games/")) return Promise.resolve({ ok: true, json: async () => ({}) });
     if (url.startsWith("/api/games")) return Promise.resolve({ json: async () => libraryGames });
     if (url.startsWith("/api/downloaders/") && url.includes("/downloads"))
-      return Promise.resolve({ json: async () => ({ success: true }) });
+      return Promise.resolve({ json: async () => downloadResult });
     return Promise.resolve({ json: async () => [] });
   });
   // Downloaders uses the QueryClient default queryFn which calls fetch
@@ -375,6 +377,33 @@ describe("SearchPage", () => {
           "POST",
           "/api/downloaders/dl-sab/downloads",
           expect.objectContaining({ downloadType: "usenet", password: undefined })
+        );
+      });
+    });
+
+    it("explains when qBittorrent accepted a request but has not confirmed the download", async () => {
+      const dl = { id: "dl-qbit", name: "qBittorrent", type: "qbittorrent", enabled: true };
+      const message =
+        "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.";
+      setupApiRequest({
+        items: [TORRENT_ITEM],
+        total: 1,
+        downloaders: [dl],
+        downloadResult: { success: true, correlationTag: "questarr-add-pending", message },
+      });
+      renderSearch();
+      typeSearch("game");
+
+      await waitFor(() => expect(screen.getByTestId("card-torrent-0")).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId("button-download-0"));
+      await waitFor(() => {
+        expect(screen.getByRole("heading", { name: "Start Download" })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("button-start-download"));
+
+      await waitFor(() => {
+        expect(toastSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "Checking qBittorrent", description: message })
         );
       });
     });
