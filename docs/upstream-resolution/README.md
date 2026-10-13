@@ -911,6 +911,44 @@ verified**, **30 superseded**, **842 unreviewed**, **7 not-applicable**,
 **1 implemented-unverified**, and **1 needs-implementation** records. Issue #37
 remains outstanding.
 
+## Batch 48 — October 13, 2026
+
+Batch 48 reviewed issues #506, #507, #510, #514, and #515, plus PRs #508, #509,
+#511–513, and #516–519, #521, and #522. Issue #506 is fixed by the bounded,
+scrollable Radix platform selector in PR #512. Magnet redirects from #507 are
+allowed through the downloader handoff without weakening HTTP(S) SSRF checks.
+The Wishlist memoizes sorted groups, and the SABnzbd queue-to-history path
+checks individual download history before marking a download missing; transient
+lookup failures do not count as misses.
+
+Issue #514 exposed a remaining gap: adding a game saved its target platform and
+automated searches used it, but manual download search only applied the
+account-wide preference. The dialog now uses the game's target first, then the
+account default. If that target is excluded by the Platforms setting, the
+dialog leaves the filter clear so the user is not shown an empty list. The
+[running UI evidence](../pr-evidence/upstream-game-platform-preselection-batch-48.png)
+shows a PS5-targeted game filtering to its PS5 release while the account default
+is PC. PR #518's multi-platform search filter remains available for manual
+adjustments. Issue #515's actions remain reachable because the shared
+ScrollArea fixes the Radix viewport's table-layout wrapper.
+
+PR #516's torrent and Usenet result metadata is mapped and displayed. PR #517's
+tabbed game details, owner-scoped download history, ratings, and links are
+present in both supported storage implementations. PR #519 persists and
+displays IGDB early-access status. PR #521's shared PageToolbar is used by
+Library, Wishlist, Playing, and Calendar. PR #522 aligns discovery query
+freshness with cache headers and rounds time-window query keys. PR #513 is
+superseded: the fork now locks newer dependency versions and pins Codecov to
+v7.1.1.
+
+The audit suite passed across 25 test files and 1,047 tests (one skipped). After
+the #514 fix, four focused client/server suites passed 220 tests (one skipped).
+Typecheck, lint, formatting, production build, release-note validation, and
+diff checks are recorded in [batch 48 evidence](evidence/validation-batch-48.txt).
+The ledger now records **435 verified**, **72 superseded**, **630 unreviewed**,
+**8 not-applicable**, **1 implemented-unverified**, and **1 needs-implementation**
+item. Issue #37 remains outstanding.
+
 ## Follow-up: RomM, IGDB, downloads and hardening (#306–319)
 
 PRs [#306](https://github.com/Doezer/Questarr/pull/306),

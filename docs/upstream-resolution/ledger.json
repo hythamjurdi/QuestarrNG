@@ -6,11 +6,11 @@
   "counts": {
     "total": 1147,
     "byStatus": {
-      "verified": 420,
+      "verified": 435,
       "needs-implementation": 1,
-      "superseded": 71,
+      "superseded": 72,
       "not-applicable": 8,
-      "unreviewed": 646,
+      "unreviewed": 630,
       "implemented-unverified": 1
     }
   },
@@ -14448,10 +14448,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Discover platform selector uses Radix's available-height CSS variable in a valid var() expression and constrains the list with vertical scrolling, so the long list remains reachable when the menu opens upward."
+        ],
+        "acceptance": [
+          "Opening the platform selector near the viewport edge keeps every option reachable by scrolling."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/506",
+          "https://github.com/Doezer/Questarr/pull/512",
+          "client/src/components/ui/select.tsx",
+          "client/__tests__/DiscoverPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14468,10 +14477,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Redirected magnet links are forwarded to the configured downloader without being treated as server-fetched HTTP URLs; the safety check permits magnet: URIs before HTTP(S) parsing, and the downloader regression tests cover the path."
+        ],
+        "acceptance": [
+          "A safe HTTP(S) redirect ending in a magnet URI is submitted to qBittorrent-compatible clients instead of failing with Unsafe URL."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/507",
+          "https://github.com/Doezer/Questarr/pull/508",
+          "server/ssrf.ts",
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14488,10 +14508,19 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "a31f02db150d8126f0389697ec51e34c8a9eae17",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The magnet redirect fix is present in isSafeUrl and is exercised by tests that verify magnet URIs do not trigger server-side DNS resolution."
+        ],
+        "acceptance": [
+          "Forward redirected magnet links to supported download clients without weakening HTTP(S) SSRF checks."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/508",
+          "server/ssrf.ts",
+          "server/__tests__/ssrf.test.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14508,10 +14537,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "56faa7318e09bbea9921ac6b27039f8efc73dc43",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Wishlist sorting is a module-level pure function, and upcoming, released, and TBA lists are memoized against their actual sort inputs."
+        ],
+        "acceptance": [
+          "Unrelated WishlistPage renders do not repeatedly sort and allocate the same game arrays."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/509",
+          "client/src/pages/wishlist.tsx",
+          "client/__tests__/wishlist-sort.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14528,10 +14565,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The status cron falls back from the queue-only bulk map to a per-download status query; SABnzbd checks history as well as its queue, and lookup outages are kept distinct from confirmed missing downloads."
+        ],
+        "acceptance": [
+          "A completed item that moved from the queue to history remains tracked through normal completion/import handling; the game is not marked owned merely because a transient lookup failed."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/510",
+          "https://github.com/Doezer/Questarr/pull/511",
+          "server/cron.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14548,10 +14596,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "4b9029fef8bab8a7811d89517a40ecad1dcc11f6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SABnzbd/NZBGet queue-to-history tracking is implemented through an individual status fallback; SABnzbd history lookup covers active and archived buckets and retries an unfiltered scan when needed."
+        ],
+        "acceptance": [
+          "Find completed queue-to-history items before treating downloads as absent, while propagating transport failures as retryable lookup errors."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/511",
+          "server/cron.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14568,10 +14626,18 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "e60bce11f1595726cd76626b81ce4e23ce103ebe",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The select menu's max-height reads Radix's inline available-height variable with explicit var() syntax and enables vertical scrolling."
+        ],
+        "acceptance": [
+          "The Discover platform dropdown stays within the available viewport height and can scroll to earlier options."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/512",
+          "client/src/components/ui/select.tsx",
+          "client/__tests__/DiscoverPage.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14588,10 +14654,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a3fcaba9a6fe8486e18805797ea52b298e273b8a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The consolidated dependency versions are older than the fork's current lockfile: TanStack Query 5.104.1, drizzle-orm 0.45.3, fast-xml-parser 5.11.2, Vitest 5.0.2, and typescript-eslint 8.71.0. Codecov is pinned to v7.1.1, newer than the rollup's v6.0.0 target; the fork's Vite and Vitest configuration has also evolved."
+        ],
+        "acceptance": [
+          "Keep the dependency and CI configuration upgrades represented by this rollup or superseded by newer compatible versions."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/513",
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/ci.yml",
+          "vite.config.ts",
+          "vitest.config.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14608,10 +14685,27 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Add Game stores a supported target platform on the game. Manual download search now resolves that per-game target ahead of the account-wide default, and automatic search uses the same precedence. If the selected target is excluded by the Platforms setting, the manual dialog leaves its platform filter clear instead of hiding every result."
+        ],
+        "acceptance": [
+          "Choose a preferred platform while adding a multi-platform game and have later manual and automated download searches favor that platform, subject to the user's allowed-platform settings."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/514",
+          "https://github.com/Doezer/Questarr/pull/518",
+          "client/src/components/AddGameModal.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "server/cron.ts",
+          "shared/title-utils.ts",
+          "shared/schema.ts",
+          "shared/schema.pg.ts",
+          "client/__tests__/AddGameModal.test.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "server/__tests__/cron_autosearch.test.ts",
+          "docs/pr-evidence/upstream-game-platform-preselection-batch-48.png"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14628,10 +14722,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The shared ScrollArea forces Radix's viewport wrapper child to display as block, avoiding the table layout that clipped the download results' horizontal actions."
+        ],
+        "acceptance": [
+          "The Actions column stays accessible in the download search dialog, including when the result table needs horizontal scrolling."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/515",
+          "client/src/components/ui/scroll-area.tsx",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14648,10 +14751,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "ac7580f6cedda6663ce2635daf63f7f0bfb69c1f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer result metadata is mapped through search and displayed in the download dialog: torrent freeleech and leecher information, plus Usenet file count and poster name."
+        ],
+        "acceptance": [
+          "Show available freeleech, leecher, file-count, and poster metadata without losing nullable rating handling."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/516",
+          "shared/schema.ts",
+          "server/search.ts",
+          "client/src/components/GameDownloadDialog.tsx",
+          "server/__tests__/search.test.ts",
+          "server/__tests__/igdb.test.ts",
+          "client/__tests__/GameDownloadDialog.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14668,10 +14783,25 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "8fd44264c83fc06a7d3b60f8c45dcb2382d1b658",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The details modal has Overview, Downloads, Media, and Links & Ratings tabs, including source badges, IGDB ratings and links, and per-game download history with file sizes. Both storage implementations support game download history, and its API checks game ownership before returning rows."
+        ],
+        "acceptance": [
+          "Provide tabbed game details, reliable IGDB metadata/source handling, and an owner-scoped download history view."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/517",
+          "client/src/components/GameDetailsModal.tsx",
+          "shared/schema.ts",
+          "shared/schema.pg.ts",
+          "server/routes.ts",
+          "server/storage.ts",
+          "migrations/0010_game_metadata_fields.sql",
+          "client/__tests__/GameDetailsModal.test.tsx",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/storage.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14688,10 +14818,20 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "a9b3938ade6fe4309bb852307dd728662304ad3e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The download dialog supports multi-platform filtering, clears stale selections when result platforms change, and applies the saved per-game target platform or account preference as its initial filter."
+        ],
+        "acceptance": [
+          "Filter search results by one or more detected platforms while retaining the add-game target-platform preference flow."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/518",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14708,10 +14848,27 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "8749f387789f4b52e4446ee6bb92c5a3ba6f700a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "IGDB early-access status is persisted on games, defaults false in both database schemas, is refreshed by the status cron, and is visible on regular, compact, and detail cards."
+        ],
+        "acceptance": [
+          "Persist early-access status from IGDB and present it consistently across game views."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/519",
+          "shared/schema.ts",
+          "shared/schema.pg.ts",
+          "migrations/0009_worthless_ikaris.sql",
+          "server/igdb.ts",
+          "server/cron.ts",
+          "server/storage.ts",
+          "client/src/components/GameCard.tsx",
+          "client/src/components/CompactGameCard.tsx",
+          "client/src/components/GameDetailsModal.tsx",
+          "server/__tests__/cron_updates.test.ts",
+          "server/__tests__/igdb_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14728,10 +14885,24 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "7441b043021d5ab9c39c4b79188666c129cea87e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reusable PageToolbar consolidates search, sort, filter badges, view controls, and contextual actions. It is used on Library, Wishlist, Playing, and Calendar, with responsive variants covered by component/page tests."
+        ],
+        "acceptance": [
+          "Replace the separate search and display controls with a responsive shared toolbar and clearer active-filter controls."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/521",
+          "client/src/components/PageToolbar.tsx",
+          "client/src/components/Library.tsx",
+          "client/src/pages/wishlist.tsx",
+          "client/src/pages/playing.tsx",
+          "client/src/pages/calendar.tsx",
+          "client/__tests__/PageToolbar.test.tsx",
+          "client/__tests__/WishlistPage.mobile.test.tsx",
+          "client/__tests__/Library.mobile.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -14748,10 +14919,22 @@
       "historyEvidence": "merge-commit-not-in-either-main-history",
       "mergeCommit": "513f0e08dba204dce3b02c5ea34bbd4a9d10f74b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Discovery carousel sections use a client stale time aligned to the server's one-hour private cache headers; IGDB time-window queries round timestamps to the hour so equivalent requests share stable cache keys."
+        ],
+        "acceptance": [
+          "Reduce redundant discovery IGDB requests while keeping browser freshness aligned with server caching and stable time-based cache keys."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/522",
+          "client/src/pages/discover.tsx",
+          "client/src/components/GameCarouselSection.tsx",
+          "server/routes.ts",
+          "server/igdb.ts",
+          "client/__tests__/DiscoverPage.test.tsx",
+          "client/__tests__/GameCarouselSection.test.tsx"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

@@ -89,6 +89,8 @@ import {
   parseJsonStringArray,
   matchesPlatformFilter,
   normalizeTitle,
+  resolveGamePlatformPreference,
+  UNSUPPORTED_TARGET_PLATFORM,
   type CanonicalPlatform,
 } from "@shared/title-utils";
 import { canonicalPlatformsForIgdbIds, matchesSelectedIgdbPlatform } from "@shared/platforms";
@@ -466,16 +468,23 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         setSelectedGroups(groups);
       }
     }
-    if (userSettings?.preferredPlatform && !platformPreselectedRef.current) {
-      // The preferred platform must also be allowed by the Platforms setting;
-      // otherwise preselecting it would hide every release and show a warning
-      // that blames the wrong filter.
+    const preferredPlatform = resolveGamePlatformPreference(
+      game ?? {},
+      userSettings?.preferredPlatform ?? null
+    );
+    if (
+      preferredPlatform &&
+      preferredPlatform !== UNSUPPORTED_TARGET_PLATFORM &&
+      !platformPreselectedRef.current
+    ) {
+      // A game's explicit target wins over the account default. The chosen
+      // platform must also be allowed by the Platforms setting; otherwise the
+      // prefilter would hide every release and blame the wrong control.
       const allowed = canonicalPlatformsForIgdbIds(userSettings?.importPlatformIds);
       const preferredAllowed =
-        allowed.length === 0 ||
-        allowed.includes(userSettings.preferredPlatform as CanonicalPlatform);
+        allowed.length === 0 || allowed.includes(preferredPlatform as CanonicalPlatform);
       if (preferredAllowed) {
-        setSelectedPlatforms([userSettings.preferredPlatform]);
+        setSelectedPlatforms([preferredPlatform]);
       }
       platformPreselectedRef.current = true;
     }
@@ -485,6 +494,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     userSettings?.preferredReleaseGroups,
     userSettings?.preferredPlatform,
     userSettings?.importPlatformIds,
+    game,
   ]);
 
   // Initialize search query only when the dialog opens or game changes — not on settings refetch.

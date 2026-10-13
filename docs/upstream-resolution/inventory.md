@@ -496,22 +496,22 @@ Snapshot: 2026-10-13T05:20:58.476Z. 1147 items. All ancestry observations requir
 | [issue #503](https://github.com/Doezer/Questarr/issues/503) | Small issues to fix | CLOSED | no-merge-commit | verified |
 | [pr #504](https://github.com/Doezer/Questarr/pull/504) | [StepSecurity] Apply security best practices | MERGED | merge-commit-in-fork-history | verified |
 | [issue #505](https://github.com/Doezer/Questarr/issues/505) | When hiding a game it's not possible ton show it again | CLOSED | no-merge-commit | verified |
-| [issue #506](https://github.com/Doezer/Questarr/issues/506) | Platform select box goes out of viewport without scroll | CLOSED | no-merge-commit | unreviewed |
-| [issue #507](https://github.com/Doezer/Questarr/issues/507) | Redirected magnet links fail with rdt-client/qBittorrent (`Unsafe URL`) | CLOSED | no-merge-commit | unreviewed |
-| [pr #508](https://github.com/Doezer/Questarr/pull/508) | Fix magnet link redirects blocked by SSRF check in qBittorrent downloader | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #509](https://github.com/Doezer/Questarr/pull/509) | ⚡ Bolt: Memoize sorted game lists in WishlistPage | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #510](https://github.com/Doezer/Questarr/issues/510) | SABnzbd download is lost when it moves from queue to history, causing false completion/owned state | CLOSED | no-merge-commit | unreviewed |
-| [pr #511](https://github.com/Doezer/Questarr/pull/511) | Fix SABnzbd downloads lost on queue→history transition | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #512](https://github.com/Doezer/Questarr/pull/512) | Fix platform select dropdown overflowing viewport | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #513](https://github.com/Doezer/Questarr/pull/513) | chore(deps): consolidate all Dependabot PRs into a single update (Merge on 04/04) | MERGED | merge-commit-in-fork-history | unreviewed |
-| [issue #514](https://github.com/Doezer/Questarr/issues/514) | Allow to select prefered platorm when adding a game | CLOSED | no-merge-commit | unreviewed |
-| [issue #515](https://github.com/Doezer/Questarr/issues/515) | Download actions sometimes not visible in download search results | CLOSED | no-merge-commit | unreviewed |
-| [pr #516](https://github.com/Doezer/Questarr/pull/516) | Add info to gameDownload (freeleech, poster name, files, leechers) | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #517](https://github.com/Doezer/Questarr/pull/517) | Game Details Modal — Tabbed UI, IGDB Metadata, and Downloads History | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #518](https://github.com/Doezer/Questarr/pull/518) | Add platform filter to game download dialog #514 | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #519](https://github.com/Doezer/Questarr/pull/519) | feat: add early access feature to games | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #521](https://github.com/Doezer/Questarr/pull/521) | feat: replace SearchBar and DisplaySettingsModal with PageToolbar | MERGED | merge-commit-not-in-either-main-history | unreviewed |
-| [pr #522](https://github.com/Doezer/Questarr/pull/522) | fix igdb request issues in discover page | MERGED | merge-commit-not-in-either-main-history | unreviewed |
+| [issue #506](https://github.com/Doezer/Questarr/issues/506) | Platform select box goes out of viewport without scroll | CLOSED | no-merge-commit | verified |
+| [issue #507](https://github.com/Doezer/Questarr/issues/507) | Redirected magnet links fail with rdt-client/qBittorrent (`Unsafe URL`) | CLOSED | no-merge-commit | verified |
+| [pr #508](https://github.com/Doezer/Questarr/pull/508) | Fix magnet link redirects blocked by SSRF check in qBittorrent downloader | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #509](https://github.com/Doezer/Questarr/pull/509) | ⚡ Bolt: Memoize sorted game lists in WishlistPage | MERGED | merge-commit-in-fork-history | verified |
+| [issue #510](https://github.com/Doezer/Questarr/issues/510) | SABnzbd download is lost when it moves from queue to history, causing false completion/owned state | CLOSED | no-merge-commit | verified |
+| [pr #511](https://github.com/Doezer/Questarr/pull/511) | Fix SABnzbd downloads lost on queue→history transition | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #512](https://github.com/Doezer/Questarr/pull/512) | Fix platform select dropdown overflowing viewport | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #513](https://github.com/Doezer/Questarr/pull/513) | chore(deps): consolidate all Dependabot PRs into a single update (Merge on 04/04) | MERGED | merge-commit-in-fork-history | superseded |
+| [issue #514](https://github.com/Doezer/Questarr/issues/514) | Allow to select prefered platorm when adding a game | CLOSED | no-merge-commit | verified |
+| [issue #515](https://github.com/Doezer/Questarr/issues/515) | Download actions sometimes not visible in download search results | CLOSED | no-merge-commit | verified |
+| [pr #516](https://github.com/Doezer/Questarr/pull/516) | Add info to gameDownload (freeleech, poster name, files, leechers) | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #517](https://github.com/Doezer/Questarr/pull/517) | Game Details Modal — Tabbed UI, IGDB Metadata, and Downloads History | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #518](https://github.com/Doezer/Questarr/pull/518) | Add platform filter to game download dialog #514 | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #519](https://github.com/Doezer/Questarr/pull/519) | feat: add early access feature to games | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #521](https://github.com/Doezer/Questarr/pull/521) | feat: replace SearchBar and DisplaySettingsModal with PageToolbar | MERGED | merge-commit-not-in-either-main-history | verified |
+| [pr #522](https://github.com/Doezer/Questarr/pull/522) | fix igdb request issues in discover page | MERGED | merge-commit-not-in-either-main-history | verified |
 | [pr #523](https://github.com/Doezer/Questarr/pull/523) | Add toggle for source filter on downloads page | MERGED | merge-commit-not-in-either-main-history | unreviewed |
 | [pr #524](https://github.com/Doezer/Questarr/pull/524) | chore(deps): bump step-security/harden-runner from 2.16.0 to 2.16.1 | MERGED | merge-commit-in-fork-history | unreviewed |
 | [pr #525](https://github.com/Doezer/Questarr/pull/525) | chore(deps): bump react-hook-form from 7.72.0 to 7.72.1 in the react group | MERGED | merge-commit-in-fork-history | unreviewed |

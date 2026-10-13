@@ -1429,6 +1429,51 @@ describe("GameDownloadDialog", () => {
       expect(screen.queryByText("Test Game PC-SKIDROW")).toBeNull();
     });
 
+    it("uses the game's target platform before the account-wide preference", async () => {
+      globalThis.fetch = createFetchMock({
+        settings: { preferredPlatform: "PC" },
+        search: makeSearchResult([
+          makeTorrentItem({ guid: "ps5-1", title: "Test Game PS5-GROUP", seeders: 50 }),
+          makeTorrentItem({ guid: "pc-1", title: "Test Game PC-SKIDROW", seeders: 40 }),
+        ]),
+      });
+      const gameWithTarget = {
+        ...mockGame,
+        targetPlatformId: 167,
+        targetPlatformName: "PlayStation 5",
+      } as import("@shared/schema").Game;
+
+      renderComponent(mockOnOpenChange, gameWithTarget);
+
+      await waitFor(() => {
+        expect(screen.getAllByText("Test Game PS5-GROUP").length).toBeGreaterThan(0);
+      });
+      expect(screen.queryByText("Test Game PC-SKIDROW")).toBeNull();
+    });
+
+    it("does not preselect a target platform excluded by the Platforms setting", async () => {
+      globalThis.fetch = createFetchMock({
+        settings: { preferredPlatform: "PC", importPlatformIds: [6] },
+        search: makeSearchResult([
+          makeTorrentItem({ guid: "ps5-1", title: "Test Game PS5-GROUP", seeders: 50 }),
+          makeTorrentItem({ guid: "pc-1", title: "Test Game PC-SKIDROW", seeders: 40 }),
+        ]),
+      });
+      const gameWithTarget = {
+        ...mockGame,
+        targetPlatformId: 167,
+        targetPlatformName: "PlayStation 5",
+      } as import("@shared/schema").Game;
+
+      renderComponent(mockOnOpenChange, gameWithTarget);
+
+      await waitFor(() => {
+        expect(screen.getAllByText("Test Game PC-SKIDROW").length).toBeGreaterThan(0);
+      });
+      expect(screen.queryByText("Test Game PS5-GROUP")).toBeNull();
+      expect(screen.queryByText(/No results match your preferred platform/i)).toBeNull();
+    });
+
     it("PC preselection includes releases with no detected platform", async () => {
       await renderWithPlatform("PC", [
         makeTorrentItem({ guid: "noplatform-1", title: "Test Game-CODEX", seeders: 80 }),
