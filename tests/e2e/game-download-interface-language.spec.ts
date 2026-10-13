@@ -585,6 +585,25 @@ test.describe("Game download interface language", () => {
     }
   });
 
+  test("marks download search queries with undetermined language metadata", async ({ page }) => {
+    await openLocalizedBundle(page, 1);
+    const downloadSearch = page.getByPlaceholder("ابحث عن التنزيلات...");
+    await downloadSearch.clear();
+    await expect(downloadSearch).toHaveAttribute("lang", "ar");
+    await downloadSearch.fill("FitGirl");
+    await expect(downloadSearch).toHaveAttribute("lang", "und");
+    if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
+      await page.screenshot({
+        path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-download-search-latin-und-ar.png`,
+        fullPage: true,
+      });
+    }
+    await downloadSearch.fill("لعبة");
+    await expect(downloadSearch).toHaveAttribute("lang", "und");
+    await downloadSearch.clear();
+    await expect(downloadSearch).toHaveAttribute("lang", "ar");
+  });
+
   test("localizes nested filter controls and singular update copy", async ({ page }) => {
     const downloadButton = await openLocalizedBundle(page, 1);
     await expect(downloadButton).toBeVisible();

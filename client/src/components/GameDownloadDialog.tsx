@@ -964,7 +964,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       <Input
         type="text"
         placeholder={t("Search for downloads...")}
-        lang={languageFor("Search for downloads...")}
+        lang={searchQuery ? "und" : languageFor("Search for downloads...")}
         dir="auto"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
