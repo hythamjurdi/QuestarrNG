@@ -120,7 +120,6 @@ jobs:
 
   windows-service:
     runs-on: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && vars.TRUSTED_MAIN_RUNNERS_ENABLED == 'true' && fromJSON('{"group":"trusted-main","labels":["self-hosted","Linux","X64","host"]}') || 'ubuntu-latest' }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6.2.0
@@ -134,12 +133,15 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Verify selected .NET SDK
+        run: '"$RUNNER_TEMP/dotnet/dotnet" --version'
+
       - name: Restore locked Windows service dependencies
-        run: dotnet restore installer/windows/Questarr.Service/Questarr.Service.csproj --runtime win-x64 --locked-mode
+        run: '"$RUNNER_TEMP/dotnet/dotnet" restore installer/windows/Questarr.Service/Questarr.Service.csproj --runtime win-x64 --locked-mode'
 
       - name: Publish self-contained Windows service host
         run: >-
-          dotnet publish installer/windows/Questarr.Service/Questarr.Service.csproj
+          "$RUNNER_TEMP/dotnet/dotnet" publish installer/windows/Questarr.Service/Questarr.Service.csproj
           --configuration Release
           --no-restore
           --runtime win-x64
