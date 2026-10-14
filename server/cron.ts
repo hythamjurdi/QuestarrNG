@@ -395,6 +395,38 @@ function applyRequestedVariantFilter(
   });
 }
 
+interface AutoSearchFilterOptions {
+  preferredPlatform: string | null | undefined;
+  operatingSystem: string | null | undefined;
+  architecture: string | null | undefined;
+  preferredGroups: string[];
+  strictPreferredGroups: boolean;
+  indexerPriorityMap: Map<string, number>;
+}
+
+/** Apply the shared auto-search filters before optionally applying category-specific checks. */
+function filterAndDeduplicateAutoSearchItems(
+  items: SearchItem[],
+  options: AutoSearchFilterOptions,
+  additionalFilter?: (item: SearchItem) => boolean
+): SearchItem[] {
+  const platformFiltered = applyPreferredPlatformFilter(items, options.preferredPlatform);
+  const variantFiltered = applyRequestedVariantFilter(
+    platformFiltered,
+    options.operatingSystem,
+    options.architecture
+  );
+  const groupFiltered = applyPreferredGroupsFilter(
+    variantFiltered,
+    options.preferredGroups,
+    options.strictPreferredGroups
+  );
+  const categoryFiltered = additionalFilter
+    ? groupFiltered.filter(additionalFilter)
+    : groupFiltered;
+  return deduplicateByTitle(categoryFiltered, options.indexerPriorityMap);
+}
+
 const AUTO_SEARCH_PAGE_SIZE = 10;
 // How many result pages auto-search walks when the global release-name blacklist hides a
 // whole page, before concluding that no eligible release exists.
@@ -1699,24 +1731,19 @@ export async function checkAutoSearch(
             // notifications on the false→true transition instead of firing every cycle.
             const wasAvailable = game.searchResultsAvailable;
 
-            // Apply platform filter first (strict), then preferred groups filter, then
-            // de-duplicate releases that appear on multiple indexers (keep highest-priority indexer).
             const effectivePlatform = resolveGamePlatformPreference(game, preferredPlatform);
-            const platformFilteredMain = applyPreferredPlatformFilter(
-              searchResult.mainItems,
-              effectivePlatform
-            );
-            const variantFilteredMain = applyRequestedVariantFilter(
-              platformFilteredMain,
-              game.targetOperatingSystem,
-              game.targetArchitecture
-            );
-            const groupFilteredMain = applyPreferredGroupsFilter(
-              variantFilteredMain,
+            const filterOptions: AutoSearchFilterOptions = {
+              preferredPlatform: effectivePlatform,
+              operatingSystem: game.targetOperatingSystem,
+              architecture: game.targetArchitecture,
               preferredGroups,
-              settings.filterByPreferredGroups ?? false
+              strictPreferredGroups: settings.filterByPreferredGroups ?? false,
+              indexerPriorityMap,
+            };
+            const mainItems = filterAndDeduplicateAutoSearchItems(
+              searchResult.mainItems,
+              filterOptions
             );
-            const mainItems = deduplicateByTitle(groupFilteredMain, indexerPriorityMap);
 
             // Handle main items
             if (mainItems.length === 0) {
@@ -1943,43 +1970,27 @@ export async function checkAutoSearch(
             const wasPacksAvailable = game.packsSearchResultsAvailable;
 
             const effectivePlatform = resolveGamePlatformPreference(game, preferredPlatform);
-            const platformFilteredUpdate = applyPreferredPlatformFilter(
-              searchResult.updateItems,
-              effectivePlatform
-            );
-            const variantFilteredUpdate = applyRequestedVariantFilter(
-              platformFilteredUpdate,
-              game.targetOperatingSystem,
-              game.targetArchitecture
-            );
-            const groupFilteredUpdate = applyPreferredGroupsFilter(
-              variantFilteredUpdate,
+            const filterOptions: AutoSearchFilterOptions = {
+              preferredPlatform: effectivePlatform,
+              operatingSystem: game.targetOperatingSystem,
+              architecture: game.targetArchitecture,
               preferredGroups,
-              settings.filterByPreferredGroups ?? false
-            );
+              strictPreferredGroups: settings.filterByPreferredGroups ?? false,
+              indexerPriorityMap,
+            };
             // Drop update releases whose version is provably not newer than the one the user
             // has installed, so a game already on v1.5 isn't flagged for a v1.4 patch.
-            const versionFilteredUpdate = groupFilteredUpdate.filter((item) =>
-              isReleasePossiblyNewer(item.title, game.installedVersion)
+            const updateItems = filterAndDeduplicateAutoSearchItems(
+              searchResult.updateItems,
+              filterOptions,
+              (item) => isReleasePossiblyNewer(item.title, game.installedVersion)
             );
-            const updateItems = deduplicateByTitle(versionFilteredUpdate, indexerPriorityMap);
 
             // Packs/add-ons are content for owned games, surfaced like updates.
-            const platformFilteredPacks = applyPreferredPlatformFilter(
+            const packsItems = filterAndDeduplicateAutoSearchItems(
               searchResult.packsItems,
-              effectivePlatform
+              filterOptions
             );
-            const variantFilteredPacks = applyRequestedVariantFilter(
-              platformFilteredPacks,
-              game.targetOperatingSystem,
-              game.targetArchitecture
-            );
-            const groupFilteredPacks = applyPreferredGroupsFilter(
-              variantFilteredPacks,
-              preferredGroups,
-              settings.filterByPreferredGroups ?? false
-            );
-            const packsItems = deduplicateByTitle(groupFilteredPacks, indexerPriorityMap);
 
             await storage.updateGameSearchResultsByCategory(game.id, {
               updates: updateItems.length > 0,

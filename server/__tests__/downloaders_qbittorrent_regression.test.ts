@@ -1404,6 +1404,9 @@ describe("qbittorrent regression coverage", () => {
     });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(
+      makeRequestSpy.mock.calls.filter(([, path]) => path.startsWith("/api/v2/torrents/info?tag="))
+    ).toHaveLength(1);
+    expect(
       makeRequestSpy.mock.calls.some(
         ([, path, body]) => path === "/api/v2/torrents/add" && Buffer.isBuffer(body)
       )
@@ -1523,8 +1526,8 @@ describe("qbittorrent regression coverage", () => {
           "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.",
       });
 
-      // 1 add request + 10 failed polling attempts, no upload fallback request.
-      expect(makeRequestSpy).toHaveBeenCalledTimes(11);
+      // 1 add request + 1 failed lookup, no upload fallback request.
+      expect(makeRequestSpy).toHaveBeenCalledTimes(2);
     } finally {
       setTimeoutSpy.mockRestore();
     }

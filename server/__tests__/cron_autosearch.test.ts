@@ -1158,6 +1158,74 @@ describe("Cron - checkAutoSearch", () => {
         })
       );
     });
+
+    it("applies platform, architecture, preferred-group, and dedup filters to packs", async () => {
+      const ownedGame = {
+        ...baseGame,
+        targetOperatingSystem: "linux",
+        targetArchitecture: "x64",
+        status: "owned" as const,
+        releaseStatus: "released" as const,
+        packsSearchResultsAvailable: false,
+      };
+      const acceptedPack = {
+        ...UPDATE_ITEM,
+        title: "Test Game.Content.Pack.Linux.x64.v1.2-CODEX",
+        group: "CODEX",
+        indexerId: "indexer-low",
+      };
+      mockGetWantedGamesGroupedByUser.mockResolvedValue(new Map([[userId, []]]));
+      mockGetUserGames.mockResolvedValue([ownedGame]);
+      mockGetUserSettings.mockResolvedValue({
+        ...baseSettings,
+        preferredReleaseGroups: '["CODEX"]',
+        filterByPreferredGroups: true,
+      });
+      mockGetEnabledIndexers.mockResolvedValue([
+        { id: "indexer-low", priority: 5 },
+        { id: "indexer-high", priority: 1 },
+      ]);
+      mockSearchAllIndexers.mockResolvedValue({
+        items: [
+          acceptedPack,
+          { ...acceptedPack, indexerId: "indexer-high" },
+          {
+            ...acceptedPack,
+            title: "Test Game.Content.Pack.Linux.arm64.v1.2-CODEX",
+            link: "https://example.com/arm64-pack",
+            indexerId: "indexer-high",
+          },
+          {
+            ...acceptedPack,
+            title: "Test Game.Content.Pack.Windows.x64.v1.2-CODEX",
+            link: "https://example.com/windows-pack",
+            indexerId: "indexer-high",
+          },
+          {
+            ...acceptedPack,
+            title: "Test Game.Content.Pack.Linux.x64.v1.2-PLAZA",
+            link: "https://example.com/wrong-group-pack",
+            group: "PLAZA",
+            indexerId: "indexer-high",
+          },
+        ],
+        errors: [],
+        total: 5,
+      });
+
+      await checkAutoSearch();
+
+      expect(mockUpdateGameSearchResultsByCategory).toHaveBeenCalledWith(ownedGame.id, {
+        updates: false,
+        packs: true,
+      });
+      expect(mockAddNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Game Packs Available",
+          message: "1 pack/add-on result(s) found for Test Game",
+        })
+      );
+    });
   });
 
   it("should not notify when all matched items are blacklisted", async () => {

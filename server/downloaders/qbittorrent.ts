@@ -387,8 +387,13 @@ export class QBittorrentClient implements DownloaderClient {
                     }
                     downloadersLogger.warn(
                       { error, url: request.url },
-                      "Failed to poll qBittorrent for the newly added torrent; will retry"
+                      "Failed to poll qBittorrent for the newly added torrent; returning its correlation tag"
                     );
+                    // A failed lookup means this qBittorrent API path is unavailable (or
+                    // otherwise failing). Repeating a request with a 30-second timeout can
+                    // keep the user waiting for minutes even though the accepted add is
+                    // already safely tracked by its correlation tag.
+                    break;
                   }
                 }
               }
