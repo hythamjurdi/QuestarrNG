@@ -20,33 +20,32 @@ behavior when implementing upstream requests.
 
 The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
-pull requests. Its source list was refreshed on October 13, 2026 at 23:48:20
-UTC. After the Batch 74 implementation commit, the ledger and generated
-inventory were regenerated after Batch 75's implementation and source review
-on October 14 at 00:25:38 UTC. The ten Batch 75 dispositions were recorded in
-that refreshed inventory. The ledger's `capturedAt` records generation time,
-not an individual GitHub request timestamp. Review status is independent of
-GitHub's open, closed, or merged state.
+pull requests. Its source list was refreshed from live GitHub on October 14,
+2026 at 00:43:20 UTC. After Batch 76's source review, the ledger and generated
+inventory were regenerated at that time, preserving prior dispositions and
+recording all ten Batch 76 dispositions. The ledger's `capturedAt` records
+generation time, not an individual GitHub request timestamp. Review status is
+independent of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       647 |
-| `superseded`             |       198 |
-| `not-applicable`         |        13 |
+| `verified`               |       651 |
+| `superseded`             |       203 |
+| `not-applicable`         |        14 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       300 |
+| `unreviewed`             |       290 |
 | **Total**                | **1,163** |
 
-The ledger gives 863 items an assigned disposition. Four implemented
+The ledger gives 873 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 300 are unreviewed. The
+currently identified item needs implementation, and 290 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. The ten Batch 75 records were unchanged
+its snapshot and still needs review. The ten Batch 76 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 75 is the latest completed
-review; see [validation evidence](evidence/validation-batch-75.md).
+ledger, not completion of the campaign. Batch 76 is the latest completed
+review; see [validation evidence](evidence/validation-batch-76.md).
 
 ## Project records
 
@@ -2284,3 +2283,13 @@ The headless `npm run dev:test` smoke captured card actions, mobile actions, the
 Focused validation passed 253 tests with 1 skipped across nine files. The full suite passed 4,274 tests with 7 skipped across 274 test files. TypeScript, lint, formatting, secret scanning, dependency override review, release-note validation, and a production Vite and TypeScript build passed. Vite emitted its existing large-chunk advisory. See [Batch 75 validation evidence](evidence/validation-batch-75.md) for all artifacts and checks.
 
 The ledger now records 647 verified, 198 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 300 unreviewed items. PR #1194 remains the only source-changed record. Task-scoped local scratch and the isolated test worktree were removed; the NFS share was not used. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 76 — October 14, 2026
+
+Batch 76 reviewed PRs [#877](https://github.com/Doezer/Questarr/pull/877)–[#884](https://github.com/Doezer/Questarr/pull/884), [issue #885](https://github.com/Doezer/Questarr/issues/885), and [PR #886](https://github.com/Doezer/Questarr/pull/886). The category-sort PR was superseded by #891 and its unique batch-mode reporting fix was carried forward by #931. The Alpine build fix and workflow behavior are verified; dependency targets are exceeded by the current lock; the Unraid 99:100 and UMASK defaults are present. Issue #885's single-file torrent path mismatch is covered by the shared resolver and regression tests. All ten records are unchanged from the refreshed snapshot.
+
+PR #884 was intentionally not implemented as a permanent retention change: its maintainer closed it as a one-time manual cleanup. PR #878 retains one outdated, non-blocking suggestion to pin Alpine build-tool versions; the clean Linux image build passed against the pinned Node 26 Alpine base and its versioned package repository.
+
+Focused validation passed 291 tests across seven files; type checking, SQLite native smoke, deployment-workflow parsing, shell syntax, and Unraid XML checks passed. A clean isolated Buildx production image build completed through dependency installation, Vite and TypeScript compilation, dependency pruning, and OCI export. npm reported zero vulnerabilities; Vite emitted its existing large-chunk advisory. The build context and OCI artifact on kspls0's LVM share and the isolated Buildx builder were removed after validation. No `client/src/**` source changed. See [Batch 76 validation evidence](evidence/validation-batch-76.md).
+
+The ledger now records 651 verified, 203 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 290 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.

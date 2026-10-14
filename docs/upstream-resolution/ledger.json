@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T00:25:38.813Z",
-  "forkHead": "10eee2966effae81cb03a2db8344bd1de63f9082",
+  "capturedAt": "2026-10-14T00:43:20.566Z",
+  "forkHead": "44fdb9021f497db49f6b28d022ee95b7f6bbc2b9",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -25456,11 +25456,32 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "Upstream closed this duplicate after #891 had already merged the equivalent default-off sortExtras feature, including the category-placement review fixes. The only distinct improvement on this branch, reporting the requested batch transfer mode despite per-file hardlink fallbacks, was carried forward in #931. QuestarrNG contains the setting, categorized directory imports, confirmation-time reclassification, duplicate-destination and containment guards, existing-category preservation, and the batch modeUsed fix. All review threads are resolved."
+        ],
+        "acceptance": [
+          "The per-user setting is persisted and default-off; categorized directories are placed without breaking flat single-file imports, duplicate destinations and path escapes are rejected, manual confirmation recomputes categories, and batch modeUsed remains the requested transfer mode."
+        ],
+        "evidence": [
+          "client/src/components/ImportSettings.tsx",
+          "client/__tests__/ImportSettings.test.tsx",
+          "shared/schema.ts",
+          "server/storage.ts",
+          "migrations/0027_confused_vulcan.sql",
+          "server/services/ImportStrategies.ts",
+          "server/services/ImportManager.ts",
+          "server/__tests__/import_strategies.test.ts",
+          "server/__tests__/import_manager.test.ts",
+          "server/__tests__/storage.test.ts",
+          "https://github.com/Doezer/Questarr/pull/877",
+          "https://github.com/Doezer/Questarr/pull/891",
+          "https://github.com/Doezer/Questarr/pull/931"
+        ],
+        "dependencies": [
+          "pr:891",
+          "pr:931"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -25476,10 +25497,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5a67e2b0dafe40cf51ac4c761aa4402d70416a78",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The current lock is better-sqlite3 13.0.3, beyond the PR's 13.0.2 fix, and the package contains the linux-musl prebuild. A fresh isolated Buildx production build on the pinned Node 26 Alpine image completed through npm ci, app compilation, production pruning, and OCI export. One stale, non-blocking CodeRabbit thread suggests pinning the Alpine build tools; the current base uses its versioned Alpine 3.24 repository and intentionally upgrades patched packages. The clean build succeeded with the repository's current compiler and Python packages."
+        ],
+        "acceptance": [
+          "The Alpine production image installs dependencies and builds successfully with the resolved better-sqlite3 release, and the SQLite native module loads in the development host smoke test."
+        ],
+        "evidence": [
+          "Dockerfile",
+          "package.json",
+          "package-lock.json",
+          "server/__tests__/db.test.ts",
+          "https://github.com/Doezer/Questarr/pull/878",
+          "docs/upstream-resolution/evidence/validation-batch-76.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25496,11 +25528,27 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9d78825563283c88f04476f49c1bbf8181b9f336",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "Current undici 8.11.2 exceeds the requested 8.9.0. The major-version engine requirement is aligned: package.json declares Node >=22.19.0, CI tests the 22.19.0 floor and Node 26, and the changelog and vulnerability notes explain the upgrade. SSRF transport coverage passes in the focused/full campaign suites. All review threads are resolved."
+        ],
+        "acceptance": [
+          "The resolved undici version meets the requested target, supported Node engines and CI cover the dependency's minimum, and the SSRF-safe fetch tests pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          ".github/workflows/ci.yml",
+          "server/ssrf.ts",
+          "server/__tests__/ssrf.test.ts",
+          "docs/CHANGELOG.md",
+          "docs/CVE_FIXES_BY_RELEASE.md",
+          "https://github.com/Doezer/Questarr/pull/879",
+          "docs/upstream-resolution/evidence/validation-batch-76.md"
+        ],
+        "dependencies": [
+          "pr:865"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -25516,10 +25564,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ff2360bd57d0941d30ad9a038b2c36ba4f245174",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The deploy workflow no longer runs on push to main. Its nightly schedule selects dev, while workflow_dispatch preserves the selected environment. The previous main-ref override is gone, and both upstream review threads are resolved."
+        ],
+        "acceptance": [
+          "Routine main pushes do not rebuild the dev image; scheduled and manual deployment triggers remain, with manual environment selection honored."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          "docs/DEPENDENCIES.md",
+          "https://github.com/Doezer/Questarr/pull/880",
+          "docs/upstream-resolution/evidence/validation-batch-76.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25536,11 +25593,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "Dependabot closed this group update because the dependencies were updatable another way. The current lock resolves postcss 8.5.29 and brace-expansion 5.0.12, meeting or exceeding the requested 8.5.25 and 5.0.9."
+        ],
+        "acceptance": [
+          "Both requested dependency targets are met or exceeded in the current lockfile."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/881",
+          "https://github.com/Doezer/Questarr/pull/882"
+        ],
+        "dependencies": [
+          "pr:882"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -25556,10 +25624,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5c9f2aad2fb436108b54dab762da343c29445d21",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The merged postcss 8.5.25 target is exceeded by the current 8.5.29 declaration and lock. The clean production Docker build also completed dependency installation and pruning with zero npm-reported vulnerabilities."
+        ],
+        "acceptance": [
+          "The declared and locked postcss version meets or exceeds 8.5.25."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/882",
+          "docs/upstream-resolution/evidence/validation-batch-76.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25576,10 +25653,19 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "Dependabot closed this group update after the listed dependencies were no longer updatable in that group. Current fast-uri 3.1.8 and ip-address 10.7.2 exceed requested 3.1.5 and 10.4.0; the clean production Docker build's npm audit reported zero vulnerabilities."
+        ],
+        "acceptance": [
+          "Both dependency targets are met or exceeded and the current clean production dependency install reports no vulnerabilities."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/883",
+          "docs/upstream-resolution/evidence/validation-batch-76.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25596,10 +25682,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "not-applicable",
+        "findings": [
+          "The maintainer closed this PR and stated the cleanup was intended to happen once, not as a permanent nightly retention change; the actual deletion would be handled manually. Keep the existing 15-day policy and do not encode the rejected permanent cutoff."
+        ],
+        "acceptance": [
+          "Record the maintainer's explicit disposition; no permanent same-day deletion policy is added."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          "https://github.com/Doezer/Questarr/pull/884",
+          "docs/upstream-resolution/evidence/validation-batch-76.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25616,10 +25710,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The reporter's concrete qBittorrent cause was a single-file torrent whose display name differed from the real filename. resolveDownloadRelativePath uses the downloader's actual one-file path and resolveRemoteImportPath feeds that path into both cron post-processing and pending-import path resolution. Regression tests cover a display name that differs from the actual .nsp filename, missing/empty file lists, and multi-file roots."
+        ],
+        "acceptance": [
+          "A single-file qBittorrent download imports from the file path reported by the client even when its display name differs; absent metadata safely falls back to the release name and unsafe relative paths are rejected."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/downloaders/utils.ts",
+          "server/cron.ts",
+          "server/services/ImportManager.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts",
+          "server/__tests__/cron_download_status.test.ts",
+          "https://github.com/Doezer/Questarr/issues/885#issuecomment-5637269499",
+          "docs/upstream-resolution/evidence/validation-batch-76.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25636,10 +25743,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8692f4d57a7cb6c063bf580f5566d57bcd4a9c49",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Unraid template defaults to PUID 99, PGID 100, and UMASK 022; its ExtraParams also sets --user=99:100, so the rootless runtime UID/GID matches those environment values. entrypoint.sh applies UMASK before executing the application, and the Dockerfile retains the general 1000:1000 defaults outside the Unraid template."
+        ],
+        "acceptance": [
+          "Unraid starts as UID:GID 99:100 with the default UMASK, and users can adjust UMASK without changing the general image defaults."
+        ],
+        "evidence": [
+          "unraid/questarr.xml",
+          "entrypoint.sh",
+          "Dockerfile",
+          "https://github.com/Doezer/Questarr/pull/886",
+          "docs/upstream-resolution/evidence/validation-batch-76.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
