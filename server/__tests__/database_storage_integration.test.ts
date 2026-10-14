@@ -34,6 +34,39 @@ describe("DatabaseStorage Integration", () => {
     }
   });
 
+  it("persists and clears a game's automatic-download target platform", async () => {
+    const userId = randomUUID();
+    await db
+      .insert(users)
+      .values({ id: userId, username: `platform_${userId}`, passwordHash: "hash" });
+
+    const game = await storage.addGame({
+      title: "God of War",
+      userId,
+      status: "wanted",
+      hidden: false,
+      targetPlatformId: 8,
+      targetPlatformName: "PlayStation 2",
+    });
+
+    expect(game.targetPlatformId).toBe(8);
+    expect(game.targetPlatformName).toBe("PlayStation 2");
+
+    await storage.updateGame(game.id, {
+      targetPlatformId: 48,
+      targetPlatformName: "PlayStation 4",
+    });
+    const updatedGame = await storage.getGame(game.id);
+    expect(updatedGame).toMatchObject({
+      targetPlatformId: 48,
+      targetPlatformName: "PlayStation 4",
+    });
+
+    await storage.updateGame(game.id, { targetPlatformId: null, targetPlatformName: null });
+    const clearedGame = await storage.getGame(game.id);
+    expect(clearedGame).toMatchObject({ targetPlatformId: null, targetPlatformName: null });
+  });
+
   it("getUserGames should filter by status correctly", async () => {
     // 1. Create a user
     const userId = randomUUID();

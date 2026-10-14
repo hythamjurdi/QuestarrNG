@@ -101,10 +101,10 @@ const IGDB_PLATFORMS = [
   { id: 167, name: "PlayStation 5" },
 ];
 
-function mockFetch(settings: Record<string, unknown>) {
+function mockFetch(settings: Record<string, unknown>, responseGames = GAMES) {
   globalThis.fetch = vi.fn(async (url: RequestInfo | URL) => {
     const u = typeof url === "string" ? url : url instanceof URL ? url.toString() : url.url;
-    if (u.includes("/api/games")) return { ok: true, json: async () => GAMES } as Response;
+    if (u.includes("/api/games")) return { ok: true, json: async () => responseGames } as Response;
     if (u.includes("/api/settings")) return { ok: true, json: async () => settings } as Response;
     if (u.includes("/api/igdb/platforms"))
       return { ok: true, json: async () => IGDB_PLATFORMS } as Response;
@@ -112,8 +112,8 @@ function mockFetch(settings: Record<string, unknown>) {
   }) as typeof fetch;
 }
 
-async function renderLibrary(settings: Record<string, unknown>) {
-  mockFetch(settings);
+async function renderLibrary(settings: Record<string, unknown>, responseGames = GAMES) {
+  mockFetch(settings, responseGames);
   render(
     <QueryClientProvider client={createTestQueryClient()}>
       <Library />
@@ -123,6 +123,34 @@ async function renderLibrary(settings: Record<string, unknown>) {
 }
 
 describe("Library platform filter visibility", () => {
+  it("deduplicates and alphabetizes genre and platform options", async () => {
+    const gamesWithRepeatedFilters = [
+      {
+        ...GAMES[0],
+        genres: ["RPG", "Action", "RPG"],
+        platforms: ["Nintendo Switch", "PC (Microsoft Windows)", "Nintendo Switch"],
+      },
+      {
+        ...GAMES[1],
+        genres: ["Action", "Adventure"],
+        platforms: ["PlayStation 5", "Nintendo Switch"],
+      },
+    ];
+    await renderLibrary({ importPlatformIds: [] }, gamesWithRepeatedFilters);
+
+    const visibleOptions = screen
+      .getAllByRole("button")
+      .map((button) => button.textContent?.trim() ?? "");
+    expect(
+      visibleOptions.filter((label) => ["Action", "Adventure", "RPG"].includes(label))
+    ).toEqual(["Action", "Adventure", "RPG"]);
+    expect(
+      visibleOptions.filter((label) =>
+        ["Nintendo Switch", "PC (Microsoft Windows)", "PlayStation 5"].includes(label)
+      )
+    ).toEqual(["Nintendo Switch", "PC (Microsoft Windows)", "PlayStation 5"]);
+  });
+
   it("hides platforms the Platforms setting leaves unchecked", async () => {
     // Only Switch and PC are selected, so PS5 disappears from the dropdown
     // while the library itself keeps every game.

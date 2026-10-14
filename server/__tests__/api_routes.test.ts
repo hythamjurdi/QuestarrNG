@@ -1613,6 +1613,31 @@ describe("API Routes - Extended Coverage", () => {
           releaseYear: 2005,
         });
       });
+
+      it.each([1950, 2100])("accepts the %s release-year boundary", async (year) => {
+        vi.mocked(igdbClient.searchGames).mockResolvedValue([]);
+
+        const response = await request(app).get(`/api/igdb/search?q=Zelda&year=${year}`);
+
+        expect(response.status).toBe(200);
+        expect(igdbClient.searchGames).toHaveBeenCalledWith("Zelda", 40, { releaseYear: year });
+      });
+
+      it.each([
+        ["platform=0", "non-positive platform ID"],
+        ["platform=1.5", "non-integer platform ID"],
+        ["year=1949", "year below the supported range"],
+        ["year=2101", "year above the supported range"],
+        ["year=20oops", "malformed year"],
+      ])("rejects %s (%s) before calling IGDB", async (filter) => {
+        vi.mocked(igdbClient.searchGames).mockClear();
+
+        const response = await request(app).get(`/api/igdb/search?q=Zelda&${filter}`);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe("Validation failed");
+        expect(igdbClient.searchGames).not.toHaveBeenCalled();
+      });
     });
 
     describe("GET /api/igdb/popular", () => {
