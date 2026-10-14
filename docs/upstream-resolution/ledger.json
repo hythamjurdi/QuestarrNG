@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T02:40:59.778Z",
-  "forkHead": "a778645ea38fe1f7e53c0413f21d90fed69e4c9e",
+  "capturedAt": "2026-10-14T02:57:47.686Z",
+  "forkHead": "eebae07659ed4eaaec52bed54e7d7bc7c739a58a",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -26915,10 +26915,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "b7f545d80263cb0ffc42fc1db2c197195a77f7ea",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The qBittorrent 5.2+ torrent-file upload path handles the JSON success response as a successful add and treats a JSON error response as a failed add. Regression tests cover both outcomes, preventing successful uploads from being reported as errors."
+        ],
+        "acceptance": [
+          "When qBittorrent returns JSON after torrent-file upload, success is recognized and a returned API error remains visible as a failure."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/qbittorrent_features.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-81.md",
+          "https://github.com/Doezer/Questarr/pull/926"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26935,10 +26945,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "7205cb3f0f8011045be845f0206d41b1540b1fce",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Downloader response diagnostics are opt-in and disabled by default. The implementation bounds response-body reads and redacts sensitive URLs, query values, headers and body content before logging; it covers unsuccessful and authentication responses before their bodies are consumed. The API contract is validated at runtime and the Logs UI handles loading and errors."
+        ],
+        "acceptance": [
+          "With diagnostics disabled, downloader responses are not logged. When explicitly enabled, diagnostic output is bounded and scrubbed, including failed and authentication responses, without breaking response handling."
+        ],
+        "evidence": [
+          "server/downloaders",
+          "server/__tests__/downloaders_debug_logging.test.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "client/src/pages/logs.tsx",
+          "client/__tests__/LogsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-81.md",
+          "https://github.com/Doezer/Questarr/pull/927"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26955,10 +26977,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "92bea2686865ae74e41fd9fa4faa24fdaa369f6e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The logs API returns 1,000 lines by default and clamps requests at 5,000; the Logs page requests 1,000 and the server-side rolling buffer retains up to 5,000. The smaller mobile display cap remains in place."
+        ],
+        "acceptance": [
+          "The logs endpoint defaults to 1,000 entries, respects its documented bounds up to 5,000, and the Logs page requests the increased history without removing the mobile cap."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "client/src/pages/logs.tsx",
+          "server/__tests__/api_routes_extended.test.ts",
+          "client/__tests__/LogsPage.test.tsx",
+          "client/__tests__/LogsPage.remaining.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-81.md",
+          "https://github.com/Doezer/Questarr/pull/928"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26975,11 +27009,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3151a18f7d9c6841eacd1b11ec64cf4c59ee46a7",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "This follow-up addresses review feedback on PR #927. The current implementation retains the default-off setting, bounded diagnostic reads and sensitive-value scrubbing across the downloader response logging path; the fixes are exercised by the shared downloader logging regressions."
+        ],
+        "acceptance": [
+          "The review follow-up's privacy and response-handling fixes remain present and pass the focused downloader diagnostic tests."
+        ],
+        "evidence": [
+          "server/downloaders",
+          "server/__tests__/downloaders_debug_logging.test.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-81.md",
+          "https://github.com/Doezer/Questarr/pull/929"
+        ],
+        "dependencies": [
+          "pr:927"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -26995,10 +27041,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6d6e81aaf91ce54b9a023f9d84b7065ac8cc1a52",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SendErrorReportDialog now passes the issue number expected by buildGitHubIssueUrl, resolving the TS2554 type-check failure. The dialog regression suite passes and repository TypeScript checking succeeds."
+        ],
+        "acceptance": [
+          "The issue URL builder receives the required issue number and the client type-checks."
+        ],
+        "evidence": [
+          "client/src/components/SendErrorReportDialog.tsx",
+          "client/__tests__/SendErrorReportDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-81.md",
+          "https://github.com/Doezer/Questarr/pull/930"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -27015,11 +27070,24 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9eefa0db641d5fdddadd34ff3b95046559e84fc2",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "PCImportStrategy reports the transfer mode selected for the batch instead of allowing a last-file hardlink fallback to overwrite the batch result. Per-file fallback remains visible separately, with regression coverage for the original mode and file identity."
+        ],
+        "acceptance": [
+          "A mixed-result import retains the original batch transfer mode while reporting per-file fallback accurately."
+        ],
+        "evidence": [
+          "server/services/ImportStrategies.ts",
+          "server/__tests__/import_strategies.test.ts",
+          "server/__tests__/import_manager.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-81.md",
+          "https://github.com/Doezer/Questarr/pull/931",
+          "https://github.com/Doezer/Questarr/pull/877"
+        ],
+        "dependencies": [
+          "pr:877"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27035,10 +27103,33 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "bbf57a4777b15af73f6f302c3f568a0d69cdbf34",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The three import/download fixes are present with QuestarrNG's multi-user safeguards: imports that need a game link enter a dedicated owner-scoped state and can be relinked through an atomic conditional update; manual NZBGet and SABnzbd imports detect duplicated mapped source paths and report missing sources; completed NZBGet items can resolve DestDir from download history."
+        ],
+        "acceptance": [
+          "A pending import can be safely linked to an owned game, stale relink or skip updates cannot overwrite concurrent changes, duplicate or missing manual-import paths produce actionable outcomes, and NZBGet completed-history lookup can recover DestDir."
+        ],
+        "evidence": [
+          "client/src/components/PendingImportsCard.tsx",
+          "server/downloaders/utils.ts",
+          "server/storage.ts",
+          "server/routes/import.ts",
+          "server/services/ImportManager.ts",
+          "server/services/ImportStrategies.ts",
+          "server/downloaders/nzbget.ts",
+          "server/__tests__/import_strategies.test.ts",
+          "server/__tests__/import_manager.test.ts",
+          "server/__tests__/import_routes_additional.test.ts",
+          "server/__tests__/import_routes_coverage.test.ts",
+          "server/__tests__/database_storage_extended.test.ts",
+          "server/__tests__/downloaders_nzbget_remaining.test.ts",
+          "client/src/components/LinkGameModal.tsx",
+          "client/__tests__/PendingImportsCard.test.tsx",
+          "client/__tests__/LinkGameModal.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-81.md",
+          "https://github.com/Doezer/Questarr/pull/932"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -27055,10 +27146,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "faa67a4d7f7b57949530f886f27e2765a64c7735",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "implemented-unverified",
+        "findings": [
+          "QuestarrNG contains an opt-in Windows installer workflow and a .NET 10 Windows service wrapper adapted to the fork's deployment model. The self-contained win-x64 service project builds with zero warnings and errors. The Inno Setup script itself has not been compiled: isolated Wine initialization hung and was terminated with its task-owned temporary prefix removed. The latest fork deploy-workflow run inspected skipped the optional installer job, and dispatching the combined workflow for this check would also run the Docker deployment path."
+        ],
+        "acceptance": [
+          "Compile the Inno Setup installer with the pinned compiler and confirm the workflow produces the Windows installer artifact and checksum; validate installation and service lifecycle on Windows before marking verified."
+        ],
+        "evidence": [
+          ".github/workflows/deploy.yml",
+          "installer/windows/Questarr.iss",
+          "installer/windows/Questarr.Service/Program.cs",
+          "installer/windows/Questarr.Service/Questarr.Service.csproj",
+          "installer/windows/README.txt",
+          "docs/OPERATIONS.md",
+          "docs/upstream-resolution/evidence/validation-batch-81.md",
+          "https://github.com/Doezer/Questarr/pull/933"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

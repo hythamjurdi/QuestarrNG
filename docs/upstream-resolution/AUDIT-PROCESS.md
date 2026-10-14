@@ -31,40 +31,43 @@ deployment, database, security, and user-facing behavior where applicable.
 The issue and PR lists were refreshed in a live GitHub audit against upstream
 main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 14, 2026**. That
 sanitized source snapshot contains 232 issues and 931 pull requests (1,163
-records total); the ledger was generated at **02:40:59 UTC**. After Batch
-80's source review, the ledger and generated inventory were regenerated from
+records total); the ledger was generated at **02:57:47 UTC**. After Batch
+81's source review, the ledger and generated inventory were regenerated from
 the live snapshot, preserving prior dispositions and recording all eight Batch
-80 dispositions. Each PR's conversation, review threads, diff, changed files,
+81 dispositions. Each PR's conversation, review threads, diff, changed files,
 and checks, and each issue's comments and timeline, were rechecked individually.
 The ledger's `capturedAt` records generation time, not an individual GitHub request
-timestamp. Its review-status counts after Batch 80 are:
+timestamp. Its review-status counts after Batch 81 are:
 
 | Ledger status            | Count | Meaning at this snapshot                                                               |
 | ------------------------ | ----: | -------------------------------------------------------------------------------------- |
-| `verified`               |   670 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `verified`               |   677 | Acceptance checks have evidence showing the behavior is present and works.             |
 | `superseded`             |   221 | A later request or implementation replaces the original; the relationship is recorded. |
 | `not-applicable`         |    14 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
 | `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
-| `implemented-unverified` |     5 | Implementation exists, but a required verification remains outstanding.                |
-| `unreviewed`             |   253 | No completed source-by-source disposition has been recorded yet.                       |
+| `implemented-unverified` |     6 | Implementation exists, but a required verification remains outstanding.                |
+| `unreviewed`             |   245 | No completed source-by-source disposition has been recorded yet.                       |
 
 These are review states, separate from upstream's open, closed, or merged state.
-After Batch 80, the ledger has 910 assigned dispositions and no
+After Batch 81, the ledger has 918 assigned dispositions and no
 `needs-implementation` records. The only `sourceChangedSinceReview` flag is
 open PR #1194, whose updated body remains queued for its chronological review.
-All eight B80 records were confirmed unchanged from their source snapshots
+All eight Batch 81 records were confirmed unchanged from their source snapshots
 before disposition. The audit serializes object keys in a stable order to
 prevent JSON property ordering from changing future digests. See `capturedAt`,
 `forkHead`, and `upstreamHead` in the ledger for inventory-generation metadata. The branch
 metadata is refreshed after each reviewed batch. See the campaign README's
-[Batch 80 record](README.md#batch-80--october-14-2026) for implementation,
+[Batch 81 record](README.md#batch-81--october-14-2026) for implementation,
 validation, visual evidence, and task-scratch cleanup.
 
-The fifth implemented-but-unverified record is PR #729's DCO requirement. The
-checker is covered by synthetic Git history tests, but rollout is not complete:
-the workflow must reach the default branch, maintainers must decide when to
-require its status check, and historical campaign commits need a human-approved
-sign-off strategy. Never add DCO trailers on another contributor's behalf.
+Six items remain implemented-but-unverified. Four integrations still require
+live-service verification. PR #729's DCO checker is covered by synthetic Git
+history tests, but rollout is not complete: the workflow must reach the default
+branch, maintainers must decide when to require its status check, and historical
+campaign commits need a human-approved sign-off strategy. Never add DCO trailers
+on another contributor's behalf. PR #933's service project builds, but its Inno
+Setup installer and Windows installation/service lifecycle still require
+verification.
 
 ## Records and source of truth
 

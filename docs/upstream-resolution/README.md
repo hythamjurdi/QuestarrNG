@@ -22,30 +22,31 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The sanitized source list and inventory were regenerated from
 the live GitHub audit on October 14, 2026. The ledger's `capturedAt` is
-02:40:59 UTC; it records generation time, not an individual GitHub request
-timestamp. After Batch 80's source review, the ledger and generated inventory
-preserved prior dispositions and recorded all eight Batch 80 dispositions.
+02:57:47 UTC; it records generation time, not an individual GitHub request
+timestamp. After Batch 81's source review, the ledger and generated inventory
+preserved prior dispositions and recorded all eight Batch 81 dispositions.
 Review status is independent of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       670 |
+| `verified`               |       677 |
 | `superseded`             |       221 |
 | `not-applicable`         |        14 |
-| `implemented-unverified` |         5 |
+| `implemented-unverified` |         6 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       253 |
+| `unreviewed`             |       245 |
 | **Total**                | **1,163** |
 
-The ledger gives 910 items an assigned disposition. Four implemented
-integrations still need live-service verification, and the DCO workflow needs
-maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 253 are unreviewed. The
-latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. All eight Batch 80 records were unchanged
-from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 80 is the latest completed
-review; see [validation evidence](evidence/validation-batch-80.md).
+The ledger gives 918 items an assigned disposition. Four implemented
+integrations still need live-service verification, the DCO workflow needs
+maintainer rollout before it can enforce sign-off on pull requests, and PR #933
+still needs an Inno Setup build plus Windows installation and service-lifecycle
+verification. No currently identified item needs implementation, and 245 are
+unreviewed. The latest refresh retains one changed-source flag: PR #1194's body
+changed after its snapshot and still needs review. All eight Batch 81 records
+were unchanged from their source snapshots before disposition. These counts
+describe the ledger, not completion of the campaign. Batch 81 is the latest
+completed review; see [validation evidence](evidence/validation-batch-81.md).
 
 ## Project records
 
@@ -2329,3 +2330,11 @@ Batch 80 reviewed PRs [#917](https://github.com/Doezer/Questarr/pull/917)–[#92
 The telemetry request in #924 is already implemented with opt-in automatic reporting, per-incident consent, scrubbed diagnostic content, owner-bound expiring reports, idempotent retries, and per-user notification delivery. New client regression tests cover the default-off setting, explicit consent, expired reports, and transient retry behavior. Issue #925 is covered by base-path-aware IGDB search, with client and server checks for the configured `/Questarr` prefix. Focused validation passed 495 tests across nine files with no skips; typecheck, lint, format, and secret scanning passed. The production build was not repeated because this batch changed only tests and audit records; the prior build passed in Batch 79. See [Batch 80 validation evidence](evidence/validation-batch-80.md).
 
 The ledger now records 670 verified, 221 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 253 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 81 — October 14, 2026
+
+Batch 81 reviewed PRs [#926](https://github.com/Doezer/Questarr/pull/926)–[#933](https://github.com/Doezer/Questarr/pull/933). All eight source digests matched the refreshed snapshot. Seven items are verified; the opt-in Windows installer request in #933 is implemented but remains unverified because the Inno Setup compiler could not be run here and available hosted runs skipped the optional installer job.
+
+The batch verified qBittorrent 5.2+ torrent-file upload responses, scrubbed opt-in downloader diagnostics, the expanded Logs history, review fixes for diagnostics, the error-report issue URL, import mode reporting, and the three import/download fixes. The #932 port retains owner-scoped relinking and conditional state updates for QuestarrNG's multi-user model. Focused validation passed 829 tests across 18 files with no skips; TypeScript, lint, formatting, and secret scanning passed. The Windows service compiled for win-x64 with zero warnings and errors, but that does not verify the Inno Setup installer or its Windows lifecycle. No application source changed in this batch, so the production build and running-UI evidence were not repeated. See [Batch 81 validation evidence](evidence/validation-batch-81.md).
+
+The ledger now records 677 verified, 221 superseded, 14 not applicable, 6 implemented-unverified, 0 needs-implementation, and 245 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
