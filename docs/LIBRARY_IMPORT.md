@@ -78,6 +78,12 @@ Correct inaccessible paths or mounts before retrying a failed import. Reviewing
 a downloaded file is separate from confirming an IGDB match for an existing
 folder below.
 
+The **Source Path** field is the exact file or folder Questarr will transfer.
+In **Move** mode the source is removed after a successful transfer; selecting a
+parent downloads folder can include unrelated files. Choose only the path for
+the tracked download. When a mapped path lets Questarr identify the tracked
+download folder, the server rejects a source path that is its parent.
+
 ## Import history
 
 Open **Activity → Import History** to inspect Steam wishlist,

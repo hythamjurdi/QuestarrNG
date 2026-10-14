@@ -92,6 +92,16 @@ const IGDB_ID_TO_PLATFORM_KEY: Record<number, string> = Object.fromEntries(
 const MAX_PATH_RETRY = 5;
 const MAX_LISTED_FILES = 100;
 
+function isStrictPathAncestor(parentPath: string, childPath: string): boolean {
+  const relative = path.relative(path.resolve(parentPath), path.resolve(childPath));
+  return (
+    relative !== "" &&
+    relative !== ".." &&
+    !relative.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relative)
+  );
+}
+
 // Prefixes a game_downloads.error_message value to mark it as an ArchivePasswordRequiredError
 // rather than a generic failure, without a dedicated schema column. GET /api/imports/pending
 // strips this prefix and turns its presence into a `passwordRequired` flag so the manual-review
@@ -1093,25 +1103,72 @@ export class ImportManager {
 
   private async resolveConfirmOriginalPath(
     overridePath: string | undefined,
-    download: NonNullable<Awaited<ReturnType<IStorage["getGameDownload"]>>>
+    download: NonNullable<Awaited<ReturnType<IStorage["getGameDownload"]>>>,
+    rejectParentOverride = false
   ): Promise<string | undefined> {
     const configuredRoots = await this.pathService.getConfiguredRoots();
     // Explicit path mappings are the administrator's allow-list for alternate
-    // local download roots. Without mappings, an override must remain inside the
-    // exact download directory reported for this tracked download.
-    if (overridePath && configuredRoots.length > 0) return overridePath;
+    // local download roots. Source-path previews can use that allow-list directly,
+    // but confirmation also checks that a manually entered path is not a parent of
+    // the tracked download directory (which could move unrelated downloads).
+    if (overridePath && configuredRoots.length > 0 && !rejectParentOverride) return overridePath;
 
     const downloader = await this.storage.getDownloader(download.downloaderId);
-    if (!downloader) return undefined;
+    if (!downloader) return overridePath && configuredRoots.length > 0 ? overridePath : undefined;
 
-    const details = await DownloaderManager.getDownloadDetails(downloader, download.downloadHash);
-    if (!details?.downloadDir) return undefined;
+    let details: Awaited<ReturnType<typeof DownloaderManager.getDownloadDetails>>;
+    try {
+      details = await DownloaderManager.getDownloadDetails(downloader, download.downloadHash);
+    } catch (error) {
+      // Keep the mapped-root recovery path available when the client is offline.
+      if (overridePath && configuredRoots.length > 0) return overridePath;
+      throw error;
+    }
+    if (!details?.downloadDir) {
+      return overridePath && configuredRoots.length > 0 ? overridePath : undefined;
+    }
 
     const remotePath = resolveRemoteImportPath({ ...details, downloadDir: details.downloadDir });
     const remoteHost = this.extractRemoteHost(downloader.url);
-    const expectedPath = await this.pathService.translatePath(remotePath, remoteHost);
+    let expectedPath: string;
+    try {
+      expectedPath = await this.pathService.translatePath(remotePath, remoteHost);
+    } catch (error) {
+      if (overridePath && configuredRoots.length > 0) return overridePath;
+      throw error;
+    }
 
     if (overridePath) {
+      if (rejectParentOverride && configuredRoots.length > 0) {
+        let safeOverridePath = path.resolve(overridePath);
+        let safeExpectedPath = path.resolve(expectedPath);
+        try {
+          safeOverridePath = await assertWithinRoots(
+            overridePath,
+            configuredRoots,
+            "Manual source path must remain inside a configured download root"
+          );
+        } catch {
+          // The caller applies the same configured-root check before using this path.
+        }
+        try {
+          safeExpectedPath = await assertWithinRoots(
+            expectedPath,
+            configuredRoots,
+            "Tracked download path is outside the configured download roots"
+          );
+        } catch {
+          // A remote path without a matching mapping is still compared lexically.
+        }
+        if (isStrictPathAncestor(safeOverridePath, safeExpectedPath)) {
+          throw new Error(
+            "Source path cannot be a parent of this download's folder. Select only this download's file or folder."
+          );
+        }
+      }
+
+      if (configuredRoots.length > 0) return overridePath;
+
       return assertWithinRoots(
         overridePath,
         [expectedPath],
@@ -1275,7 +1332,8 @@ export class ImportManager {
 
     const resolvedOriginalPath = await this.resolveConfirmOriginalPath(
       overridePlan.originalPath,
-      download
+      download,
+      true
     );
 
     if (!resolvedOriginalPath) {

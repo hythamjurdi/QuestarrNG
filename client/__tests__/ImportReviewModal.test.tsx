@@ -144,6 +144,16 @@ describe("ImportReviewModal", () => {
     });
   });
 
+  it("warns that the exact source path is transferred and may contain unrelated files", () => {
+    renderModal();
+
+    const sourcePath = screen.getByLabelText(/Source Path/);
+    expect(sourcePath).toHaveAttribute("aria-describedby", "import-review-source-path-help");
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "This is the exact file or folder Questarr will transfer. Move removes the source; choosing a parent downloads folder can include unrelated files."
+    );
+  });
+
   it("explains the volume and source-lifetime tradeoffs for hardlinks and symlinks", async () => {
     renderModal();
 

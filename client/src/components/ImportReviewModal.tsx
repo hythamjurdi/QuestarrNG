@@ -249,6 +249,7 @@ export default function ImportReviewModal({
               <div className="flex gap-2">
                 <Input
                   id="import-review-source-path"
+                  aria-describedby="import-review-source-path-help"
                   value={sourcePath}
                   onChange={(e) => setSourcePath(e.target.value)}
                   placeholder="Auto-resolved from download client"
@@ -262,6 +263,14 @@ export default function ImportReviewModal({
                   <FolderOpen className="h-4 w-4" />
                 </Button>
               </div>
+              <p
+                id="import-review-source-path-help"
+                role="note"
+                className="text-xs text-amber-400/90"
+              >
+                This is the exact file or folder Questarr will transfer. Move removes the source;
+                choosing a parent downloads folder can include unrelated files.
+              </p>
             </div>
 
             {/* Destination Path */}

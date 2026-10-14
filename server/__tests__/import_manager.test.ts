@@ -14,6 +14,7 @@ const { fsMock, downloadersMock } = vi.hoisted(() => ({
   },
   downloadersMock: {
     removeDownload: vi.fn().mockResolvedValue({ success: true, message: "ok" }),
+    getDownloadDetails: vi.fn(),
   },
 }));
 
@@ -64,6 +65,9 @@ describe("ImportManager", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    downloadersMock.getDownloadDetails.mockReset();
+    storage.getDownloader.mockReset();
+    pathService.getConfiguredRoots.mockResolvedValue(["/"]);
     fsMock.pathExists.mockResolvedValue(true);
     fsMock.realpath.mockImplementation(async (input) => input);
     pathService.translatePath.mockResolvedValue("/data/downloads/file.iso");
@@ -689,6 +693,47 @@ describe("ImportManager", () => {
     );
 
     execSpy.mockRestore();
+  });
+
+  it("rejects a mapped source path that is a parent of the tracked download folder", async () => {
+    storage.getGameDownload.mockResolvedValue({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadHash: "release-hash",
+      downloadTitle: "Release",
+    });
+    storage.getDownloader.mockResolvedValue({ url: "http://sabnzbd.local" });
+    downloadersMock.getDownloadDetails.mockResolvedValue({
+      name: "Release",
+      downloadDir: "/remote/complete/Release",
+      files: [],
+    });
+    pathService.getConfiguredRoots.mockResolvedValue(["/data/downloads"]);
+    pathService.translatePath.mockResolvedValue("/data/downloads/complete/Release");
+
+    const manager = new ImportManager(
+      storage as never, // NOSONAR
+      pathService as never, // NOSONAR
+      platformService as never, // NOSONAR
+      archiveService as never // NOSONAR
+    );
+
+    await expect(
+      manager.confirmImport("dl-1", {
+        strategy: "pc",
+        originalPath: "/data/downloads/complete",
+        proposedPath: "/safe/root/PC/Release",
+        needsReview: false,
+        transferMode: "move",
+      })
+    ).rejects.toThrow("Source path cannot be a parent of this download's folder");
+
+    expect(downloadersMock.getDownloadDetails).toHaveBeenCalledWith(
+      { url: "http://sabnzbd.local" },
+      "release-hash"
+    );
+    expect(fsMock.pathExists).not.toHaveBeenCalled();
   });
 
   it("confirmImport: overridePlan.proposedPath provided → strategy receives the override proposedPath", async () => {
