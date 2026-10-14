@@ -1019,6 +1019,21 @@ describe("API Routes - Extended Coverage", () => {
         .send({ status: "completed" });
       expect(response.status).toBe(404);
     });
+
+    it("should not update a game owned by another user", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "other-user",
+      } as unknown as Game);
+
+      const response = await request(app)
+        .patch(`/api/games/${gameId}/status`)
+        .send({ status: "completed" });
+
+      expect(response.status).toBe(403);
+      expect(storage.updateGameStatus).not.toHaveBeenCalled();
+    });
   });
 
   describe("PATCH /api/games/:id/hidden", () => {
@@ -1045,6 +1060,21 @@ describe("API Routes - Extended Coverage", () => {
         .send({ hidden: "yes" });
       expect(response.status).toBe(400);
       expect(response.body.error).toBe("Validation failed");
+    });
+
+    it("should not change visibility for a game owned by another user", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "other-user",
+      } as unknown as Game);
+
+      const response = await request(app)
+        .patch(`/api/games/${gameId}/hidden`)
+        .send({ hidden: true });
+
+      expect(response.status).toBe(403);
+      expect(storage.updateGameHidden).not.toHaveBeenCalled();
     });
   });
 
@@ -1244,6 +1274,21 @@ describe("API Routes - Extended Coverage", () => {
 
       const response = await request(app).delete(`/api/games/${gameId}`);
       expect(response.status).toBe(404);
+    });
+
+    it("should not delete a game or its files when another user owns it", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "other-user",
+        libraryPath: "/data/library/OtherUserGame",
+      } as unknown as Game);
+
+      const response = await request(app).delete(`/api/games/${gameId}?deleteFiles=true`);
+
+      expect(response.status).toBe(403);
+      expect(storage.removeGame).not.toHaveBeenCalled();
+      expect(fsExtra.remove).not.toHaveBeenCalled();
     });
 
     it("should delete library files when deleteFiles=true and path is inside library root", async () => {
