@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T02:27:18.345Z",
-  "forkHead": "dde7c452b272f044972d7355b1dc2bcf65c11e4e",
+  "capturedAt": "2026-10-14T02:40:59.778Z",
+  "forkHead": "a778645ea38fe1f7e53c0413f21d90fed69e4c9e",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -26631,10 +26631,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "42bad233a94ab69e86e123f87d7c3be3bf1ac012",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged development-dependency group requests seven package versions. The current manifest and lockfile meet all targets: `@testing-library/jest-dom` 7.0.1 and `esbuild` 0.28.2 match the PR, while the other five are newer. The merged head's CI, dependency review, SAST, deprecated-dependency checks, and builds passed."
+        ],
+        "acceptance": [
+          "Every requested development dependency remains locked at or above the PR version; QuestarrNG's typecheck, lint, and production build pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/917",
+          "docs/upstream-resolution/evidence/validation-batch-80.md",
+          "npm run check; npm run lint; docs/upstream-resolution/evidence/validation-batch-79.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26651,10 +26661,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a309ce889d41dd3cb05a883fed8e756f00236d22",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The two requested GitHub Actions updates are already exceeded by the fork's immutable pins: `step-security/harden-runner` is v2.22.0 (target v2.20.1) and `github/codeql-action/upload-sarif` is v4.38.2 (target v4.37.6). The merged upstream PR's checks passed."
+        ],
+        "acceptance": [
+          "Both action targets remain met or exceeded by current SHA-pinned workflow references."
+        ],
+        "evidence": [
+          ".github/workflows/",
+          "https://github.com/Doezer/Questarr/pull/918",
+          "docs/upstream-resolution/evidence/validation-batch-80.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26671,10 +26689,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e315bec21aafb15dc95f8dd7644147ce6bd8461e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All nine production dependency targets in this merged update are met or exceeded by the current manifest and lockfile; the current resolved versions have advanced beyond the requested roll-up."
+        ],
+        "acceptance": [
+          "Each of the nine production dependency versions remains at or above the PR target, and the current production build succeeds."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/919",
+          "docs/upstream-resolution/evidence/validation-batch-80.md",
+          "npm run build; docs/upstream-resolution/evidence/validation-batch-79.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26691,10 +26719,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "This closed ESLint 10.8.1 update has failing upstream CI checks. QuestarrNG already uses ESLint 10.12.0, later than the requested release; the fork's current TypeScript and lint checks pass."
+        ],
+        "acceptance": [
+          "The installed ESLint version exceeds 10.8.1 and QuestarrNG typechecking and lint pass."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/920",
+          "docs/upstream-resolution/evidence/validation-batch-80.md",
+          "npm run check; npm run lint"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26711,10 +26749,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "9b0fa112213c0a2e82de192e3ada03bf2c86c073",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The merged PR requested Framer Motion 13.0.0; QuestarrNG already uses 14.0.0, which supersedes that target. The upstream PR's required checks passed."
+        ],
+        "acceptance": [
+          "The current manifest and lockfile use Framer Motion at a version newer than 13.0.0, and the production build passes."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/921",
+          "docs/upstream-resolution/evidence/validation-batch-80.md",
+          "npm run build; docs/upstream-resolution/evidence/validation-batch-79.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26731,10 +26779,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8742edb366cf77a4cf5c4f6a7c959fd73be8cb9d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged type-definition update to `@types/parse-torrent` 11.0.1 is present in QuestarrNG's manifest and lockfile. Current typechecking passes, and the upstream CI, dependency, SAST, and build checks passed."
+        ],
+        "acceptance": [
+          "`@types/parse-torrent` remains at 11.0.1 or newer and the application typechecks and builds."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/Doezer/Questarr/pull/922",
+          "docs/upstream-resolution/evidence/validation-batch-80.md",
+          "npm run check; npm run build; docs/upstream-resolution/evidence/validation-batch-79.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26780,10 +26838,34 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6f1c31099aa0eab7e9c98abefd9169e44e4e1b78",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG already implements this feature with per-user opt-in telemetry disabled by default, a per-incident consent dialog otherwise, scrubbed logs and error text, one automatic worker submission per detected error, a 30-minute cooldown, owner-bound pending reports with a 24-hour TTL, UUID validation, retryable idempotent sends, and bounded fatal handling for unhandled errors. The dialog distinguishes a real 404 expiry from transient request failures. Upstream review follow-ups are present; its Apprise decoupling proposal was withdrawn because other event notifications use the same in-app preference rule. The fork's per-user socket rooms also prevent notification/report-link leakage across users."
+        ],
+        "acceptance": [
+          "Automatic telemetry sends only after the user's explicit setting is enabled; otherwise the user must confirm each report. Diagnostic content is scrubbed before upload, pending reports are owner-scoped and expire, concurrent sends cannot duplicate delivery, and other users cannot receive the notification. The settings screen and consent/retry dialog work as described."
+        ],
+        "evidence": [
+          "shared/schema.ts",
+          "shared/schema.pg.ts",
+          "shared/log-scrub.ts",
+          "shared/__tests__/log-scrub.test.ts",
+          "server/error-telemetry.ts",
+          "server/__tests__/error_telemetry.test.ts",
+          "server/index.ts",
+          "server/middleware.ts",
+          "server/notification-prefs.ts",
+          "server/routes.ts",
+          "server/socket.ts",
+          "client/src/pages/settings.tsx",
+          "client/__tests__/SettingsPage.test.tsx",
+          "client/src/components/SendErrorReportDialog.tsx",
+          "client/__tests__/SendErrorReportDialog.test.tsx",
+          "client/src/components/NotificationCenter.tsx",
+          "docs/API.md",
+          "https://github.com/Doezer/Questarr/pull/924",
+          "docs/upstream-resolution/evidence/validation-batch-80.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26800,10 +26882,23 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The report says IGDB search from Add Game used a raw client fetch, which skipped the subdirectory prefix. QuestarrNG's Add Game flow uses `apiFetch`, which applies the runtime-resolved base path. A focused client test asserts `/Questarr/api/igdb/search`, and the server route test confirms the endpoint succeeds only under the configured prefix."
+        ],
+        "acceptance": [
+          "Under a configured `QUESTARR_BASE_PATH`, Add Game sends IGDB search requests to the prefixed endpoint and the server serves that route."
+        ],
+        "evidence": [
+          "client/src/components/AddGameModal.tsx",
+          "client/src/lib/queryClient.ts",
+          "client/src/lib/app-path.ts",
+          "client/__tests__/queryClient-base-path.test.ts",
+          "client/__tests__/app-path.test.ts",
+          "server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-80.md",
+          "https://github.com/Doezer/Questarr/issues/925"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

@@ -22,30 +22,30 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The sanitized source list and inventory were regenerated from
 the live GitHub audit on October 14, 2026. The ledger's `capturedAt` is
-02:27:18 UTC; it records generation time, not an individual GitHub request
-timestamp. After Batch 79's source review, the ledger and generated inventory
-preserved prior dispositions and recorded all eight Batch 79 dispositions.
+02:40:59 UTC; it records generation time, not an individual GitHub request
+timestamp. After Batch 80's source review, the ledger and generated inventory
+preserved prior dispositions and recorded all eight Batch 80 dispositions.
 Review status is independent of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       666 |
-| `superseded`             |       217 |
+| `verified`               |       670 |
+| `superseded`             |       221 |
 | `not-applicable`         |        14 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       261 |
+| `unreviewed`             |       253 |
 | **Total**                | **1,163** |
 
-The ledger gives 902 items an assigned disposition. Four implemented
+The ledger gives 910 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 261 are unreviewed. The
+currently identified item needs implementation, and 253 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. All eight Batch 79 records were unchanged
+its snapshot and still needs review. All eight Batch 80 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 79 is the latest completed
-review; see [validation evidence](evidence/validation-batch-79.md).
+ledger, not completion of the campaign. Batch 80 is the latest completed
+review; see [validation evidence](evidence/validation-batch-80.md).
 
 ## Project records
 
@@ -2321,3 +2321,11 @@ Issue #913 exposed both a SABnzbd path-resolution failure and a risky manual-imp
 Batch 79 also confirmed the retry-state assertion from #910, the current tag-and-digest Node Alpine pin from #911, the cross-repository support-log link and protected investigation guidance from #912, plain-HTTP clipboard fallback from issue #914, and actionable corrupt-archive errors with isolated extraction staging from #916. Focused regression validation passed 335 tests with 1 skipped across 12 files. TypeScript, lint, formatting, secretlint, dependency-override review, production-license checks, and production build passed. The new import behavior has a user-facing release-note fragment.
 
 The ledger now records 666 verified, 217 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 261 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 80 — October 14, 2026
+
+Batch 80 reviewed PRs [#917](https://github.com/Doezer/Questarr/pull/917)–[#922](https://github.com/Doezer/Questarr/pull/922), PR [#924](https://github.com/Doezer/Questarr/pull/924), and issue [#925](https://github.com/Doezer/Questarr/issues/925). Four dependency and CI updates (#918–#921) are superseded by newer dependency versions or immutable action pins. The other four records are verified against the current fork. All eight matched their refreshed source digests.
+
+The telemetry request in #924 is already implemented with opt-in automatic reporting, per-incident consent, scrubbed diagnostic content, owner-bound expiring reports, idempotent retries, and per-user notification delivery. New client regression tests cover the default-off setting, explicit consent, expired reports, and transient retry behavior. Issue #925 is covered by base-path-aware IGDB search, with client and server checks for the configured `/Questarr` prefix. Focused validation passed 495 tests across nine files with no skips; typecheck, lint, format, and secret scanning passed. The production build was not repeated because this batch changed only tests and audit records; the prior build passed in Batch 79. See [Batch 80 validation evidence](evidence/validation-batch-80.md).
+
+The ledger now records 670 verified, 221 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 253 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
