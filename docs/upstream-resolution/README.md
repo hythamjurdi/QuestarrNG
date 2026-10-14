@@ -20,32 +20,32 @@ behavior when implementing upstream requests.
 
 The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
-pull requests. Its source list was refreshed from live GitHub on October 14,
-2026 at 00:43:20 UTC. After Batch 76's source review, the ledger and generated
-inventory were regenerated at that time, preserving prior dispositions and
-recording all ten Batch 76 dispositions. The ledger's `capturedAt` records
+pull requests. The sanitized source list was refreshed from live GitHub on
+October 14, 2026 at 01:44:16 UTC. After Batch 77's source review, the ledger
+and generated inventory were regenerated, preserving prior dispositions and
+recording all ten Batch 77 dispositions. The ledger's `capturedAt` records
 generation time, not an individual GitHub request timestamp. Review status is
 independent of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       651 |
-| `superseded`             |       203 |
+| `verified`               |       655 |
+| `superseded`             |       209 |
 | `not-applicable`         |        14 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       290 |
+| `unreviewed`             |       280 |
 | **Total**                | **1,163** |
 
-The ledger gives 873 items an assigned disposition. Four implemented
+The ledger gives 883 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 290 are unreviewed. The
+currently identified item needs implementation, and 280 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. The ten Batch 76 records were unchanged
+its snapshot and still needs review. The ten Batch 77 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 76 is the latest completed
-review; see [validation evidence](evidence/validation-batch-76.md).
+ledger, not completion of the campaign. Batch 77 is the latest completed
+review; see [validation evidence](evidence/validation-batch-77.md).
 
 ## Project records
 
@@ -2293,3 +2293,13 @@ PR #884 was intentionally not implemented as a permanent retention change: its m
 Focused validation passed 291 tests across seven files; type checking, SQLite native smoke, deployment-workflow parsing, shell syntax, and Unraid XML checks passed. A clean isolated Buildx production image build completed through dependency installation, Vite and TypeScript compilation, dependency pruning, and OCI export. npm reported zero vulnerabilities; Vite emitted its existing large-chunk advisory. The build context and OCI artifact on kspls0's LVM share and the isolated Buildx builder were removed after validation. No `client/src/**` source changed. See [Batch 76 validation evidence](evidence/validation-batch-76.md).
 
 The ledger now records 651 verified, 203 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 290 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 77 — October 14, 2026
+
+Batch 77 reviewed PRs [#887](https://github.com/Doezer/Questarr/pull/887)–[#895](https://github.com/Doezer/Questarr/pull/895) and [issue #896](https://github.com/Doezer/Questarr/issues/896). PRs #887–889 were superseded by combined PR #890; #892 and #893 by replacement PRs #938 and #945; and the requested dependency versions in #894 by newer locked versions. PRs #890, #891, #895, and issue #896 are verified against the current fork. All ten source records are unchanged from the refreshed snapshot.
+
+The ARM issue uncovered a fork-specific runtime gap: QuestarrNG's workflows already built ARM64 images, but the image shipped an x64-only UnRAR executable. The Dockerfile now builds SHA-pinned RARLAB UnRAR source for the target architecture, retains its license, and the README, import guide, secrets guide, and release note document the behavior. Clean amd64 and arm64 production image builds passed. Both images reported UnRAR 7.23 and extracted RAR5 single-file and 12-volume fixtures with byte-for-byte checks; both also started successfully and returned `{"status":"ok"}` from `/api/health`.
+
+Focused validation passed 281 tests with 1 skipped across eight files. TypeScript, lint, formatting, secretlint, dependency-override checks, license checks, and the running Files-tab browser check passed. The screenshot shows main-game and DLC groups: [PR #893 Files-tab evidence](evidence/upstream-pr-893-files-tab-2026-10-14.png). See [Batch 77 validation evidence](evidence/validation-batch-77.md) for commands and cleanup details.
+
+The ledger now records 655 verified, 209 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 280 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.

@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T00:43:20.566Z",
-  "forkHead": "44fdb9021f497db49f6b28d022ee95b7f6bbc2b9",
+  "capturedAt": "2026-10-14T01:44:16.005Z",
+  "forkHead": "b06f0261c75bc929fb1e1560cf7f3f5feae6b385",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -25773,10 +25773,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The maintainers closed this standalone sidebar optimization in favor of merged PR #890, which combined it with the tooltip and downloader-safety changes. The fork has the memoized badge calculation and stable empty-game value."
+        ],
+        "acceptance": [
+          "Sidebar badge counts remain correct while avoiding repeated derived work when the game list is unchanged."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/887; https://github.com/Doezer/Questarr/pull/890; client/src/components/AppSidebar.tsx; client/__tests__/AppSidebar.test.tsx; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25793,10 +25799,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The maintainers closed this standalone RSS tooltip change in favor of merged PR #890. QuestarrNG uses the shared Tooltip component and preserves accessible labels."
+        ],
+        "acceptance": [
+          "RSS controls expose the intended tooltip text and accessible names in the rendered component."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/888; https://github.com/Doezer/Questarr/pull/890; client/src/components/RssFeedList.tsx; client/__tests__/RssFeedList.test.tsx; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25813,10 +25825,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The maintainers closed this standalone downloader SSRF change in favor of merged PR #890, which also incorporated the mock assertions requested in review. Downloader HTTP calls use the shared safeFetch path."
+        ],
+        "acceptance": [
+          "Downloader requests enforce safe URL resolution and redirect handling, and the regression suite covers blocked destinations and allowed redirect semantics."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/889; https://github.com/Doezer/Questarr/pull/890; server/ssrf.ts; server/downloaders/; server/__tests__/downloaders_ssrf.test.ts; server/__tests__/ssrf.test.ts; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25833,10 +25851,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "3dfc92414a8f340c89025b001e2c712d0711f132",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged combined PR implements the sidebar count optimization, shared RSS tooltips, and safe downloader requests. Its review feedback on redirect method semantics, cross-origin credentials, preserved headers, and safeFetch mocks is resolved; the corresponding behavior is present in QuestarrNG."
+        ],
+        "acceptance": [
+          "Sidebar counts and RSS accessible tooltips pass component tests; safeFetch regression tests cover redirects, request methods, headers, credentials, and SSRF blocking."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/890; client/src/components/AppSidebar.tsx; client/src/components/RssFeedList.tsx; server/ssrf.ts; server/__tests__/ssrf.test.ts; server/__tests__/downloaders_ssrf.test.ts; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25853,10 +25877,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "a369d29400f93b591aa4352f570a4b6450eda1dc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged PR adds persisted game-file metadata and authenticated file-content APIs. QuestarrNG has the schema, storage and route implementation, including validated game ownership and bounded path handling."
+        ],
+        "acceptance": [
+          "Game-file records persist through the storage layer; API access validates game ownership and safe file paths, with storage and route regressions passing."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/891; shared/schema.ts; migrations/; migrations-pg/; server/storage.ts; server/routes.ts; server/__tests__/storage.test.ts; server/__tests__/game_files_routes.test.ts; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25873,10 +25903,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The original recursive Scan Disk PR was closed after the feature was rebased in merged PR #938, which also fixed the packs category mapping. Follow-up #944 added scan count/time budgets and rate limiting. The fork retains file-only discovery, containment checks after canonicalization, ownership checks and category normalization."
+        ],
+        "acceptance": [
+          "A scan is read-only, limited to the owned game root, handles symlinks and path escapes safely, applies resource limits, and returns normalized file categories."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/892; https://github.com/Doezer/Questarr/pull/938; https://github.com/Doezer/Questarr/issues/944; server/routes.ts; server/scan-limits.ts; server/__tests__/game_files_routes.test.ts; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25893,10 +25929,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The original Files-tab PR was closed after replacement PR #945 merged. The replacement added the missing lucide test mocks and fixed the upstream suite failure; QuestarrNG renders the Files tab only for library games and supports loading, error, empty, flat and grouped states."
+        ],
+        "acceptance": [
+          "The Files tab is hidden for discovery-only games and renders file categories and names from the game-files API; the running browser view shows main-game and DLC groups."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/893; https://github.com/Doezer/Questarr/pull/945; client/src/components/GameDetailsModal.tsx; client/__tests__/GameDetailsModal.test.tsx; docs/upstream-resolution/evidence/upstream-pr-893-files-tab-2026-10-14.png; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25913,10 +25955,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "18b163e119c315d1656302a11918ed9ab996f1a1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The merged development-dependency group is superseded by newer locked versions than every requested target: @playwright/test 1.63.0 (requested 1.62.0), secretlint preset and secretlint 13.0.7 (13.0.4 requested), @vitejs/plugin-react 6.1.2 (6.0.4), lint-staged 17.6.0 (17.2.0), postcss 8.5.29 (8.5.25), and prettier 3.9.9 (3.9.6). A clean production image install completed with no npm audit vulnerabilities."
+        ],
+        "acceptance": [
+          "All seven requested development dependencies remain at versions meeting or exceeding the requested updates, and a clean npm ci/prune completes."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/894; package.json; package-lock.json; clean amd64 and arm64 Docker builds report 0 npm vulnerabilities; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25933,10 +25981,16 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "51167707e732a685620a18de0dba6ad80120f653",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Indexer-provided comments links are passed through safeUrl before either rendered anchor, preventing unsafe schemes from becoming clickable links."
+        ],
+        "acceptance": [
+          "A javascript: comments URL is rejected while valid comments URLs remain safe; focused dialog tests pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/895; client/src/components/GameDownloadDialog.tsx; client/__tests__/GameDownloadDialog.test.tsx; docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25953,10 +26007,16 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The maintainer closed this issue after restoring arm64 builds in release 1.4.2. QuestarrNG already built multi-platform images, but its Dockerfile installed an x64-only UnRAR binary, leaving RAR extraction broken on arm64. The image now compiles SHA-pinned RARLAB source for the target architecture and includes the license."
+        ],
+        "acceptance": [
+          "Clean linux/amd64 and linux/arm64 production images build; each reports UnRAR 7.23 with its license, extracts and byte-compares RAR5 single-file and 12-part fixtures, and starts the app with /api/health returning {\"status\":\"ok\"}."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/896; Dockerfile; README.md; docs/LIBRARY_IMPORT.md; docs/SECRETS.md; release-notes/2026-10-14-native-arm64-rar-extraction.md; amd64 and arm64 Buildx logs and runtime fixture checks in docs/upstream-resolution/evidence/validation-batch-77.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
