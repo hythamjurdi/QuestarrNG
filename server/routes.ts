@@ -62,7 +62,12 @@ import {
 import { z } from "zod";
 import { routesLogger } from "./logger.js";
 import { getPendingReport, sendPendingReport } from "./error-telemetry.js";
-import { SCAN_MAX_FILES, SCAN_TIME_BUDGET_MS } from "./scan-limits.js";
+import {
+  SCAN_MAX_DEPTH,
+  SCAN_MAX_FILES,
+  SCAN_MAX_RESPONSE_BYTES,
+  SCAN_TIME_BUDGET_MS,
+} from "./scan-limits.js";
 import {
   igdbRateLimiter,
   sensitiveEndpointLimiter,
@@ -3071,8 +3076,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Recursively scan a game library folder. This endpoint is read-only; imports are handled separately.
-  // The walk is bounded (file count + wall-clock budget) and rate-limited per user,
-  // since a very large library tree can otherwise exhaust filesystem I/O and memory.
+  // The walk streams directory entries and is bounded by file count, encoded response
+  // size, nesting depth, and wall-clock time. It is also rate-limited per user.
   app.get(
     "/api/games/:gameId/files",
     authenticateToken,
@@ -3101,48 +3106,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const files: ScannedGameFile[] = [];
         let truncated = false;
         const deadline = Date.now() + SCAN_TIME_BUDGET_MS;
-        const walk = async (dir: string, inheritedCategory?: DownloadCategory): Promise<void> => {
+        let responseBytes = Buffer.byteLength(JSON.stringify({ files: [], truncated: false }));
+        const walk = async (
+          dir: string,
+          depth: number,
+          inheritedCategory?: DownloadCategory
+        ): Promise<void> => {
           if (truncated) return;
+          if (depth > SCAN_MAX_DEPTH) {
+            truncated = true;
+            return;
+          }
+          if (Date.now() >= deadline) {
+            truncated = true;
+            return;
+          }
           const canonicalDir = await realpathOrNull(dir);
           if (!canonicalDir || !isContained(canonicalDir, libraryRoot)) return;
-          let entries: fs.Dirent[];
+          let directory: fs.Dir;
           try {
-            entries = await fs.promises.readdir(canonicalDir, { withFileTypes: true });
+            directory = await fs.promises.opendir(canonicalDir);
           } catch (error) {
             if (isExpectedFsError(error)) return;
             throw error;
           }
-          for (const entry of entries) {
-            // Stop traversing once a budget is exceeded; `truncated` short-circuits
-            // every pending recursion level on the way back up the tree.
-            if (truncated || files.length >= SCAN_MAX_FILES || Date.now() >= deadline) {
-              truncated = true;
-              return;
+          try {
+            // Async directory iteration avoids materializing an arbitrarily large
+            // directory in memory before the scan budgets can stop the walk.
+            for await (const entry of directory) {
+              // Stop traversing once a budget is exceeded; `truncated` short-circuits
+              // every pending recursion level on the way back up the tree.
+              if (truncated || files.length >= SCAN_MAX_FILES || Date.now() >= deadline) {
+                truncated = true;
+                break;
+              }
+              const fullPath = path.join(canonicalDir, entry.name);
+              if (entry.isDirectory()) {
+                const lowerName = entry.name.toLowerCase();
+                const nextCategory = isCategoryDirName(lowerName) ? lowerName : inheritedCategory;
+                await walk(fullPath, depth + 1, nextCategory);
+                continue;
+              }
+              if (!entry.isFile()) continue;
+              const canonicalFile = await realpathOrNull(fullPath);
+              if (!canonicalFile || !isContained(canonicalFile, libraryRoot)) continue;
+              let stat: Awaited<ReturnType<typeof fs.promises.stat>>;
+              try {
+                stat = await fs.promises.stat(canonicalFile);
+              } catch (error) {
+                if (isExpectedFsError(error)) continue;
+                throw error;
+              }
+              if (Date.now() >= deadline) {
+                truncated = true;
+                break;
+              }
+              const category = normalizeCategory(
+                inheritedCategory ?? categorizeDownload(path.parse(entry.name).name).category
+              );
+              const file: ScannedGameFile = {
+                name: entry.name,
+                path: canonicalFile,
+                category,
+                size: stat.size,
+              };
+              const recordBytes = Buffer.byteLength(JSON.stringify(file));
+              const separatorBytes = files.length > 0 ? 1 : 0;
+              if (responseBytes + separatorBytes + recordBytes > SCAN_MAX_RESPONSE_BYTES) {
+                truncated = true;
+                break;
+              }
+              responseBytes += separatorBytes + recordBytes;
+              files.push(file);
             }
-            const fullPath = path.join(canonicalDir, entry.name);
-            if (entry.isDirectory()) {
-              const lowerName = entry.name.toLowerCase();
-              const nextCategory = isCategoryDirName(lowerName) ? lowerName : inheritedCategory;
-              await walk(fullPath, nextCategory);
-              continue;
-            }
-            if (!entry.isFile()) continue;
-            const canonicalFile = await realpathOrNull(fullPath);
-            if (!canonicalFile || !isContained(canonicalFile, libraryRoot)) continue;
-            let stat: Awaited<ReturnType<typeof fs.promises.stat>>;
-            try {
-              stat = await fs.promises.stat(canonicalFile);
-            } catch (error) {
-              if (isExpectedFsError(error)) continue;
-              throw error;
-            }
-            const category = normalizeCategory(
-              inheritedCategory ?? categorizeDownload(path.parse(entry.name).name).category
-            );
-            files.push({ name: entry.name, path: canonicalFile, category, size: stat.size });
+          } catch (error) {
+            if (isExpectedFsError(error)) return;
+            throw error;
+          } finally {
+            // Async iteration normally closes the handle on completion or break;
+            // this is a no-op if it has already closed.
+            await directory.close().catch(() => undefined);
           }
         };
-        await walk(scanRoot);
+        await walk(scanRoot, 0);
         // A category the user picked by hand wins over the folder/filename guess.
         const overrides = new Map(
           (await storage.getGameFiles(gameId))

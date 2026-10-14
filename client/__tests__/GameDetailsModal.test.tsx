@@ -1036,6 +1036,25 @@ describe("GameDetailsModal", () => {
       expect(await screen.findByText(/no files found on disk/i)).toBeInTheDocument();
     });
 
+    it("explains when scan limits return a partial file list", async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+        makeFetchMock({
+          "/api/games/1/files": {
+            files: [{ name: "game.exe", path: "/games/game.exe", category: "main", size: 1024 }],
+            truncated: true,
+          },
+        })
+      );
+      renderComponent();
+
+      fireEvent.mouseDown(screen.getByRole("tab", { name: /files/i }));
+
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        "Showing a partial file list because the scan reached a safety limit."
+      );
+      expect(screen.getByText("game.exe")).toBeInTheDocument();
+    });
+
     it("renders a flat list when files belong to a single category", async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
         makeFetchMock({

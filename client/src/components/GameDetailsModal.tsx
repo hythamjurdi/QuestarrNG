@@ -125,6 +125,13 @@ interface GameDetailsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface ScannedGameFilesResponse {
+  files: ScannedGameFile[];
+  truncated: boolean;
+}
+
+const EMPTY_SCANNED_GAME_FILES: ScannedGameFile[] = [];
+
 type GameDownloadWithDownloader = GameDownload & { downloaderName: string | null };
 
 interface HLTBEntry {
@@ -882,20 +889,21 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
   });
 
   const {
-    data: gameFiles = [],
+    data: gameFilesResponse,
     isLoading: filesLoading,
     isError: filesError,
-  } = useQuery<ScannedGameFile[]>({
+  } = useQuery<ScannedGameFilesResponse>({
     queryKey: [`/api/games/${game?.id}/files`],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/games/${game!.id}/files`);
-      const data = await res.json();
-      return data.files;
+      return res.json();
     },
     // The endpoint recursively scans the game's library folder, so only fetch it once the
     // Files tab is actually opened rather than on every modal open.
     enabled: open && activeTab === "files" && !!game?.id && !isDiscoveryId(game.id),
   });
+  const gameFiles = gameFilesResponse?.files ?? EMPTY_SCANNED_GAME_FILES;
+  const filesTruncated = gameFilesResponse?.truncated ?? false;
 
   const groupedGameFiles = useMemo(() => {
     const groups = new Map<string, typeof gameFiles>();
@@ -1598,6 +1606,15 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
         >
           <ScrollArea className="h-full">
             <div className="pr-4 pb-2">
+              {filesTruncated && (
+                <div
+                  role="status"
+                  className="mb-3 flex items-start gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+                >
+                  <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>Showing a partial file list because the scan reached a safety limit.</span>
+                </div>
+              )}
               {filesLoading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
