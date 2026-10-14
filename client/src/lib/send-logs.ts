@@ -8,6 +8,7 @@
  */
 
 import { SUPPORT_WORKER_URL, GITHUB_ISSUES_URL } from "./support-config";
+import { UI_LABELS } from "./ui-labels";
 
 export { scrubPii, scrubLogLines } from "@shared/log-scrub";
 
@@ -37,6 +38,8 @@ export interface SendLogsFailure {
   ok: false;
   status: number;
   message: string;
+  messageKey?: string;
+  messageValues?: Record<string, string | number>;
 }
 
 export type SendLogsResult = SendLogsSuccess | SendLogsFailure;
@@ -47,6 +50,7 @@ export async function sendLogs(payload: SendLogsPayload): Promise<SendLogsResult
       ok: false,
       status: 0,
       message: "Log upload is not configured for this build.",
+      messageKey: "Log upload is not configured for this build.",
     };
   }
 
@@ -69,19 +73,39 @@ export async function sendLogs(payload: SendLogsPayload): Promise<SendLogsResult
     };
 
     let message = errorMessages[response.status] ?? `Unexpected error (HTTP ${response.status}).`;
+    let messageKey: string | undefined =
+      errorMessages[response.status] ?? "Unexpected error (HTTP {status}).";
+    let messageValues = errorMessages[response.status] ? undefined : { status: response.status };
     try {
       const body = (await response.json()) as { error?: string };
-      if (body.error) message = body.error;
+      if (body.error) {
+        message = body.error;
+        messageKey = Object.hasOwn(UI_LABELS, body.error) ? body.error : undefined;
+        messageValues = messageKey?.includes("{status}") ? { status: response.status } : undefined;
+      }
     } catch {
       // ignore — use the default message
     }
 
-    return { ok: false, status: response.status, message };
+    return {
+      ok: false,
+      status: response.status,
+      message,
+      ...(messageKey ? { messageKey } : {}),
+      ...(messageValues && messageKey ? { messageValues } : {}),
+    };
   } catch (err) {
+    // Browser fetch failures are normally TypeErrors such as "Failed to fetch".
+    // Keep those implementation-specific details out of the UI so the stable
+    // network message can be localized, while preserving other unexpected
+    // errors for diagnosis.
+    const isNetworkError = err instanceof TypeError;
+    const networkMessage = "Network error — check your connection.";
     return {
       ok: false,
       status: 0,
-      message: err instanceof Error ? err.message : "Network error — check your connection.",
+      message: isNetworkError || !(err instanceof Error) ? networkMessage : err.message,
+      ...(isNetworkError || !(err instanceof Error) ? { messageKey: networkMessage } : {}),
     };
   }
 }

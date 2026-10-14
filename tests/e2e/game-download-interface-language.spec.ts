@@ -457,7 +457,10 @@ test.describe("Game download interface language", () => {
     );
     const downloadsAge = page.getByTestId("badge-age-e2e-age-download");
     await expect(downloadsAge).toContainText(expectedAge);
-    await expect(downloadsAge.locator('[lang="ar"][dir="rtl"]')).toHaveText(expectedAge);
+    const ageValue = downloadsAge.getByText(expectedAge, { exact: true });
+    await expect(ageValue).toHaveText(expectedAge);
+    await expect(ageValue).toHaveAttribute("lang", "ar");
+    await expect(ageValue).toHaveAttribute("dir", "rtl");
     if (process.env.PR47_VISUAL_EVIDENCE_DIR) {
       await page.screenshot({
         path: `${process.env.PR47_VISUAL_EVIDENCE_DIR}/pr47-downloads-localized-age.png`,
@@ -490,7 +493,7 @@ test.describe("Game download interface language", () => {
     );
 
     await page.goto("/search");
-    await page.getByPlaceholder("Enter game title...").fill("Localized");
+    await page.getByTestId("input-search-query").fill("Localized");
     const searchAge = page.getByText(expectedAge, { exact: true });
     await expect(searchAge).toHaveAttribute("lang", "ar");
     await expect(searchAge).toHaveAttribute("dir", "rtl");
@@ -837,7 +840,7 @@ test.describe("Game download interface language", () => {
   });
 
   test("formats successful download toast counts regionally", async ({ page }) => {
-    const downloadButton = await openLocalizedBundle(page, 2, "es");
+    const downloadButton = await openLocalizedBundle(page, 2, "ar");
     await page.route("**/api/downloads", async (route) => {
       if (route.request().method() !== "POST") {
         await route.fulfill({ json: [] });
@@ -856,18 +859,16 @@ test.describe("Game download interface language", () => {
     const bundleDialog = page.getByRole("alertdialog");
     await bundleDialog.getByRole("button", { name: "تنزيل مع تحديثين" }).click();
 
-    const regionalThree = await page.evaluate(() => new Intl.NumberFormat("es").format(3));
-    const successToast = page.getByText(`${regionalThree} download(s) sent to Example Downloader`, {
-      exact: true,
-    });
-    await expect(successToast).toBeVisible();
-    await expect(
-      page.getByText(`Added ${regionalThree} of ${regionalThree} downloads`, { exact: true })
-    ).toBeVisible();
+    const regionalThree = await page.evaluate(() => new Intl.NumberFormat("ar").format(3));
+    const successToast = page.getByRole("status").filter({ hasText: "تم إرسال" });
+    await expect(successToast).toContainText(regionalThree);
+    await expect(successToast).toContainText("Example Downloader");
+    const additionToast = page.getByRole("status").filter({ hasText: "تمت إضافة" });
+    await expect(additionToast).toContainText(regionalThree);
   });
 
   test("formats failed download toast counts regionally", async ({ page }) => {
-    const downloadButton = await openLocalizedBundle(page, 2, "es");
+    const downloadButton = await openLocalizedBundle(page, 2, "ar");
     let requestIndex = 0;
     await page.route("**/api/downloads", async (route) => {
       if (route.request().method() !== "POST") {
@@ -888,8 +889,8 @@ test.describe("Game download interface language", () => {
     const bundleDialog = page.getByRole("alertdialog");
     await bundleDialog.getByRole("button", { name: "تنزيل مع تحديثين" }).click();
 
-    const regionalTwo = await page.evaluate(() => new Intl.NumberFormat("es").format(2));
-    const failureToast = page.getByText(`${regionalTwo} download(s) failed`, { exact: true });
-    await expect(failureToast).toBeVisible();
+    const regionalTwo = await page.evaluate(() => new Intl.NumberFormat("ar").format(2));
+    const failureToast = page.getByRole("status").filter({ hasText: "وفشلت" });
+    await expect(failureToast).toContainText(regionalTwo);
   });
 });

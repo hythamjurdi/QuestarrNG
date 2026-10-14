@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 
 import {
   INTERFACE_LANGUAGE_OPTIONS,
   applyInitialInterfaceLanguage,
+  formatInterfaceMessage,
   getBrowserInterfaceLanguage,
   getInterfaceCollator,
+  getInterfaceLanguage,
   getInterfaceTextDirection,
   getInterfaceTextLanguage,
   setInterfaceLanguage,
+  translateInterfaceLabel,
   useInterfaceLanguage,
 } from "@/lib/interface-locale";
+import type { InterfaceLanguage } from "@/lib/interface-locale";
 
 describe("browser interface language detection", () => {
   it.each([
@@ -103,7 +107,7 @@ describe("browser interface language detection", () => {
     }
   });
 
-  it("keeps translated two-release labels interpolatable and preserves Arabic dual form", () => {
+  it("translates the fixed two-release label and preserves Arabic dual form", () => {
     function TranslationProbe() {
       const { language, t } = useInterfaceLanguage();
       return createElement(
@@ -120,10 +124,119 @@ describe("browser interface language detection", () => {
       const text = probe.textContent ?? "";
       if (value === "en") expect(text).toBe("en:two releases");
       else if (value === "ar") expect(text).toBe("ar:إصداران");
-      else expect(text).toContain("{count}");
+      else expect(text.slice(value.length + 1)).not.toBe("two releases");
     }
 
     setInterfaceLanguage("en");
+  });
+
+  it("isolates interpolated values only in right-to-left messages", () => {
+    expect(
+      formatInterfaceMessage("Change status for {title}", { title: "Example game" }, "en")
+    ).toBe("Change status for Example game");
+    expect(
+      formatInterfaceMessage("Change status for {title}", { title: "Example game" }, "ar")
+    ).toContain("\u2068Example game\u2069");
+    expect(formatInterfaceMessage("Uncatalogued {missing}", {}, "es")).toBe(
+      "Uncatalogued {missing}"
+    );
+    expect(formatInterfaceMessage("Navigation", {}, "unsupported" as InterfaceLanguage)).toBe(
+      "Navigation"
+    );
+  });
+
+  it("localizes marked attributes and filters invalid interpolation data", () => {
+    const button = document.createElement("button");
+    button.setAttribute("data-i18n-aria-label", "Selection: {count}/{total}");
+    button.setAttribute(
+      "data-i18n-aria-label-values",
+      JSON.stringify({ count: 2, total: "4", invalid: true })
+    );
+    const title = document.createElement("span");
+    title.setAttribute("data-i18n-title", "Navigation");
+    title.setAttribute("data-i18n-title-values", "[]");
+    document.body.append(button, title);
+
+    try {
+      setInterfaceLanguage("ar");
+      expect(button.getAttribute("aria-label")).toContain("\u20682\u2069");
+      expect(button.getAttribute("aria-label")).toContain("\u20684\u2069");
+      expect(title.getAttribute("title")).toBe(translateInterfaceLabel("Navigation", "ar"));
+    } finally {
+      button.remove();
+      title.remove();
+      setInterfaceLanguage("en");
+    }
+  });
+
+  it("updates only the marked element when its source or interpolation attributes change", async () => {
+    const source = "View {value} on xREL";
+    const button = document.createElement("button");
+    button.setAttribute("data-i18n-aria-label", source);
+    button.setAttribute("data-i18n-aria-label-values", JSON.stringify({ value: "First release" }));
+    const unrelated = document.createElement("button");
+    unrelated.setAttribute("data-i18n-aria-label", "Navigation");
+    unrelated.setAttribute("aria-label", translateInterfaceLabel("Navigation", "es"));
+    document.body.append(button, unrelated);
+
+    try {
+      setInterfaceLanguage("es");
+      await waitFor(() => {
+        expect(button.getAttribute("aria-label")).toBe(
+          formatInterfaceMessage(source, { value: "First release" }, "es")
+        );
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const unrelatedSetAttribute = vi.spyOn(unrelated, "setAttribute");
+
+      button.setAttribute(
+        "data-i18n-aria-label-values",
+        JSON.stringify({ value: "Second release" })
+      );
+      await waitFor(() => {
+        expect(button.getAttribute("aria-label")).toBe(
+          formatInterfaceMessage(source, { value: "Second release" }, "es")
+        );
+      });
+
+      button.setAttribute("data-i18n-aria-label", "View original article for {title}");
+      button.setAttribute(
+        "data-i18n-aria-label-values",
+        JSON.stringify({ title: "A new article" })
+      );
+      await waitFor(() => {
+        expect(button.getAttribute("aria-label")).toBe(
+          formatInterfaceMessage(
+            "View original article for {title}",
+            { title: "A new article" },
+            "es"
+          )
+        );
+      });
+
+      expect(unrelated.getAttribute("aria-label")).toBe(
+        translateInterfaceLabel("Navigation", "es")
+      );
+      expect(unrelatedSetAttribute).not.toHaveBeenCalled();
+    } finally {
+      button.remove();
+      unrelated.remove();
+      setInterfaceLanguage("en");
+    }
+  });
+
+  it("keeps the selected language active when browser storage is blocked", () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage unavailable");
+    });
+
+    try {
+      expect(() => setInterfaceLanguage("es")).not.toThrow();
+      expect(getInterfaceLanguage()).toBe("es");
+    } finally {
+      setItem.mockRestore();
+      setInterfaceLanguage("en");
+    }
   });
 });
 
@@ -139,13 +252,13 @@ describe("interface text language metadata", () => {
   });
 
   it("marks English fallback strings as English", () => {
-    expect(getInterfaceTextLanguage("Initial Setup", "ar")).toBe("en");
-    expect(getInterfaceTextDirection("Initial Setup", "ar")).toBe("ltr");
+    expect(getInterfaceTextLanguage("Uncatalogued label", "ar")).toBe("en");
+    expect(getInterfaceTextDirection("Uncatalogued label", "ar")).toBe("ltr");
   });
 
-  it("keeps document metadata aligned with English fallback content", () => {
-    expect(document.documentElement.lang).toBe("en");
-    expect(document.documentElement.dir).toBe("ltr");
+  it("sets document metadata to the selected interface language", () => {
+    expect(document.documentElement.lang).toBe("ar");
+    expect(document.documentElement.dir).toBe("rtl");
     expect(getInterfaceTextDirection("Navigation", "ar")).toBe("rtl");
   });
 
