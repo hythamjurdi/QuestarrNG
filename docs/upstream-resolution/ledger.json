@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T01:44:16.005Z",
-  "forkHead": "b06f0261c75bc929fb1e1560cf7f3f5feae6b385",
+  "capturedAt": "2026-10-14T02:09:51.557Z",
+  "forkHead": "fa50b33fc7b7ff308c15ed13542f350f691d84d9",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -26033,10 +26033,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8460db2c8039fb91b9c8c5db35a9aaee20e77dde",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The Add Game dialog exposes IGDB platform and release-year filters. The server accepts positive integer platform IDs and years 1950–2100, rejecting malformed and out-of-range values before IGDB is called. IGDB results are canonicalized before local platform/year filtering and truncated only after filtering; incomplete year input clears stale results without issuing a request, and a valid year disables undated-first sorting. The merged upstream accessibility feedback is present: the switch has an accessible name and spacing follows the project scale."
+        ],
+        "acceptance": [
+          "Search requests are capped at 10 and include the selected platform and year; results reflect both filters after canonicalization.",
+          "Years 1950 and 2100 are accepted; malformed/out-of-range years and non-positive/non-integer platform IDs return HTTP 400 before IGDB is called.",
+          "Incomplete year input clears old results without another search, and the undated-first control is disabled for a valid year.",
+          "The running Add Game dialog visibly presents the platform, year, and matching result together."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/897",
+          "server/middleware.ts; server/routes.ts; server/igdb.ts; client/src/components/AddGameModal.tsx",
+          "server/__tests__/api_routes.test.ts; server/__tests__/igdb.test.ts; client/__tests__/AddGameModal.test.tsx",
+          "docs/upstream-resolution/evidence/upstream-pr-897-add-game-filters-2026-10-14.png; docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26053,11 +26065,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The original draft was closed in favor of PR #1048 after its stacked branch fell behind main. The merged replacement carries the per-game target-platform feature forward, including paired nullable IGDB fields, validated platform selection, details editing/clearing, and automatic-search precedence with the account-wide preference as fallback. The current fork has the replacement behavior, and the target pair is covered through UI, API, schema, storage, and automatic-search tests."
+        ],
+        "acceptance": [
+          "The #1048 replacement behavior remains present: selected per-game platform persists and can be cleared; automatic search uses it ahead of the account default and falls back when it is unset."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/898; https://github.com/Doezer/Questarr/pull/1048",
+          "shared/schema.ts; shared/title-utils.ts; server/cron.ts; server/routes.ts; server/storage.ts; migrations/",
+          "shared/__tests__/schema.test.ts; shared/__tests__/title_utils.test.ts; server/__tests__/api_routes.test.ts; server/__tests__/cron_autosearch.test.ts; server/__tests__/database_storage_integration.test.ts; client/__tests__/AddGameModal.test.tsx; client/__tests__/GameDetailsModal.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
+        "dependencies": [
+          "pr:1048"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -26073,10 +26096,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0cf4b68c9895ec06969078b8b87697ef07cb39a2",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "All seven requested development dependency targets are present at or above their requested locked versions. Six are newer; @types/semver remains at the requested 7.8.0. The merged PR head reports successful CI, Dependency Review, SAST, and Deprecated Dependencies checks."
+        ],
+        "acceptance": [
+          "Every requested development dependency remains locked at a version greater than or equal to the PR target, and the current repository checks and production build pass."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/899",
+          "package.json; package-lock.json; B78 version-target assertion covered all seven requested development packages",
+          "npm run check; npm run lint; npm run build; docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26093,10 +26124,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6d5ce887b972f6a2641ac17ad609d046566df27c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The eight requested production dependency versions are all exceeded by the current manifest and lockfile, so this dependency roll-up is superseded by later updates. The merged PR head reports successful CI, Dependency Review, SAST, and Deprecated Dependencies checks."
+        ],
+        "acceptance": [
+          "All eight requested production dependency targets remain met or exceeded in package.json/package-lock.json, and the current production build passes."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/900",
+          "package.json; package-lock.json; B78 version-target assertion covered all eight requested production packages",
+          "npm run check; npm run lint; npm run build; docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26113,10 +26152,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "81c5481304558f222622af1958febb5fe1a6b12e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The requested setup-qemu-action, docker-login-action, and CodeQL upload-SARIF versions have all advanced to newer pinned releases in the current workflows. The merged PR head reports successful CI, Dependency Review, and SAST checks."
+        ],
+        "acceptance": [
+          "All three requested action versions remain met or exceeded in the current immutable workflow pins."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/901",
+          ".github/workflows/deploy.yml; .github/workflows/fork-image.yml; .github/workflows/scorecard.yml; .github/workflows/sast.yml; .github/workflows/vulnerability-scan.yml",
+          "docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26133,11 +26180,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The original ARM64 proposal was replaced by PR #905, which reimplemented the production multi-architecture behavior and addressed the original review threads about keeping the QEMU/build predicate in one place and scoping ARM support claims to Docker images. The replacement also corrected the pinned Node base image to a multi-platform manifest and clarified 64-bit ARM requirements."
+        ],
+        "acceptance": [
+          "The #905 replacement builds production images for linux/amd64 and linux/arm64 from one shared predicate, while dev/test remain amd64-only unless ARM64 is explicitly requested."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/902; https://github.com/Doezer/Questarr/pull/905",
+          ".github/workflows/deploy.yml; Dockerfile; README.md",
+          "docs/upstream-resolution/evidence/validation-batch-77.md; docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
+        "dependencies": [
+          "pr:905"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -26153,11 +26210,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The maintainer explicitly closed this unmerged bypass proposal as no longer needed, choosing to publish a v1.4.2 hotfix from v1.4.1 with the vulnerable dependencies patched directly. Review discussion also identified input-injection, audit-operational-failure, and overly broad republish-scope risks. QuestarrNG keeps its strict release gate: Critical/High findings block publication and deploy.yml has no SCA bypass input."
+        ],
+        "acceptance": [
+          "The source maintainer’s closure decision is reflected without weakening QuestarrNG release policy: the deployment workflow runs npm audit at the high threshold and a Critical/High finding blocks release."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/903; https://github.com/Doezer/Questarr/pull/904",
+          ".github/workflows/deploy.yml; docs/VULNERABILITY_MANAGEMENT.md",
+          "B78 deploy workflow and strict SCA policy assertions; docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
+        "dependencies": [
+          "pr:904"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -26173,10 +26240,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "aa0f2bf357d0f977201578544375948a47daa7a4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The requested upstream 1.4.3 bump separated main from the v1.4.2 hotfix tag. QuestarrNG’s fork release stream has since advanced consistently to 1.10.0 across package.json, package-lock.json, Docker metadata, and the Home Assistant add-on; the changelog retains the v1.4.2 hotfix history as a separate release."
+        ],
+        "acceptance": [
+          "Current package, lockfile, Docker, and add-on version metadata agree on 1.10.0, which does not collide with the v1.4.2 hotfix tag; release documentation preserves the historical tag distinction."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/904",
+          "package.json; package-lock.json; Dockerfile; questarr/Dockerfile; questarr/config.yaml; docs/CHANGELOG.md; docs/CVE_FIXES_BY_RELEASE.md",
+          "B78 release-version assertion; merged PR head CI, Dependency Review, SAST, and Deprecated Dependencies checks; docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26193,10 +26268,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e6405886b96a4fe75a17246a1597f7cae4aed6e4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged replacement computes multiarch_enabled once and uses it for both QEMU and Buildx: every production build includes linux/arm64, while dev/test do so only on explicit request. The follow-up review threads are resolved. Current Docker base images support both architectures, and the previous clean production-image run verified native UnRAR and application health on amd64 and arm64."
+        ],
+        "acceptance": [
+          "The workflow predicate truth table matches production/dev/test expectations and controls both QEMU and the published platform list.",
+          "Clean linux/amd64 and linux/arm64 production images both extract real RAR5 fixtures and return healthy application status."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/905",
+          ".github/workflows/deploy.yml; Dockerfile; README.md",
+          "B78 deploy workflow matrix; docs/upstream-resolution/evidence/validation-batch-77.md; docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26239,11 +26323,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The original unmerged performance PR was consolidated into merged PR #908 without further code changes. The current Library component uses the same one-pass genre/platform collection from the canonical replacement."
+        ],
+        "acceptance": [
+          "The #908 implementation is present in Library.tsx and preserves unique, alphabetically sorted filter options."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/907; https://github.com/Doezer/Questarr/pull/908",
+          "client/src/components/Library.tsx; client/__tests__/Library.platform-filter.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
+        "dependencies": [
+          "pr:908"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -26259,10 +26353,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "1a03cdad6bea837b649534516f84a783dbfadddc",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The merged consolidation walks the games array once, collecting genre and platform values into separate sets and sorting both final option lists. The current UI regression test confirms repeated values are removed and both lists remain alphabetically ordered; default and mobile library tests also pass."
+        ],
+        "acceptance": [
+          "Genre and platform filter values are unique and alphabetically ordered across games, with existing library filter behavior preserved."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/pull/908",
+          "client/src/components/Library.tsx; client/__tests__/Library.platform-filter.test.tsx; client/__tests__/Library.defaultFilters.test.tsx; client/__tests__/Library.mobile.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-78.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

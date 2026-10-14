@@ -20,32 +20,32 @@ behavior when implementing upstream requests.
 
 The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
-pull requests. The sanitized source list was refreshed from live GitHub on
-October 14, 2026 at 01:44:16 UTC. After Batch 77's source review, the ledger
-and generated inventory were regenerated, preserving prior dispositions and
-recording all ten Batch 77 dispositions. The ledger's `capturedAt` records
-generation time, not an individual GitHub request timestamp. Review status is
-independent of GitHub's open, closed, or merged state.
+pull requests. The sanitized source list and inventory were regenerated from
+the live GitHub audit on October 14, 2026. The ledger's `capturedAt` is
+02:09:51 UTC; it records generation time, not an individual GitHub request
+timestamp. After Batch 78's source review, the ledger and generated inventory
+preserved prior dispositions and recorded all eleven Batch 78 dispositions.
+Review status is independent of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       655 |
-| `superseded`             |       209 |
+| `verified`               |       660 |
+| `superseded`             |       215 |
 | `not-applicable`         |        14 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       280 |
+| `unreviewed`             |       269 |
 | **Total**                | **1,163** |
 
-The ledger gives 883 items an assigned disposition. Four implemented
+The ledger gives 894 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 280 are unreviewed. The
+currently identified item needs implementation, and 269 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. The ten Batch 77 records were unchanged
+its snapshot and still needs review. All eleven Batch 78 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 77 is the latest completed
-review; see [validation evidence](evidence/validation-batch-77.md).
+ledger, not completion of the campaign. Batch 78 is the latest completed
+review; see [validation evidence](evidence/validation-batch-78.md).
 
 ## Project records
 
@@ -2303,3 +2303,11 @@ The ARM issue uncovered a fork-specific runtime gap: QuestarrNG's workflows alre
 Focused validation passed 281 tests with 1 skipped across eight files. TypeScript, lint, formatting, secretlint, dependency-override checks, license checks, and the running Files-tab browser check passed. The screenshot shows main-game and DLC groups: [PR #893 Files-tab evidence](evidence/upstream-pr-893-files-tab-2026-10-14.png). See [Batch 77 validation evidence](evidence/validation-batch-77.md) for commands and cleanup details.
 
 The ledger now records 655 verified, 209 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 280 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 78 — October 14, 2026
+
+Batch 78 reviewed PRs [#897](https://github.com/Doezer/Questarr/pull/897)–[#905](https://github.com/Doezer/Questarr/pull/905), then [#907](https://github.com/Doezer/Questarr/pull/907) and [#908](https://github.com/Doezer/Questarr/pull/908). Five records are verified: #897's platform/year search filters, #899's development dependency updates, #904's release version, #905's multi-architecture build workflow, and #908's single-pass genre/platform collection. Six are superseded: #898 by #1048, #900 by newer locked dependencies, #901 by newer action pins, #902 by #905, #903 by the maintainer's patched-hotfix decision recorded with #904, and #907 by #908. All eleven source records were unchanged from the refreshed snapshot.
+
+The existing search and target-platform behavior already met the upstream requests. Batch 78 added regression coverage for inclusive year boundaries and invalid filter rejection before IGDB calls, per-game target-platform persistence/change/clear, and unique sorted genre/platform filters. The Add Game filter flow was exercised in a running `npm run dev:test` session; its query and selected values are shown in [PR #897 visual evidence](evidence/upstream-pr-897-add-game-filters-2026-10-14.png). The strict release SCA gate remains in place; PR #903's maintainer closed the bypass proposal after choosing a patched v1.4.2 hotfix instead. Focused validation passed 869 tests across 13 files with no skips, and repository-wide type, lint, format, secret, dependency-override, license, and production-build checks passed. See [Batch 78 validation evidence](evidence/validation-batch-78.md) for source findings, checks, and cleanup.
+
+The ledger now records 660 verified, 215 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 269 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
