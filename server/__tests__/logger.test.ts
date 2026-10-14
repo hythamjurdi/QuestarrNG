@@ -120,6 +120,29 @@ describe("Logger Module", () => {
     });
   });
 
+  it("redacts message text and child bindings before they hit the sink", async () => {
+    const loggerModule = await import("../logger.js");
+    const { logEmitter } = await import("../log-events.js");
+    const lines: string[] = [];
+    const onLine = (line: string) => lines.push(line);
+    logEmitter.on("line", onLine);
+
+    loggerModule.logger.info("apiKey=message-secret");
+    loggerModule.logger.info("password=%s", "formatted-secret");
+    loggerModule.logger.child({ token: "child-secret" }).info("safe child message");
+
+    await new Promise((resolve) => setImmediate(resolve));
+    logEmitter.off("line", onLine);
+
+    expect(lines).toHaveLength(3);
+    expect(lines.join("\n")).not.toContain("message-secret");
+    expect(lines.join("\n")).not.toContain("formatted-secret");
+    expect(lines.join("\n")).not.toContain("child-secret");
+    expect(JSON.parse(lines[0])).toMatchObject({ msg: "apiKey=[redacted]" });
+    expect(JSON.parse(lines[1])).toMatchObject({ msg: "password=[redacted]" });
+    expect(JSON.parse(lines[2])).toMatchObject({ token: "[redacted]" });
+  });
+
   it("configures the pino-pretty stdout target outside of production", async () => {
     process.env.NODE_ENV = "development";
 
