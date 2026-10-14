@@ -57,6 +57,12 @@ archives are listed with `unrar lt -v`; other formats use 7-Zip. Questarr
 refuses the archive, and the import fails with an error, if any of these is
 true:
 
+The Docker image compiles RARLAB UnRAR 7.23 from a source archive pinned by
+SHA-256 for the target architecture. This keeps RAR and multi-volume extraction
+available on both amd64 and arm64 and includes [RARLAB's 7.23 archive-safety
+fixes](https://www.rarlab.com/rarnew.htm). The image retains the required license
+at `/usr/share/licenses/questarr/UNRAR-LICENSE.txt`.
+
 | Check                                                                                         | Error message                                                       |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | More entries than `ARCHIVE_MAX_ENTRIES`                                                       | `Archive contains too many entries (limit: N).`                     |

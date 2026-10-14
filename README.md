@@ -162,7 +162,15 @@ The optional Windows installer runs QuestarrNG as a Windows service and bundles
 its service host as a self-contained .NET 10 LTS executable. QuestarrNG itself is
 a Node.js application; the installer does not require a separate .NET runtime.
 
-**Supported architectures:** released QuestarrNG Docker images are published for `linux/amd64` and `linux/arm64`, so the app runs on a Raspberry Pi 4/5 with a 64-bit OS, other 64-bit ARM SBCs, and ARM-based NAS boxes as well as on x86 hardware. Docker selects the right architecture automatically — the commands below are identical on every platform. (32-bit ARM, e.g. `armv7`/a 32-bit OS on Raspberry Pi 3 and earlier, is not supported. The [Home Assistant add-on](#home-assistant-add-on) is `amd64`-only.)
+**Supported architectures:** released QuestarrNG Docker images are published for
+`linux/amd64` and `linux/arm64`, so the app runs on a Raspberry Pi 4/5 with a
+64-bit OS, other 64-bit ARM SBCs, and ARM-based NAS boxes as well as on x86
+hardware. Docker selects the right architecture automatically — the commands
+below are identical on every platform. Both images build a native RARLAB UnRAR
+7.23 executable, so RAR/RAR5 and multi-volume imports work on ARM64 as well as
+amd64. (32-bit ARM, e.g. `armv7`/a 32-bit OS on Raspberry Pi 3 and earlier, is
+not supported. The [Home Assistant add-on](#home-assistant-add-on) is
+`amd64`-only.)
 
 ### Option 1: Quick start (direct Docker)
 

@@ -43,6 +43,12 @@ link files to the game and mark it Owned; Playing, Shelved, and Completed status
 are preserved. Wii U releases and games identified by IGDB as Wii U use the
 `Wii U` platform folder when QuestarrNG selects the import destination.
 
+The Docker image builds RARLAB UnRAR 7.23 from a [SHA-256-pinned source
+archive](https://www.rarlab.com/rar/unrarsrc-7.2.7.tar.gz) for the image's
+target architecture. RAR and RAR5 archives, including multi-volume sets,
+therefore use a native extractor on both amd64 and arm64. The image includes
+the UnRAR license at `/usr/share/licenses/questarr/UNRAR-LICENSE.txt`.
+
 Archive extraction stages the contents before merging them into the destination.
 When importing an update into an existing game folder, files supplied by the
 archive replace same-named files; unrelated installed files and saves remain.

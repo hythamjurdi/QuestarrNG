@@ -18,6 +18,28 @@ COPY package*.json ./
 COPY vendor/node-forge ./vendor/node-forge
 RUN npm ci --ignore-scripts
 
+# Build RAR extraction support from RARLAB's pinned UnRAR 7.23 source. Building it for the
+# target platform keeps both linux/amd64 and linux/arm64 images native; the x64-only
+# prebuilt archive cannot run in the ARM64 image used by Apple Silicon and Raspberry Pi.
+# Version 7.23 fixes RAR recovery-volume heap overflow and archive path traversal issues.
+# https://www.rarlab.com/rarnew.htm
+FROM base AS unrar-builder
+RUN apk add --no-cache curl
+
+ARG RARLAB_UNRAR_SOURCE_VERSION=7.2.7
+ARG RARLAB_UNRAR_SOURCE_SHA256=01d903a7dcf413cb2925696d7796e48e38d471f79bfe7ef3ad2aebf6c12dbefd
+RUN set -eux; \
+    curl -fsSL --proto '=https' --tlsv1.2 \
+      -o /tmp/unrarsrc.tar.gz \
+      "https://www.rarlab.com/rar/unrarsrc-${RARLAB_UNRAR_SOURCE_VERSION}.tar.gz"; \
+    echo "${RARLAB_UNRAR_SOURCE_SHA256}  /tmp/unrarsrc.tar.gz" | sha256sum -c -; \
+    tar -xzf /tmp/unrarsrc.tar.gz -C /tmp; \
+    make -C /tmp/unrar -j2; \
+    install -Dm755 /tmp/unrar/unrar /usr/local/bin/unrar; \
+    install -Dm644 /tmp/unrar/license.txt /usr/share/licenses/questarr/UNRAR-LICENSE.txt; \
+    /usr/local/bin/unrar -iver | grep -Fx '7.23'; \
+    rm -rf /tmp/unrarsrc.tar.gz /tmp/unrar
+
 # Build client and server
 FROM base AS builder
 
@@ -42,35 +64,17 @@ ENV UMASK=022
 # own musl-native 7-Zip build for .zip/.7z/.iso/.tar/.gz/.bz2 — replaces the glibc-linked
 # 7za that the npm 7zip-bin package bundles, which can never execute on this musl-only base
 # image: there's no /lib64/ld-linux-x86-64.so.2 for it, so every run fails with ENOENT
-# regardless of the executable bit — see ArchiveService.ts), gcompat (glibc compatibility
-# shim, needed below to run RARLAB's official unrar binary), curl (to fetch that binary
-# with strict HTTPS enforcement, see below), and Python + Apprise for local CLI
-# notifications.
+# regardless of the executable bit — see ArchiveService.ts), and Python + Apprise for local
+# CLI notifications. The native UnRAR binary is copied from the pinned source build below.
 COPY requirements/apprise.txt /tmp/requirements-apprise.txt
 RUN apk update && apk upgrade --no-cache && \
-    apk add --no-cache 7zip curl gcompat py3-pip python3 shadow su-exec && \
+    apk add --no-cache 7zip py3-pip python3 shadow su-exec && \
     python3 -m pip install --no-cache-dir --break-system-packages --only-binary :all: \
       --require-hashes -r /tmp/requirements-apprise.txt && \
     rm /tmp/requirements-apprise.txt
 
-# Fetch RARLAB's official unrar binary for RAR extraction (legacy and RAR5, including
-# multi-volume sets). Alpine dropped its own `unrar` package because RARLAB's license
-# doesn't meet Alpine's packaging policy for main/community — the binary itself remains
-# free to use and redistribute, so we bundle it directly instead. Pinned to an exact
-# version for reproducible builds; gcompat above provides the glibc dynamic loader this
-# binary needs on musl. `--proto '=https'` makes curl refuse to follow a redirect to
-# anything but https, so a compromised or misconfigured redirect can't silently downgrade
-# this download to plaintext.
-# The exact pinned archive was downloaded from RARLAB over HTTPS and its SHA-256 was
-# independently recomputed during Batch 68 validation; see the campaign evidence record.
-ARG RARLAB_UNRAR_VERSION=712
-ARG RARLAB_UNRAR_SHA256=630d9a9dd131367273667bee079ad103f469f1b7cdbc9b42a4f283cc2993bab2
-RUN curl -fsSL --proto '=https' --tlsv1.2 -o /tmp/unrar.tar.gz \
-      "https://www.rarlab.com/rar/rarlinux-x64-${RARLAB_UNRAR_VERSION}.tar.gz" && \
-    echo "${RARLAB_UNRAR_SHA256}  /tmp/unrar.tar.gz" | sha256sum -c - && \
-    tar -xzf /tmp/unrar.tar.gz -C /tmp && \
-    install -Dm755 /tmp/rar/unrar /usr/local/bin/unrar && \
-    rm -rf /tmp/unrar.tar.gz /tmp/rar
+COPY --from=unrar-builder /usr/local/bin/unrar /usr/local/bin/unrar
+COPY --from=unrar-builder /usr/share/licenses/questarr/UNRAR-LICENSE.txt /usr/share/licenses/questarr/UNRAR-LICENSE.txt
 
 # Reuse node_modules from base and prune dev dependencies (avoids a second npm ci)
 COPY --from=base /app/node_modules ./node_modules
