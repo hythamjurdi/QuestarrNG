@@ -58,6 +58,13 @@ it with a request, and falls back to title matching when add tags are unsupporte
 
 Questarr supports SABnzbd through its HTTP API, including `addurl` and multipart `addfile` flows; a live integration was verified on SABnzbd 5.1.3. For each download Questarr uses the request category when supplied, otherwise the saved downloader category, then `games`. Add any custom category to SABnzbd's category list as well: an unregistered category is reported in the queue as `*` (Default).
 
+Questarr always verifies SABnzbd's TLS certificate, including for locally hosted
+instances. It does not retry with certificate verification disabled. To use a
+private or locally issued CA, add that CA to the operating system/container
+trust store or set `NODE_EXTRA_CA_CERTS` to the CA PEM file before Questarr
+starts, then restart the service. This keeps the SABnzbd API key and archive
+password protected by authenticated TLS rather than accepting any certificate.
+
 ### NZBGet
 
 Questarr supports NZBGet through its RPC API, including the `append` method used to add NZB files, archives, or URLs to the queue.
