@@ -688,6 +688,35 @@ describe("SettingsPage", () => {
     await waitFor(() => expect(debugSwitch).toBeChecked());
   });
 
+  it("keeps automatic telemetry opt-in off by default and saves the user's choice", async () => {
+    const { apiRequest } = await import("@/lib/queryClient");
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Settings");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "System" }));
+
+    const telemetrySwitch = await screen.findByRole("switch", {
+      name: "Automatically send error reports",
+    });
+    expect(telemetrySwitch).not.toBeChecked();
+    expect(screen.getByText(/Off by default/)).toBeInTheDocument();
+
+    fireEvent.click(telemetrySwitch);
+    expect(telemetrySwitch).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Save Telemetry" }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith("PATCH", "/api/settings", {
+        telemetryEnabled: true,
+      });
+    });
+  });
+
   it("disables downloader debug logging switch and shows an error when the setting fails to load", async () => {
     const { apiRequest } = await import("@/lib/queryClient");
     vi.mocked(apiRequest).mockImplementation(async (method: string, url: string) => {
