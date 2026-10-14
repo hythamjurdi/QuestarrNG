@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T03:11:16.202Z",
-  "forkHead": "9924b48c61bd8846bea72eec2b6e2b194828eb64",
+  "capturedAt": "2026-10-14T03:40:13.239Z",
+  "forkHead": "5cbe8be45726100c43a81d1ec852ada56404f0e8",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -27209,12 +27209,13 @@
       "review": {
         "status": "verified",
         "findings": [
-          "The PR bundles eight changes. QuestarrNG has a default-deny API authentication boundary with an explicit public-route allowlist; self-signed SABnzbd TLS retry is opt-in and defaults off; xREL search is bounded to 24 seconds and carries nuke reasons through to the release UI; Newznab and Torznab capability discovery tries candidate URLs with category fallback and one overall deadline; production logging defaults to info with LOG_LEVEL override and structured secret scrubbing; IGDB edition canonicalization uses the real version_parent relationship with request headroom and serialized parent lookup; browser authentication uses httpOnly cookies, a distinct random CSRF token, bearer compatibility, and a guarded legacy-token migration; affected clients use the shared base-path-aware apiFetch helper.",
+          "The PR bundles eight changes. QuestarrNG has a default-deny API authentication boundary with an explicit public-route allowlist; xREL search is bounded to 24 seconds and carries nuke reasons through to the release UI; Newznab and Torznab capability discovery tries candidate URLs with category fallback and one overall deadline; production logging defaults to info with LOG_LEVEL override and structured secret scrubbing; IGDB edition canonicalization uses the real version_parent relationship with request headroom and serialized parent lookup; browser authentication uses httpOnly cookies, a distinct random CSRF token, bearer compatibility, and a guarded legacy-token migration; affected clients use the shared base-path-aware apiFetch helper.",
+          "The self-signed SABnzbd retry was removed in d822e19d: TLS verification remains enabled even when the legacy allowSelfSignedCertificate field is true. Private CAs are supported through NODE_EXTRA_CA_CERTS or the OS/container trust store; the UI hides the ineffective toggle and explains this path.",
           "The latest PR review had three unresolved threads. The StrictMode legacy-token migration and trusted-proxy cookie-secure findings are already handled in QuestarrNG. The logger finding was reproducible: Pino field formatting did not cover message text or child bindings. Commit 9924b48c adds redaction to the final serialized record and regression coverage for message, formatted message, and child-binding secrets."
         ],
         "acceptance": [
           "Unlisted API routes require authentication while only the intentional public-route allowlist remains public.",
-          "Self-signed SABnzbd certificate retry remains disabled unless a user opts in.",
+          "SABnzbd TLS connections always verify the certificate chain; the legacy bypass field cannot disable verification, and private CA trust uses NODE_EXTRA_CA_CERTS or the OS/container trust store.",
           "xREL search has a finite request timeout and release nuke reasons are returned and shown.",
           "Newznab and Torznab caps discovery falls back to game categories without multiplying the total request deadline.",
           "Production logs default to info, LOG_LEVEL can override it, and structured fields, rendered messages, and child bindings are scrubbed before reaching log sinks.",
@@ -27256,7 +27257,8 @@
           "docs/API.md",
           "docs/SECURITY_ASSESSMENT.md",
           "docs/upstream-resolution/evidence/validation-batch-82.md",
-          "https://github.com/Doezer/Questarr/pull/935"
+          "https://github.com/Doezer/Questarr/pull/935",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
         ],
         "dependencies": []
       },
@@ -27487,11 +27489,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "57add1edf95d91e9d87a2fba56c76d58deda527b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Dockerfile and CI npm ci installs use --ignore-scripts consistently, avoiding lifecycle scripts during dependency installation. The upstream checks were green and had no actionable review feedback."
+        ],
+        "acceptance": [
+          "All npm ci invocations in the Docker build and CI workflow pass --ignore-scripts."
+        ],
+        "evidence": [
+          "Dockerfile; .github/workflows/ci.yml",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27507,11 +27515,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "0441230c50dde30a54fa79ec9893c95ce4d384ff",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Root-folder discovery, validation, storage, deletion, scanning, UI, and documentation are present. The reviewed fixes are reflected: unmatched folders are validated against the server-queued absolute path, changed paths are probed before persistence, all configured roots are scanned, existing libraryPath values are preserved, deletion is separately opt-in, and failures produce a user-visible error.",
+          "Root folders use shared instance-admin configuration like indexers and downloaders, consistent with the documented self-hosted multi-user model; they are not user-owned rows."
+        ],
+        "acceptance": [
+          "Users can discover and queue root folders, review matches, scan configured roots, and remove entries while file deletion remains opt-in.",
+          "Server-side validation and path probes protect persisted root configuration from client-controlled or invalid paths."
+        ],
+        "evidence": [
+          "shared/schema.ts; server/root-folders.ts; server/library-scanner.ts; server/routes.ts; client/src/components/RootFolderDiscovery.tsx; client/__tests__/RootFolderDiscovery.test.tsx; server/__tests__/root-folders.test.ts; server/__tests__/library-scanner.test.ts; docs/API.md",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27527,11 +27543,20 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The endpoint already met the explicit acceptance for a 5,000-file cap, 5-second wall-clock budget, { files, truncated } response, per-user 10-requests-per-minute limiter, and count/time/rate tests. The traversal was strengthened to stream directory entries instead of materializing a whole directory and now also caps encoded response size at 8 MiB and nesting depth at 128.",
+          "The Files tab now retains the response truncation flag and announces when the displayed list is partial, so users do not mistake a bounded scan for a complete inventory. Upstream PR #955 implements the original count/time/rate acceptance."
+        ],
+        "acceptance": [
+          "Recursive scans stop at 5,000 files, 8 MiB encoded response, depth 128, or 5 seconds; any cap returns truncated: true.",
+          "The endpoint is limited to 10 requests per minute per authenticated user and its count, time, size, depth, and rate limits have regression coverage.",
+          "The Files tab explains partial results accessibly while still displaying returned files."
+        ],
+        "evidence": [
+          "server/routes.ts; server/scan-limits.ts; server/middleware.ts; server/__tests__/game_files_routes.test.ts; server/__tests__/scan-ratelimit.test.ts; client/src/components/GameDetailsModal.tsx; client/__tests__/GameDetailsModal.test.tsx; docs/API.md; docs/THREAT_MODEL.md; docs/upstream-resolution/evidence/scan-limits-partial-files-tab.png; https://github.com/Doezer/Questarr/pull/955",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27547,11 +27572,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "961a331f80735e10ed953972483db275cc099507",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The Files tab contract and test behavior are present: file queries run only when the tab is opened, loading and error states are handled, empty results are explained, and single-category and grouped results render correctly."
+        ],
+        "acceptance": [
+          "The Files tab uses the shared ScannedGameFile contract and covers loading, error, empty, flat-list, grouped-list, and discovery behavior."
+        ],
+        "evidence": [
+          "client/src/components/GameDetailsModal.tsx; shared/schema.ts; client/__tests__/GameDetailsModal.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27567,11 +27598,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "d724c0c8e35a593987151be04d4907e48f42767c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Discord webhook configuration is available on Stats and removed from Settings. The form trims saved URLs, supports clearing values and legacy aliases, and the settings section follows its visibility toggle."
+        ],
+        "acceptance": [
+          "Webhook settings are editable from Stats, preserve the existing webhook contract, and support saving, clearing, and hiding/showing the configuration."
+        ],
+        "evidence": [
+          "client/src/components/DiscordWebhookSettings.tsx; client/src/pages/stats.tsx; client/src/pages/settings.tsx; client/__tests__/DiscordWebhookSettings.test.tsx; client/__tests__/StatsPage.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27587,11 +27624,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "dda7186f2b662e8cf458fda4e74068ffd8a358c6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The request makes a self-signed-certificate bypass opt-in. QuestarrNG has removed the request-level TLS-verification bypass entirely; certificate validation stays enabled even when the legacy allowSelfSignedCertificate database field is true.",
+          "The old checkbox is hidden and replaced with guidance to trust a private CA through NODE_EXTRA_CA_CERTS or the operating system/container trust store. This is stricter than opt-in bypass and avoids exposing SABnzbd API keys or archive passwords to an untrusted certificate."
+        ],
+        "acceptance": [
+          "SABnzbd HTTPS always validates the peer certificate; stale settings cannot disable validation.",
+          "Operators can trust private/local certificate authorities through the supported CA trust store configuration."
+        ],
+        "evidence": [
+          "d822e19d18156deff757ff10bd208b48f5d564f6; server/downloaders/sabnzbd.ts; server/__tests__/downloaders_sabnzbd_tls.test.ts; server/__tests__/downloaders_ssl_fallback.test.ts; client/src/pages/downloaders.tsx; client/__tests__/DownloadersPage.test.tsx; docs/DOWNLOADERS_COMPATIBILITY.md",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27607,11 +27652,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "17d72ea8dbc673421d555d2fc594be42d28cac18",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "xREL search uses a 24-second timeout and carries nuke reasons through the shared release DTO into visible release-list text and a Nuked badge, with a fallback when no textual reason exists.",
+          "The upstream SonarCloud Code Analysis quality gate failed because new-code duplication measured 18.4% against a 3% maximum. The remaining upstream CI, security, build, and test checks succeeded; local focused validation passes the fork implementation tests."
+        ],
+        "acceptance": [
+          "A stalled xREL search fails within the bounded request timeout.",
+          "Nuke reason and flag data reach the UI as visible text and badge rather than hover-only information."
+        ],
+        "evidence": [
+          "server/xrel.ts; shared/xrel-types.ts; client/src/pages/xrel-releases.tsx; server/__tests__/xrel.test.ts; https://github.com/Doezer/Questarr/pull/948",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27627,11 +27680,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e91f8b2977fbc11ceea305873747e6625f9776c1",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "Settings are grouped into seven domain tabs. Release-name blacklist entries are grouped by gameId with accessible removal controls, and the IGDB rate-limit input is clamped in the UI and validated by the server to integers from 1 through 4."
+        ],
+        "acceptance": [
+          "Settings tabs group controls by domain and preserve existing save behavior.",
+          "Blacklist entries remain scoped to their game and can be removed with an accessible name.",
+          "IGDB per-user rate limits are restricted to integer values 1 through 4 and successful saves give clear feedback."
+        ],
+        "evidence": [
+          "client/src/pages/settings.tsx; server/routes.ts; shared/schema.ts; client/__tests__/SettingsPage.test.tsx; server/__tests__/api_routes.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-83.md"
+        ]
       },
       "sourceChangedSinceReview": false
     },

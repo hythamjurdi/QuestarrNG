@@ -22,31 +22,30 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The sanitized source list and inventory were regenerated from
 the live GitHub audit on October 14, 2026. The ledger's `capturedAt` is
-03:11:16 UTC; it records generation time, not an individual GitHub request
-timestamp. After Batch 82's source review, the ledger and generated inventory
-preserved prior dispositions and recorded all eight Batch 82 dispositions.
-Review status is independent of GitHub's open, closed, or merged state.
+03:40:13 UTC; it records generation time, not an individual GitHub request
+timestamp. Batch 83 reviewed PRs #942–#943, issue #944, and PRs #945–#949; all
+eight source digests matched the refreshed snapshot. Review status is
+independent of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       683 |
-| `superseded`             |       223 |
+| `verified`               |       690 |
+| `superseded`             |       224 |
 | `not-applicable`         |        14 |
 | `implemented-unverified` |         6 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       237 |
+| `unreviewed`             |       229 |
 | **Total**                | **1,163** |
 
-The ledger gives 926 items an assigned disposition. Four implemented
+The ledger gives 934 items an assigned disposition. Four implemented
 integrations still need live-service verification, the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests, and PR #933
 still needs an Inno Setup build plus Windows installation and service-lifecycle
-verification. No currently identified item needs implementation, and 237 are
+verification. No currently identified item needs implementation, and 229 are
 unreviewed. The latest refresh retains one changed-source flag: PR #1194's body
-changed after its snapshot and still needs review. All eight Batch 82 records
-were unchanged from their source snapshots before disposition. These counts
-describe the ledger, not completion of the campaign. Batch 82 is the latest
-completed review; see [validation evidence](evidence/validation-batch-82.md).
+changed after its snapshot and still needs review. These counts describe the
+ledger, not completion of the campaign. Batch 83 is the latest completed
+review; see [validation evidence](evidence/validation-batch-83.md).
 
 ## Project records
 
@@ -2348,3 +2347,13 @@ Review of #935 found a real secret-redaction gap in the logger: Pino's structure
 Focused validation passed 585 tests across 29 Vitest files with no skips. TypeScript checking, lint, formatting, secret scanning, and the production build passed; the build reported only the existing large-chunk advisory. No `client/src/**` files changed, so running-UI screenshot evidence was not applicable. The task-scoped build scratch directory was removed and the pre-existing `dist/` directory restored. See [Batch 82 validation evidence](evidence/validation-batch-82.md).
 
 The ledger now records 683 verified, 223 superseded, 14 not applicable, 6 implemented-unverified, 0 needs-implementation, and 237 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 83 — October 14, 2026
+
+Batch 83 reviewed PRs [#942](https://github.com/Doezer/Questarr/pull/942)–[#943](https://github.com/Doezer/Questarr/pull/943), issue [#944](https://github.com/Doezer/Questarr/issues/944), and PRs [#945](https://github.com/Doezer/Questarr/pull/945)–[#949](https://github.com/Doezer/Questarr/pull/949). All eight source digests matched the refreshed snapshot. Seven items are verified; PR #947 is superseded by the fork’s stricter policy that always validates SABnzbd TLS certificates.
+
+Issue #944 already had the requested 5,000-file and five-second scan caps, `{ files, truncated }` response, per-user rate limiter, and tests from upstream PR #955. QuestarrNG now streams directory entries and also caps the encoded response at 8 MiB and nesting depth at 128. The Files tab explains when a bounded scan returns a partial list. [Running-UI evidence](evidence/scan-limits-partial-files-tab.png) shows the notice alongside a returned file. The API and threat model document the scan limits, and downloader compatibility docs explain private-CA setup for SABnzbd. The batch also corrected PR #935’s earlier ledger wording: certificate verification is never disabled, including when the legacy `allowSelfSignedCertificate` field is true.
+
+Focused validation passed 628 tests across 15 files with no skips. TypeScript, lint, formatting, secret scanning, and the production build passed; the build reported the existing large-chunk advisory. The app used port 5101 because port 5100 belonged to another process. The disposable server, database, script, and scratch directory were removed, the existing Playwright auth state and `dist/` were preserved, and no NFS scratch was used. See [Batch 83 validation evidence](evidence/validation-batch-83.md).
+
+The ledger now records 690 verified, 224 superseded, 14 not applicable, 6 implemented-unverified, 0 needs-implementation, and 229 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.

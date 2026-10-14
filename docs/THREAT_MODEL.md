@@ -304,6 +304,12 @@ linked file as the source of truth.
 - **Rate limiting:** `server/middleware.ts` (`igdbRateLimiter`, `authRateLimiter`,
   `sensitiveEndpointLimiter`, `generalApiLimiter`, `scanRateLimiter`,
   `integrationRateLimiter`); `server/index.ts:34` (global mount)
+- **Game-file scan resource bounds:** `GET /api/games/:gameId/files` in
+  `server/routes.ts` streams directory entries and caps each scan at 5,000 files,
+  8 MiB of encoded response data, depth 128, and five seconds. The authenticated
+  user rate limit is 10 requests per minute; bounded results set `truncated: true`.
+  See `server/scan-limits.ts`, `server/__tests__/game_files_routes.test.ts`, and
+  `server/__tests__/scan-ratelimit.test.ts`.
 - **Authentication/session:** `server/auth.ts` (JWT issuance/verification); global gate at
   `server/routes.ts:845`
 - **SeerrNG provider authorization:** `server/auth.ts` (key scope and expiry),
