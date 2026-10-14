@@ -9,6 +9,7 @@ This document lists the current compatibility targets for downloaders supported 
 | Synology Download Station | Supports `SYNO.DownloadStation.Task` v1 and `SYNO.DownloadStation2.Task` v2 when exposed by the NAS.                                                      |
 | Transmission              | Supports the classic Transmission RPC family over the session-based HTTP RPC endpoint.                                                                    |
 | qBittorrent               | Supports qBittorrent WebUI API integrations, with modern support aligned to the 4.1+ API family.                                                          |
+| rTorrent                  | Uses XML-RPC with SHA-256 Digest; MD5-only endpoints are rejected.                                                                                           |
 | SABnzbd                   | Supports the current SABnzbd HTTP API, including the `addurl` and multipart `addfile` flows used by Questarr; modern releases such as 5.0.4 are in scope. |
 | NZBGet                    | Supports the NZBGet RPC API used by Questarr, including `append`; the official API documentation covers NZBGet version 13.0 and later.                    |
 
@@ -27,6 +28,12 @@ Questarr uses the long-lived Transmission RPC interface rather than targeting on
 ### qBittorrent
 
 Questarr targets the qBittorrent WebUI API. Historical documentation exists for qBittorrent 3.2.0 through 4.0.4, while the maintained OpenAPI documentation covers the newer 4.1+ API family.
+
+### rTorrent
+
+Questarr uses rTorrent's XML-RPC endpoint and accepts SHA-256 Digest only.
+Classic MD5 and unsupported algorithms are rejected; upgrade rTorrent/ruTorrent
+to a build that advertises SHA-256 Digest.
 
 ### SABnzbd
 
