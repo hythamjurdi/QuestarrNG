@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T02:09:51.557Z",
-  "forkHead": "fa50b33fc7b7ff308c15ed13542f350f691d84d9",
+  "capturedAt": "2026-10-14T02:27:18.345Z",
+  "forkHead": "dde7c452b272f044972d7355b1dc2bcf65c11e4e",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -26381,11 +26381,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The proposed `bde0dae` digest resolves to the Debian Node 26 image, not the Alpine image used by this Dockerfile; adopting it would make the existing `apk add` step fail. The corrected Alpine tag-and-digest pin requested in PR #911 is already in QuestarrNG."
+        ],
+        "acceptance": [
+          "The Dockerfile keeps a digest that matches `node:26-alpine`, and clean production builds succeed for supported architectures."
+        ],
+        "evidence": [
+          "Dockerfile",
+          "docs/upstream-resolution/evidence/validation-batch-77.md",
+          "https://github.com/Doezer/Questarr/pull/909",
+          "https://github.com/Doezer/Questarr/pull/911"
+        ],
+        "dependencies": [
+          "pr:911"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -26401,10 +26412,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "260dd04baef8690c51c87cb85d80e83379fa5af6",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The PR fixes an assertion that expected the wrong status after an import confirm failure. QuestarrNG's current import-manager tests assert the retryable `manual_review_required` state and the implementation preserves pending work for correction."
+        ],
+        "acceptance": [
+          "A retryable confirm failure leaves the import in manual review, and regression tests assert that state."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "server/__tests__/import_manager.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-79.md",
+          "https://github.com/Doezer/Questarr/pull/910"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26421,10 +26441,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The PR pins the explicit `node:26-alpine` tag together with its digest. QuestarrNG already uses that matching tag-and-digest pair; the upstream PR was closed after a SonarCloud policy objection, but the fork's current production Docker builds confirm the pin is usable."
+        ],
+        "acceptance": [
+          "The Node tag and digest identify the same Alpine base image, and production images build for amd64 and arm64."
+        ],
+        "evidence": [
+          "Dockerfile",
+          "docs/upstream-resolution/evidence/validation-batch-77.md",
+          "https://github.com/Doezer/Questarr/pull/911"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26441,10 +26469,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5eadb1f56dab3bb78df08763eeb6046f391580e5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "QuestarrNG's support issue template carries the public support-log issue reference, and the investigate-issue skill treats issue and log text as untrusted. It validates a positive issue number and requires the private log's support code to match the public issue before using private logs."
+        ],
+        "acceptance": [
+          "Submitted support issues include the matching support-log reference; investigation guidance validates identity before reading private logs and does not treat issue text as instructions."
+        ],
+        "evidence": [
+          "client/src/lib/send-logs.ts",
+          "client/__tests__/send-logs.test.ts",
+          ".claude/skills/investigate-issue/SKILL.md",
+          "docs/upstream-resolution/evidence/validation-batch-79.md",
+          "https://github.com/Doezer/Questarr/pull/912"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26461,10 +26499,24 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "SABnzbd may report `storage` as either the completed folder or a file inside it; QuestarrNG resolves both to the correct release folder, avoiding a doubled release-name path, and leaves failed confirmations retryable. The reporter also warned that selecting a parent download directory in Move mode could transfer unrelated files. Confirmation now rejects a strict parent of the tracked download directory when that directory is resolvable under configured path mappings, and the dialog and import guide explain the exact-source and Move behavior."
+        ],
+        "acceptance": [
+          "SABnzbd folder and single-file storage paths resolve to the release folder; failed confirmation remains retryable; with mapped roots and available downloader details, a parent source override is rejected; the source field has an accessible warning that Move removes the selected source."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "server/__tests__/import_manager.test.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
+          "client/src/components/ImportReviewModal.tsx",
+          "client/__tests__/ImportReviewModal.test.tsx",
+          "docs/LIBRARY_IMPORT.md",
+          "docs/upstream-resolution/evidence/upstream-issue-913-source-path-warning-2026-10-14.png",
+          "docs/upstream-resolution/evidence/validation-batch-79.md",
+          "https://github.com/Doezer/Questarr/issues/913"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26481,10 +26533,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The shared clipboard helper first uses the secure-context clipboard API and falls back to the legacy copy command for plain-HTTP pages. The download dialog uses the helper and reports copy failures instead of silently doing nothing."
+        ],
+        "acceptance": [
+          "Torrent/NZB link copy works with the modern clipboard API and its plain-HTTP fallback, with visible failure handling."
+        ],
+        "evidence": [
+          "client/src/lib/utils.ts",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/utils.test.ts",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/validation-batch-79.md",
+          "https://github.com/Doezer/Questarr/issues/914"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -26501,11 +26564,26 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "This closed SABnzbd manual-confirm proposal was replaced by the later follow-up PRs #937 and #940. QuestarrNG's current handling is verified against the clarified single-file/folder `storage` paths and retryable failure behavior tracked by issue #913."
+        ],
+        "acceptance": [
+          "The later SABnzbd follow-ups are linked for chronological review, and the current fork passes the issue #913 path and retryability regression checks."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
+          "server/__tests__/import_manager.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-79.md",
+          "https://github.com/Doezer/Questarr/pull/915",
+          "https://github.com/Doezer/Questarr/pull/937",
+          "https://github.com/Doezer/Questarr/pull/940"
+        ],
+        "dependencies": [
+          "pr:937",
+          "pr:940"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -26521,10 +26599,22 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The request for clearer corrupt-RAR diagnostics moved into PR #803 and has since evolved with QuestarrNG's native UnRAR runtime. Archive failures now distinguish corrupt or incomplete input and recommend re-download/retry; extraction uses isolated staging and cleans it on failure so partial files cannot be mistaken for a completed import."
+        ],
+        "acceptance": [
+          "Corrupt or incomplete RAR input produces actionable diagnostics and retryable import failure; isolated extraction staging leaves no stale output after failure."
+        ],
+        "evidence": [
+          "server/services/ArchiveService.ts",
+          "server/__tests__/archive_service.test.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-77.md",
+          "docs/upstream-resolution/evidence/validation-batch-79.md",
+          "https://github.com/Doezer/Questarr/pull/916",
+          "https://github.com/Doezer/Questarr/pull/803"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

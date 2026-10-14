@@ -22,30 +22,30 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The sanitized source list and inventory were regenerated from
 the live GitHub audit on October 14, 2026. The ledger's `capturedAt` is
-02:09:51 UTC; it records generation time, not an individual GitHub request
-timestamp. After Batch 78's source review, the ledger and generated inventory
-preserved prior dispositions and recorded all eleven Batch 78 dispositions.
+02:27:18 UTC; it records generation time, not an individual GitHub request
+timestamp. After Batch 79's source review, the ledger and generated inventory
+preserved prior dispositions and recorded all eight Batch 79 dispositions.
 Review status is independent of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       660 |
-| `superseded`             |       215 |
+| `verified`               |       666 |
+| `superseded`             |       217 |
 | `not-applicable`         |        14 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       269 |
+| `unreviewed`             |       261 |
 | **Total**                | **1,163** |
 
-The ledger gives 894 items an assigned disposition. Four implemented
+The ledger gives 902 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 269 are unreviewed. The
+currently identified item needs implementation, and 261 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. All eleven Batch 78 records were unchanged
+its snapshot and still needs review. All eight Batch 79 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 78 is the latest completed
-review; see [validation evidence](evidence/validation-batch-78.md).
+ledger, not completion of the campaign. Batch 79 is the latest completed
+review; see [validation evidence](evidence/validation-batch-79.md).
 
 ## Project records
 
@@ -2311,3 +2311,13 @@ Batch 78 reviewed PRs [#897](https://github.com/Doezer/Questarr/pull/897)–[#90
 The existing search and target-platform behavior already met the upstream requests. Batch 78 added regression coverage for inclusive year boundaries and invalid filter rejection before IGDB calls, per-game target-platform persistence/change/clear, and unique sorted genre/platform filters. The Add Game filter flow was exercised in a running `npm run dev:test` session; its query and selected values are shown in [PR #897 visual evidence](evidence/upstream-pr-897-add-game-filters-2026-10-14.png). The strict release SCA gate remains in place; PR #903's maintainer closed the bypass proposal after choosing a patched v1.4.2 hotfix instead. Focused validation passed 869 tests across 13 files with no skips, and repository-wide type, lint, format, secret, dependency-override, license, and production-build checks passed. See [Batch 78 validation evidence](evidence/validation-batch-78.md) for source findings, checks, and cleanup.
 
 The ledger now records 660 verified, 215 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 269 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 79 — October 14, 2026
+
+Batch 79 reviewed PRs [#909](https://github.com/Doezer/Questarr/pull/909)–[#912](https://github.com/Doezer/Questarr/pull/912), issues [#913](https://github.com/Doezer/Questarr/issues/913) and [#914](https://github.com/Doezer/Questarr/issues/914), and PRs [#915](https://github.com/Doezer/Questarr/pull/915) and [#916](https://github.com/Doezer/Questarr/pull/916). PRs #909 and #915 are superseded by the corrected Alpine image pin in #911 and the SABnzbd follow-ups #937/#940. The other six records are verified against the current fork. All eight matched their refreshed source digests.
+
+Issue #913 exposed both a SABnzbd path-resolution failure and a risky manual-import choice: in Move mode, selecting a parent download folder could transfer unrelated files. Existing path resolution handles SABnzbd `storage` values that name either a folder or one file inside it, and failed confirmations remain retryable. QuestarrNG now also rejects a mapped source path that is a parent of the tracked download folder when that folder can be resolved. The review dialog warns that the selected source is transferred and Move removes it; the import guide explains the same behavior. The actual running interface is captured in [issue #913 visual evidence](evidence/upstream-issue-913-source-path-warning-2026-10-14.png), with details in [Batch 79 validation evidence](evidence/validation-batch-79.md).
+
+Batch 79 also confirmed the retry-state assertion from #910, the current tag-and-digest Node Alpine pin from #911, the cross-repository support-log link and protected investigation guidance from #912, plain-HTTP clipboard fallback from issue #914, and actionable corrupt-archive errors with isolated extraction staging from #916. Focused regression validation passed 335 tests with 1 skipped across 12 files. TypeScript, lint, formatting, secretlint, dependency-override review, production-license checks, and production build passed. The new import behavior has a user-facing release-note fragment.
+
+The ledger now records 666 verified, 217 superseded, 14 not applicable, 5 implemented-unverified, 0 needs-implementation, and 261 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
