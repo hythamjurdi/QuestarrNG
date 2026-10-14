@@ -635,6 +635,9 @@ delivery commitment.
 
 See the upstream [Troubleshooting Wiki](https://github.com/Doezer/Questarr/wiki/Troubleshooting)
 
+If you lose the local account password, an operator can reset it from the
+QuestarrNG host or container with the [password-recovery CLI](docs/PASSWORD_RECOVERY.md).
+
 If you run into an issue, go to the **Logs** page and click **Send Logs** before reporting it — it makes diagnosing the problem much easier.
 
 ### Getting Help

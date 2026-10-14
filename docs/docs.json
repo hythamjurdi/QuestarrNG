@@ -29,7 +29,14 @@
       },
       {
         "group": "Deployment",
-        "pages": ["HOME_SERVER_APPS", "PROXMOX", "REVERSE_PROXY", "DATABASE", "MIGRATION"]
+        "pages": [
+          "HOME_SERVER_APPS",
+          "PROXMOX",
+          "REVERSE_PROXY",
+          "DATABASE",
+          "PASSWORD_RECOVERY",
+          "MIGRATION"
+        ]
       },
       {
         "group": "Reference",

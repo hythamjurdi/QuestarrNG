@@ -24,6 +24,8 @@ documentation in this repository.
 
 - Database backends and SQLite-to-PostgreSQL migration:
   [`docs/DATABASE.md`](./DATABASE.md)
+- Operator-only account password recovery:
+  [`docs/PASSWORD_RECOVERY.md`](./PASSWORD_RECOVERY.md)
 - Legacy PostgreSQL-to-SQLite migration:
   [`docs/MIGRATION.md`](./MIGRATION.md)
 - Reverse proxy and subdirectory deployment:

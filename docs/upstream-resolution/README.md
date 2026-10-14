@@ -20,31 +20,33 @@ behavior when implementing upstream requests.
 
 The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
-pull requests. Its source list was refreshed on October 13, 2026 at 23:22:52
-UTC; after Batch 73, the ledger and generated inventory were regenerated from
-that snapshot at 23:46:27 UTC. The ledger's `capturedAt` records generation
-time, not an individual GitHub request timestamp. Review status is independent
-of GitHub's open, closed, or merged state.
+pull requests. Its source list was refreshed on October 13, 2026 at 23:48:20
+UTC. After the Batch 74 implementation commit, the ledger and generated
+inventory were regenerated from that snapshot on October 14 at 00:02:50 UTC;
+the ten B74 dispositions were then added to the regenerated records. The
+ledger's `capturedAt` records generation time, not an individual GitHub request
+timestamp. Review status is independent of GitHub's open, closed, or merged
+state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       634 |
-| `superseded`             |       191 |
+| `verified`               |       638 |
+| `superseded`             |       197 |
 | `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       320 |
+| `unreviewed`             |       310 |
 | **Total**                | **1,163** |
 
-The ledger gives 843 items an assigned disposition. Four implemented
+The ledger gives 853 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 320 are unreviewed. The
+currently identified item needs implementation, and 310 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. The ten Batch 73 records were unchanged
+its snapshot and still needs review. The ten Batch 74 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 73 is the latest completed
-review; see [validation evidence](evidence/validation-batch-73.txt).
+ledger, not completion of the campaign. Batch 74 is the latest completed
+review; see [validation evidence](evidence/validation-batch-74.txt).
 
 ## Project records
 
@@ -2254,3 +2256,13 @@ The review verified the fork's HTTPS-safe clone configuration, recognized PR tem
 Focused validation passed 117 tests across five files, with 32 cron-status tests passing after formatting. The full suite passed 4,256 tests with 7 skipped. TypeScript, lint, format, release-note, XML, and diff checks passed. The GHCR pruning workflow was reviewed statically and not triggered because it deletes remote image versions. No production build was repeated because no production source changed; no `client/src/**` files changed. See [Batch 73 validation evidence](evidence/validation-batch-73.txt).
 
 The ledger now records 634 verified, 191 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 320 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 74 — October 14, 2026
+
+Batch 74 reviewed PRs #857–866. The four security and account-operation requests are verified. The six dependency updates are superseded by current locked package and workflow versions that meet or exceed the requested targets. Their descriptions, review feedback, CI outcomes, and resulting fork behavior are recorded per item in the ledger and [Batch 74 evidence](evidence/validation-batch-74.txt).
+
+The recovery CLI now enforces the same trimmed 8-character, letter-and-number password policy as account setup and password changes. Its testable runner covers invalid arguments, missing accounts, weak passwords, confirmation mismatches, successful hashing and storage, failed updates, and secret-safe error handling. The API and security documentation now describe login logging, game ownership responses, and local host/container recovery. Regression tests assert that another user's status, visibility, and deletion requests return 403 without database writes or file deletion.
+
+Focused validation passed 396 tests across the recovery and API route suites. The full suite passed 4,269 tests with 7 skipped; type checking, lint, formatting, secret scanning, production TypeScript compilation, the Vite build, the compiled CLI usage smoke test, and release-note validation passed. Vite emitted a large-chunk advisory. No `client/src/**` files changed. Task-scoped local scratch was removed; the desktop NFS mount hung during metadata access, so no NFS scratch was created. See [Batch 74 validation evidence](evidence/validation-batch-74.txt).
+
+The ledger now records 638 verified, 197 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 310 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.

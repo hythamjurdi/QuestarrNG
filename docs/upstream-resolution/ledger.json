@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-13T23:46:27.758Z",
-  "forkHead": "7ac4bf9c85a622e601915ec25b3c1f524e59200d",
+  "capturedAt": "2026-10-14T00:02:50.784Z",
+  "forkHead": "71980090f5a8f1546bba8605bfcd5d1b5e670414",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -24842,10 +24842,26 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "27c4c09b24fbcd0f20e72478bf5600324ef04624",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork enforces bounded validation for single-indexer searches, quick-add titles, game-status routes, and NexusMods queries. qBittorrent torrent identifiers are URL-encoded at each ID-bearing request. Upstream review follow-ups for safe integer offsets, reserved-character IDs, middleware validation, and logger mocks are present in code and regression coverage."
+        ],
+        "acceptance": [
+          "Invalid and out-of-range search/query values return HTTP 400, valid requests reach the intended handlers, and offset cannot exceed Number.MAX_SAFE_INTEGER.",
+          "A qBittorrent ID containing reserved query characters stays one encoded parameter, and user-controlled quick-add and NexusMods strings remain bounded."
+        ],
+        "evidence": [
+          "server/middleware.ts",
+          "server/routes.ts",
+          "server/downloaders/qbittorrent.ts",
+          "server/nexusmods.ts",
+          "server/__tests__/middleware.test.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "server/__tests__/downloaders_clients_regression.test.ts",
+          "server/__tests__/nexusmods-routes.test.ts",
+          "docs/API.md",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24862,10 +24878,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "78ded67f3ba1d297eef724d3bffb847355750e10",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Failed login attempts retain a generic 401 response and log the trimmed username with the trusted client IP; the password is not included in the log record. Upstream review requested exact IP coverage under the configured proxy trust model, which the fork tests."
+        ],
+        "acceptance": [
+          "A failed login logs the trimmed username and request IP, never the submitted password, while returning the same generic authentication failure response."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/trust-proxy.test.ts",
+          "docs/API.md",
+          "docs/SECURITY_ASSESSMENT.md",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24882,10 +24909,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2b58940676d60e6a6ab5d7e0d496cf2ee59efd5c",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Game status changes, visibility changes, and deletion already resolve the authenticated owner before database or file effects. The shared password schema is used for setup and password changes, with trimmed passwords requiring at least eight characters, one letter, and one number. Review feedback about shared validation and client guidance is reflected in the current fork."
+        ],
+        "acceptance": [
+          "A different user receives 403 for game status, visibility, and deletion, with no storage mutation or file deletion; missing games remain 404.",
+          "Setup, password change, and recovery use the same trimmed 8+ character, letter-and-number password policy."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "shared/schema.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/api_routes_extended.test.ts",
+          "docs/API.md",
+          "docs/SECURITY_ASSESSMENT.md",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24902,10 +24942,22 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "116514781c1408b944fdf83c326cd0d6bc4de705",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The recovery CLI already used a hidden TTY prompt, accepted piped input, handled chunked terminal input and EOF, avoided passwords in argv, and allowed logger output to flush. Its remaining gap was a stale six-character check; the CLI now calls the shared passwordPolicySchema, exposes a dependency-injected runner for meaningful tests, and documents host/container use."
+        ],
+        "acceptance": [
+          "The CLI rejects missing or extra arguments, unknown accounts, policy failures, mismatched confirmations, failed updates, and unsafe error logging; valid trimmed passwords are hashed and stored.",
+          "The production TypeScript build emits dist/scripts/reset-password.js, and running that compiled CLI without arguments prints usage and exits with code 1."
+        ],
+        "evidence": [
+          "scripts/reset-password.ts",
+          "scripts/__tests__/reset-password.test.ts",
+          "docs/PASSWORD_RECOVERY.md",
+          "Dockerfile",
+          "tsconfig.build.json",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24922,10 +24974,18 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The closed, unmerged grouped development-dependency update is superseded by the current lockfile, which already has the requested Playwright, Secretlint, eslint-plugin-react, lint-staged, postcss, and Prettier versions or newer compatible versions."
+        ],
+        "acceptance": [
+          "Every package target in the upstream group is met or exceeded by the current package-lock.json; no older version is introduced."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24942,10 +25002,17 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e0bea9e5ef8a5bc1402aaefced485a0bc6fe70b4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The action-version group is already satisfied by current workflow pins: setup-buildx v4.4.1, build-push v7.4.0, CodeQL upload-sarif v4.38.2, and scorecard v2.4.4. These meet or exceed the versions requested by the merged upstream PR."
+        ],
+        "acceptance": [
+          "All four requested GitHub Actions are pinned to their target or a newer version in the current workflows."
+        ],
+        "evidence": [
+          ".github/workflows",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24962,10 +25029,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "4e5a0028e470fafa6aa70bec2315ad5764d34d5a",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "All 32 production-dependency targets in the upstream grouped PR are met or exceeded by the current package lock. The current locked graph passes the complete test suite and production builds."
+        ],
+        "acceptance": [
+          "Each of the 32 package targets parsed from the PR description is satisfied by the current package-lock.json without a downgrade."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -24982,10 +25057,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8c6f435e5cb1c178cba16b2b3ddb9408a7a0b4c4",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "@testing-library/jest-dom is already at 7.0.1 in package.json and package-lock.json, newer than the requested 7.0.0. The full test suite passes on the fork’s Node 26 toolchain."
+        ],
+        "acceptance": [
+          "The lockfile contains @testing-library/jest-dom 7.0.0 or newer and the test suite passes."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25002,10 +25085,21 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The closed, unmerged undici 8.9.0 update is superseded by the current locked 8.11.2. Upstream advisories identify 8.9.0 as patched for the cache-control disclosure/crash and blob-like-body CRLF issues; 8.11.2 is later on the same major line."
+        ],
+        "acceptance": [
+          "The deployed dependency lock is undici 8.9.0 or newer and includes the upstream fixes requested by the PR."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "https://github.com/nodejs/undici/security/advisories/GHSA-4cwx-7wf7-3272",
+          "https://github.com/nodejs/undici/security/advisories/GHSA-m8rv-5g2x-5cg5",
+          "https://github.com/nodejs/undici/releases",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25022,10 +25116,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "cca6c52f9f8c780df07fba13dc662ab7215abec3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "better-sqlite3 is already locked at 13.0.3, newer than the upstream 13.0.1 target. The fork’s Docker builder supplies the native-build toolchain, and the current binary dependency is covered by the full application suite and production builds. The container recovery instructions invoke emitted JavaScript because the runtime image copies dist rather than TypeScript sources."
+        ],
+        "acceptance": [
+          "The current lockfile satisfies the requested better-sqlite3 version, the project builds and tests against it, and the operator recovery command targets a file present in the production image."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "Dockerfile",
+          "scripts/reset-password.ts",
+          "docs/PASSWORD_RECOVERY.md",
+          "docs/upstream-resolution/evidence/validation-batch-74.txt"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
