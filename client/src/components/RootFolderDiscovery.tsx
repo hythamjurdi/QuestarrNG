@@ -41,6 +41,7 @@ import { getSocket } from "@/lib/socket";
 import type { RootFolder } from "@shared/schema";
 import { FileBrowser } from "./FileBrowser";
 import { InterfaceText } from "@/components/InterfaceText";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
 import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
 
 interface ScanProgress {
@@ -565,7 +566,11 @@ export function RootFolderDiscovery() {
                       </>
                     )}
                   </p>
-                  {p.errorMessage && <p className="text-xs text-destructive">{p.errorMessage}</p>}
+                  {p.errorMessage && (
+                    <p className="text-xs text-destructive">
+                      <ApiErrorDetailText source={p.errorMessage} />
+                    </p>
+                  )}
                 </div>
               );
             })}

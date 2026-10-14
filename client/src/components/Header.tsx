@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Config } from "@shared/schema";
 import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
 
 const AddGameModal = lazy(() => import("./AddGameModal"));
 
@@ -204,7 +205,7 @@ export default function Header({
                         </p>
                         {info.error && (
                           <p className="mt-1 text-xs text-destructive" lang="en" dir="auto">
-                            {info.error}
+                            <ApiErrorDetailText source={info.error} />
                           </p>
                         )}
                       </div>

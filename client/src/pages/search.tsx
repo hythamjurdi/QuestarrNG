@@ -14,6 +14,7 @@ import {
   getInterfaceLanguageDirection,
   useInterfaceLanguage,
 } from "@/lib/interface-locale";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
 import { isTorrentDownloaderType, isUsenetDownloaderType } from "@shared/downloader-types";
 import { cleanReleaseName } from "@shared/title-utils";
 import {
@@ -570,7 +571,7 @@ export default function SearchPage() {
                       className="text-muted-foreground"
                       data-testid={`error-message-${index}`}
                     >
-                      • {error}
+                      • <ApiErrorDetailText source={error} />
                     </li>
                   ))}
                 </ul>

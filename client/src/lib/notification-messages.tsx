@@ -22,7 +22,8 @@ type MessageKey =
   | "errorReportSent"
   | "errorReportFailed"
   | "errorOccurred"
-  | "securityFlagged";
+  | "securityFlagged"
+  | "unknownError";
 type MessageParams = Record<string, string>;
 const MESSAGES: Record<MessageKey, readonly string[]> = {
   gameReleased: [
@@ -319,6 +320,20 @@ const MESSAGES: Record<MessageKey, readonly string[]> = {
     "{game} bị đánh dấu và cách ly. Lý do: {reason}.",
     "{game} ditandai dan dikarantina. Alasan: {reason}.",
   ],
+  unknownError: [
+    "error desconocido",
+    "未知错误",
+    "अज्ञात त्रुटि",
+    "unbekannter Fehler",
+    "不明なエラー",
+    "erreur inconnue",
+    "erro desconhecido",
+    "خطأ غير معروف",
+    "알 수 없는 오류",
+    "未知錯誤",
+    "lỗi không xác định",
+    "kesalahan tidak diketahui",
+  ],
 };
 export interface LocalizedNotificationMessage {
   content: ReactNode;
@@ -333,12 +348,16 @@ function formatTemplate(
   return template.split(/(\{[a-z]+\})/g).map((part, index) => {
     const name = part.match(/^\{([a-z]+)\}$/)?.[1];
     if (!name || params[name] === undefined) return part;
-    const isRawEnglish = name === "error" || name === "reason";
+    const isUnknownError = name === "error" && params[name] === "unknown error";
+    const value = isUnknownError
+      ? (MESSAGES.unknownError[
+          NOTIFICATION_LOCALES.indexOf(language as (typeof NOTIFICATION_LOCALES)[number])
+        ] ?? params[name])
+      : params[name];
+    const isRawEnglish = (name === "error" || name === "reason") && !isUnknownError;
     return (
       <bdi key={`${name}-${index}`} {...(isRawEnglish ? { lang: "en" } : {})} dir="auto">
-        {name === "count"
-          ? new Intl.NumberFormat(language).format(Number(params[name]))
-          : params[name]}
+        {name === "count" ? new Intl.NumberFormat(language).format(Number(params[name])) : value}
       </bdi>
     );
   });

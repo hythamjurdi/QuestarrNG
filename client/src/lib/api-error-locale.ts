@@ -1,4 +1,6 @@
-import type { InterfaceLanguage } from "@/lib/interface-locale";
+import { translateInterfaceLabel, type InterfaceLanguage } from "@/lib/interface-locale";
+import { localizeApiErrorDetailTemplate } from "@/lib/api-error-details/templates";
+import { getApiErrorDetailLabel } from "@/lib/api-error-details";
 import { apiErrorCodeForStatus, type ApiErrorCode } from "@shared/api-error-codes";
 
 type ApiErrorCatalogKey =
@@ -185,6 +187,48 @@ const LOCALE_ORDER: readonly InterfaceLanguage[] = [
   "id",
 ];
 
+function localizeApiErrorDetail(detail: string, language: InterfaceLanguage): string | undefined {
+  const localizedDetail = translateInterfaceLabel(detail, language);
+  if (localizedDetail !== detail) return localizedDetail;
+  const localizedApiErrorDetail = getApiErrorDetailLabel(detail, language);
+  if (localizedApiErrorDetail !== undefined) return localizedApiErrorDetail;
+  const importWrapper = detail.match(/^(Security alert|Password required|Import failed): (.+)$/);
+  if (importWrapper?.[1] && importWrapper[2]) {
+    const nestedDetail = localizeApiErrorDetail(importWrapper[2], language) ?? importWrapper[2];
+    const localizedWrapper = localizeApiErrorDetailTemplate(
+      importWrapper[1] + ": " + nestedDetail,
+      language
+    );
+    if (localizedWrapper !== undefined) return localizedWrapper;
+  }
+  const sslWrapper = detail.match(
+    /^(Invalid SSL configuration|Uploaded certificate\/key are invalid): (.+)$/
+  );
+  if (sslWrapper) {
+    const [, sourceTemplate, nestedDetail] = sslWrapper;
+    const interfaceTranslation = translateInterfaceLabel(nestedDetail!, language);
+    const localizedNestedDetail =
+      interfaceTranslation !== nestedDetail
+        ? interfaceTranslation
+        : (getApiErrorDetailLabel(nestedDetail!, language) ?? nestedDetail!);
+    const localizedWrapper = localizeApiErrorDetailTemplate(
+      sourceTemplate + ": " + localizedNestedDetail,
+      language
+    );
+    if (localizedWrapper !== undefined) return localizedWrapper;
+  }
+  return localizeApiErrorDetailTemplate(detail, language);
+}
+
+/** Returns a translation only for recognized app-owned details or templates. */
+export function getLocalizedApiErrorDetail(
+  detail: string,
+  language: InterfaceLanguage
+): string | undefined {
+  if (language === "en") return undefined;
+  return localizeApiErrorDetail(detail, language);
+}
+
 export function getLocalizedApiErrorMessage(
   code: string | undefined,
   status: number,
@@ -192,6 +236,9 @@ export function getLocalizedApiErrorMessage(
   language: InterfaceLanguage
 ): string {
   if (language === "en") return detail;
+  const localizedDetail = localizeApiErrorDetail(detail, language);
+  if (localizedDetail !== undefined) return localizedDetail;
+
   const stableCode = code as ApiErrorCode | undefined;
   const resolvedCode =
     stableCode && Object.hasOwn(API_ERROR_CODE_TO_CATALOG_KEY, stableCode)
@@ -200,5 +247,7 @@ export function getLocalizedApiErrorMessage(
   const key = API_ERROR_CODE_TO_CATALOG_KEY[resolvedCode];
   const message = API_ERROR_MESSAGES[key][LOCALE_ORDER.indexOf(language)];
   if (!message) return detail;
-  return detail ? `${message}: \u2068${detail}\u2069` : message;
+  if (!detail) return message;
+  const summary = message.replace(/[.!?…。！？؟]+$/u, "");
+  return `${summary}: \u2068${detail}\u2069`;
 }

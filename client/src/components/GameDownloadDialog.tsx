@@ -4,6 +4,7 @@ import {
   useRegionalPreference,
 } from "@/lib/regional-format";
 import { getInterfaceCollator, formatInterfaceMessage } from "@/lib/interface-locale";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
 import React, { useState, useEffect, useMemo, useCallback, useRef, useId } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -1991,7 +1992,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
             <ul className="text-sm space-y-1">
               {searchResults.errors.map((error, index) => (
                 <li key={index} className="text-muted-foreground">
-                  • {error}
+                  • <ApiErrorDetailText source={error} />
                 </li>
               ))}
             </ul>

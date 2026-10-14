@@ -9,6 +9,7 @@ import {
   useInterfaceLanguage,
   formatInterfaceMessage,
 } from "@/lib/interface-locale";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiFetch, throwIfResNotOk } from "@/lib/queryClient";
@@ -245,7 +246,7 @@ export default function Downloads() {
             title: formatInterfaceMessage("Downloader Error: {downloaderName}", {
               downloaderName: String(error.downloaderName ?? ""),
             }),
-            description: error.error,
+            description: <ApiErrorDetailText source={error.error} />,
             variant: "destructive",
           });
           hasShownErrorsRef.current.add(errorKey);
