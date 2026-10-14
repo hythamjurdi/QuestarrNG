@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T00:02:50.784Z",
-  "forkHead": "71980090f5a8f1546bba8605bfcd5d1b5e670414",
+  "capturedAt": "2026-10-14T00:25:38.813Z",
+  "forkHead": "10eee2966effae81cb03a2db8344bd1de63f9082",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -25147,10 +25147,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "ee449ed6f1fd15bdc660c805bace711fbe2ba42b",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "superseded",
+        "findings": [
+          "The merged PR requested jsdom 30.0.0; QuestarrNG already declares ^30.1.2 and locks 30.1.2, so the requested target is surpassed. The locked jsdom engine range is ^22.22.2 || ^24.15.0 || >=26.0.0; the full suite ran on Node 24.21 and the project container uses Node 26."
+        ],
+        "acceptance": [
+          "The declared and locked jsdom versions meet or exceed 30.0.0, and the current test suite passes on a supported Node version."
+        ],
+        "evidence": [
+          "package.json",
+          "package-lock.json",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25167,11 +25175,25 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The reporter described qBittorrent 5.2 accepting URL adds as pending without Questarr tracking the eventual torrent. The issue was closed after the reporter confirmed the linked development-image fix worked. QuestarrNG handles qBittorrent's HTTP 202 pending response, tracks unresolved adds by correlation tag, and resolves those tags from the download-status cron. Batch 75 also stops after the first failed lookup instead of repeating long, unavailable requests."
+        ],
+        "acceptance": [
+          "A pending response returns a successful tracked result with either the resolved hash or a correlation tag; a failed lookup does not resubmit an already accepted URL as a torrent-file upload; the status cron can resolve the correlation tag later."
+        ],
+        "evidence": [
+          "https://github.com/Doezer/Questarr/issues/868",
+          "https://github.com/Doezer/Questarr/pull/869",
+          "server/downloaders/qbittorrent.ts",
+          "server/cron.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/cron_async_download_resolution.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
+        "dependencies": [
+          "pr:869"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -25187,10 +25209,20 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "db20445ecbcd2cc3ea56d064474bcc072a2ae475",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The current qBittorrent adapter preserves the reviewed async-add behavior: requests use safeFetch, both URL and fallback upload carry correlation tags, duplicate resolution checks known hashes before tag lookup, and duplicate recovery cleans up both tags. Regression tests cover unavailable polling, duplicate branches, and tag cleanup. Batch 75 addresses the remaining latency concern by stopping after the first failed poll while retaining the correlation tag for later cron resolution."
+        ],
+        "acceptance": [
+          "Pending adds that resolve return their hash and remove the request tag; unresolved adds return a correlation tag; an unavailable poll is attempted once and never triggers a second submission; fallback duplicate resolution recognizes the existing torrent and removes both correlation tags."
+        ],
+        "evidence": [
+          "server/downloaders/qbittorrent.ts",
+          "server/__tests__/downloaders_qbittorrent_regression.test.ts",
+          "server/__tests__/downloaders_qbittorrent_remaining.test.ts",
+          "server/__tests__/cron_async_download_resolution.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25207,10 +25239,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "2956c55b3b520986a4a02c9a955828bbd7a16704",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The fork already has the reviewed game-card action layout: the desktop hide control sits over the cover and appears on hover or keyboard focus, while mobile actions remain visible. Card details use keyboard-accessible semantics. Headless browser evidence captures the desktop hover state and mobile layout."
+        ],
+        "acceptance": [
+          "Pointer hover and keyboard focus reveal the desktop hide control; the details action remains keyboard accessible; mobile retains its visible card actions."
+        ],
+        "evidence": [
+          "client/src/components/GameCard.tsx",
+          "client/__tests__/GameCard.test.tsx",
+          "client/__tests__/GameCard.remaining.test.tsx",
+          "docs/upstream-resolution/evidence/batch-75/b75-game-card-actions.png",
+          "docs/upstream-resolution/evidence/batch-75/b75-game-card-mobile-actions.png",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25227,10 +25270,21 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8c1f4a0d33583c095dd3558da1fb967945dbb9a3",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Wishlist columns are configurable from 2 through 10 and persisted under wishlistGridColumns. The shared hook normalizes malformed and out-of-range values; Batch 75 adds direct hook regression tests for defaults, persistence, rounding, and both range boundaries. The running UI screenshot shows the control set to three columns."
+        ],
+        "acceptance": [
+          "The wishlist defaults to five columns, accepts and persists values from 2 through 10, and normalizes invalid saved or requested values into that range."
+        ],
+        "evidence": [
+          "client/src/pages/wishlist.tsx",
+          "client/src/components/GridColumnsControl.tsx",
+          "client/src/hooks/use-grid-columns.ts",
+          "client/__tests__/use-grid-columns.test.ts",
+          "docs/upstream-resolution/evidence/batch-75/b75-wishlist-grid-columns.png",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25247,10 +25301,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "397997ce6986f77f7e4b2bbcc92adca30e978bb5",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Release titles link to the indexer comments/source URL when one is present, open in a new tab with noopener noreferrer, and remain plain headings when there is no safe source URL. The same contract is covered for mobile and desktop, including unsafe URL rejection. The running-app screenshot shows a linked result."
+        ],
+        "acceptance": [
+          "A result with a safe source URL exposes a title link with target=_blank and rel=noopener noreferrer on both layouts; an unsafe or missing URL does not create a navigable link."
+        ],
+        "evidence": [
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/batch-75/b75-download-indexer-source.png",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25267,10 +25330,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "f30cd0c368eddb2049066ca102f4175eb335ea80",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "ImportStrategies falls back from hardlink to copy for cross-device, permission, and unsupported-operation errors (EXDEV, EPERM, EACCES, ENOTSUP, EOPNOTSUPP). Unexpected I/O errors remain errors, cleanup is covered, and directory imports hardlink files individually."
+        ],
+        "acceptance": [
+          "Each supported hardlink failure code uses the copy fallback with cleanup; unexpected errors propagate; valid directory hardlinks remain hardlinks."
+        ],
+        "evidence": [
+          "server/services/ImportStrategies.ts",
+          "server/__tests__/import_strategies.test.ts",
+          "server/__tests__/import_manager_archive_extraction.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25287,10 +25359,23 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8800a8d0c303f4db77914e0c1ea8910b9075b78d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Initial release status is normalized from the release date so a game that was already released at creation does not emit a false new-release notification. The shared behavior is applied across ordinary creation, quick-add, and Steam wishlist import; future and undated releases retain their intended states."
+        ],
+        "acceptance": [
+          "Past and current release dates create games in released status across all creation paths; future or missing release dates are not incorrectly marked released; notification regression tests pass."
+        ],
+        "evidence": [
+          "server/game-status.ts",
+          "server/routes.ts",
+          "server/steam.ts",
+          "server/__tests__/api_routes.test.ts",
+          "server/__tests__/steam_wishlist.test.ts",
+          "docs/upstream-resolution/evidence/validation-batch-75.md",
+          "server/__tests__/api_routes_extended.test.ts",
+          "server/__tests__/api_routes_extended.test.ts"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25307,10 +25392,19 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "e06219f8439624277861984a25c106a664b6a81f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The shared Radix scroll area keeps its vertical scrollbar mounted and gives the thumb a persistent muted style with a clearer hover state. The component regression test checks forceMount, orientation, and both thumb classes; the batch's running-app modal smoke is retained alongside the test evidence."
+        ],
+        "acceptance": [
+          "The vertical scrollbar remains mounted when the scroll area is rendered and its thumb keeps a visible default style that strengthens on hover."
+        ],
+        "evidence": [
+          "client/src/components/ui/scroll-area.tsx",
+          "client/__tests__/ScrollArea.test.tsx",
+          "docs/upstream-resolution/evidence/batch-75/b75-game-details-scroll-area.png",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -25327,10 +25421,25 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "423b544144ce70f3ed5fa72b5a18df8cccdb07d2",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "Packs/Addons is a distinct download category across categorization, filters, claims, result views, availability storage, and notifications; explicit DLC and expansions retain their DLC classification. The remaining open upstream review note asked to share the main/update/packs auto-search filter pipeline. Batch 75 now uses one shared filter-and-deduplicate helper with an update-only version predicate, preserving filter order. Regression coverage verifies platform, OS architecture, preferred-group, and duplicate filtering on pack results."
+        ],
+        "acceptance": [
+          "Packs/Addons are distinguishable from updates while DLC and extras remain in the owned-game packs channel; pack availability and notification transitions work; platform, operating-system, architecture, preferred-group, version, and duplicate filters keep their prior semantics."
+        ],
+        "evidence": [
+          "shared/download-categorizer.ts",
+          "shared/schema.ts",
+          "server/cron.ts",
+          "server/__tests__/cron_autosearch.test.ts",
+          "shared/__tests__/download-categorizer.test.ts",
+          "migrations/0026_aberrant_quentin_quire.sql",
+          "client/src/components/GameDownloadDialog.tsx",
+          "client/__tests__/GameDownloadDialog.test.tsx",
+          "docs/upstream-resolution/evidence/batch-75/b75-download-packs-category.png",
+          "docs/upstream-resolution/evidence/validation-batch-75.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false

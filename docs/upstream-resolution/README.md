@@ -22,31 +22,31 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. Its source list was refreshed on October 13, 2026 at 23:48:20
 UTC. After the Batch 74 implementation commit, the ledger and generated
-inventory were regenerated from that snapshot on October 14 at 00:02:50 UTC;
-the ten B74 dispositions were then added to the regenerated records. The
-ledger's `capturedAt` records generation time, not an individual GitHub request
-timestamp. Review status is independent of GitHub's open, closed, or merged
-state.
+inventory were regenerated after Batch 75's implementation and source review
+on October 14 at 00:25:38 UTC. The ten Batch 75 dispositions were recorded in
+that refreshed inventory. The ledger's `capturedAt` records generation time,
+not an individual GitHub request timestamp. Review status is independent of
+GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       638 |
-| `superseded`             |       197 |
+| `verified`               |       647 |
+| `superseded`             |       198 |
 | `not-applicable`         |        13 |
 | `implemented-unverified` |         5 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       310 |
+| `unreviewed`             |       300 |
 | **Total**                | **1,163** |
 
-The ledger gives 853 items an assigned disposition. Four implemented
+The ledger gives 863 items an assigned disposition. Four implemented
 integrations still need live-service verification, and the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests. No
-currently identified item needs implementation, and 310 are unreviewed. The
+currently identified item needs implementation, and 300 are unreviewed. The
 latest refresh retains one changed-source flag: PR #1194's body changed after
-its snapshot and still needs review. The ten Batch 74 records were unchanged
+its snapshot and still needs review. The ten Batch 75 records were unchanged
 from their source snapshots before disposition. These counts describe the
-ledger, not completion of the campaign. Batch 74 is the latest completed
-review; see [validation evidence](evidence/validation-batch-74.txt).
+ledger, not completion of the campaign. Batch 75 is the latest completed
+review; see [validation evidence](evidence/validation-batch-75.md).
 
 ## Project records
 
@@ -2266,3 +2266,21 @@ The recovery CLI now enforces the same trimmed 8-character, letter-and-number pa
 Focused validation passed 396 tests across the recovery and API route suites. The full suite passed 4,269 tests with 7 skipped; type checking, lint, formatting, secret scanning, production TypeScript compilation, the Vite build, the compiled CLI usage smoke test, and release-note validation passed. Vite emitted a large-chunk advisory. No `client/src/**` files changed. Task-scoped local scratch was removed; the desktop NFS mount hung during metadata access, so no NFS scratch was created. See [Batch 74 validation evidence](evidence/validation-batch-74.txt).
 
 The ledger now records 638 verified, 197 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 310 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 75 — October 14, 2026
+
+Batch 75 reviewed issue [#868](https://github.com/Doezer/Questarr/issues/868) and PRs [#867](https://github.com/Doezer/Questarr/pull/867) and [#869–876](https://github.com/Doezer/Questarr/pull/869). The jsdom target is superseded by the current 30.1.2 lock. The qBittorrent 5.2 issue and pending-add PR are verified; the adapter now stops after its first failed status lookup and keeps the accepted add tracked by correlation tag instead of repeating a slow failing request. Existing card actions, wishlist columns, indexer links, hardlink fallback, release-state normalization, visible scrollbars, and Packs/Addons support were checked against current source, tests, and running UI evidence. All ten records were unchanged from their source snapshots.
+
+The remaining open review note on PR #876 asked to share the auto-search filtering and deduplication stages. The cron now uses one common helper for main, update, and packs candidates. Update-only installed-version filtering still happens before deduplication, and new regression coverage confirms that packs honor platform, operating-system, architecture, preferred-group, and duplicate filters. Batch 75 also added direct wishlist-column tests for persisted, malformed, and out-of-range values.
+
+The headless `npm run dev:test` smoke captured card actions, mobile actions, the wishlist column control, linked download results, Packs/Addons results, and a game-details modal. The screenshot artifacts are retained in the [Batch 75 evidence folder](evidence/batch-75/):
+
+![Desktop game-card actions](evidence/batch-75/b75-game-card-actions.png)
+
+![Wishlist grid column control](evidence/batch-75/b75-wishlist-grid-columns.png)
+
+![Download results with the indexer source link and Packs/Addons category](evidence/batch-75/b75-download-indexer-source.png)
+
+Focused validation passed 253 tests with 1 skipped across nine files. The full suite passed 4,274 tests with 7 skipped across 274 test files. TypeScript, lint, formatting, secret scanning, dependency override review, release-note validation, and a production Vite and TypeScript build passed. Vite emitted its existing large-chunk advisory. See [Batch 75 validation evidence](evidence/validation-batch-75.md) for all artifacts and checks.
+
+The ledger now records 647 verified, 198 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 300 unreviewed items. PR #1194 remains the only source-changed record. Task-scoped local scratch and the isolated test worktree were removed; the NFS share was not used. The campaign remains incomplete and must not be merged to `main`.
