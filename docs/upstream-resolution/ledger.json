@@ -1,7 +1,7 @@
 {
   "repository": "Doezer/Questarr",
-  "capturedAt": "2026-10-14T02:57:47.686Z",
-  "forkHead": "eebae07659ed4eaaec52bed54e7d7bc7c739a58a",
+  "capturedAt": "2026-10-14T03:11:16.202Z",
+  "forkHead": "9924b48c61bd8846bea72eec2b6e2b194828eb64",
   "upstreamHead": "0b538fe4b0a2269edcc8fd3e71e2bbc240291868",
   "counts": {
     "issue:CLOSED": 228,
@@ -27179,10 +27179,18 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "6bffc668b10fcccdd93c0dc3c90930e3c327a1de",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "This repository-hygiene change ignores Claude-created worktree directories. QuestarrNG already ignores .claude/worktrees/ in its root .gitignore, so transient worktree contents do not appear as untracked project files."
+        ],
+        "acceptance": [
+          "The root ignore rule covers .claude/worktrees/."
+        ],
+        "evidence": [
+          ".gitignore",
+          "https://github.com/Doezer/Questarr/pull/934",
+          "docs/upstream-resolution/evidence/validation-batch-82.md"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -27199,10 +27207,57 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
+        "status": "verified",
+        "findings": [
+          "The PR bundles eight changes. QuestarrNG has a default-deny API authentication boundary with an explicit public-route allowlist; self-signed SABnzbd TLS retry is opt-in and defaults off; xREL search is bounded to 24 seconds and carries nuke reasons through to the release UI; Newznab and Torznab capability discovery tries candidate URLs with category fallback and one overall deadline; production logging defaults to info with LOG_LEVEL override and structured secret scrubbing; IGDB edition canonicalization uses the real version_parent relationship with request headroom and serialized parent lookup; browser authentication uses httpOnly cookies, a distinct random CSRF token, bearer compatibility, and a guarded legacy-token migration; affected clients use the shared base-path-aware apiFetch helper.",
+          "The latest PR review had three unresolved threads. The StrictMode legacy-token migration and trusted-proxy cookie-secure findings are already handled in QuestarrNG. The logger finding was reproducible: Pino field formatting did not cover message text or child bindings. Commit 9924b48c adds redaction to the final serialized record and regression coverage for message, formatted message, and child-binding secrets."
+        ],
+        "acceptance": [
+          "Unlisted API routes require authentication while only the intentional public-route allowlist remains public.",
+          "Self-signed SABnzbd certificate retry remains disabled unless a user opts in.",
+          "xREL search has a finite request timeout and release nuke reasons are returned and shown.",
+          "Newznab and Torznab caps discovery falls back to game categories without multiplying the total request deadline.",
+          "Production logs default to info, LOG_LEVEL can override it, and structured fields, rendered messages, and child bindings are scrubbed before reaching log sinks.",
+          "IGDB version editions collapse only through explicit version_parent links, with request headroom for deduplication and parent requests subject to the shared limiter.",
+          "Cookie sessions are httpOnly, cookie-authenticated mutations require CSRF validation, bearer clients remain compatible, and a legacy localStorage token is migrated at most once per provider mount.",
+          "Add Game and downloads requests use the shared helper so base paths and auth headers are consistently applied."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/middleware.ts",
+          "server/auth.ts",
+          "server/security.ts",
+          "server/logger.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/xrel.ts",
+          "server/indexer-caps.ts",
+          "server/igdb.ts",
+          "shared/schema.ts",
+          "shared/xrel-types.ts",
+          "client/src/lib/auth.tsx",
+          "client/src/lib/queryClient.ts",
+          "client/src/components/AddGameModal.tsx",
+          "client/src/pages/downloads.tsx",
+          "client/src/pages/downloaders.tsx",
+          "client/src/pages/xrel-releases.tsx",
+          "server/__tests__/auth-boundary.test.ts",
+          "server/__tests__/cookie-auth-csrf.test.ts",
+          "server/__tests__/downloaders_sabnzbd_tls.test.ts",
+          "server/__tests__/xrel.test.ts",
+          "server/__tests__/newznab.test.ts",
+          "server/__tests__/indexer-caps.test.ts",
+          "server/__tests__/torznab.test.ts",
+          "server/__tests__/logger.test.ts",
+          "server/__tests__/security-redaction.test.ts",
+          "server/__tests__/igdb.test.ts",
+          "client/__tests__/DownloadersPage.test.tsx",
+          "client/__tests__/AddGameModal.test.tsx",
+          "client/__tests__/DownloadsPage.test.tsx",
+          "docs/API.md",
+          "docs/SECURITY_ASSESSMENT.md",
+          "docs/upstream-resolution/evidence/validation-batch-82.md",
+          "https://github.com/Doezer/Questarr/pull/935"
+        ],
         "dependencies": []
       },
       "sourceChangedSinceReview": false
@@ -27219,11 +27274,28 @@
       "historyEvidence": "no-merge-commit",
       "mergeCommit": null,
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "The author closed this PR with the note that its changes were already part of #935. QuestarrNG AddGameModal and downloads page both use the shared apiFetch helper, which applies the configured base path and authorization consistently."
+        ],
+        "acceptance": [
+          "Add Game IGDB search and downloads requests use the shared base-path-aware fetch helper; PR #935 carries the combined upstream change."
+        ],
+        "evidence": [
+          "client/src/components/AddGameModal.tsx",
+          "client/src/pages/downloads.tsx",
+          "client/__tests__/queryClient-base-path.test.ts",
+          "client/__tests__/app-path.test.ts",
+          "client/__tests__/AddGameModal.test.tsx",
+          "client/__tests__/DownloadsPage.test.tsx",
+          "https://github.com/Doezer/Questarr/pull/936",
+          "https://github.com/Doezer/Questarr/pull/935",
+          "docs/upstream-resolution/evidence/validation-batch-82.md"
+        ],
+        "dependencies": [
+          "pr:935",
+          "issue:925"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27239,11 +27311,27 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "51852aa9eab873b3fa62f1c2ff829e95a5b6795d",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "superseded",
+        "findings": [
+          "PR #940 explicitly supersedes this first SABnzbd Confirm Import fix. The rebase retains idempotent completed-path resolution, uses the shared path-normalization helper, adds Windows backslash-path handling, and replaces risky trailing-separator regexes. QuestarrNG has the final behavior and regression coverage."
+        ],
+        "acceptance": [
+          "SABnzbd manual confirm resolves folder and single-file history paths without duplicating the release segment, handles Windows-style incomplete paths, and remains retryable when confirmation fails."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/downloaders/utils.ts",
+          "server/__tests__/import_manager_additional.test.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
+          "https://github.com/Doezer/Questarr/pull/937",
+          "https://github.com/Doezer/Questarr/pull/940",
+          "https://github.com/Doezer/Questarr/issues/913",
+          "docs/upstream-resolution/evidence/validation-batch-82.md"
+        ],
+        "dependencies": [
+          "pr:940"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27259,11 +27347,28 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "729c7fed41e13b356c42af5029053bd5a2f7159e",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The rebased Scan Disk implementation provides a read-only recursive game-file scan with per-user ownership checks, files-only output, library-root containment checks, category inheritance, and normalization of packs to the persisted extra category. The fork also carries later scan budgets and rate limiting; PR #892 is already recorded as superseded by this rebase."
+        ],
+        "acceptance": [
+          "Scanning an owned game's library returns only contained files with normalized categories; missing or escaping paths return an empty result, access is owner-scoped, and the recursive walk respects configured file/time limits and rate limiting."
+        ],
+        "evidence": [
+          "server/routes.ts",
+          "server/library-scanner.ts",
+          "server/scan-limits.ts",
+          "server/__tests__/game_files_routes.test.ts",
+          "server/__tests__/library-scanner.test.ts",
+          "server/__tests__/scan-ratelimit.test.ts",
+          "docs/API.md",
+          "https://github.com/Doezer/Questarr/pull/938",
+          "https://github.com/Doezer/Questarr/pull/892",
+          "docs/upstream-resolution/evidence/validation-batch-82.md"
+        ],
+        "dependencies": [
+          "pr:892"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27279,11 +27384,25 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "559d3f9721f73a98e40cf05d99d5f7190825b68f",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The application sends X-Robots-Tag noindex, nofollow on responses, serves a disallow-all robots.txt, and includes a noindex meta tag in the HTML. The security assessment correctly explains that these signals do not remove already-indexed pages or replace authentication. The follow-up security-header regression is verified separately in #941."
+        ],
+        "acceptance": [
+          "All application responses carry the anti-indexing header, robots.txt disallows crawlers, the HTML has a noindex meta tag, and documentation describes the limits of crawler directives."
+        ],
+        "evidence": [
+          "server/app.ts",
+          "server/routes.ts",
+          "client/index.html",
+          "server/__tests__/security.test.ts",
+          "docs/SECURITY_ASSESSMENT.md",
+          "https://github.com/Doezer/Questarr/pull/939",
+          "docs/upstream-resolution/evidence/validation-batch-82.md"
+        ],
+        "dependencies": [
+          "pr:941"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27299,11 +27418,27 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "8430e46ae28e48785c95780715138507fd951c75",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "This PR rebases and supersedes #937. QuestarrNG uses the shared buildRemoteImportPath and stripTrailingPathSeparators helpers instead of duplicate path logic or backtracking-prone separator regexes. SABnzbd history resolution handles completed folders, single-file storage paths, and Windows backslash-delimited incomplete paths."
+        ],
+        "acceptance": [
+          "Manual-confirm paths avoid duplicate release suffixes, completed folder and single-file history paths resolve correctly, Windows separators are handled, and path normalization avoids the flagged super-linear regex behavior."
+        ],
+        "evidence": [
+          "server/services/ImportManager.ts",
+          "server/downloaders/sabnzbd.ts",
+          "server/downloaders/utils.ts",
+          "server/__tests__/import_manager_additional.test.ts",
+          "server/__tests__/downloaders_sabnzbd_remaining.test.ts",
+          "server/__tests__/downloaders_utils_manager.test.ts",
+          "https://github.com/Doezer/Questarr/pull/940",
+          "https://github.com/Doezer/Questarr/pull/937",
+          "docs/upstream-resolution/evidence/validation-batch-82.md"
+        ],
+        "dependencies": [
+          "pr:937"
+        ]
       },
       "sourceChangedSinceReview": false
     },
@@ -27319,11 +27454,24 @@
       "historyEvidence": "merge-commit-in-fork-history",
       "mergeCommit": "5a560f09cf4fa30b0c5e19eee7a1238e37764489",
       "review": {
-        "status": "unreviewed",
-        "findings": [],
-        "acceptance": [],
-        "evidence": [],
-        "dependencies": []
+        "status": "verified",
+        "findings": [
+          "The robots.txt response route is registered in routes.ts after Helmet middleware, so it receives the application's security headers; the early X-Robots-Tag middleware remains in app.ts to cover earlier error responses. The single upstream inline review thread is resolved."
+        ],
+        "acceptance": [
+          "robots.txt keeps the disallow-all response and receives configured Helmet security headers, including X-Content-Type-Options nosniff; early responses still receive the X-Robots-Tag header."
+        ],
+        "evidence": [
+          "server/app.ts",
+          "server/routes.ts",
+          "server/__tests__/security.test.ts",
+          "https://github.com/Doezer/Questarr/pull/941",
+          "https://github.com/Doezer/Questarr/pull/939",
+          "docs/upstream-resolution/evidence/validation-batch-82.md"
+        ],
+        "dependencies": [
+          "pr:939"
+        ]
       },
       "sourceChangedSinceReview": false
     },

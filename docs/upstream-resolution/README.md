@@ -22,31 +22,31 @@ The live audit refreshed upstream main
 `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` and confirmed 232 issues and 931
 pull requests. The sanitized source list and inventory were regenerated from
 the live GitHub audit on October 14, 2026. The ledger's `capturedAt` is
-02:57:47 UTC; it records generation time, not an individual GitHub request
-timestamp. After Batch 81's source review, the ledger and generated inventory
-preserved prior dispositions and recorded all eight Batch 81 dispositions.
+03:11:16 UTC; it records generation time, not an individual GitHub request
+timestamp. After Batch 82's source review, the ledger and generated inventory
+preserved prior dispositions and recorded all eight Batch 82 dispositions.
 Review status is independent of GitHub's open, closed, or merged state.
 
 | Review status            |     Items |
 | ------------------------ | --------: |
-| `verified`               |       677 |
-| `superseded`             |       221 |
+| `verified`               |       683 |
+| `superseded`             |       223 |
 | `not-applicable`         |        14 |
 | `implemented-unverified` |         6 |
 | `needs-implementation`   |         0 |
-| `unreviewed`             |       245 |
+| `unreviewed`             |       237 |
 | **Total**                | **1,163** |
 
-The ledger gives 918 items an assigned disposition. Four implemented
+The ledger gives 926 items an assigned disposition. Four implemented
 integrations still need live-service verification, the DCO workflow needs
 maintainer rollout before it can enforce sign-off on pull requests, and PR #933
 still needs an Inno Setup build plus Windows installation and service-lifecycle
-verification. No currently identified item needs implementation, and 245 are
+verification. No currently identified item needs implementation, and 237 are
 unreviewed. The latest refresh retains one changed-source flag: PR #1194's body
-changed after its snapshot and still needs review. All eight Batch 81 records
+changed after its snapshot and still needs review. All eight Batch 82 records
 were unchanged from their source snapshots before disposition. These counts
-describe the ledger, not completion of the campaign. Batch 81 is the latest
-completed review; see [validation evidence](evidence/validation-batch-81.md).
+describe the ledger, not completion of the campaign. Batch 82 is the latest
+completed review; see [validation evidence](evidence/validation-batch-82.md).
 
 ## Project records
 
@@ -2338,3 +2338,13 @@ Batch 81 reviewed PRs [#926](https://github.com/Doezer/Questarr/pull/926)–[#93
 The batch verified qBittorrent 5.2+ torrent-file upload responses, scrubbed opt-in downloader diagnostics, the expanded Logs history, review fixes for diagnostics, the error-report issue URL, import mode reporting, and the three import/download fixes. The #932 port retains owner-scoped relinking and conditional state updates for QuestarrNG's multi-user model. Focused validation passed 829 tests across 18 files with no skips; TypeScript, lint, formatting, and secret scanning passed. The Windows service compiled for win-x64 with zero warnings and errors, but that does not verify the Inno Setup installer or its Windows lifecycle. No application source changed in this batch, so the production build and running-UI evidence were not repeated. See [Batch 81 validation evidence](evidence/validation-batch-81.md).
 
 The ledger now records 677 verified, 221 superseded, 14 not applicable, 6 implemented-unverified, 0 needs-implementation, and 245 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.
+
+## Batch 82 — October 14, 2026
+
+Batch 82 reviewed PRs [#934](https://github.com/Doezer/Questarr/pull/934)–[#941](https://github.com/Doezer/Questarr/pull/941). All eight source digests matched the refreshed snapshot. Six records are verified; #936 was superseded because its API-fetch changes were already included in #935, and #937 was superseded by the later path-safety PR #940.
+
+Review of #935 found a real secret-redaction gap in the logger: Pino's structured-field formatter did not see the final interpolated message or child-logger bindings. The fix in [logger.ts](../../server/logger.ts) applies the existing recursive/text redaction policy to the completed serialized record, and regression tests cover both message formatting and child bindings. The security assessment now documents the protection and its limits. The batch also verified the existing ignore rule, default-deny API boundary, cookie/CSRF auth, xREL timeout and nuke reason, bounded indexer capability discovery, IGDB edition canonicalization, root-folder scanning, and crawler protections.
+
+Focused validation passed 585 tests across 29 Vitest files with no skips. TypeScript checking, lint, formatting, secret scanning, and the production build passed; the build reported only the existing large-chunk advisory. No `client/src/**` files changed, so running-UI screenshot evidence was not applicable. The task-scoped build scratch directory was removed and the pre-existing `dist/` directory restored. See [Batch 82 validation evidence](evidence/validation-batch-82.md).
+
+The ledger now records 683 verified, 223 superseded, 14 not applicable, 6 implemented-unverified, 0 needs-implementation, and 237 unreviewed items. PR #1194 remains the only source-changed record. The campaign remains incomplete and must not be merged to `main`.

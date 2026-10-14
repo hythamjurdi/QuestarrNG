@@ -70,6 +70,21 @@ revalidates each redirect with the same policy. This preserves self-hosted
 Prowlarr downloads without allowing arbitrary bundle URLs to reach internal
 services.
 
+## Log secret redaction
+
+The server logger applies the shared secret-redaction policy to structured log
+fields and then to the completed serialized record. That second pass includes
+the final interpolated message and child-logger bindings, which are not visible
+to Pino's structured-field formatter. The redacted record is used by the file,
+stdout, and live-log outputs. If a record cannot be parsed as JSON, the logger
+falls back to the text redactor. Regression tests cover secrets in structured
+fields, raw and formatted messages, and child bindings. This catches common
+credential-shaped values and keys; callers should still avoid putting secrets
+in logs because redaction patterns cannot guarantee detection of every secret.
+
+Implementation: `server/logger.ts`, `server/security.ts`, and
+`shared/log-scrub.ts`; regression coverage: `server/__tests__/logger.test.ts`.
+
 ## CI test execution and secret boundaries
 
 Pull-request validation executes candidate code, so candidate-controlled
