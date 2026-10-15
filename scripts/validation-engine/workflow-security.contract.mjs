@@ -169,7 +169,9 @@ test('manual Discord release announcements require the main-only protected envir
   assert.doesNotMatch(announceJob, /startsWith\(github\.ref, 'refs\/tags\/v'\)/u);
   assert.match(announceJob, /environment:\n\s+name: discord-release/u);
   assert.match(announceJob, /DISCORD_WEBHOOK: \$\{\{ secrets\.DISCORD_WEBHOOK \}\}/u);
-  assert.match(announceJob, /Discord announcement skipped because discord-release has no webhook secret/u);
+  assert.ok(announceJob.includes('test -n "$DISCORD_WEBHOOK"'));
+  assert.ok(announceJob.includes('DISCORD_WEBHOOK is required in the discord-release environment.'));
+  assert.doesNotMatch(announceJob, /Discord announcement skipped because discord-release has no webhook secret/u);
 });
 
 test('tag Discord announcements use the trusted default-branch workflow', () => {
@@ -184,12 +186,15 @@ test('tag Discord announcements use the trusted default-branch workflow', () => 
   assert.match(trustedDiscordWorkflow, /workflow_run\.conclusion == 'success'/u);
   assert.match(trustedDiscordWorkflow, /environment:\n\s+name: discord-release/u);
   assert.match(trustedDiscordWorkflow, /DISCORD_WEBHOOK: \$\{\{ secrets\.DISCORD_WEBHOOK \}\}/u);
+  assert.ok(trustedDiscordWorkflow.includes('test -n "$DISCORD_WEBHOOK"'));
+  assert.ok(trustedDiscordWorkflow.includes('DISCORD_WEBHOOK is required in the discord-release environment.'));
   assert.match(trustedDiscordWorkflow, /TAG: \$\{\{ github\.event\.workflow_run\.head_branch \}\}/u);
   assert.match(trustedDiscordWorkflow, /ref: \$\{\{ github\.sha \}\}/u);
   assert.match(trustedDiscordWorkflow, /persist-credentials: false/u);
   assert.match(trustedDiscordWorkflow, /permissions:\n\x20{2}contents:\x20read/u);
   assert.doesNotMatch(trustedDiscordWorkflow, /pull_request(?:_target)?\s*:/u);
   assert.doesNotMatch(trustedDiscordWorkflow, /secrets\.DISCORD_RELEASE_WEBHOOK/u);
+  assert.doesNotMatch(trustedDiscordWorkflow, /Discord announcement skipped because discord-release has no webhook secret/u);
 });
 
 test('production image releases require a version-tag push', () => {

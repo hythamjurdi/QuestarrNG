@@ -117,15 +117,13 @@ to development and test channels, with reserved production and version tags
 rejected by the workflow contract.
 
 GitHub exposes repository secrets to every workflow in the repository, so the
-release webhook must not remain repository-scoped. The announcement jobs use
-the `discord-release` environment, restricted to `main`, and read a separately
-named `DISCORD_WEBHOOK` environment secret. Tag announcements run in a
-default-branch `workflow_run` workflow only after the trusted image workflow
-succeeds. Create a replacement
-webhook in that environment, then delete the repository-level
-`DISCORD_RELEASE_WEBHOOK`; GitHub does not reveal the stored secret's value for
-transfer. Until the repository secret is removed, same-repository
-pull-request workflows can still reference it.
+release webhook must not be repository-scoped. The announcement jobs use the
+`discord-release` environment, restricted to `main`, and read the
+`DISCORD_WEBHOOK` environment secret. Tag announcements run in a default-branch
+`workflow_run` workflow only after the trusted image workflow succeeds. The
+former repository-level `DISCORD_RELEASE_WEBHOOK` has been removed, preventing
+same-repository pull-request workflows from reading the release webhook. Both
+announcement paths fail if the environment secret is missing.
 
 ## Account security controls
 
