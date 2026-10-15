@@ -108,6 +108,8 @@ checksum. Compose, Home Assistant, CasaOS, Cosmos, Umbrel, Unraid, and Helm
 deploy the GHCR image; the tag gate checks their version metadata against
 `package.json`. The Home Assistant add-on smoke build also runs against the
 release image. The Proxmox LXC installer builds QuestarrNG from source.
+The `linux/amd64` and `linux/arm64` images build on native GitHub-hosted
+runners, and the validated package version is written to the OCI image label.
 
 The release workflow verifies both packages and checksums after the container
 scans and smoke tests pass, uploads all four files to a draft GitHub release,

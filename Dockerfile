@@ -48,6 +48,7 @@ RUN npm run build
 
 # Production stage
 FROM node:26-alpine@sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019 AS production
+ARG QUESTARR_VERSION=dev
 
 WORKDIR /app
 
@@ -121,4 +122,4 @@ LABEL org.opencontainers.image.description="QuestarrNG game discovery and acquis
 LABEL org.opencontainers.image.authors="Doezer and Snapetech contributors"
 LABEL org.opencontainers.image.source="https://github.com/snapetech-org/QuestarrNG"
 LABEL org.opencontainers.image.licenses="GPL-3.0-only"
-LABEL org.opencontainers.image.version="1.11.0"
+LABEL org.opencontainers.image.version="${QUESTARR_VERSION}"
