@@ -100,6 +100,28 @@ jobs:
         shell: pwsh
         run: choco install innosetup --version=6.7.1 --no-progress -y
 
+      # better-sqlite3 compiles natively when npm ci runs. The project-pinned
+      # node-gyp 12 dependency recognizes the Visual Studio 18 toolchain here;
+      # npm's bundled node-gyp 11.5 does not. Older release tags predate that
+      # dependency, so add the same exact version to their lockfile for recovery.
+      - name: Ensure VS 18 compatible node-gyp for legacy tags
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $package = Get-Content package.json | ConvertFrom-Json
+          if (-not $package.devDependencies.'node-gyp') {
+            npm install --package-lock-only --ignore-scripts --no-audit --save-dev --save-exact 'node-gyp@12.4.0'
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not add the pinned node-gyp to this legacy release."
+            }
+          }
+
+          $lock = Get-Content package-lock.json | ConvertFrom-Json
+          $lockedVersion = [version]$lock.packages.'node_modules/node-gyp'.version
+          if ($lockedVersion -lt [version]'12.1.0') {
+            throw "node-gyp $lockedVersion does not support the Visual Studio 18 toolchain."
+          }
+
       - name: Install dependencies
         run: npm ci
 
