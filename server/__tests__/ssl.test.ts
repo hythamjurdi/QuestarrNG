@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import path from "path";
 import forge from "node-forge";
-import { generateSelfSignedCert, validateCertFiles, getCertInfo } from "../ssl";
+import {
+  createHttpsServerOptions,
+  generateSelfSignedCert,
+  validateCertFiles,
+  getCertInfo,
+} from "../ssl";
 
 // Define hoisted mocks
 const mocks = vi.hoisted(() => ({
@@ -34,6 +39,15 @@ vi.mock("tls", () => ({
 }));
 
 describe("SSL Module", () => {
+  it("requires TLS 1.2 or newer for the built-in HTTPS listener", () => {
+    const options = createHttpsServerOptions(
+      Buffer.from("private key"),
+      Buffer.from("certificate")
+    );
+
+    expect(options.minVersion).toBe("TLSv1.2");
+  });
+
   beforeEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();

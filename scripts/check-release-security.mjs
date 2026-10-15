@@ -17,6 +17,7 @@ export const REQUIRED_CHECKS = [
   "Analyze (javascript-typescript)",
   "Analyze (csharp)",
   "Analyze (actions)",
+  "Analyze (cpp)",
   "semgrep",
   "Playwright e2e",
   "OWASP ZAP baseline scan",
@@ -29,6 +30,7 @@ export const REQUIRED_CODE_ANALYSES = [
   { tool: "CodeQL", category: "/language:csharp" },
   { tool: "CodeQL", category: "/language:javascript-typescript" },
   { tool: "CodeQL", category: "/language:actions" },
+  { tool: "CodeQL", category: "/language:cpp" },
   { tool: "Semgrep OSS", category: ".github/workflows/sast.yml:semgrep" },
 ];
 

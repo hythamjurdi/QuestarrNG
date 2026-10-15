@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef QUESTARR_DATA_DIR
+#define QUESTARR_DATA_DIR "/data"
+#endif
+
 static uid_t target_uid;
 static gid_t target_gid;
 
@@ -60,7 +64,7 @@ int main(int argc, char **argv) {
   target_uid = (uid_t)uid;
   target_gid = (gid_t)gid;
 
-  if (nftw("/data", set_data_owner, 32, FTW_PHYS) != 0) {
+  if (nftw(QUESTARR_DATA_DIR, set_data_owner, 32, FTW_PHYS) != 0) {
     fprintf(stderr, "Cannot walk the Home Assistant /data volume: %s\n", strerror(errno));
     return 1;
   }
