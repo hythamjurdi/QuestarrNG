@@ -775,9 +775,11 @@ export default function SearchPage() {
                   <InterfaceText source={"No Results Found"} />
                 </p>
                 <p className="text-sm mt-1">
-                  {dateFrom || dateTo
-                    ? "No releases match the selected date range. Try adjusting the filter."
-                    : "Try adjusting your search terms or check if your indexers are properly configured."}
+                  {dateFrom || dateTo ? (
+                    <InterfaceText source="No releases match the selected date range. Try adjusting the filter." />
+                  ) : (
+                    <InterfaceText source="Try adjusting your search terms or check if your indexers are properly configured." />
+                  )}
                 </p>
                 {!!(dateFrom || dateTo) && hasNextPage && (
                   <Button

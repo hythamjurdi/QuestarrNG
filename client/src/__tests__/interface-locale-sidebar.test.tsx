@@ -42,6 +42,10 @@ describe("AppSidebar translated labels", () => {
     expect(libraryButton).toHaveAttribute("dir", "rtl");
     expect(translatedLabel).toHaveAttribute("lang", "ar");
     expect(translatedLabel).toHaveAttribute("dir", "rtl");
+
+    const libraryImport = screen.getByText("استيراد المكتبة");
+    expect(libraryImport).toHaveAttribute("lang", "ar");
+    expect(libraryImport).toHaveAttribute("dir", "rtl");
   });
 
   it("places the desktop sidebar on the right for Arabic and the left for English", () => {
