@@ -567,6 +567,6 @@ test('Dependabot groups NuGet and Docker minor/patch updates without grouping ma
     dependabot.updates
       .filter((entry) => entry['package-ecosystem'] === 'docker')
       .map((entry) => entry.directory),
-    ['/', '/questarr'],
+    ['/', '/questarr', '/casaos', '/doezer-questarr'],
   );
 });
