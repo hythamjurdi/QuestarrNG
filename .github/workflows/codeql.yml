@@ -80,6 +80,7 @@ jobs:
         if: matrix.language == 'cpp'
         env:
           REQUIRE_SANITIZER_TOOLCHAIN: "1"
+          LD_PRELOAD: ""
         run: node --test scripts/validation-engine/data-owner-sanitizers.contract.mjs
 
       - name: Perform CodeQL Analysis
