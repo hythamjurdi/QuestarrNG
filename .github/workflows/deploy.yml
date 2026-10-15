@@ -192,6 +192,7 @@ jobs:
         uses: step-security/docker-build-push-action@b736dc8a921e02a288f956d3dd9111e276a4cfec # v7.4.0
         with:
           context: .
+          build-args: QUESTARR_VERSION=${{ steps.package_version.outputs.version }}
           # Dev/test stay amd64-only (and fast) unless build_arm64 is explicitly
           # requested. Version-tagged production releases use fork-image.yml.
           platforms: ${{ steps.arch.outputs.multiarch_enabled == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
@@ -389,4 +390,4 @@ jobs:
     uses: ./.github/workflows/windows-installer.yml
     with:
       source_ref: ${{ github.sha }}
-      release_tag: ''
+      release_tag: ""

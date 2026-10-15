@@ -83,24 +83,52 @@ describe("release image manifest verification", () => {
     }
   });
 
-  it("labels the published image with the organization repository source", () => {
+  it("labels the published image with its build version and organization repository source", () => {
     const dockerfile = readFileSync(resolve(cwd(), "Dockerfile"), "utf8");
     const sourceLabel = dockerfile.match(/^LABEL org\.opencontainers\.image\.source="([^"]+)"$/mu);
+    const versionLabel = dockerfile.match(
+      /^LABEL org\.opencontainers\.image\.version="([^"]+)"$/mu
+    );
 
     expect(sourceLabel?.[1]).toBe("https://github.com/snapetech-org/QuestarrNG");
+    expect(dockerfile).toContain("ARG QUESTARR_VERSION=dev");
+    expect(versionLabel?.[1]).toBe("${QUESTARR_VERSION}");
   });
 
-  it("scans both exact platform digests before attaching release aliases", () => {
+  it("builds each release architecture natively and scans both exact digests before aliases", () => {
     const workflow = load(readFileSync(resolve(cwd(), ".github/workflows/fork-image.yml"), "utf8"));
+    const security = workflow.jobs["release-security"];
+    const platformBuild = workflow.jobs["build-source-image"];
+    const nativeRunners = platformBuild.strategy.matrix.include.map((entry) => entry.runner);
+    expect(platformBuild.needs).toBe("release-security");
+    expect(nativeRunners).toContain("ubuntu-24.04");
+    expect(nativeRunners).toContain("ubuntu-24.04-arm");
+    expect(
+      platformBuild.steps.some((step) => step.uses?.startsWith("step-security/setup-qemu-action@"))
+    ).toBe(false);
+    const platformBuildStep = platformBuild.steps.find((step) => step.id === "build-image");
+    expect(platformBuildStep.with.platforms).toBe("${{ matrix.platform }}");
+    expect(platformBuildStep.with.outputs).toContain("push-by-digest=true");
+    expect(platformBuildStep.with["build-args"]).toBe(
+      "QUESTARR_VERSION=${{ needs.release-security.outputs.version }}"
+    );
+    expect(
+      security.steps.some(
+        (step) => step.name === "Require clean security before building versioned images"
+      )
+    ).toBe(true);
+
     const steps = workflow.jobs.publish.steps;
     const tagsStep = steps.find((step) => step.id === "tags");
-    const buildIndex = steps.findIndex((step) => step.id === "build-image");
+    const buildIndex = steps.findIndex((step) => step.id === "publish-image");
     const verifyIndex = steps.findIndex((step) => step.id === "verify-image");
     const scanSteps = steps.filter((step) => step.name?.startsWith("Scan the verified linux/"));
     expect(tagsStep.run).toContain("node scripts/fork-image-tags.mjs");
     expect(tagsStep.run).not.toContain("$IMAGE:latest");
     expect(tagsStep.run).not.toContain("$IMAGE:${GITHUB_REF_NAME#v}");
-    expect(steps[buildIndex].with.tags).toBe("${{ steps.tags.outputs.tags }}");
+    expect(steps[buildIndex].run).toContain("docker buildx imagetools create");
+    expect(steps[buildIndex].run).toContain("digest-amd64");
+    expect(steps[buildIndex].run).toContain("digest-arm64");
     expect(verifyIndex).toBeGreaterThan(buildIndex);
     expect(scanSteps).toHaveLength(2);
     const scanByPlatform = Object.fromEntries(

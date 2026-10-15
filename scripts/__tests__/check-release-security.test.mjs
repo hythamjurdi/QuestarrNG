@@ -23,7 +23,11 @@ describe("release security gate", () => {
     const gates = Object.entries(workflow.jobs).filter(([, job]) =>
       job.steps?.some((step) => step.run?.includes("node scripts/check-release-security.mjs"))
     );
-    expect(gates.map(([name]) => name)).toEqual(["publish", "release", "finalize-release"]);
+    expect(gates.map(([name]) => name)).toEqual([
+      "release-security",
+      "release",
+      "finalize-release",
+    ]);
     for (const [, job] of gates) {
       expect(job.permissions).toMatchObject({
         checks: "read",

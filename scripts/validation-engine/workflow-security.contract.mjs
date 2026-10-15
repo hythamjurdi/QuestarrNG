@@ -220,10 +220,20 @@ test('production image releases require a version-tag push', () => {
     /github\.event_name == 'push' && startsWith\(github\.ref, 'refs\/tags\/v'\)/u
   );
   assert.doesNotMatch(imageWorkflow.jobs.publish.if, /workflow_dispatch/u);
+  assert.match(
+    imageWorkflow.jobs['release-security'].if,
+    /github\.event_name == 'push' && startsWith\(github\.ref, 'refs\/tags\/v'\)/u
+  );
+  assert.match(
+    imageWorkflow.jobs['build-source-image'].if,
+    /github\.event_name == 'push' && startsWith\(github\.ref, 'refs\/tags\/v'\)/u
+  );
+  assert.equal(imageWorkflow.jobs['build-source-image'].needs, 'release-security');
+  assert.deepEqual(imageWorkflow.jobs.publish.needs, ['release-security', 'build-source-image']);
   assert.match(imageWorkflow.jobs.release.if, /startsWith\(github\.ref, 'refs\/tags\/v'\)/u);
   const publishJob = jobBlock(releaseWorkflow, 'publish', 'addon-smoke');
   const imageTagsStart = publishJob.indexOf('- name: Set image tags');
-  const imageTagsEnd = publishJob.indexOf('- name: Set up QEMU for ARM64 release images', imageTagsStart);
+  const imageTagsEnd = publishJob.indexOf('- name: Set up Docker Buildx', imageTagsStart);
   assert.ok(imageTagsStart >= 0 && imageTagsEnd > imageTagsStart);
   const imageTagsStep = publishJob.slice(imageTagsStart, imageTagsEnd);
   assert.match(imageTagsStep, /refs\/tags\/v\*/u);
@@ -325,10 +335,12 @@ test('version-tag releases include verified Windows and Helm assets before publi
 test('release publishing and announcements are gated to QuestarrNG by stable repository ID', () => {
   assert.equal(
     (releaseWorkflow.match(/github\.repository_id == '1388297896'/gu) ?? []).length,
-    6,
+    8,
     'release and recovery jobs use the stable repository ID'
   );
   for (const [name, nextName] of [
+    ['release-security', 'build-source-image'],
+    ['build-source-image', 'publish'],
     ['publish', 'addon-smoke'],
     ['addon-smoke', 'build-windows-installer'],
     ['build-windows-installer', 'release'],
