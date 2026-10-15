@@ -344,9 +344,12 @@ export default function SettingsPage() {
     queryKey: ["/api/auth/me"],
   });
 
-  const { data: blacklistEntries, isLoading: blacklistLoading } = useQuery<
-    (ReleaseBlacklist & { gameTitle: string })[]
-  >({
+  const {
+    data: blacklistEntries,
+    isLoading: blacklistLoading,
+    isError: blacklistError,
+    refetch: refetchBlacklist,
+  } = useQuery<(ReleaseBlacklist & { gameTitle: string })[]>({
     queryKey: ["/api/blacklist"],
   });
 
@@ -1856,6 +1859,15 @@ export default function SettingsPage() {
                 {blacklistLoading ? (
                   <div className="text-sm text-muted-foreground">
                     <InterfaceText source={"Loading..."} />
+                  </div>
+                ) : blacklistError ? (
+                  <div className="flex items-center gap-3 text-sm text-destructive">
+                    <span>
+                      <InterfaceText source={"Could not load blacklisted releases."} />
+                    </span>
+                    <Button variant="outline" size="sm" onClick={() => refetchBlacklist()}>
+                      <InterfaceText source={"Retry"} />
+                    </Button>
                   </div>
                 ) : !Array.isArray(blacklistEntries) || blacklistEntries.length === 0 ? (
                   <div className="text-sm text-muted-foreground">

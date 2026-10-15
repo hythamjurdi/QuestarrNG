@@ -32,7 +32,9 @@ test.describe("Settings organization", () => {
     await page.reload();
     await page.getByRole("tab", { name: "Platforms", exact: true }).click();
     await expect(
-      page.getByRole("tabpanel", { name: "Platforms" }).getByRole("checkbox", { name: "Wii U", exact: true })
+      page
+        .getByRole("tabpanel", { name: "Platforms" })
+        .getByRole("checkbox", { name: "Wii U", exact: true })
     ).toBeChecked();
   });
 
@@ -52,7 +54,7 @@ test.describe("Settings organization", () => {
     });
     let allowBlacklistRetry = false;
     let removed = false;
-    await page.route("/api/blacklist", (route) => {
+    await page.route("**/api/blacklist**", (route) => {
       if (!allowBlacklistRetry) {
         return route.fulfill({ status: 500, json: { error: "Fixture failure" } });
       }

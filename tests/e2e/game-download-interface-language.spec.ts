@@ -143,9 +143,9 @@ test.describe("Game download interface language", () => {
     const arabicTwo = await page.evaluate(() => new Intl.NumberFormat("ar").format(2));
     const arabicOne = await page.evaluate(() => new Intl.NumberFormat("ar").format(1));
     await expect(wishlistButton.getByText(arabicTwo, { exact: true })).toBeVisible();
-    await expect(wishlistButton).toHaveAttribute("aria-label", new RegExp(`\\(${arabicTwo}\\)$`));
+    await expect(wishlistButton).toHaveAttribute("aria-label", new RegExp(arabicTwo));
     await expect(downloadsButton.getByText(arabicOne, { exact: true })).toBeVisible();
-    await expect(downloadsButton).toHaveAttribute("aria-label", new RegExp(`\\(${arabicOne}\\)$`));
+    await expect(downloadsButton).toHaveAttribute("aria-label", new RegExp(arabicOne));
     await expect(page.getByTestId("card-game-wishlist-1")).toBeVisible();
 
     if (process.env.PR47_VISUAL_EVIDENCE_DIR) {

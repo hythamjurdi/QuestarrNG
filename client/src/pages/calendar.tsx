@@ -1,5 +1,6 @@
 import {
   formatRegionalNumber,
+  getRegionalDirection as getLocaleDirection,
   getRegionalLocale,
   getRegionalWeekStartsOn,
   useRegionalPreference,
