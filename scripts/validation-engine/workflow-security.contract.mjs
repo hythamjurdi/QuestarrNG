@@ -34,6 +34,12 @@ const deployWorkflow = readFileSync(
   fileURLToPath(new URL('deploy.yml', workflowDirectory)),
   'utf8'
 );
+const projectPackage = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8')
+);
+const projectLock = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../package-lock.json', import.meta.url)), 'utf8')
+);
 const readme = readFileSync(fileURLToPath(new URL('../../README.md', import.meta.url)), 'utf8');
 const imageReferenceFiles = [
   'README.md',
@@ -65,6 +71,23 @@ function jobBlock(workflow, name, nextName) {
   if (nextName) assert.notEqual(end, -1, `${name} job has a bounded section`);
   return workflow.slice(start, end);
 }
+
+test('Windows native installs use the project-locked Visual Studio 18 compatible node-gyp', () => {
+  const declaredRange = projectPackage.devDependencies['node-gyp'];
+  const lockedRange = projectLock.packages[''].devDependencies['node-gyp'];
+  const lockedVersion = projectLock.packages['node_modules/node-gyp'].version;
+  const [major, minor] = lockedVersion.split('.').map(Number);
+
+  assert.equal(lockedRange, declaredRange);
+  assert.ok(
+    major > 12 || (major === 12 && minor >= 1),
+    `node-gyp ${lockedVersion} must support the Visual Studio 18 toolchain`
+  );
+  assert.match(
+    windowsInstallerWorkflow,
+    /name: Ensure VS 18 compatible node-gyp for legacy tags[\s\S]*?npm install --package-lock-only --ignore-scripts --no-audit --save-dev --save-exact 'node-gyp@12\.4\.0'[\s\S]*?name: Install dependencies[\s\S]*?run: npm ci/u
+  );
+});
 
 test('pull-request CI never receives the Codecov secret', () => {
   assert.doesNotMatch(ciWorkflow, /secrets\.CODECOV_TOKEN/u);
