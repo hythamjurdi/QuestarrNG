@@ -163,6 +163,8 @@ See [docs/DATABASE.md](docs/DATABASE.md) before configuring PostgreSQL.
 The optional Windows installer runs QuestarrNG as a Windows service and bundles
 its service host as a self-contained .NET 10 LTS executable. QuestarrNG itself is
 a Node.js application; the installer does not require a separate .NET runtime.
+Version-tag releases include the Windows x64 installer and a SHA-256
+checksum on the GitHub release page.
 
 **Supported architectures:** released QuestarrNG Docker images are published for
 `linux/amd64` and `linux/arm64`, so the app runs on a Raspberry Pi 4/5 with a
@@ -399,8 +401,9 @@ PUID/PGID, update the template's **Extra Parameters** `--user` value to match.
 <details>
 <summary><b>Install with the bundled Helm chart</b></summary>
 
-A Helm chart lives in [`charts/questarr`](charts/questarr). It is not published to a Helm
-repository yet, so install it from a clone:
+A Helm chart lives in [`charts/questarr`](charts/questarr). Each version-tag
+release attaches a packaged chart and SHA-256 checksum to its GitHub release.
+There is no Helm repository yet; you can install from a repository clone:
 
 ```bash
 git clone https://github.com/snapetech-org/QuestarrNG.git

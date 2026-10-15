@@ -22,6 +22,10 @@ const releaseWorkflow = readFileSync(
   fileURLToPath(new URL('fork-image.yml', workflowDirectory)),
   'utf8'
 );
+const windowsInstallerWorkflow = readFileSync(
+  fileURLToPath(new URL('windows-installer.yml', workflowDirectory)),
+  'utf8'
+);
 const trustedDiscordWorkflow = readFileSync(
   fileURLToPath(new URL('trusted-discord-release-announcement.yml', workflowDirectory)),
   'utf8'
@@ -44,6 +48,7 @@ const imageReferenceFiles = [
   'charts/questarr/README.md',
   'docs/HOME_SERVER_APPS.md',
   'docs/REVERSE_PROXY.md',
+  'docs/QUICKSTART.md',
   'docs/SBOM.md',
   'docs/VEX.md',
   'scripts/__tests__/verify-release-image-manifest.test.mjs',
@@ -180,9 +185,14 @@ test('production image releases require a version-tag push', () => {
   assert.match(imageTagsStep, /Production image publication requires a version tag push/u);
   assert.doesNotMatch(imageTagsStep, /release_tag=latest/u);
   const smokeIndex = publishJob.indexOf('Smoke test published image and SeerrNG route');
-  const attachIndex = publishJob.indexOf('Attach publish tag after scans and smoke test pass');
-  assert.ok(smokeIndex >= 0 && attachIndex > smokeIndex);
-  assert.match(publishJob.slice(attachIndex), /for tag in "\$RELEASE_TAG" latest/u);
+  assert.ok(smokeIndex >= 0);
+  assert.doesNotMatch(publishJob, /Attach publish tag/u);
+  const releaseJob = jobBlock(releaseWorkflow, 'release', 'update-changelog');
+  const assetsVerified = releaseJob.indexOf('name: Verify draft release assets');
+  const attachIndex = releaseJob.indexOf('Attach versioned GHCR tags after all release assets pass');
+  const publishIndex = releaseJob.indexOf('name: Publish verified GitHub release');
+  assert.ok(assetsVerified >= 0 && attachIndex > assetsVerified && publishIndex > attachIndex);
+  assert.match(releaseJob.slice(attachIndex), /for tag in "\$VERSION" latest/u);
 
   const deployConfig = load(deployWorkflow);
   assert.deepEqual(deployConfig.on.workflow_dispatch.inputs.environment.options, ['dev', 'test']);
@@ -202,15 +212,60 @@ test('production image releases require a version-tag push', () => {
   assert.match(metadata.with.tags, /inputs\.tag != ''/u);
 });
 
+test('version-tag releases include verified Windows and Helm assets before publication', () => {
+  const workflow = load(releaseWorkflow);
+  const installerJob = workflow.jobs['build-windows-installer'];
+  assert.equal(installerJob.uses, './.github/workflows/windows-installer.yml');
+  assert.deepEqual(installerJob.needs, ['publish', 'addon-smoke']);
+  assert.match(installerJob.if, /github\.event_name == 'push'.*refs\/tags\/v/u);
+  assert.deepEqual(workflow.jobs.release.needs, [
+    'publish',
+    'addon-smoke',
+    'build-windows-installer'
+  ]);
+
+  const release = jobBlock(releaseWorkflow, 'release', 'update-changelog');
+  assert.match(release, /draft: true[\s\S]*files: release-assets\/\*/u);
+  const verifyDraft = release.indexOf('name: Verify draft release assets');
+  const publishRelease = release.indexOf('name: Publish verified GitHub release');
+  const verifyPublished = release.indexOf('name: Verify published release assets');
+  assert.ok(verifyDraft >= 0 && publishRelease > verifyDraft && verifyPublished > publishRelease);
+  assert.match(release, /sha256sum -c/u);
+  assert.match(release, /Package versioned Helm chart/u);
+  assert.match(release, /\$chart, \(\$chart \+ "\.sha256"\)/u);
+
+  assert.match(windowsInstallerWorkflow, /workflow_call:[\s\S]*workflow_dispatch:/u);
+  assert.match(windowsInstallerWorkflow, /release tag and main ancestry/iu);
+  assert.match(windowsInstallerWorkflow, /inputs\.release_tag == '' \|\| github\.ref == 'refs\/heads\/main'/u);
+  assert.match(windowsInstallerWorkflow, /Verify existing published release before recovery build/u);
+  assert.match(windowsInstallerWorkflow, /attach-release-assets:[\s\S]*?contents: write/u);
+  assert.match(windowsInstallerWorkflow, /Attach installer and checksum/u);
+  assert.match(windowsInstallerWorkflow, /Package Helm chart from the release tag/u);
+  assert.match(windowsInstallerWorkflow, /index\(\$chart \+ "\.sha256"\)/u);
+  assert.match(windowsInstallerWorkflow, /name: Build Windows x64 installer[\s\S]*?permissions:\n\s+contents: read/u);
+  assert.match(releaseWorkflow, /Home Assistant, Helm, CasaOS, and Umbrel versions must match package\.json/u);
+  assert.match(releaseWorkflow, /Download verified Windows assets from the failed release run/u);
+  assert.match(releaseWorkflow, /Create recovered draft GitHub release with verified assets[\s\S]*?draft: true[\s\S]*?files: release-assets\/\*/u);
+  const recovery = jobBlock(releaseWorkflow, 'finalize-release', 'update-finalized-changelog');
+  const recoveryAssetsVerified = recovery.indexOf('name: Verify recovered draft assets');
+  const recoveryAttach = recovery.indexOf('Attach versioned GHCR tags after recovered assets pass');
+  const recoveryPublish = recovery.indexOf('name: Publish recovered GitHub release');
+  assert.ok(recoveryAssetsVerified >= 0 && recoveryAttach > recoveryAssetsVerified && recoveryPublish > recoveryAttach);
+  assert.match(releaseWorkflow, /needs: \[release, publish\][\s\S]*?IMAGE_DIGEST: \$\{\{ needs\.publish\.outputs\.digest \}\}/u);
+  assert.match(releaseWorkflow, /sync release notes and Home Assistant image/u);
+  assert.match(releaseWorkflow, /release_image_digest: \$\{\{ steps\.validate\.outputs\.release_image_digest \}\}/u);
+});
+
 test('release publishing and announcements are gated to QuestarrNG by stable repository ID', () => {
   assert.equal(
     (releaseWorkflow.match(/github\.repository_id == '1388297896'/gu) ?? []).length,
-    5,
-    'all five release and recovery jobs use the stable repository ID'
+    6,
+    'release and recovery jobs use the stable repository ID'
   );
   for (const [name, nextName] of [
     ['publish', 'addon-smoke'],
-    ['addon-smoke', 'release'],
+    ['addon-smoke', 'build-windows-installer'],
+    ['build-windows-installer', 'release'],
     ['finalize-release', 'update-finalized-changelog'],
     ['update-finalized-changelog', 'announce-release'],
     ['announce-release', undefined],

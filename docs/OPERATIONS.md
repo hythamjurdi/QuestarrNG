@@ -100,23 +100,29 @@ All pull requests and hardening passes must pass the following verification gate
 3.  **Proactive Improvement**: Implement small, high-impact improvements.
 4.  **Deliver Green PR**: Submit fully-tested changes.
 
-## Windows release assets
+## Versioned release assets
 
-Windows installers use the existing manual **Deploy Web App** workflow. Creating
-a tag creates a draft release; it does not build or attach an installer.
+Every valid version tag publishes the multi-architecture GHCR image and builds
+the self-contained Windows x64 installer and Helm chart, each with a SHA-256
+checksum. Compose, Home Assistant, CasaOS, Cosmos, Umbrel, Unraid, and Helm
+deploy the GHCR image; the tag gate checks their version metadata against
+`package.json`. The Home Assistant add-on smoke build also runs against the
+release image. The Proxmox LXC installer builds QuestarrNG from source.
 
-Before publishing a release that advertises Windows support:
+The release workflow verifies both packages and checksums after the container
+scans and smoke tests pass, uploads all four files to a draft GitHub release,
+and publishes only after the asset list is verified. A failed build or missing
+asset leaves the release unpublished.
+The post-release changelog pull request also updates the Home Assistant
+add-on's pinned base-image digest to the newly published image.
 
-1. Wait for the matching draft GitHub release to exist.
-2. Run **Deploy Web App** from the release commit with the matching `tag` input
-   (for example, `v1.5.0`) and **build_windows_installer** enabled. Choose the
-   deployment environment intended for that release.
-3. Verify that `QuestarrSetup-<version>-windows-x64.exe` and its `.sha256` file
-   are attached to the matching release. The version comes from `package.json`
-   on the workflow's selected ref, so it must match the release.
-4. Publish the release only after verifying its assets.
+To rebuild assets for an already-published release, run the Build Windows and
+Helm assets workflow from the main branch and provide that stable release tag.
+The recovery path requires the tag to match package.json, remain on main, and
+already have a published GitHub release; it replaces the installer and
+Helm chart with their checksums, verifies them, and refreshes the release links.
+It cannot create a release or publish a production container image.
 
-The installer job treats a missing matching release as a skipped attachment.
-If that occurs, attach the executable and checksum from the workflow artifact
-to the matching draft release before publishing. Tagging, dispatching the
-deployment workflow, and publication remain maintainer actions.
+The Deploy Web App workflow remains a manual dev/test workflow. Its optional
+installer build is a workflow artifact for testing and is not a production
+release.
