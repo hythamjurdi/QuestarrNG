@@ -109,7 +109,7 @@ test.describe("Discover details release actions", () => {
         }
       } else {
         await dialog
-          .getByRole("button", { name: "Download Release Quest-GROUP", exact: true })
+          .getByRole("button", { name: `Download ${release.title}`, exact: true })
           .click();
       }
       await expect.poll(() => actionRequests).toBe(1);

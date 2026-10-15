@@ -1,6 +1,5 @@
 import {
   formatRegionalNumber,
-  getRegionalDirection as getLocaleDirection,
   getRegionalLocale,
   getRegionalWeekStartsOn,
   useRegionalPreference,
@@ -177,8 +176,8 @@ type CalendarPageProps = { today?: Date } & Partial<RouteComponentProps>;
 export default function CalendarPage({ today: injectedToday }: CalendarPageProps = {}) {
   const { language, t, languageFor, directionFor } = useInterfaceLanguage();
   useRegionalPreference();
-  const regionalLocale = getRegionalLocale();
-  const regionalDirection = getLocaleDirection(regionalLocale);
+  const regionalLocale = getRegionalLanguage();
+  const regionalDirection = getRegionalDirection(regionalLocale);
   const [viewMode, setViewMode] = useState<ViewMode>("year");
   const [currentDate, setCurrentDate] = useState(() =>
     injectedToday ? new Date(injectedToday.getTime()) : new Date()

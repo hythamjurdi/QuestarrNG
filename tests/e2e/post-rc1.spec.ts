@@ -348,11 +348,7 @@ test.describe("v1.5 changes since RC1", () => {
     await expect(
       dialog.getByText("Using the saved key. Type a new one to replace it.")
     ).toBeVisible();
-    await expect(
-      page.getByRole("group", { name: "Selected items" }).getByRole("button", {
-        name: "Remove PC > Games",
-      })
-    ).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Remove PC > Games" })).toBeVisible();
     const sync = page.getByTestId("button-sync-prowlarr-confirm");
     await dialog.getByLabel("Priority", { exact: true }).fill("101");
     await expect(sync).toBeDisabled();

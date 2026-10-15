@@ -23,7 +23,7 @@ test("identifies update releases on library thumbnails and clears the badge with
     });
   });
   await page.reload();
-  await page.getByPlaceholder("Search your library...").fill(title);
+  await page.getByPlaceholder("Search your library…").fill(title);
   const card = page.getByTestId(`card-game-${game.id}`);
   await expect(
     card.getByRole("status", { name: "Game updates available on indexers" })
@@ -36,7 +36,7 @@ test("identifies update releases on library thumbnails and clears the badge with
   await page.screenshot({ path: "docs/pr-evidence/upstream-update-available-mobile.png" });
   available = false;
   await page.reload();
-  await page.getByPlaceholder("Search your library...").fill(title);
+  await page.getByPlaceholder("Search your library…").fill(title);
   await expect(card).toBeVisible();
   await expect(
     card.getByRole("status", { name: "Game updates available on indexers" })

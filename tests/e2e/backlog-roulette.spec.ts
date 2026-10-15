@@ -16,7 +16,7 @@ test.describe("Backlog roulette", () => {
     });
     await seedGame(page, { title: `${prefix} Wanted`, igdbId: id + 2 });
     await page.reload();
-    await page.getByPlaceholder("Search your library...").fill(prefix);
+    await page.getByPlaceholder("Search your library…").fill(prefix);
     await expect(page.getByTestId(`card-game-${first.id}`)).toBeVisible();
     const pick = page.getByRole("button", { name: "Pick a game", exact: true });
     await expect(pick).toBeEnabled();
@@ -74,7 +74,7 @@ test.describe("Backlog roulette", () => {
     await page.goto("/");
     const game = await seedGame(page, { title, igdbId: id });
     await page.reload();
-    await page.getByPlaceholder("Search your library...").fill(title);
+    await page.getByPlaceholder("Search your library…").fill(title);
     await expect(page.getByTestId(`card-game-${game.id}`)).toBeVisible();
     const pick = page.getByRole("button", { name: "Pick a game", exact: true });
     await expect(pick).toBeEnabled();
@@ -95,7 +95,7 @@ test.describe("Backlog roulette", () => {
     await page.keyboard.press("Escape");
     await page.evaluate(() => localStorage.setItem("theme", "light"));
     await page.reload();
-    await page.getByPlaceholder("Search your library...").fill(title);
+    await page.getByPlaceholder("Search your library…").fill(title);
     await expect(pick).toBeEnabled();
     await pick.click();
     await dialog.getByRole("combobox", { name: "Pick from" }).click();

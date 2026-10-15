@@ -137,6 +137,7 @@ test.describe("Game download interface language", () => {
     );
 
     await page.goto("/");
+    await page.getByTestId("nav-more").click();
     const wishlistButton = page.getByTestId("nav-wishlist");
     const downloadsButton = page.getByTestId("nav-downloads");
     const arabicTwo = await page.evaluate(() => new Intl.NumberFormat("ar").format(2));

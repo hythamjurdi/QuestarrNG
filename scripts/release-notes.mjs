@@ -154,17 +154,24 @@ export function changedReleaseNoteFiles(base, head, cwd = process.cwd()) {
     .filter(({ file }) => file && isReleaseNotePath(file));
 }
 
-export function isReleaseNoteShipped(file, head, cwd = process.cwd()) {
-  let latestTag;
+function latestReachableReleaseTag(head, cwd) {
   try {
-    latestTag = execFileSync(
+    const tags = execFileSync(
       "git",
-      ["describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", head],
+      ["tag", "--merged", head, "--list", "v[0-9]*", "--sort=-version:refname"],
       { cwd, encoding: "utf8" }
-    ).trim();
+    );
+    return tags
+      .split("\n")
+      .find((tag) => /^v\d+\.\d+\.\d+$/u.test(tag)) ?? null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+export function isReleaseNoteShipped(file, head, cwd = process.cwd()) {
+  const latestTag = latestReachableReleaseTag(head, cwd);
+  if (!latestTag) return false;
 
   try {
     execFileSync("git", ["cat-file", "-e", `${latestTag}:${file}`], {
@@ -178,16 +185,8 @@ export function isReleaseNoteShipped(file, head, cwd = process.cwd()) {
 }
 
 export function isShippedReleaseNoteChanged(file, head, cwd = process.cwd()) {
-  let latestTag;
-  try {
-    latestTag = execFileSync(
-      "git",
-      ["describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", head],
-      { cwd, encoding: "utf8" }
-    ).trim();
-  } catch {
-    return false;
-  }
+  const latestTag = latestReachableReleaseTag(head, cwd);
+  if (!latestTag) return false;
 
   let shippedContent;
   try {
