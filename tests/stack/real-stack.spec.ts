@@ -62,7 +62,7 @@ async function grabFromLibrary(key: ReleaseKey): Promise<void> {
   await page.getByLabel(`View details for ${release.game}`, { exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Download", exact: true }).click();
   const grab = page.getByRole("button", {
-    name: `Download ${release.title.replace(/[._]/g, " ")}`,
+    name: `Download ${release.title}`,
     exact: true,
   });
   await expect(grab).toBeVisible({ timeout: 30_000 });
