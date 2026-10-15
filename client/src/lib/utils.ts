@@ -1,3 +1,4 @@
+import { formatRegionalDate, formatRegionalNumber } from "@/lib/regional-format";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type Game, type InsertGame } from "@shared/schema";
@@ -11,11 +12,15 @@ export function cn(...inputs: ClassValue[]) {
  * Formats bytes to a human-readable string (e.g., "1.5 GB")
  */
 export function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) {
+    return formatRegionalNumber(0, { maximumFractionDigits: 2 }) + " B";
+  }
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  return (
+    formatRegionalNumber(bytes / Math.pow(k, i), { maximumFractionDigits: 2 }) + " " + sizes[i]
+  );
 }
 
 /**
@@ -100,13 +105,19 @@ export type EnabledPriorityNamed = {
  * @param b - The second value to compare.
  * @returns A negative number if a should come before b, a positive number if a should come after b, or 0 if they are considered equal.
  */
-export function compareEnabledPriorityName<T extends EnabledPriorityNamed>(a: T, b: T): number {
+const defaultEnabledNameCollator = new Intl.Collator(undefined, { sensitivity: "base" });
+
+export function compareEnabledPriorityName<T extends EnabledPriorityNamed>(
+  a: T,
+  b: T,
+  collator = defaultEnabledNameCollator
+): number {
   if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
 
   const priorityDiff = a.priority - b.priority;
   if (priorityDiff !== 0) return priorityDiff;
 
-  return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  return collator.compare(a.name, b.name);
 }
 
 /**
@@ -171,18 +182,34 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 /**
  * Parses an ISO release date string into a display year and an optional full date.
  * IGDB represents year-only known dates as YYYY-12-31; fullDate is null in that case.
- * fullDate is formatted as dd/mm/yyyy using UTC to avoid timezone shifts.
+ * fullDate uses the selected regional format and UTC to avoid timezone shifts.
  */
-export function parseReleaseDate(isoDate: string | null | undefined): {
+export function parseReleaseDate(
+  isoDate: string | null | undefined,
+  preference?: string
+): {
   year: string;
   fullDate: string | null;
 } {
   if (!isoDate) return { year: "TBA", fullDate: null };
-  const year = isoDate.slice(0, 4);
+  const rawYear = isoDate.slice(0, 4);
+  const yearNumber = Number(rawYear);
+  const year = Number.isFinite(yearNumber)
+    ? formatRegionalNumber(
+        yearNumber,
+        { minimumIntegerDigits: rawYear.length, useGrouping: false },
+        preference
+      )
+    : rawYear;
   if (isoDate.endsWith("-12-31")) return { year, fullDate: null };
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return { year, fullDate: null };
-  const dd = String(date.getUTCDate()).padStart(2, "0");
-  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  return { year, fullDate: `${dd}/${mm}/${date.getUTCFullYear()}` };
+  return {
+    year,
+    fullDate: formatRegionalDate(
+      date,
+      { year: "numeric", month: "2-digit", day: "2-digit" },
+      preference
+    ),
+  };
 }

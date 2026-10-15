@@ -439,7 +439,7 @@ describe("downloaders helper regression coverage", () => {
     const digest = client.computeDigestHeader(
       "POST",
       "/RPC2",
-      'Digest realm="rtorrent", nonce="abc", qop="auth", opaque="xyz"',
+      'Digest realm="rtorrent", nonce="abc", qop="auth", opaque="xyz", algorithm="SHA-256"',
       "user",
       "pass"
     );
@@ -525,7 +525,7 @@ describe("downloaders helper regression coverage", () => {
         headers: {
           get: (name: string) =>
             name.toLowerCase() === "www-authenticate"
-              ? 'Digest realm="rtorrent", nonce="abc", qop="auth"'
+              ? 'Digest realm="rtorrent", nonce="abc", qop="auth", algorithm="SHA-256"'
               : null,
         },
       } as Response)
@@ -556,7 +556,7 @@ describe("downloaders helper regression coverage", () => {
         headers: {
           get: (name: string) =>
             name.toLowerCase() === "www-authenticate"
-              ? 'Digest realm="rtorrent", nonce="abc", qop="auth"'
+              ? 'Digest realm="rtorrent", nonce="abc", qop="auth", algorithm="SHA-256"'
               : null,
         },
       } as Response)

@@ -69,7 +69,7 @@ describe("AppSidebar library counts", () => {
     expect(screen.queryByTestId("nav-calendar")).not.toBeInTheDocument();
     expect(screen.queryByTestId("nav-wishlist")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Downloads, 1 active downloads" })
+      screen.getByRole("button", { name: "Downloads, 1 active download" })
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "More" }));

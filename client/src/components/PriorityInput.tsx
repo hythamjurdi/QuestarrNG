@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { InterfaceText } from "@/components/InterfaceText";
 
 interface PriorityInputProps {
   id: string;
@@ -30,12 +31,15 @@ export function PriorityInput({ id, priority, onSave }: PriorityInputProps) {
 
   return (
     <div className="flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold">
-      <span className="text-muted-foreground">Priority</span>
+      <span className="text-muted-foreground">
+        <InterfaceText source={"Priority"} />
+      </span>
       <button
         type="button"
         className="text-muted-foreground hover:text-foreground w-3.5 text-center leading-none"
         onClick={() => save(currentValue() - 1)}
         aria-label="Decrease priority"
+        data-i18n-aria-label={"Decrease priority"}
       >
         −
       </button>
@@ -49,12 +53,14 @@ export function PriorityInput({ id, priority, onSave }: PriorityInputProps) {
         onKeyDown={(event) => event.key === "Enter" && save(currentValue())}
         className="w-7 bg-transparent text-center outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         aria-label="Priority value"
+        data-i18n-aria-label={"Priority value"}
       />
       <button
         type="button"
         className="text-muted-foreground hover:text-foreground w-3.5 text-center leading-none"
         onClick={() => save(currentValue() + 1)}
         aria-label="Increase priority"
+        data-i18n-aria-label={"Increase priority"}
       >
         +
       </button>

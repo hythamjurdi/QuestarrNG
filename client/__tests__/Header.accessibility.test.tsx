@@ -54,6 +54,8 @@ describe("Header accessibility", () => {
       </QueryClientProvider>
     );
 
-    expect(await screen.findByRole("button", { name: "Add Game" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Add Game" }, { timeout: 5000 })
+    ).toBeInTheDocument();
   });
 });

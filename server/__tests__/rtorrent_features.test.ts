@@ -170,14 +170,11 @@ describe("RTorrentClient - digest auth header computation", () => {
   // so there's no fixed value to recompute against, and re-deriving the
   // same digest the implementation already computes wouldn't catch much
   // beyond what the length/format check below already confirms.
-  it("falls back to MD5 for a classic RFC 2617 challenge with no algorithm", () => {
+  it("rejects legacy MD5 for a classic RFC 2617 challenge", () => {
     const authHeader = 'Digest realm="rtorrent", nonce="abc123", qop="auth"';
-    const auth = client.computeDigestHeader("POST", "/RPC2", authHeader, "user", "pass");
-
-    expect(auth).toContain('algorithm="MD5"');
-    const responseMatch = auth.match(/response="([a-f0-9]+)"/);
-    expect(responseMatch).not.toBeNull();
-    expect(responseMatch![1]).toHaveLength(32);
+    expect(() => client.computeDigestHeader("POST", "/RPC2", authHeader, "user", "pass")).toThrow(
+      "Unsupported rTorrent Digest algorithm: MD5"
+    );
   });
 
   it("uses SHA-256 when the server's challenge declares algorithm=SHA-256 (RFC 7616)", () => {
@@ -188,5 +185,13 @@ describe("RTorrentClient - digest auth header computation", () => {
     const responseMatch = auth.match(/response="([a-f0-9]+)"/);
     expect(responseMatch).not.toBeNull();
     expect(responseMatch![1]).toHaveLength(64);
+  });
+
+  it("does not downgrade unsupported Digest algorithms to MD5", () => {
+    const authHeader = 'Digest realm="rtorrent", nonce="abc123", qop="auth", algorithm="MD5-sess"';
+
+    expect(() => client.computeDigestHeader("POST", "/RPC2", authHeader, "user", "pass")).toThrow(
+      "Unsupported rTorrent Digest algorithm: MD5-sess"
+    );
   });
 });

@@ -6,6 +6,7 @@ import { RotateCcw, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import TagListEditor from "@/components/TagListEditor";
+import { InterfaceText } from "@/components/InterfaceText";
 
 type EditorProps = Omit<React.ComponentProps<typeof TagListEditor>, "tags" | "onChange">;
 
@@ -65,9 +66,13 @@ export default function TagListSettingsCard({
       <CardHeader>
         <div className="flex items-center space-x-3">
           <Icon className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardTitle className="text-lg">
+            <InterfaceText source={title} />
+          </CardTitle>
         </div>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription>
+          <InterfaceText source={description} />
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
@@ -84,7 +89,7 @@ export default function TagListSettingsCard({
             className="gap-2"
           >
             <RotateCcw className="h-4 w-4" />
-            Reset
+            <InterfaceText source={"Reset"} />
           </Button>
           <Button
             size="sm"
@@ -93,7 +98,7 @@ export default function TagListSettingsCard({
             className="gap-2"
           >
             <Save className={saveMutation.isPending ? "h-4 w-4 animate-pulse" : "h-4 w-4"} />
-            {saveMutation.isPending ? "Saving..." : saveLabel}
+            <InterfaceText source={saveMutation.isPending ? "Saving..." : saveLabel} />
           </Button>
         </div>
 

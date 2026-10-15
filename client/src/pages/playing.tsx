@@ -1,3 +1,8 @@
+import {
+  formatInterfaceMessage,
+  getInterfaceCollator,
+  useInterfaceLanguage,
+} from "@/lib/interface-locale";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Gamepad2 } from "lucide-react";
@@ -26,8 +31,14 @@ const SORT_OPTIONS = [
   { value: "title-asc", label: "Title (A-Z)" },
 ];
 
-function sortGames(gameList: Game[], currentSortBy: SortOption): Game[] {
+function sortGames(
+  gameList: Game[],
+  currentSortBy: SortOption,
+  interfaceLanguage: ReturnType<typeof useInterfaceLanguage>["language"]
+): Game[] {
   const sorted = [...gameList];
+  const titleCollator =
+    currentSortBy === "title-asc" ? getInterfaceCollator(interfaceLanguage) : null;
   return sorted.sort((a, b) => {
     switch (currentSortBy) {
       case "added-desc":
@@ -35,7 +46,7 @@ function sortGames(gameList: Game[], currentSortBy: SortOption): Game[] {
       case "added-asc":
         return compareDates(a.addedAt, b.addedAt, true);
       case "title-asc":
-        return a.title.localeCompare(b.title);
+        return titleCollator!.compare(a.title, b.title);
       default:
         return 0;
     }
@@ -43,6 +54,7 @@ function sortGames(gameList: Game[], currentSortBy: SortOption): Game[] {
 }
 
 export default function PlayingPage() {
+  const { language: interfaceLanguage, t, languageFor, directionFor } = useInterfaceLanguage();
   const [sortBy, setSortBy] = useState<SortOption>("added-desc");
   const { viewMode, setViewMode, listDensity, setListDensity } = useViewControls("playing");
   const [showDownloadsOnly, setShowDownloadsOnly] = useState(false);
@@ -71,13 +83,16 @@ export default function PlayingPage() {
     return { filteredGames: filtered, filteredCount: filtered.length };
   }, [games, showSearchResultsOnly, showDownloadsOnly, downloadSummaries, searchQuery]);
 
-  const sortedGames = useMemo(() => sortGames(filteredGames, sortBy), [filteredGames, sortBy]);
+  const sortedGames = useMemo(
+    () => sortGames(filteredGames, sortBy, interfaceLanguage),
+    [filteredGames, sortBy, interfaceLanguage]
+  );
 
   const emptyStateContent = useMemo(() => {
     if (searchQuery) {
       return {
         title: "No games match your search",
-        description: `No games currently playing found for "${searchQuery}".`,
+        description: "No games currently playing found for “{query}”.",
       };
     }
     if (showDownloadsOnly && showSearchResultsOnly) {
@@ -119,6 +134,7 @@ export default function PlayingPage() {
       <EmptyState
         icon={Gamepad2}
         title="Failed to load games"
+        data-i18n-title={"Failed to load games"}
         description="Refresh the page or try again later."
       />
     );
@@ -127,6 +143,7 @@ export default function PlayingPage() {
       <EmptyState
         icon={Gamepad2}
         title="Nothing in progress"
+        data-i18n-title={"Nothing in progress"}
         description="Mark a game as Playing from your Library to track it here — journal entries, screenshots, and milestones live on its details page."
         actionLabel="Go to Library"
         actionLink="/"
@@ -138,6 +155,7 @@ export default function PlayingPage() {
         icon={Gamepad2}
         title={emptyStateContent.title}
         description={emptyStateContent.description}
+        {...(searchQuery ? { descriptionValues: { query: searchQuery } } : {})}
       />
     );
   } else {
@@ -159,11 +177,28 @@ export default function PlayingPage() {
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Playing</h1>
+          <h1
+            className="text-2xl font-bold tracking-tight"
+            lang={languageFor("Playing")}
+            dir={directionFor("Playing")}
+          >
+            {t("Playing")}
+          </h1>
           {games.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-0.5">
-              <span className="font-medium text-foreground">{games.length}</span> game
-              {games.length !== 1 ? "s" : ""} in progress
+            <p
+              className="text-sm text-muted-foreground mt-0.5"
+              lang={languageFor(
+                games.length === 1 ? "{count} game in progress" : "{count} games in progress"
+              )}
+              dir={directionFor(
+                games.length === 1 ? "{count} game in progress" : "{count} games in progress"
+              )}
+            >
+              {formatInterfaceMessage(
+                games.length === 1 ? "{count} game in progress" : "{count} games in progress",
+                { count: games.length },
+                interfaceLanguage
+              )}
             </p>
           )}
         </div>
@@ -190,7 +225,13 @@ export default function PlayingPage() {
                 setShowDownloadsOnly={setShowDownloadsOnly}
               />
               {showSearchResultsOnly && showDownloadsOnly && (
-                <p className="text-xs text-muted-foreground">Multiple filters active</p>
+                <p
+                  className="text-xs text-muted-foreground"
+                  lang={languageFor("Multiple filters active")}
+                  dir={directionFor("Multiple filters active")}
+                >
+                  {t("Multiple filters active")}
+                </p>
               )}
             </>
           }

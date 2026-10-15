@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import CalendarPage from "../src/pages/calendar";
 import { createTestQueryClient, getRequestUrl } from "./test-utils";
+import { setInterfaceLanguage } from "@/lib/interface-locale";
+import { setRegionalPreference } from "@/lib/regional-format";
 
 vi.mock("@/components/GameDownloadDialog", () => ({
   default: ({ open, game }: { open: boolean; game: { title: string } | null }) =>
@@ -93,10 +95,18 @@ describe("CalendarPage", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-05-29T12:00:00Z"));
     vi.clearAllMocks();
+    act(() => {
+      setInterfaceLanguage("en");
+      setRegionalPreference("system");
+    });
     mockGamesFetch([]);
   });
 
   afterEach(() => {
+    act(() => {
+      setInterfaceLanguage("en");
+      setRegionalPreference("system");
+    });
     vi.useRealTimers();
   });
 
@@ -153,16 +163,12 @@ describe("CalendarPage", () => {
       { ...baseGame, id: "game-7", title: "June Game", releaseDate: "2026-06-02" },
       { ...baseGame, id: "game-8", title: "Datetime Game", releaseDate: "2026-05-10T12:00:00Z" },
     ]);
-
     renderPage();
-
     const aprilGame = await screen.findByText("April Game");
     const aprilCard = screen.getByRole("heading", { name: "April" }).closest(".bg-card");
     const juneCard = screen.getByRole("heading", { name: "June" }).closest(".bg-card");
-
     expect(aprilCard).toHaveClass("opacity-50");
     expect(juneCard).not.toHaveClass("opacity-50");
-    // Inside a past month the card is already dimmed, so its badges stay as-is.
     expect(aprilGame.closest("button")).not.toHaveClass("opacity-50");
     expect(screen.getByText("Early May Game").closest("button")).toHaveClass("opacity-50");
     expect(screen.getByText("June Game").closest("button")).not.toHaveClass("opacity-50");
@@ -174,13 +180,22 @@ describe("CalendarPage", () => {
       { ...baseGame, id: "before", title: "Before injected day", releaseDate: "2024-02-01" },
       { ...baseGame, id: "after", title: "After injected day", releaseDate: "2024-02-20" },
     ]);
-
     renderPage(new Date(2024, 1, 15));
-
     const before = await screen.findByText("Before injected day");
     const after = screen.getByText("After injected day");
     expect(before.closest("button")).toHaveClass("opacity-50");
     expect(after.closest("button")).not.toHaveClass("opacity-50");
+  });
+
+  it("formats the undated year with regional digits and no grouping", async () => {
+    act(() => setRegionalPreference("ar"));
+    mockGamesFetch([{ ...baseGame, id: "undated-game", releaseDate: "2026-12-31" }]);
+    renderPage();
+    const expectedYear = new Intl.NumberFormat("ar", { useGrouping: false }).format(2026);
+    const groupedYear = new Intl.NumberFormat("ar").format(2026);
+    const title = await screen.findByRole("heading", { name: /No Release Date/u });
+    expect(title).toHaveTextContent(`No Release Date — ${expectedYear}`);
+    expect(title).not.toHaveTextContent(groupedYear);
   });
 
   it("switches to week view and opens the download dialog from a visible game", async () => {
@@ -234,5 +249,34 @@ describe("CalendarPage", () => {
       expect(dayCell?.className).not.toContain("border-primary/60");
       expect(dayCell?.className).not.toContain("bg-primary/5");
     });
+  });
+
+  it("keeps regional date and interface language metadata separate in month day labels", async () => {
+    act(() => {
+      setInterfaceLanguage("ar");
+      setRegionalPreference("ja");
+    });
+    mockGamesFetch([
+      { ...baseGame, id: "game-1", releaseDate: "2026-05-29" },
+      { ...baseGame, id: "game-2", title: "Space Quest II", releaseDate: "2026-05-29" },
+    ]);
+
+    renderPage();
+    fireEvent.change(await screen.findByRole("combobox", { name: "Calendar view" }), {
+      target: { value: "month" },
+    });
+
+    const dayButton = await screen.findByRole("button", { name: /إصداران/u });
+    const labelledByIds = dayButton.getAttribute("aria-labelledby")?.split(" ") ?? [];
+    expect(dayButton).not.toHaveAttribute("aria-label");
+    expect(dayButton).not.toHaveAttribute("lang");
+    expect(dayButton).toHaveAttribute("dir", "auto");
+    expect(labelledByIds).toHaveLength(2);
+
+    const [dateLabel, releaseLabel] = labelledByIds.map((id) => document.getElementById(id));
+    expect(dateLabel).toHaveAttribute("lang", "ja");
+    expect(dateLabel).toHaveAttribute("dir", "ltr");
+    expect(releaseLabel).toHaveAttribute("lang", "ar");
+    expect(releaseLabel).toHaveAttribute("dir", "rtl");
   });
 });

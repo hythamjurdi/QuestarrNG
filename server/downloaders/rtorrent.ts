@@ -665,10 +665,16 @@ export class RTorrentClient implements DownloaderClient {
 
     const realm = challenge.realm;
     const nonce = challenge.nonce;
-    const algorithm = challenge.algorithm || "MD5";
+    const algorithm = challenge.algorithm?.trim() || "MD5";
     const qop = challenge.qop;
     const opaque = challenge.opaque;
-    const hashAlgo = algorithm.toUpperCase().startsWith("SHA-256") ? "sha256" : "md5";
+    // RFC 2617 defaults to MD5 when `algorithm` is missing; never downgrade.
+    if (algorithm.toUpperCase() !== "SHA-256") {
+      throw new Error(
+        `Unsupported rTorrent Digest algorithm: ${algorithm}. Configure rTorrent to advertise SHA-256.`
+      );
+    }
+    const hashAlgo = "sha256";
 
     // A1 = username:realm:password
     const ha1 = crypto

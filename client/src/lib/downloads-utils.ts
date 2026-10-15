@@ -1,19 +1,11 @@
 import type { DownloadStatus, DownloadStatusType, DownloadType } from "@shared/schema";
+import { formatBytes } from "@/lib/utils";
+import { formatRegionalNumber } from "@/lib/regional-format";
+export { formatBytes } from "@/lib/utils";
 
 export type { DownloadStatusType, DownloadType };
 
 export type DownloadData = DownloadStatus;
-
-/**
- * Format bytes to human-readable string
- */
-export function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-}
 
 /**
  * Format download/upload speed
@@ -229,8 +221,33 @@ export function formatUnpackStatus(unpackStatus?: "unpacking" | "completed" | "f
 /**
  * Format age in days to human-readable string
  */
-export function formatAge(days?: number): string {
+export function formatAge(days?: number, locale?: string, numberPreference?: string): string {
   if (days === undefined) return "";
+  if (locale !== undefined) {
+    const ageInDays = Math.max(0, days);
+    const formatRelativeTime = (
+      value: number,
+      unit: Intl.RelativeTimeFormatUnit,
+      numeric: Intl.RelativeTimeFormatOptions["numeric"] = "always"
+    ) => {
+      const formatter = new Intl.RelativeTimeFormat(locale, { numeric });
+      if (numberPreference === undefined) return formatter.format(value, unit);
+      const relativeTime = formatter.format(value, unit);
+      const interfaceNumber = new Intl.NumberFormat(locale).format(Math.abs(value));
+      const regionalNumber = formatRegionalNumber(Math.abs(value), undefined, numberPreference);
+      return relativeTime.replace(interfaceNumber, regionalNumber);
+    };
+    if (ageInDays === 0) return formatRelativeTime(0, "day", "auto");
+
+    const wholeDays = Math.floor(ageInDays);
+    if (wholeDays < 1) {
+      const wholeHours = Math.max(1, Math.floor(ageInDays * 24));
+      return formatRelativeTime(-wholeHours, "hour");
+    }
+
+    return formatRelativeTime(-wholeDays, "day");
+  }
+
   if (days === 0) return "Today";
   const wholeDays = Math.floor(days);
   if (wholeDays < 1) return "< 1 day";

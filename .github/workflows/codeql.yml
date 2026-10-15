@@ -38,10 +38,12 @@ jobs:
             build-mode: none
           - language: actions
             build-mode: none
+          - language: cpp
+            build-mode: manual
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -69,6 +71,17 @@ jobs:
       - name: Build C# service for CodeQL
         if: matrix.language == 'csharp'
         run: dotnet build installer/windows/Questarr.Service/Questarr.Service.csproj --configuration Release --no-restore --runtime win-x64
+
+      - name: Build Home Assistant ownership helper for CodeQL
+        if: matrix.language == 'cpp'
+        run: cc -std=c11 -Wall -Wextra -Werror -o "$RUNNER_TEMP/questarr-fix-data-owner" questarr/fix-data-owner.c
+
+      - name: Run Home Assistant ownership helper sanitizers
+        if: matrix.language == 'cpp'
+        env:
+          REQUIRE_SANITIZER_TOOLCHAIN: "1"
+          LD_PRELOAD: ""
+        run: node --test scripts/validation-engine/data-owner-sanitizers.contract.mjs
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2

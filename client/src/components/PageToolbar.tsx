@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import ViewControlsToolbar from "./ViewControlsToolbar";
 import type { ViewMode, ListDensity } from "@/hooks/use-view-controls";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 
 export interface SortOption {
   value: string;
@@ -29,6 +30,13 @@ interface PageToolbarProps {
   search?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+  searchClearLabel?: string;
+  searchClearLang?: string;
+  searchClearDir?: "ltr" | "rtl";
+  searchLang?: string;
+  searchDir?: "ltr" | "rtl" | "auto";
+  /** Direction to use for the placeholder while an auto-directed search is empty. */
+  searchEmptyDir?: "ltr" | "rtl";
   /** Content rendered in the filter row (filter pills, custom toggles). */
   filterPills?: React.ReactNode;
   /** Sort select. Rendered when sortOptions is non-empty. */
@@ -47,6 +55,12 @@ export default function PageToolbar({
   search,
   onSearchChange,
   searchPlaceholder = "Search...",
+  searchClearLabel = "Clear search",
+  searchClearLang,
+  searchClearDir,
+  searchLang,
+  searchDir,
+  searchEmptyDir,
   filterPills,
   sortValue,
   onSortChange,
@@ -55,6 +69,11 @@ export default function PageToolbar({
   viewControls,
   actions,
 }: PageToolbarProps) {
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
+  const inputSearchDir =
+    searchDir === "auto" && !(search ?? "")
+      ? (searchEmptyDir ?? searchDir)
+      : (searchDir ?? directionFor(searchPlaceholder));
   const hasSearch = onSearchChange !== undefined;
   const hasSort = Boolean(sortOptions?.length && onSortChange);
   const hasRow2 = Boolean(filterPills || hasSort || actions);
@@ -73,9 +92,11 @@ export default function PageToolbar({
               type="text"
               value={search ?? ""}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              placeholder={searchPlaceholder}
+              placeholder={t(searchPlaceholder)}
               className="h-10 pl-9 pr-8 text-sm sm:h-8"
-              aria-label={searchPlaceholder}
+              aria-label={t(searchPlaceholder)}
+              lang={search ? "und" : (searchLang ?? languageFor(searchPlaceholder))}
+              dir={inputSearchDir}
             />
             {search && (
               <Button
@@ -84,7 +105,9 @@ export default function PageToolbar({
                 size="icon"
                 className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 p-0 hover:bg-transparent sm:h-6 sm:w-6 no-default-hover-elevate no-default-active-elevate"
                 onClick={() => onSearchChange?.("")}
-                aria-label="Clear search"
+                aria-label={t(searchClearLabel)}
+                lang={searchClearLang ?? languageFor(searchClearLabel)}
+                dir={searchClearDir ?? directionFor(searchClearLabel)}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -112,21 +135,31 @@ export default function PageToolbar({
           )}
           {hasSort && (
             <div className="flex flex-1 items-center gap-1.5 md:flex-initial">
-              <span className="text-xs text-muted-foreground hidden sm:inline">Sort</span>
+              <span
+                className="text-xs text-muted-foreground hidden sm:inline"
+                lang={languageFor("Sort")}
+                dir={directionFor("Sort")}
+              >
+                {t("Sort")}
+              </span>
               <Select
                 {...(sortValue !== undefined ? { value: sortValue } : {})}
                 {...(onSortChange !== undefined ? { onValueChange: onSortChange } : {})}
               >
                 <SelectTrigger
                   className="h-8 w-full text-sm md:w-[160px]"
-                  aria-label={sortAriaLabel}
+                  aria-label={t(sortAriaLabel)}
+                  lang={languageFor(sortAriaLabel)}
+                  dir={directionFor(sortAriaLabel)}
                 >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {sortOptions?.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                      <span lang={languageFor(opt.label)} dir={directionFor(opt.label)}>
+                        {t(opt.label)}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

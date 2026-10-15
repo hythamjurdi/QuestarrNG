@@ -1,6 +1,12 @@
 // Copyright (c) QuestarrNG contributors. All rights reserved.
 import process from 'node:process';
 
+export function vitestWorkerEnvironment(githubActions = process.env.GITHUB_ACTIONS) {
+  return {
+    QUESTARR_CI_VITEST_MAX_WORKERS: githubActions === 'true' ? '4' : '0',
+  };
+}
+
 export const validation = {
   repository: 'questarrng',
   inputs: [
@@ -19,6 +25,7 @@ export const validation = {
     'release-notes/20261013-validation-pr-secret-isolation.md',
     'release-notes/20261012-validation-sandbox-hardening.md',
     'release-notes/20261013-validation-sandbox-ci.md',
+    'release-notes/20261013-bounded-validation-task-pool.md',
     '.github/CONTRIBUTING.md',
     'docs/development/validation-engine.md',
     'docs/SECURITY_ASSESSMENT.md',
@@ -37,10 +44,14 @@ export const validation = {
     'scripts/validation-engine/trusted-test-source-policy.mjs',
     'scripts/validation-engine/trusted-test-source-policy.contract.mjs',
     'scripts/validation-engine/workflow-security.contract.mjs',
+    'scripts/validation-engine/data-owner-sanitizers.contract.mjs',
+    'questarr/fix-data-owner.c',
+    'questarr/fix-data-owner-test-wrap.c',
     'scripts/validation-engine/reconcile-ci.mjs',
     'scripts/validation-engine/reconcile-ci.contract.mjs',
     'scripts/validate-development.mjs',
   ],
+  maxConcurrentTasks: 2,
   requiredCommands: ['git', 'node', 'npm'],
   runtimes: [
     {
@@ -58,6 +69,7 @@ export const validation = {
     { id: 'trusted-launcher-contracts', glob: 'scripts/validation-engine/trusted-test-launcher.contract.mjs', framework: 'node:test', owner: 'validation-engine' },
     { id: 'trusted-source-policy-contracts', glob: 'scripts/validation-engine/trusted-test-source-policy.contract.mjs', framework: 'node:test', owner: 'validation-engine' },
     { id: 'workflow-security-contracts', glob: 'scripts/validation-engine/workflow-security.contract.mjs', framework: 'node:test', owner: 'validation-engine' },
+    { id: 'data-owner-sanitizer-contracts', glob: 'scripts/validation-engine/data-owner-sanitizers.contract.mjs', framework: 'node:test', owner: 'home-assistant' },
     { id: 'browser-playwright', glob: 'tests/e2e/**/*.spec.ts', framework: 'playwright', owner: 'browser' },
   ],
   tasks: [
@@ -65,11 +77,12 @@ export const validation = {
       id: 'engine-contract-tests',
       name: 'Validation engine contract tests',
       stage: 'repository',
+      concurrencyGroup: 'engine-contract-output',
       kind: 'test',
-      command: ['node', '--test', 'scripts/validation-engine/engine.contract.mjs', 'scripts/validation-engine/trusted-test-launcher.contract.mjs', 'scripts/validation-engine/trusted-test-source-policy.contract.mjs', 'scripts/validation-engine/workflow-security.contract.mjs'],
+      command: ['node', '--test', 'scripts/validation-engine/engine.contract.mjs', 'scripts/validation-engine/trusted-test-launcher.contract.mjs', 'scripts/validation-engine/trusted-test-source-policy.contract.mjs', 'scripts/validation-engine/workflow-security.contract.mjs', 'scripts/validation-engine/data-owner-sanitizers.contract.mjs'],
       casePattern: '(?:ℹ|#)\\s*pass\\s+(\\d+)',
       minimumCases: 1,
-      inventoryLanes: ['trusted-launcher-contracts', 'trusted-source-policy-contracts', 'workflow-security-contracts'],
+      inventoryLanes: ['trusted-launcher-contracts', 'trusted-source-policy-contracts', 'workflow-security-contracts', 'data-owner-sanitizer-contracts'],
       env: {
         GITHUB_ACTIONS: 'false',
         REQUIRE_VALIDATION_SANDBOX: process.env.GITHUB_ACTIONS === 'true' ? '1' : '0',
@@ -80,6 +93,7 @@ export const validation = {
       id: 'ci-node-reconciliation-tests',
       name: 'GitHub CI node-reconciliation contract tests',
       stage: 'repository',
+      concurrencyGroup: 'reconciliation-contract-output',
       kind: 'test',
       command: ['node', '--test', 'scripts/validation-engine/reconcile-ci.contract.mjs'],
       casePattern: '(?:ℹ|#)\\s*pass\\s+(\\d+)',
@@ -90,6 +104,7 @@ export const validation = {
       id: 'install-dependencies',
       name: 'Install locked JavaScript dependencies',
       stage: 'prepare',
+      concurrencyGroup: 'npm-install-tree',
       kind: 'setup',
       command: ['npm', 'ci', '--ignore-scripts'],
       passEnv: ['NPM_CONFIG_CACHE', 'NPM_CONFIG_OFFLINE'],
@@ -169,6 +184,7 @@ export const validation = {
       id: 'typecheck',
       name: 'TypeScript type check',
       stage: 'build',
+      concurrencyGroup: 'heavy-node-workload',
       kind: 'check',
       command: ['npm', 'run', 'check'],
       dependsOn: ['install-dependencies'],
@@ -178,6 +194,7 @@ export const validation = {
       id: 'vitest-coverage',
       name: 'Vitest suite and merged coverage thresholds',
       stage: 'repository',
+      concurrencyGroup: 'heavy-node-workload',
       kind: 'test',
       command: [
         'npm', 'run', 'test:coverage', '--',
@@ -188,6 +205,7 @@ export const validation = {
       inventoryLanes: [
         'client-vitest', 'shared-vitest', 'server-vitest', 'scripts-vitest',
       ],
+      env: vitestWorkerEnvironment(),
       dependsOn: ['install-dependencies'],
       timeoutSeconds: 2400,
     },
@@ -195,6 +213,7 @@ export const validation = {
       id: 'vitest-shard-' + shard,
       name: 'Vitest coverage shard ' + shard + '/4',
       stage: 'repository',
+      concurrencyGroup: 'heavy-node-workload',
       kind: 'test',
       command: [
         'npm', 'test', '--', '--shard=' + shard + '/4', '--coverage',
@@ -216,6 +235,7 @@ export const validation = {
       id: 'playwright-browser-install',
       name: 'Install Playwright Chromium',
       stage: 'prepare',
+      concurrencyGroup: 'playwright-browser-cache',
       kind: 'setup',
       command: ['npx', '--no-install', 'playwright', 'install', 'chromium'],
       env: { PLAYWRIGHT_BROWSERS_PATH: '0' },
@@ -228,6 +248,7 @@ export const validation = {
       id: 'playwright-e2e',
       name: 'Playwright browser E2E',
       stage: 'browser',
+      concurrencyGroup: 'heavy-node-workload',
       kind: 'test',
       command: ['npm', 'run', 'test:e2e', '--', '--reporter=line'],
       env: { PLAYWRIGHT_BROWSERS_PATH: '0' },
@@ -243,6 +264,7 @@ export const validation = {
       id: 'build',
       name: 'Production web build',
       stage: 'build',
+      concurrencyGroup: 'heavy-node-workload',
       kind: 'build',
       command: ['npm', 'run', 'build'],
       dependsOn: ['lint', 'format-check', 'typecheck'],

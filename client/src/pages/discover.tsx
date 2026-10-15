@@ -27,6 +27,8 @@ import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import { ACQUIRED_GAME_STATUSES, type Game, type Config, type UserSettings } from "@shared/schema";
 import { type GameStatus } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
+import { useInterfaceLanguage, formatInterfaceMessage } from "@/lib/interface-locale";
+import { InterfaceText } from "@/components/InterfaceText";
 
 const EMPTY_GAMES: Game[] = [];
 
@@ -87,6 +89,15 @@ const SelectTriggerWithSpinner = ({
 };
 
 export default function DiscoverPage() {
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
+  const textNode = useCallback(
+    (source: string) => (
+      <span lang={languageFor(source)} dir={directionFor(source)}>
+        {t(source)}
+      </span>
+    ),
+    [directionFor, languageFor, t]
+  );
   const [selectedGenre, setSelectedGenre] = useState<string>("Adventure");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("PC");
   const [selectedProvider, setSelectedProvider] = useState("igdb");
@@ -324,22 +335,22 @@ export default function DiscoverPage() {
   useEffect(() => {
     if (genresError) {
       toast({
-        description: "Failed to load genres, using defaults",
+        description: textNode("Failed to load genres, using defaults"),
 
         variant: "destructive",
       });
     }
-  }, [genresError, toast]);
+  }, [genresError, textNode, toast]);
 
   useEffect(() => {
     if (platformsError) {
       toast({
-        description: "Failed to load platforms, using defaults",
+        description: textNode("Failed to load platforms, using defaults"),
 
         variant: "destructive",
       });
     }
-  }, [platformsError, toast]);
+  }, [platformsError, textNode, toast]);
 
   // Track game mutation (for Discovery games)
 
@@ -386,7 +397,7 @@ export default function DiscoverPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/games"] });
 
-      toast({ description: "Game added to watchlist!" });
+      toast({ description: textNode("Game added to watchlist!") });
     },
 
     onError: (error: Error) => {
@@ -394,13 +405,13 @@ export default function DiscoverPage() {
 
       if (errorMessage.includes("409") || errorMessage.includes("already in collection")) {
         toast({
-          description: "Game is already in your collection",
+          description: textNode("Game is already in your collection"),
 
           variant: "default",
         });
       } else {
         toast({
-          description: "Failed to track game",
+          description: textNode("Failed to track game"),
 
           variant: "destructive",
         });
@@ -420,9 +431,9 @@ export default function DiscoverPage() {
             : undefined;
       return hideDiscoveryGame(game, localId);
     },
-    hiddenSuccessMessage: "Game hidden from discovery",
-    unhiddenSuccessMessage: "Game unhidden",
-    errorMessage: "Failed to hide game",
+    hiddenSuccessMessage: t("Game hidden from discovery"),
+    unhiddenSuccessMessage: t("Game unhidden"),
+    errorMessage: t("Failed to hide game"),
   });
 
   // Add game mutation (for status changes on Discovery games)
@@ -462,12 +473,12 @@ export default function DiscoverPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/games"] });
 
-      toast({ description: "Game added to collection successfully" });
+      toast({ description: textNode("Game added to collection successfully") });
     },
 
     onError: () => {
       toast({
-        description: "Failed to add game to collection",
+        description: textNode("Failed to add game to collection"),
 
         variant: "destructive",
       });
@@ -651,12 +662,18 @@ export default function DiscoverPage() {
         <div className="bg-muted p-4 rounded-full">
           <AlertCircle className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h2 className="text-2xl font-bold">Game Metadata Provider Required</h2>
+        <h2 className="text-2xl font-bold">
+          <InterfaceText source={"Game Metadata Provider Required"} />
+        </h2>
         <p className="text-muted-foreground max-w-md">
-          Configure IGDB or the optional RAWG provider in Settings to discover and browse games.
+          <InterfaceText
+            source={
+              "Configure IGDB or the optional RAWG provider in Settings to discover and browse games."
+            }
+          />
         </p>
         <Link href="/settings">
-          <Button>Go to Settings</Button>
+          <Button>{textNode("Go to Settings")}</Button>
         </Link>
       </div>
     );
@@ -670,20 +687,38 @@ export default function DiscoverPage() {
         <Tabs value={selectedProvider} onValueChange={setSelectedProvider} className="space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Discover</h1>
-              <p className="text-muted-foreground text-sm mt-0.5">
-                Explore popular games, new releases, and find your next adventure
+              <h1
+                className="text-2xl font-bold tracking-tight"
+                lang={languageFor("Discover")}
+                dir={directionFor("Discover")}
+              >
+                {t("Discover")}
+              </h1>
+              <p
+                className="text-muted-foreground text-sm mt-0.5"
+                lang={languageFor(
+                  "Explore popular games, new releases, and find your next adventure"
+                )}
+                dir={directionFor(
+                  "Explore popular games, new releases, and find your next adventure"
+                )}
+              >
+                {t("Explore popular games, new releases, and find your next adventure")}
               </p>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
               <TabsList>
                 <TabsTrigger value="igdb" disabled={!config?.igdb.configured}>
-                  IGDB
+                  <InterfaceText source={"IGDB"} />
                 </TabsTrigger>
-                {config?.rawg?.configured && <TabsTrigger value="rawg">RAWG</TabsTrigger>}
+                {config?.rawg?.configured && (
+                  <TabsTrigger value="rawg">
+                    <InterfaceText source={"RAWG"} />
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="rss" className="gap-2">
-                  <Rss className="h-4 w-4" /> RSS
+                  <Rss className="h-4 w-4" /> <InterfaceText source={"RSS"} />
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -696,10 +731,12 @@ export default function DiscoverPage() {
                 size="sm"
                 className="gap-2"
                 onClick={() => setShowSettings(true)}
-                aria-label="Discovery settings"
+                aria-label={t("Discovery settings")}
+                lang={languageFor("Discovery settings")}
+                dir={directionFor("Discovery settings")}
               >
                 <Settings2 className="h-4 w-4" />
-                Discovery Settings
+                {textNode("Discovery Settings")}
               </Button>
             </div>
 
@@ -716,6 +753,7 @@ export default function DiscoverPage() {
             {/* Popular Games Section */}
             <GameCarouselSection
               title="Popular Games"
+              data-i18n-title={"Popular Games"}
               queryKey={igdbCarouselQueryKeys.popular}
               queryFn={fetchPopularGames}
               staleTime={DISCOVERY_STALE_TIME}
@@ -728,6 +766,7 @@ export default function DiscoverPage() {
             {/* Recent Releases Section */}
             <GameCarouselSection
               title="Recent Releases"
+              data-i18n-title={"Recent Releases"}
               queryKey={igdbCarouselQueryKeys.recent}
               queryFn={fetchRecentGames}
               staleTime={DISCOVERY_STALE_TIME}
@@ -740,6 +779,7 @@ export default function DiscoverPage() {
             {/* Upcoming Releases Section */}
             <GameCarouselSection
               title="Coming Soon"
+              data-i18n-title={"Coming Soon"}
               queryKey={igdbCarouselQueryKeys.upcoming}
               queryFn={fetchUpcomingGames}
               staleTime={DISCOVERY_STALE_TIME}
@@ -752,14 +792,20 @@ export default function DiscoverPage() {
             {/* By Genre Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <h2 className="text-xl font-semibold">By Genre</h2>
+                <h2
+                  className="text-xl font-semibold"
+                  lang={languageFor("By Genre")}
+                  dir={directionFor("By Genre")}
+                >
+                  {t("By Genre")}
+                </h2>
                 <Select value={selectedGenre} onValueChange={setSelectedGenre}>
                   <SelectTriggerWithSpinner
                     className="w-[180px]"
                     data-testid="select-genre"
                     loading={isFetchingGenres}
                   >
-                    <SelectValue placeholder="Select genre" />
+                    <SelectValue placeholder={t("Select genre")} />
                   </SelectTriggerWithSpinner>
                   <SelectContent>
                     {displayGenres.map((genre: Genre) => (
@@ -772,7 +818,9 @@ export default function DiscoverPage() {
               </div>
               {/* Keep the label in sync with its debounced query while the filter settles. */}
               <GameCarouselSection
-                title={`${debouncedGenre} Games`}
+                title={formatInterfaceMessage("{selectedGenre} Games", {
+                  selectedGenre: String(debouncedGenre ?? ""),
+                })}
                 queryKey={genreCarouselQueryKey}
                 queryFn={fetchGamesByGenre}
                 staleTime={DISCOVERY_STALE_TIME}
@@ -791,14 +839,20 @@ export default function DiscoverPage() {
             {displayPlatforms.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <h2 className="text-xl font-semibold">By Platform</h2>
+                  <h2
+                    className="text-xl font-semibold"
+                    lang={languageFor("By Platform")}
+                    dir={directionFor("By Platform")}
+                  >
+                    {t("By Platform")}
+                  </h2>
                   <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                     <SelectTriggerWithSpinner
                       className="w-[180px]"
                       data-testid="select-platform"
                       loading={isFetchingPlatforms}
                     >
-                      <SelectValue placeholder="Select platform" />
+                      <SelectValue placeholder={t("Select platform")} />
                     </SelectTriggerWithSpinner>
                     <SelectContent>
                       {displayPlatforms.map((platform: Platform) => (
@@ -811,7 +865,9 @@ export default function DiscoverPage() {
                 </div>
                 {/* Match the label to the same debounced platform used by its query. */}
                 <GameCarouselSection
-                  title={`${debouncedPlatform} Games`}
+                  title={formatInterfaceMessage("{selectedPlatform} Games", {
+                    selectedPlatform: String(selectedPlatform ?? ""),
+                  })}
                   queryKey={platformCarouselQueryKey}
                   queryFn={fetchGamesByPlatform}
                   staleTime={DISCOVERY_STALE_TIME}
@@ -892,9 +948,19 @@ export default function DiscoverPage() {
           <TabsContent value="rss" className="space-y-6">
             <div className="flex justify-between items-center bg-muted/30 p-4 rounded-lg">
               <div>
-                <h3 className="font-semibold">RSS Feed Discovery</h3>
-                <p className="text-sm text-muted-foreground">
-                  Track releases from your favorite sites.
+                <h3
+                  className="font-semibold"
+                  lang={languageFor("RSS Feed Discovery")}
+                  dir={directionFor("RSS Feed Discovery")}
+                >
+                  {t("RSS Feed Discovery")}
+                </h3>
+                <p
+                  className="text-sm text-muted-foreground"
+                  lang={languageFor("Track releases from your favorite sites.")}
+                  dir={directionFor("Track releases from your favorite sites.")}
+                >
+                  {t("Track releases from your favorite sites.")}
                 </p>
               </div>
               <RssSettings />

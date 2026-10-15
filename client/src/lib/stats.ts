@@ -1,3 +1,5 @@
+import { getInterfaceCollator, type InterfaceLanguage } from "@/lib/interface-locale";
+import { formatRegionalNumber } from "@/lib/regional-format";
 import { type Game } from "@shared/schema";
 
 export interface LibraryStats {
@@ -23,7 +25,11 @@ export interface LibraryStats {
   completionRate: number;
 }
 
-export function calculateLibraryStats(games: Game[]): LibraryStats {
+export function calculateLibraryStats(
+  games: Game[],
+  regionalPreference?: string,
+  interfaceLanguage: InterfaceLanguage = "en"
+): LibraryStats {
   const totalGames = games.length;
 
   if (totalGames === 0) {
@@ -139,13 +145,34 @@ export function calculateLibraryStats(games: Game[]): LibraryStats {
     else if (g.status === "downloading") statusBreakdown.downloading++;
   }
 
-  const avgRating = ratedCount > 0 ? (ratingSum / ratedCount).toFixed(1) : "N/A";
-  const avgUserRating = userRatedCount > 0 ? (userRatingSum / userRatedCount).toFixed(1) : "N/A";
+  const avgRating =
+    ratedCount > 0
+      ? formatRegionalNumber(
+          ratingSum / ratedCount,
+          {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          },
+          regionalPreference
+        )
+      : "N/A";
+  const avgUserRating =
+    userRatedCount > 0
+      ? formatRegionalNumber(
+          userRatingSum / userRatedCount,
+          {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          },
+          regionalPreference
+        )
+      : "N/A";
 
   const getTopItemFromCounts = (counts: Record<string, number>) => {
     const entries = Object.entries(counts);
     if (entries.length === 0) return null;
-    entries.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const collator = getInterfaceCollator(interfaceLanguage);
+    entries.sort((a, b) => b[1] - a[1] || collator.compare(a[0], b[0]));
     const [name, count] = entries[0]!;
     return { name, count };
   };

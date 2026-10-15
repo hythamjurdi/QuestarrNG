@@ -6,6 +6,10 @@ import { assertWithinRoots } from "./path-security.js";
 
 const { mkdir, writeFile, readFile } = fs.promises;
 
+export function createHttpsServerOptions(key: Buffer, cert: Buffer) {
+  return { key, cert, minVersion: "TLSv1.2" as const };
+}
+
 // Use the directory where config.yaml is located + /ssl
 const SSL_DIR = path.join(configLoader.getConfigDir(), "ssl");
 

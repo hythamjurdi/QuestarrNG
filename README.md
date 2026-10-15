@@ -11,11 +11,11 @@ PostgreSQL, and hardened multi-architecture releases. See
 [What changed in QuestarrNG](docs/FORK_CHANGES.md) for the overview and
 [the changelog](docs/CHANGELOG.md) for the release-by-release history.
 
-Use `ghcr.io/snapetech/questarrng:latest` or the Compose file in this
-repository for the latest published release. The `dev` tag tracks main-branch
-builds for testing, and semantic-version tags pin a specific release. The
-upstream Questarr image does not contain the SeerrNG provider routes. The fork
-image is published for `linux/amd64` and `linux/arm64`.
+Use `ghcr.io/snapetech-org/questarrng:latest` or the Compose file in this
+repository for the latest published release. Production images are published
+only from explicit version tags; semantic-version tags pin a specific release.
+The upstream Questarr image does not contain the SeerrNG provider routes. The
+fork image is published for `linux/amd64` and `linux/arm64`.
 
 Support QuestarrNG on [Ko-fi](https://ko-fi.com/snapetech).
 
@@ -25,17 +25,17 @@ A video game management application inspired by the -Arr apps (Sonarr, Radarr, P
 
 [![Library screenshot](images/Screenshots/library.png)](images/Screenshots/library.png)
 
-[![GHCR](https://img.shields.io/badge/container-ghcr.io%2Fsnapetech%2Fquestarrng-blue?logo=github&logoColor=white)](https://github.com/snapetech/QuestarrNG/pkgs/container/questarrng)
-[![GitHub release](https://img.shields.io/github/v/release/snapetech/QuestarrNG)](https://github.com/snapetech/QuestarrNG/releases)
-[![License](https://img.shields.io/github/license/snapetech/QuestarrNG)](https://github.com/snapetech/QuestarrNG/blob/main/COPYING)
-[![CI](https://github.com/snapetech/QuestarrNG/actions/workflows/ci.yml/badge.svg)](https://github.com/snapetech/QuestarrNG/actions/workflows/ci.yml)
-[![Code Scanning](https://github.com/snapetech/QuestarrNG/actions/workflows/sast.yml/badge.svg)](https://github.com/snapetech/QuestarrNG/security/code-scanning)
-[![Last commit](https://img.shields.io/github/last-commit/snapetech/QuestarrNG)](https://github.com/snapetech/QuestarrNG/commits/main)
+[![GHCR](https://img.shields.io/badge/container-ghcr.io%2Fsnapetech-org%2Fquestarrng-blue?logo=github&logoColor=white)](https://github.com/orgs/snapetech-org/packages/container/package/questarrng)
+[![GitHub release](https://img.shields.io/github/v/release/snapetech/QuestarrNG)](https://github.com/snapetech-org/QuestarrNG/releases)
+[![License](https://img.shields.io/github/license/snapetech/QuestarrNG)](https://github.com/snapetech-org/QuestarrNG/blob/main/COPYING)
+[![CI](https://github.com/snapetech-org/QuestarrNG/actions/workflows/ci.yml/badge.svg)](https://github.com/snapetech-org/QuestarrNG/actions/workflows/ci.yml)
+[![Code Scanning](https://github.com/snapetech-org/QuestarrNG/actions/workflows/sast.yml/badge.svg)](https://github.com/snapetech-org/QuestarrNG/security/code-scanning)
+[![Last commit](https://img.shields.io/github/last-commit/snapetech/QuestarrNG)](https://github.com/snapetech-org/QuestarrNG/commits/main)
 
 ⭐ Star us on GitHub — your support motivates us a lot! 🙏😊
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289da?logo=discord&logoColor=white)](https://discord.gg/STkp86wP9F)
-[![Share](https://img.shields.io/badge/share-000000?logo=x&logoColor=white)](https://x.com/intent/tweet?text=Check%20out%20QuestarrNG%20on%20GitHub:%20https://github.com/snapetech/QuestarrNG%20%23gaming%20%23selfhosted)
+[![Share](https://img.shields.io/badge/share-000000?logo=x&logoColor=white)](https://x.com/intent/tweet?text=Check%20out%20QuestarrNG%20on%20GitHub:%20https://github.com/snapetech-org/QuestarrNG%20%23gaming%20%23selfhosted)
 
 ## Table of Contents
 
@@ -135,11 +135,13 @@ Questarr restarts during a handoff before recording its download, it pauses the
 request for a duplicate-download check before retrying or cancelling. The retry
 or cancel endpoint returns `409` with `confirmationRequired` until the caller
 checks the download queue/history and sends `confirmNoExistingDownload: true`.
-QuestarrNG 1.10.0 advertises provider contract v2, preserves exact IGDB request
-identity, and can show verified Steam ownership and community play-time
-estimates. It supports authenticated multi-file bundles and can stage
-Real-Debrid downloads locally before import. Emulation acquisition remains
-unsupported. See the [compatibility guide](docs/SEERRNG-INTEGRATION.md#current-capability-status).
+QuestarrNG 1.11.0 adds browser-local interface language selection and regional
+date and number formatting. It also advertises provider contract v2, preserves
+exact IGDB request identity, and can show verified Steam ownership and
+community play-time estimates. It supports authenticated multi-file bundles
+and can stage Real-Debrid downloads locally before import. Emulation
+acquisition remains unsupported. See the
+[compatibility guide](docs/SEERRNG-INTEGRATION.md#current-capability-status).
 
 ### Import processing and file safety
 
@@ -178,23 +180,23 @@ not supported. The [Home Assistant add-on](#home-assistant-add-on) is
 mkdir -p ./data
 docker run -d -p 5000:5000 --user "$(id -u):$(id -g)" \
   -e PUID="$(id -u)" -e PGID="$(id -g)" \
-  -v ./data:/app/data --name questarrng ghcr.io/snapetech/questarrng:latest
+  -v ./data:/app/data --name questarrng ghcr.io/snapetech-org/questarrng:latest
 ```
 
-`latest` is updated only when a versioned release is published. Main-branch
-builds use `ghcr.io/snapetech/questarrng:dev`; use that tag for testing, not for
-a stable installation. Release tags are published both as `latest` and as the
-exact semantic version (for example, `1.10.0`). To update a Compose install,
+`latest` and versioned production images are updated only by publishing an
+explicit version tag. A push to `main` does not publish a release image. Release
+tags are published both as `latest` and as the exact semantic version (for
+example, `1.11.0`). To update a Compose install,
 run `docker compose pull && docker compose up -d`.
 
 ### Option 2: Docker Compose (more detailed)
 
-1. **Use the [`docker-compose.yml`](https://github.com/snapetech/QuestarrNG/blob/main/docker-compose.yml) file from the repo or create a minimal one.** It pulls the published GHCR image and does not need a `.env` file for the default SQLite setup:
+1. **Use the [`docker-compose.yml`](https://github.com/snapetech-org/QuestarrNG/blob/main/docker-compose.yml) file from the repo or create a minimal one.** It pulls the published GHCR image and does not need a `.env` file for the default SQLite setup:
 
    ```yaml
    services:
      app:
-       image: ghcr.io/snapetech/questarrng:latest
+       image: ghcr.io/snapetech-org/questarrng:latest
        user: "${PUID:-1000}:${PGID:-1000}"
        ports:
          - "5000:5000"
@@ -286,7 +288,7 @@ with a reverse proxy on the same host, set `HOST=127.0.0.1` to restrict access.
 
 Prefer running Questarr as a native Windows service instead of Docker? Download
 `QuestarrSetup-<version>-windows-x64.exe` from the
-[latest QuestarrNG release](https://github.com/snapetech/QuestarrNG/releases/latest) and
+[latest QuestarrNG release](https://github.com/snapetech-org/QuestarrNG/releases/latest) and
 run it. The installer bundles Node.js, installs Questarr as a Windows service
 (`Questarr.Service.exe`), and starts it automatically — open
 `http://localhost:5000` once it finishes.
@@ -324,7 +326,7 @@ and troubleshooting.
 The upstream **Questarr** Community Apps entry uses the upstream image and
 does not include this fork's SeerrNG integration routes. Use the
 [QuestarrNG fork template](unraid/questarr.xml)
-for `ghcr.io/snapetech/questarrng:latest`. QuestarrNG works as a standalone
+for `ghcr.io/snapetech-org/questarrng:latest`. QuestarrNG works as a standalone
 game manager; SeerrNG integration is optional. For package or integration
 support, use the [SeerrNG issue tracker](https://github.com/snapetech/seerrng/issues).
 
@@ -372,7 +374,7 @@ PUID/PGID, update the template's **Extra Parameters** `--user` value to match.
 
 1. In umbrelOS, open the **App Store**.
 2. Click the **⋮** menu (top right) → **Community App Stores**.
-3. Add this repository URL: `https://github.com/snapetech/QuestarrNG`
+3. Add this repository URL: `https://github.com/snapetech-org/QuestarrNG`
 4. Open the **Snapetech** store and install **QuestarrNG** (app ID `doezer-questarr`, retained for existing installs), then open it from
    your dashboard (`http://umbrel.local:5000`).
 
@@ -401,7 +403,7 @@ A Helm chart lives in [`charts/questarr`](charts/questarr). It is not published 
 repository yet, so install it from a clone:
 
 ```bash
-git clone https://github.com/snapetech/QuestarrNG.git
+git clone https://github.com/snapetech-org/QuestarrNG.git
 cd QuestarrNG
 helm install questarr charts/questarr --namespace questarr --create-namespace
 ```
@@ -428,7 +430,7 @@ You can install Questarr as a Home Assistant add-on from this repository:
 
 1. In Home Assistant, open **Settings → Add-ons → Add-on Store**.
 2. Click the menu (⋮) and choose **Repositories**.
-3. Add this repository URL: `https://github.com/snapetech/QuestarrNG`
+3. Add this repository URL: `https://github.com/snapetech-org/QuestarrNG`
 4. Install the **Questarr** add-on and start it.
 5. Open `http://<home-assistant-host>:5000` to access the UI.
 
@@ -588,7 +590,7 @@ This is mainly for users who want the latest commit (e.g when trying out fixes f
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/snapetech/QuestarrNG.git
+git clone https://github.com/snapetech-org/QuestarrNG.git
 cd QuestarrNG
 ```
 
@@ -637,7 +639,9 @@ shipped. The remaining product proposals are version-aware game upgrades,
 additional direct-download providers, importing owned Steam or GOG libraries,
 and possible Gameyfin or user-defined webhook integrations. The maintained
 [PRD](docs/PRD.md) marks what is shipped, what remains, and which ideas have no
-delivery commitment.
+delivery commitment. The [UI localization roadmap](docs/localization-roadmap.md)
+tracks current language and calendar coverage, plus the remaining screen-level
+translation and RTL work.
 
 ## Troubleshooting
 
@@ -650,8 +654,8 @@ If you run into an issue, go to the **Logs** page and click **Send Logs** before
 
 ### Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/snapetech/QuestarrNG/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/snapetech/QuestarrNG/discussions)
+- **Issues**: [GitHub Issues](https://github.com/snapetech-org/QuestarrNG/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/snapetech-org/QuestarrNG/discussions)
 - **Discord**: [Join our Server](https://discord.gg/STkp86wP9F)
 
 ## Project Security & Documentation
@@ -697,7 +701,7 @@ work is merged to `main`.
 
 ### Contributors
 
-<a href="https://github.com/snapetech/QuestarrNG/graphs/contributors">
+<a href="https://github.com/snapetech-org/QuestarrNG/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=snapetech/QuestarrNG" />
 </a>
 

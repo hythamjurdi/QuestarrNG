@@ -5,6 +5,8 @@ import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SettingsPage from "../src/pages/settings";
+import { setInterfaceLanguage } from "../src/lib/interface-locale";
+import { setRegionalPreference } from "../src/lib/regional-format";
 import { createTestQueryClient } from "./test-utils";
 
 vi.mock("@/components/ui/select", () => {
@@ -110,7 +112,18 @@ async function defaultFetch(input: RequestInfo | URL): Promise<Response> {
 describe("SettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(globalThis, "fetch").mockImplementation(defaultFetch);
+    setInterfaceLanguage("en");
+    setRegionalPreference("system");
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes("/api/config"))
+        return { ok: true, json: async () => defaultConfig } as Response;
+      if (url.includes("/api/blacklist")) return { ok: true, json: async () => [] } as Response;
+      if (url.includes("/api/api-keys")) return { ok: true, json: async () => [] } as Response;
+      if (url.includes("/api/settings"))
+        return { ok: true, json: async () => defaultUserSettings } as Response;
+      return { ok: true, json: async () => ({}) } as Response;
+    }) as typeof fetch;
   });
 
   afterEach(() => {
@@ -219,6 +232,22 @@ describe("SettingsPage", () => {
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
     expect(settingsRequests).toBe(2);
+  });
+
+  it("translates the selected browser-default regional format", async () => {
+    setInterfaceLanguage("ar");
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    const translatedOptions = await screen.findAllByRole("button", {
+      name: "استخدام إعدادات المتصفح",
+    });
+    expect(translatedOptions.length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Use browser settings" })).not.toBeInTheDocument();
   });
 
   it("reveals interval, unreleased, and auto-download controls when auto-search is enabled", async () => {
@@ -344,7 +373,7 @@ describe("SettingsPage", () => {
     expect(screen.getByTestId("preferred-release-groups")).toBeInTheDocument();
   });
 
-  it("renders the platform picker in the Appearance tab", async () => {
+  it("renders the platform picker in the dedicated Platforms tab", async () => {
     render(
       <QueryClientProvider client={createTestQueryClient()}>
         <SettingsPage />
@@ -352,12 +381,13 @@ describe("SettingsPage", () => {
     );
 
     await screen.findByText("Settings");
-    expect(screen.queryByRole("tab", { name: "Platforms" })).not.toBeInTheDocument();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Appearance" }));
+    expect(screen.getByRole("tab", { name: "Platforms" })).toBeInTheDocument();
+    expect(screen.queryByText("Choose the platforms you use.", { exact: false })).toBeNull();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Platforms" }));
 
     expect(
       await screen.findByText("Choose the platforms you use.", { exact: false })
-    ).toBeInTheDocument();
+    ).toBeVisible();
   });
 
   it("switches to the Integrations tab and saves a Steam ID", async () => {

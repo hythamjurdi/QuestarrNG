@@ -137,17 +137,17 @@ void (async () => {
     if (ssl.enabled && ssl.certPath && ssl.keyPath) {
       try {
         // Validate certs before attempting to start
-        const { validateCertFiles } = await import("./ssl.js");
+        const { createHttpsServerOptions, validateCertFiles } = await import("./ssl.js");
         const { valid, error } = await validateCertFiles(ssl.certPath, ssl.keyPath);
 
         if (!valid) {
           log(`⚠️ SSL Configuration Invalid: ${error}. Starting in HTTP-only mode.`);
           // Skip HTTPS setup
         } else {
-          const httpsOptions = {
-            key: await fs.promises.readFile(ssl.keyPath),
-            cert: await fs.promises.readFile(ssl.certPath),
-          };
+          const httpsOptions = createHttpsServerOptions(
+            await fs.promises.readFile(ssl.keyPath),
+            await fs.promises.readFile(ssl.certPath)
+          );
 
           const httpsServer = https.createServer(httpsOptions, rootRequestHandler ?? app);
 

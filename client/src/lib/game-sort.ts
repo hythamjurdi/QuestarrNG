@@ -1,3 +1,4 @@
+import { getInterfaceCollator, type InterfaceLanguage } from "@/lib/interface-locale";
 import { type Game } from "@shared/schema";
 
 export type LibrarySortOption =
@@ -60,8 +61,14 @@ const compareNumbers = (
   return 0;
 };
 
-export function sortLibraryGames(gameList: Game[], sortBy: LibrarySortOption): Game[] {
+export function sortLibraryGames(
+  gameList: Game[],
+  sortBy: LibrarySortOption,
+  interfaceLanguage: InterfaceLanguage = "en"
+): Game[] {
   const sorted = [...gameList];
+  const titleCollator =
+    sortBy === "title-asc" ? getInterfaceCollator(interfaceLanguage) : undefined;
 
   return sorted.sort((a, b) => {
     switch (sortBy) {
@@ -76,7 +83,7 @@ export function sortLibraryGames(gameList: Game[], sortBy: LibrarySortOption): G
       case "rating-desc":
         return compareNumbers(a.userRating, b.userRating, false);
       case "title-asc":
-        return a.title.localeCompare(b.title);
+        return titleCollator!.compare(a.title, b.title);
       default:
         return 0;
     }

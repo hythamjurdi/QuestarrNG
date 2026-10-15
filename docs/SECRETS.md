@@ -226,24 +226,11 @@ Transmission, rTorrent, sabnzbd, nzbget).
   transparently, so `server/downloaders/*.ts` and `server/search.ts` receive
   plaintext exactly as before — HTTP Basic Auth (base64, not encryption) for
   qBittorrent/Transmission-style clients, and RFC 2617 Digest Auth
-  challenge-response for rTorrent (`server/downloaders/rtorrent.ts:596-621`).
-  - **MD5 fallback (accepted risk):** RFC 2617's classic Digest Auth only
-    defines MD5; `rtorrent.ts:596,599` uses SHA-256 whenever the rTorrent/
-    ruTorrent server's challenge advertises `algorithm=SHA-256`, and falls
-    back to MD5 only for servers that don't (the common case, since most
-    rTorrent/ruTorrent builds still only implement the original RFC 2617
-    MD5 scheme). This is an interoperability requirement, not a choice —
-    there is no more-secure alternative that the target servers accept.
-    Risk is limited: the digest response is an HMAC-style construction
-    keyed by server-issued `nonce`/client `cnonce` per request
-    (`rtorrent.ts:608-621`), not a bare hash of the credential, so MD5's
-    known collision weakness doesn't directly expose the password —
-    the exposure is the same one every RFC 2617 MD5 deployment has always
-    carried. Mitigation: always prefer a downloader/network path that
-    terminates in TLS between QuestarrNG and the rTorrent host where
-    possible, since Digest Auth (either hash) still doesn't encrypt the
-    request/response bodies themselves. No other code path in QuestarrNG
-    depends on MD5.
+  challenge-response for rTorrent (`server/downloaders/rtorrent.ts`).
+  Only SHA-256 Digest is supported. Classic RFC 2617 MD5 and unrecognized
+  algorithms are rejected; upgrade rTorrent/ruTorrent to advertise SHA-256.
+  Digest authentication does not encrypt request or response bodies, so use
+  TLS even when SHA-256 is available.
 - **Access control / API exposure:** every indexer/downloader route sits
   behind the global `authenticateToken` middleware (`server/routes.ts:821-829`).
   `GET /api/indexers`, `GET /api/indexers/:id`, `GET /api/downloaders`, and

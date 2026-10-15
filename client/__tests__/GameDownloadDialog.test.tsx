@@ -2,13 +2,14 @@
  * @vitest-environment jsdom
  */
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GameDownloadDialog from "../src/components/GameDownloadDialog";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { createTestQueryClient, getRequestUrl } from "./test-utils";
+import { setInterfaceLanguage } from "@/lib/interface-locale";
 
 // Route apiRequest through globalThis.fetch so test mocks capture mutation calls
 vi.mock("@/lib/queryClient", () => ({
@@ -280,6 +281,7 @@ describe("GameDownloadDialog", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockIsMobile = false;
+    setInterfaceLanguage("en");
     Object.assign(navigator, {
       clipboard: {
         writeText: vi.fn(),
@@ -310,6 +312,13 @@ describe("GameDownloadDialog", () => {
       name: "More download options",
     });
     expect(optionsButtons).toHaveLength(3);
+  });
+
+  it("uses automatic direction for the typed download search", async () => {
+    renderComponent();
+
+    const searchInput = await screen.findByPlaceholderText("Search for downloads...");
+    expect(searchInput).toHaveAttribute("dir", "auto");
   });
 
   it.each([false, true])(
@@ -447,7 +456,7 @@ describe("GameDownloadDialog", () => {
 
     // Click on Health sort header
     // Initial state is Seeders Desc (ArrowDown). Clicking it should toggle to Asc (ArrowUp).
-    const healthHeader = screen.getByText("Health");
+    const healthHeader = screen.getByRole("button", { name: "Health" });
     fireEvent.click(healthHeader);
 
     // Should trigger a re-sort -> Ascending -> ArrowUp
@@ -463,13 +472,13 @@ describe("GameDownloadDialog", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText("Priority")).toBeInTheDocument();
+      expect(screen.getByText("Test Torrent 1")).toBeInTheDocument();
     });
 
     // Click the Priority sort header. Default order (desc) shows the
     // highest-priority indexer (lowest configured priority number) first:
     // Indexer B (priority 1) < Indexer A (priority 2) < Indexer C (priority 3).
-    fireEvent.click(screen.getByText("Priority"));
+    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
 
     await waitFor(() => {
       // Dialog content renders into a Radix portal on document.body, not inside `container`.
@@ -509,11 +518,11 @@ describe("GameDownloadDialog", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText("Priority")).toBeInTheDocument();
+      expect(screen.getByText("Test Torrent Unknown")).toBeInTheDocument();
     });
 
     // Default order (desc): known indexers by priority, unknown last.
-    fireEvent.click(screen.getByText("Priority"));
+    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
     await waitFor(() => {
       const text = document.body.textContent ?? "";
       const posB = text.indexOf("Test Torrent 2");
@@ -525,7 +534,7 @@ describe("GameDownloadDialog", () => {
     });
 
     // Reversed order (asc): unknown indexer must still sort last, not first.
-    fireEvent.click(screen.getByText("Priority"));
+    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
     await waitFor(() => {
       const text = document.body.textContent ?? "";
       const posB = text.indexOf("Test Torrent 2");
@@ -559,7 +568,7 @@ describe("GameDownloadDialog", () => {
     // The Priority header should render even though only one of the two
     // result indexers is present in the enabled-indexers list.
     await waitFor(() => {
-      expect(screen.getByText("Priority")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Priority" })).toBeInTheDocument();
     });
 
     // The unrecognized indexer's row shows an em dash instead of a number.
@@ -607,7 +616,7 @@ describe("GameDownloadDialog", () => {
 
     await waitFor(() => {
       expect(mockToast).toHaveBeenCalledWith(
-        expect.objectContaining({ title: expect.stringContaining("download(s) sent") })
+        expect.objectContaining({ title: "Downloads sent: 1 to TestDownloader" })
       );
     });
 
@@ -761,6 +770,7 @@ describe("GameDownloadDialog", () => {
   });
 
   it("shows bundle dialog when clicking a main item that has updates available", async () => {
+    setInterfaceLanguage("ar");
     const mainItem = makeTorrentItem({
       guid: "main-1",
       title: "Test Game SKIDROW",
@@ -769,7 +779,7 @@ describe("GameDownloadDialog", () => {
     });
     const updateItem = makeTorrentItem({
       guid: "update-1",
-      title: "Test Game Update",
+      title: "Test.Game.Update-v1.2",
       link: "http://test.com/update",
       size: 1024 * 1024 * 5,
       seeders: 20,
@@ -792,9 +802,11 @@ describe("GameDownloadDialog", () => {
     const downloadButtons = screen.getAllByTestId("icon-download");
     fireEvent.click(downloadButtons[0].closest("button")!);
 
-    await waitFor(() => {
-      expect(screen.getByText("Download with Updates?")).toBeInTheDocument();
-    });
+    const bundleDialog = screen.getByRole("alertdialog");
+    const updateTitle = await within(bundleDialog).findByText("Test.Game.Update-v1.2");
+    expect(bundleDialog).toHaveAttribute("dir", "rtl");
+    expect(updateTitle).toHaveAttribute("lang", "und");
+    expect(updateTitle).toHaveAttribute("dir", "auto");
   });
 
   it.each([false, true])(
@@ -1550,7 +1562,7 @@ describe("GameDownloadDialog", () => {
       (
         await screen.findAllByText(
           (_, element) =>
-            element?.textContent?.includes("No results match your preferred platform") ?? false
+            element?.textContent?.includes("No results for selected platforms:") ?? false
         )
       ).length
     ).toBeGreaterThan(0);
@@ -1558,7 +1570,7 @@ describe("GameDownloadDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show all results" }));
 
     await waitFor(() => {
-      expect(screen.queryByText(/No results match your preferred platform/i)).toBeNull();
+      expect(screen.queryByText(/No results for selected platforms:/i)).toBeNull();
       expect(screen.getAllByText("Test Game PC v1.0-SKIDROW").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Test Game Mac Edition-CODEX").length).toBeGreaterThan(0);
     });
@@ -1728,14 +1740,14 @@ describe("GameDownloadDialog", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Download with Updates?")).toBeInTheDocument();
-      expect(screen.getByText("1 of 1 updates selected")).toBeInTheDocument();
+      expect(screen.getByText("Selection: 1/1")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText("Deselect All"));
-    expect(screen.getByText("0 of 1 updates selected")).toBeInTheDocument();
+    expect(screen.getByText("Selection: 0/1")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Select All"));
-    expect(screen.getByText("1 of 1 updates selected")).toBeInTheDocument();
+    expect(screen.getByText("Selection: 1/1")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Download game only"));
 

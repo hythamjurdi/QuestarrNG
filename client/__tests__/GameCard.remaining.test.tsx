@@ -92,6 +92,7 @@ vi.mock("../src/components/StatusBadge", () => ({
   __esModule: true,
   default: ({ status }: { status: string }) => <span>{status}</span>,
   getStatusLabel: (status: string) => status,
+  getStatusSourceLabel: (status: string) => status,
   getStatusVisual: () => ({ Icon: null, iconColorClass: "" }),
 }));
 
@@ -281,7 +282,7 @@ describe("GameCard remaining coverage", () => {
     // Open the status picker popover
     fireEvent.click(screen.getByTestId("button-status-1"));
 
-    // Select "Completed" from the picker chips using its visible accessible name.
+    // The picker exposes readable status labels; select by visible accessible name.
     const completedChip = await screen.findByRole("button", { name: "Completed" });
     fireEvent.click(completedChip);
 

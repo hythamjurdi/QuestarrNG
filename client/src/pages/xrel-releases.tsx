@@ -1,3 +1,5 @@
+import { getRegionalLocale } from "@/lib/regional-format";
+import { formatXrelSize } from "@/lib/xrel-format";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw, Loader2, Plus } from "lucide-react";
@@ -5,8 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { apiFetch } from "@/lib/queryClient";
+import { apiFetch, throwIfResNotOk } from "@/lib/queryClient";
 import type { XrelReleaseListItem } from "@shared/xrel-types";
+import { InterfaceText } from "@/components/InterfaceText";
+import { formatInterfaceMessage } from "@/lib/interface-locale";
 
 // The transport fields (id, dirname, nukeReason, ...) come from the
 // server's XrelReleaseListItem DTO; these are page-only fields the server
@@ -24,21 +28,19 @@ interface XrelRelease extends XrelReleaseListItem {
 
 interface XrelLatestResponse {
   list: XrelRelease[];
-  pagination: { current_page: number; per_page: number; has_next_page: boolean };
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_pages?: number;
+    has_next_page: boolean;
+  };
 }
 
 function formatDate(ts: number): string {
-  return new Date(ts * 1000).toLocaleString(undefined, {
+  return new Date(ts * 1000).toLocaleString(getRegionalLocale(), {
     dateStyle: "short",
     timeStyle: "short",
   });
-}
-
-function formatSize(mb?: number, unit?: string): string {
-  if (mb == null) return "—";
-  if (unit === "GB") return `${mb.toFixed(1)} GB`;
-  if (mb >= 1024 && !unit) return `${(mb / 1024).toFixed(1)} GB`;
-  return `${mb} ${unit || "MB"}`;
 }
 
 function safeUrl(url: string | undefined): string {
@@ -62,7 +64,7 @@ export default function XrelReleasesPage() {
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page) });
       const res = await apiFetch(`/api/xrel/latest?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch xREL latest");
+      await throwIfResNotOk(res);
       return res.json();
     },
   });
@@ -81,16 +83,15 @@ export default function XrelReleasesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to add game");
-      }
+      await throwIfResNotOk(res);
       return res.json();
     },
     onSuccess: (data) => {
       toast({
         title: "Game added",
-        description: `Added "${data.title}" to your wanted list`,
+        description: formatInterfaceMessage('Added "{title}" to your wanted list', {
+          title: String(data.title ?? ""),
+        }),
       });
       // Iterate over the list and update the item that was added to avoid full refetch if possible,
       // but simpler to just invalidates queries
@@ -109,15 +110,21 @@ export default function XrelReleasesPage() {
   const list = data?.list ?? [];
   const pagination = data?.pagination;
   const hasNextPage = pagination?.has_next_page ?? false;
+  const totalPages = pagination?.total_pages;
 
   return (
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-4 md:mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">xREL.to Releases</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            <InterfaceText source={"xREL.to Releases"} />
+          </h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Latest game releases listed on xREL.to (scene/P2P). No download links — for reference
-            only.
+            <InterfaceText
+              source={
+                "Latest game releases listed on xREL.to (scene/P2P). No download links — for reference only."
+              }
+            />
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0 pt-1">
@@ -127,6 +134,7 @@ export default function XrelReleasesPage() {
             onClick={() => refetch()}
             disabled={isFetching}
             aria-label="Refresh"
+            data-i18n-aria-label={"Refresh"}
           >
             <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
           </Button>
@@ -135,9 +143,11 @@ export default function XrelReleasesPage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Latest game releases</CardTitle>
+          <CardTitle className="text-base">
+            <InterfaceText source={"Latest game releases"} />
+          </CardTitle>
           <CardDescription>
-            Filtered to games only (master_game). Data from{" "}
+            <InterfaceText source={"Filtered to games only (master_game). Data from"} />{" "}
             <a
               href="https://www.xrel.to"
               target="_blank"
@@ -153,11 +163,22 @@ export default function XrelReleasesPage() {
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               <RefreshCw className="h-8 w-8 animate-spin mr-2" />
-              Loading…
+              <InterfaceText source={"Loading…"} />
             </div>
           ) : !isFetching && list.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No game releases found on this page.</p>
+              <p className="text-muted-foreground">
+                <InterfaceText source={"No game releases found on this page."} />
+              </p>
+              {hasNextPage && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  <InterfaceText
+                    source={
+                      "Note: Results are filtered to games only, so some pages may appear empty."
+                    }
+                  />
+                </p>
+              )}
             </div>
           ) : (
             <>
@@ -184,10 +205,18 @@ export default function XrelReleasesPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="shrink-0 text-primary hover:underline inline-flex items-center gap-0.5 text-sm"
-                        aria-label={`View ${rel.ext_info?.title ?? rel.dirname} on xREL`}
+                        aria-label={formatInterfaceMessage("View {value} on xREL", {
+                          value: String(rel.ext_info?.title ?? rel.dirname ?? ""),
+                        })}
+                        data-i18n-aria-label={"View {value} on xREL"}
+                        data-i18n-aria-label-values={JSON.stringify({
+                          value: String(rel.ext_info?.title ?? rel.dirname ?? ""),
+                        })}
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">View</span>
+                        <span className="hidden sm:inline">
+                          <InterfaceText source={"View"} />
+                        </span>
                       </a>
                     </div>
                     {/* Meta row: date · size · badges · action — wraps naturally on mobile */}
@@ -197,7 +226,7 @@ export default function XrelReleasesPage() {
                       </span>
                       {rel.sizeMb != null && (
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatSize(rel.sizeMb, rel.sizeUnit)}
+                          {formatXrelSize(rel.sizeMb, rel.sizeUnit)}
                         </span>
                       )}
                       <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
@@ -211,9 +240,11 @@ export default function XrelReleasesPage() {
                           <Badge
                             variant="destructive"
                             className="text-[10px] h-4 px-1.5"
-                            title={`Nuked: ${rel.nukeReason}`}
+                            title={formatInterfaceMessage("Nuked: {reason}", {
+                              reason: String(rel.nukeReason ?? ""),
+                            })}
                           >
-                            Nuked
+                            <InterfaceText source={"Nuked"} />
                           </Badge>
                           {/* Also shown as visible text, not just the hover title above --
                               touch/mobile users can't reliably reach a native tooltip. */}
@@ -243,7 +274,9 @@ export default function XrelReleasesPage() {
                             addGameMutation.isPending &&
                             addGameMutation.variables === rel.matchCandidate?.title
                           }
-                          title={`Add "${rel.matchCandidate?.title ?? ""}" to wanted list`}
+                          title={formatInterfaceMessage('Add "{value}" to wanted list', {
+                            value: String(rel.matchCandidate?.title ?? ""),
+                          })}
                         >
                           {addGameMutation.isPending &&
                           addGameMutation.variables === rel.matchCandidate?.title ? (
@@ -251,7 +284,7 @@ export default function XrelReleasesPage() {
                           ) : (
                             <Plus className="h-3 w-3" />
                           )}
-                          Add
+                          <InterfaceText source={"Add"} />
                         </Button>
                       ) : null}
                     </div>
@@ -266,10 +299,20 @@ export default function XrelReleasesPage() {
                     disabled={page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
-                    Previous
+                    <InterfaceText source={"Previous"} />
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Page {pagination?.current_page ?? page}
+                    {totalPages === undefined ? (
+                      <InterfaceText
+                        source={"Page {page}"}
+                        values={{ page: pagination?.current_page ?? page }}
+                      />
+                    ) : (
+                      <InterfaceText
+                        source={"Page {page} of {total}"}
+                        values={{ page: pagination?.current_page ?? page, total: totalPages }}
+                      />
+                    )}
                   </span>
                   <Button
                     variant="outline"
@@ -277,7 +320,7 @@ export default function XrelReleasesPage() {
                     disabled={!hasNextPage}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    Next
+                    <InterfaceText source={"Next"} />
                   </Button>
                 </div>
               )}

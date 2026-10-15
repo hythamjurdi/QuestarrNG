@@ -51,6 +51,31 @@ describe("PageToolbar", () => {
     expect(onSearchChange).toHaveBeenCalledWith("quest");
   });
 
+  it("keeps the translated placeholder direction while an auto-directed search is empty", () => {
+    const { rerender } = render(
+      <PageToolbar
+        search=""
+        onSearchChange={vi.fn()}
+        searchPlaceholder="ابحث عن الألعاب..."
+        searchDir="auto"
+        searchEmptyDir="rtl"
+      />
+    );
+    const search = screen.getByRole("textbox", { name: "ابحث عن الألعاب..." });
+    expect(search).toHaveAttribute("dir", "rtl");
+
+    rerender(
+      <PageToolbar
+        search="Calendar"
+        onSearchChange={vi.fn()}
+        searchPlaceholder="ابحث عن الألعاب..."
+        searchDir="auto"
+        searchEmptyDir="rtl"
+      />
+    );
+    expect(search).toHaveAttribute("dir", "auto");
+  });
+
   it("does not render search input when onSearchChange is not provided", () => {
     render(<PageToolbar />);
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();

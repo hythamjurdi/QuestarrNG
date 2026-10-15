@@ -1,4 +1,9 @@
-﻿import React, { useMemo, useState, useEffect } from "react";
+import {
+  formatInterfaceMessage,
+  getInterfaceCollator,
+  useInterfaceLanguage,
+} from "@/lib/interface-locale";
+import React, { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Eye, EyeOff } from "lucide-react";
 import GameStatusGrid from "@/components/GameStatusGrid";
@@ -31,8 +36,14 @@ const SORT_OPTIONS = [
 // 笞｡ Bolt: Move sortGames outside of the component to prevent it from being recreated
 // on every render, which would break the `useMemo` dependencies below if it were
 // included in the dependency array.
-export const sortGames = (gameList: Game[], currentSortBy: SortOption): Game[] => {
+export const sortGames = (
+  gameList: Game[],
+  currentSortBy: SortOption,
+  interfaceLanguage: ReturnType<typeof useInterfaceLanguage>["language"]
+): Game[] => {
   const sorted = [...gameList];
+  const titleCollator =
+    currentSortBy === "title-asc" ? getInterfaceCollator(interfaceLanguage) : null;
 
   return sorted.sort((a, b) => {
     switch (currentSortBy) {
@@ -43,7 +54,7 @@ export const sortGames = (gameList: Game[], currentSortBy: SortOption): Game[] =
       case "added-desc":
         return compareDates(a.addedAt, b.addedAt, false);
       case "title-asc":
-        return a.title.localeCompare(b.title);
+        return titleCollator!.compare(a.title, b.title);
       default:
         return 0;
     }
@@ -51,6 +62,7 @@ export const sortGames = (gameList: Game[], currentSortBy: SortOption): Game[] =
 };
 
 export default function WishlistPage() {
+  const { language: interfaceLanguage, t, languageFor, directionFor } = useInterfaceLanguage();
   const [sortBy, setSortBy] = useState<SortOption>("release-desc");
   const { viewMode, setViewMode, listDensity, setListDensity } = useViewControls("wishlist");
   const [showUnreleased, setShowUnreleased] = useLocalStorageState("wishlistShowUnreleased", true);
@@ -125,16 +137,16 @@ export default function WishlistPage() {
 
   // 笞｡ Bolt: Memoize the sorted arrays to prevent re-sorting on every render
   const sortedUpcomingGames = useMemo(() => {
-    return sortGames(upcomingGames, sortBy);
-  }, [upcomingGames, sortBy]);
+    return sortGames(upcomingGames, sortBy, interfaceLanguage);
+  }, [upcomingGames, sortBy, interfaceLanguage]);
 
   const sortedReleasedGames = useMemo(() => {
-    return sortGames(releasedGames, sortBy);
-  }, [releasedGames, sortBy]);
+    return sortGames(releasedGames, sortBy, interfaceLanguage);
+  }, [releasedGames, sortBy, interfaceLanguage]);
 
   const sortedTbaGames = useMemo(() => {
-    return sortGames(tbaGames, sortBy);
-  }, [tbaGames, sortBy]);
+    return sortGames(tbaGames, sortBy, interfaceLanguage);
+  }, [tbaGames, sortBy, interfaceLanguage]);
 
   const isMobile = useIsMobile();
 
@@ -176,7 +188,7 @@ export default function WishlistPage() {
     if (searchQuery) {
       return {
         title: "No games match your search",
-        description: `No wishlist games found for "${searchQuery}".`,
+        description: "No wishlist games found for “{query}”.",
       };
     }
 
@@ -230,6 +242,7 @@ export default function WishlistPage() {
       <EmptyState
         icon={Star}
         title="Your wishlist is empty"
+        data-i18n-title={"Your wishlist is empty"}
         description="Keep track of games you want to play. Add them from the Discover page to get notified about releases and updates."
         actionLabel="Find Games"
         actionLink="/discover"
@@ -241,6 +254,7 @@ export default function WishlistPage() {
         icon={Star}
         title={emptyStateContent.title}
         description={emptyStateContent.description}
+        {...(searchQuery ? { descriptionValues: { query: searchQuery } } : {})}
       />
     );
   } else if (isMobile && mobileSections.length > 1) {
@@ -249,7 +263,9 @@ export default function WishlistPage() {
         <TabsList className="w-full">
           {mobileSections.map((section) => (
             <TabsTrigger key={section.id} value={section.id} className="flex-1">
-              {section.label}
+              <span lang={languageFor(section.label)} dir={directionFor(section.label)}>
+                {t(section.label)}
+              </span>
               <span className="ml-1.5 text-xs opacity-60">{section.count}</span>
             </TabsTrigger>
           ))}
@@ -276,8 +292,12 @@ export default function WishlistPage() {
         {releasedGames.length > 0 && (
           <section>
             <div className="flex items-baseline gap-2 mb-3">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Released
+              <h2
+                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                lang={languageFor("Released")}
+                dir={directionFor("Released")}
+              >
+                {t("Released")}
               </h2>
               <span className="text-xs text-muted-foreground/60">{releasedGames.length}</span>
             </div>
@@ -297,8 +317,12 @@ export default function WishlistPage() {
         {showUnreleased && upcomingGames.length > 0 && (
           <section>
             <div className="flex items-baseline gap-2 mb-3">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Upcoming
+              <h2
+                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                lang={languageFor("Upcoming")}
+                dir={directionFor("Upcoming")}
+              >
+                {t("Upcoming")}
               </h2>
               <span className="text-xs text-muted-foreground/60">{upcomingGames.length}</span>
             </div>
@@ -318,8 +342,12 @@ export default function WishlistPage() {
         {showUnreleased && tbaGames.length > 0 && (
           <section>
             <div className="flex items-baseline gap-2 mb-3">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                To Be Announced
+              <h2
+                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                lang={languageFor("TBA")}
+                dir={directionFor("TBA")}
+              >
+                {t("TBA")}
               </h2>
               <span className="text-xs text-muted-foreground/60">{tbaGames.length}</span>
             </div>
@@ -343,11 +371,28 @@ export default function WishlistPage() {
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Wishlist</h1>
+          <h1
+            className="text-2xl font-bold tracking-tight"
+            lang={languageFor("Wishlist")}
+            dir={directionFor("Wishlist")}
+          >
+            {t("Wishlist")}
+          </h1>
           {games.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-0.5">
-              <span className="font-medium text-foreground">{games.length}</span> game
-              {games.length !== 1 ? "s" : ""} wanted
+            <p
+              className="text-sm text-muted-foreground mt-0.5"
+              lang={languageFor(
+                games.length === 1 ? "{count} game wanted" : "{count} games wanted"
+              )}
+              dir={directionFor(
+                games.length === 1 ? "{count} game wanted" : "{count} games wanted"
+              )}
+            >
+              {formatInterfaceMessage(
+                games.length === 1 ? "{count} game wanted" : "{count} games wanted",
+                { count: games.length },
+                interfaceLanguage
+              )}
             </p>
           )}
         </div>
@@ -371,7 +416,9 @@ export default function WishlistPage() {
                 onClick={() => setShowUnreleased(!showUnreleased)}
               >
                 {showUnreleased ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                Unreleased
+                <span lang={languageFor("Unreleased")} dir={directionFor("Unreleased")}>
+                  {t("Unreleased")}
+                </span>
               </Button>
               <GameFilterPills
                 showSearchResultsOnly={showSearchResultsOnly}
@@ -380,7 +427,13 @@ export default function WishlistPage() {
                 setShowDownloadsOnly={setShowDownloadsOnly}
               />
               {showSearchResultsOnly && showDownloadsOnly && (
-                <p className="text-xs text-muted-foreground">Multiple filters active</p>
+                <p
+                  className="text-xs text-muted-foreground"
+                  lang={languageFor("Multiple filters active")}
+                  dir={directionFor("Multiple filters active")}
+                >
+                  {t("Multiple filters active")}
+                </p>
               )}
             </>
           }

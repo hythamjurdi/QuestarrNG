@@ -107,7 +107,7 @@ describe("claim dialog regressions", () => {
     expect(items).toHaveLength(1);
     expect(items[0]).not.toHaveProperty("gameId");
     expect(items[0]?.newGame).toMatchObject({ igdbId: 123, title: "Candidate Game" });
-    expect(toastMock).toHaveBeenCalledWith({ title: "Linked 1 group(s) to games" });
+    expect(toastMock).toHaveBeenCalledWith({ title: "Linked 1 group to a game" });
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 

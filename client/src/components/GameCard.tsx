@@ -18,6 +18,13 @@ import { useToast } from "@/hooks/use-toast";
 import LazyModalFallback from "./LazyModalFallback";
 import { getReleaseStatus } from "@/lib/game-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  getRegionalDirection,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
+import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
+import { InterfaceText } from "@/components/InterfaceText";
 
 // ⚡ Bolt: Lazy load heavy modal components to reduce initial bundle size.
 // These are only needed when the user interacts with the card.
@@ -46,13 +53,19 @@ const GameCard = ({
   isDiscovery = false,
   downloadSummary,
 }: GameCardProps) => {
+  const { language, t, languageFor, directionFor } = useInterfaceLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const releaseStatus = getReleaseStatus(game);
+  const hasUserVisibleRating = game.rating != null && Number(game.rating) > 0;
   const isMobile = useIsMobile();
+  const regionalPreference = useRegionalPreference();
+  const regionalLocale =
+    getRegionalLocale(regionalPreference) ?? Intl.DateTimeFormat().resolvedOptions().locale;
+  const regionalDirection = getRegionalDirection(regionalLocale);
 
   // Keep track of the resolved game object (either original or newly added)
   const [resolvedGame, setResolvedGame] = useState<Game>(game);
@@ -118,7 +131,12 @@ const GameCard = ({
         setDownloadOpen(true);
       } catch {
         toast({
-          description: "Failed to add game to library before downloading",
+          description:
+            language === "en" ? (
+              "Failed to add game to library before downloading"
+            ) : (
+              <InterfaceText source="Failed to add game to library before downloading" />
+            ),
           variant: "destructive",
         });
       }
@@ -131,7 +149,10 @@ const GameCard = ({
     onToggleHidden?.(game.id, !game.hidden);
   };
 
-  const { year: releaseYear, fullDate: releaseFullDate } = parseReleaseDate(game.releaseDate);
+  const { year: releaseYear, fullDate: releaseFullDate } = parseReleaseDate(
+    game.releaseDate,
+    regionalPreference
+  );
   const mobileActionButtonClass = "h-9 w-9";
 
   return (
@@ -140,13 +161,19 @@ const GameCard = ({
       onClick={handleCardClick}
       className={`group hover-elevate transition-all duration-200 mx-auto min-w-0 w-full max-w-full cursor-pointer flex flex-col h-full overflow-hidden sm:max-w-[225px] ${game.hidden ? "opacity-60 grayscale" : ""}`}
       data-testid={`card-game-${game.id}`}
+      role="group"
+      aria-label={formatInterfaceMessage("Game card for {title}", { title: game.title })}
+      lang={languageFor("Game card for {title}")}
+      dir={directionFor("Game card for {title}")}
     >
       <div className="relative">
         {/* ⚡ Bolt: Lazy loading images prevents fetching all game covers upfront,
             improving initial page load speed, especially on pages with many carousels. */}
         <img
           src={coverSrc(game.coverUrl)}
-          alt={`${game.title} cover`}
+          alt={formatInterfaceMessage("Cover art for {title}", { title: game.title })}
+          lang={languageFor("Cover art for {title}")}
+          dir={directionFor("Cover art for {title}")}
           className="thumbnail-image rounded-t-md"
           loading="lazy"
           data-testid={`img-cover-${game.id}`}
@@ -155,19 +182,29 @@ const GameCard = ({
         <div className="absolute right-1.5 top-1.5 flex max-w-[calc(100%-0.75rem)] flex-col items-end gap-1 sm:right-2 sm:top-2">
           {!isDiscovery && game.status && <StatusBadge status={game.status} />}
           {game.earlyAccess && (
-            <Badge className="text-xs bg-amber-500 border-amber-600 text-white">Early Access</Badge>
+            <Badge
+              className="text-xs bg-amber-500 border-amber-600 text-white"
+              lang={languageFor("Early Access")}
+              dir={directionFor("Early Access")}
+            >
+              {t("Early Access")}
+            </Badge>
           )}
           {game.status === "wanted" && (
             <Badge
               variant={releaseStatus.variant}
               className={`max-w-full truncate text-[10px] sm:text-xs ${releaseStatus.className || ""}`}
             >
-              {releaseStatus.label}
+              <span lang={languageFor(releaseStatus.label)} dir={directionFor(releaseStatus.label)}>
+                {t(releaseStatus.label)}
+              </span>
             </Badge>
           )}
           {game.hidden && (
             <Badge variant="secondary" className="text-xs bg-gray-500 text-white">
-              Hidden
+              <span lang={languageFor("Hidden")} dir={directionFor("Hidden")}>
+                {t("Hidden")}
+              </span>
             </Badge>
           )}
         </div>
@@ -189,14 +226,24 @@ const GameCard = ({
                     e.stopPropagation();
                     handleToggleHidden();
                   }}
-                  aria-label={game.hidden ? `Unhide ${game.title}` : `Hide ${game.title}`}
+                  aria-label={formatInterfaceMessage(
+                    game.hidden ? "Unhide {title}" : "Hide {title}",
+                    { title: game.title }
+                  )}
+                  lang={languageFor(game.hidden ? "Unhide {title}" : "Hide {title}")}
+                  dir={directionFor(game.hidden ? "Unhide {title}" : "Hide {title}")}
                   data-testid={`button-toggle-hidden-${game.id}`}
                 >
                   {game.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>{game.hidden ? "Unhide Game" : "Hide Game"}</p>
+                <p
+                  lang={languageFor(game.hidden ? "Unhide Game" : "Hide Game")}
+                  dir={directionFor(game.hidden ? "Unhide Game" : "Hide Game")}
+                >
+                  {t(game.hidden ? "Unhide Game" : "Hide Game")}
+                </p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -218,7 +265,9 @@ const GameCard = ({
                       void handleDownloadClick();
                     }}
                     disabled={addGameMutation.isPending}
-                    aria-label={`Download ${game.title}`}
+                    aria-label={formatInterfaceMessage("Download {title}", { title: game.title })}
+                    lang={languageFor("Download {title}")}
+                    dir={directionFor("Download {title}")}
                     data-testid={`button-download-${game.id}`}
                   >
                     {addGameMutation.isPending ? (
@@ -229,7 +278,9 @@ const GameCard = ({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Download</p>
+                  <p lang={languageFor("Download")} dir={directionFor("Download")}>
+                    {t("Download")}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -240,6 +291,8 @@ const GameCard = ({
         <h3
           className="mb-1.5 line-clamp-2 text-xs font-semibold leading-4 sm:mb-2 sm:text-sm sm:leading-5"
           data-testid={`text-title-${game.id}`}
+          lang="und"
+          dir="auto"
         >
           <button
             type="button"
@@ -260,21 +313,31 @@ const GameCard = ({
               <div
                 className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 role="img"
-                aria-label={`IGDB rating: ${
-                  game.rating !== null && game.rating !== undefined
-                    ? `${game.rating} out of 10`
-                    : "Not rated"
-                }`}
+                aria-label={
+                  hasUserVisibleRating
+                    ? formatInterfaceMessage("IGDB rating: {rating} out of 10", {
+                        rating: Number(game.rating),
+                      })
+                    : t("Not rated")
+                }
+                lang={languageFor(
+                  hasUserVisibleRating ? "IGDB rating: {rating} out of 10" : "Not rated"
+                )}
+                dir={directionFor(
+                  hasUserVisibleRating ? "IGDB rating: {rating} out of 10" : "Not rated"
+                )}
                 tabIndex={0}
               >
                 <Star className="w-3 h-3 text-accent" aria-hidden="true" />
                 <span data-testid={`text-rating-${game.id}`}>
-                  {game.rating !== null && game.rating !== undefined ? `${game.rating}/10` : "N/A"}
+                  {hasUserVisibleRating ? `${game.rating}/10` : t("N/A")}
                 </span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>IGDB score</p>
+              <p lang={languageFor("IGDB score")} dir={directionFor("IGDB score")}>
+                {t("IGDB score")}
+              </p>
             </TooltipContent>
           </Tooltip>
           {!isDiscovery && game.userRating !== null && game.userRating !== undefined && (
@@ -283,7 +346,11 @@ const GameCard = ({
                 <div
                   className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   role="img"
-                  aria-label={`My rating: ${game.userRating} out of 10`}
+                  aria-label={formatInterfaceMessage("My rating: {rating} out of 10", {
+                    rating: game.userRating,
+                  })}
+                  lang={languageFor("My rating: {rating} out of 10")}
+                  dir={directionFor("My rating: {rating} out of 10")}
                   tabIndex={0}
                 >
                   <Star className="w-3 h-3 fill-primary text-primary" aria-hidden="true" />
@@ -291,7 +358,9 @@ const GameCard = ({
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>My rating</p>
+                <p lang={languageFor("My rating")} dir={directionFor("My rating")}>
+                  {t("My rating")}
+                </p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -300,7 +369,9 @@ const GameCard = ({
               <div
                 className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 role="img"
-                aria-label={`Release Date: ${releaseYear}`}
+                aria-label={formatInterfaceMessage("Release Date: {date}", { date: releaseYear })}
+                lang={languageFor("Release Date: {date}")}
+                dir={directionFor("Release Date: {date}")}
                 tabIndex={0}
               >
                 <Calendar className="w-3 h-3" aria-hidden="true" />
@@ -308,7 +379,15 @@ const GameCard = ({
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{releaseFullDate ?? "Release Date"}</p>
+              {releaseFullDate ? (
+                <p lang={regionalLocale} dir={regionalDirection}>
+                  {releaseFullDate}
+                </p>
+              ) : (
+                <p lang={languageFor("Release Date")} dir={directionFor("Release Date")}>
+                  {t("Release Date")}
+                </p>
+              )}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -330,7 +409,9 @@ const GameCard = ({
               e.stopPropagation();
             }}
             role="toolbar"
-            aria-label={`Actions for ${game.title}`}
+            aria-label={formatInterfaceMessage("Actions for {title}", { title: game.title })}
+            lang={languageFor("Actions for {title}")}
+            dir={directionFor("Actions for {title}")}
             tabIndex={0}
           >
             <Button
@@ -339,7 +420,9 @@ const GameCard = ({
               className={mobileActionButtonClass}
               onClick={() => void handleDownloadClick()}
               disabled={addGameMutation.isPending}
-              aria-label={`Download ${game.title}`}
+              aria-label={formatInterfaceMessage("Download {title}", { title: game.title })}
+              lang={languageFor("Download {title}")}
+              dir={directionFor("Download {title}")}
               data-testid={`button-download-${game.id}`}
             >
               {addGameMutation.isPending ? (
@@ -362,15 +445,21 @@ const GameCard = ({
               }}
               disabled={addGameMutation.isPending}
               data-testid={`button-track-${game.id}`}
-              aria-label={`Track ${game.title}`}
+              aria-label={formatInterfaceMessage("Track {title}", { title: game.title })}
+              lang={languageFor("Track {title}")}
+              dir={directionFor("Track {title}")}
             >
               {addGameMutation.isPending ? (
                 <>
                   <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                  Tracking...
+                  <span lang={languageFor("Tracking...")} dir={directionFor("Tracking...")}>
+                    {t("Tracking...")}
+                  </span>
                 </>
               ) : (
-                "Track Game"
+                <span lang={languageFor("Track Game")} dir={directionFor("Track Game")}>
+                  {t("Track Game")}
+                </span>
               )}
             </Button>
           ) : (

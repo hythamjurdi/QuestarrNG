@@ -1,3 +1,9 @@
+import { getRegionalLocale, useRegionalPreference } from "@/lib/regional-format";
+import {
+  formatInterfaceMessage,
+  getInterfaceCollator,
+  useInterfaceLanguage,
+} from "@/lib/interface-locale";
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, PauseCircle, PlayCircle, ScrollText, Search, Send, Trash2 } from "lucide-react";
@@ -202,13 +208,13 @@ function parseLogLine(raw: string): ParsedLogLine {
 function formatTime(time: string): string {
   if (!time) return "";
   const parsed = new Date(time);
-  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleTimeString();
+  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleTimeString(getRegionalLocale());
 }
 
 function formatDateTime(time: string): string {
-  if (!time) return "No timestamp";
+  if (!time) return "";
   const parsed = new Date(time);
-  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleString();
+  return Number.isNaN(parsed.getTime()) ? time : parsed.toLocaleString(getRegionalLocale());
 }
 
 function buildSummaryText(fields: LogField[]): string {
@@ -225,6 +231,8 @@ const LogLineRow = memo(function LogLineRow({
   isSelected: boolean;
   onSelect: (line: ParsedLogLine) => void;
 }>) {
+  useRegionalPreference();
+  const { language, languageFor, directionFor } = useInterfaceLanguage();
   const timeStr = formatTime(line.time);
   const summaryText = buildSummaryText(line.summaryFields);
 
@@ -237,7 +245,9 @@ const LogLineRow = memo(function LogLineRow({
       ].join(" ")}
       onClick={() => onSelect(line)}
       data-testid="log-line-row"
-      aria-label={`Inspect log ${line.msg}`}
+      aria-label={formatInterfaceMessage("Inspect log: {message}", { message: line.msg }, language)}
+      lang={languageFor("Inspect log: {message}")}
+      dir={directionFor("Inspect log: {message}")}
     >
       <span className="w-20 flex-shrink-0 text-right tabular-nums text-zinc-500">{timeStr}</span>
       <span
@@ -245,11 +255,13 @@ const LogLineRow = memo(function LogLineRow({
       >
         {line.levelLabel}
       </span>
-      <span className="truncate text-zinc-400">{line.module ?? "-"}</span>
-      <span className="truncate text-zinc-100" title={line.msg}>
+      <span className="truncate text-zinc-400" lang="und" dir="auto">
+        {line.module ?? "-"}
+      </span>
+      <span className="truncate text-zinc-100" title={line.msg} lang="und" dir="auto">
         {line.msg}
       </span>
-      <span className="truncate text-zinc-400" title={summaryText}>
+      <span className="truncate text-zinc-400" title={summaryText} lang="und" dir="auto">
         {summaryText}
       </span>
     </button>
@@ -265,6 +277,8 @@ const LogLineCard = memo(function LogLineCard({
   isSelected: boolean;
   onSelect: (line: ParsedLogLine) => void;
 }>) {
+  useRegionalPreference();
+  const { language, languageFor, directionFor } = useInterfaceLanguage();
   const timeStr = formatTime(line.time);
   const summaryText = buildSummaryText(line.summaryFields);
 
@@ -277,7 +291,9 @@ const LogLineCard = memo(function LogLineCard({
       ].join(" ")}
       onClick={() => onSelect(line)}
       data-testid="log-line-row"
-      aria-label={`Inspect log ${line.msg}`}
+      aria-label={formatInterfaceMessage("Inspect log: {message}", { message: line.msg }, language)}
+      lang={languageFor("Inspect log: {message}")}
+      dir={directionFor("Inspect log: {message}")}
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs tabular-nums text-zinc-500">{timeStr}</span>
@@ -286,13 +302,19 @@ const LogLineCard = memo(function LogLineCard({
         </span>
         {line.module && (
           <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[11px] text-zinc-300">
-            {line.module}
+            <span lang="und" dir="auto">
+              {line.module}
+            </span>
           </span>
         )}
       </div>
-      <p className="mt-2 break-words text-sm text-zinc-100">{line.msg}</p>
+      <p className="mt-2 break-words text-sm text-zinc-100" lang="und" dir="auto">
+        {line.msg}
+      </p>
       {summaryText !== "-" && (
-        <p className="mt-2 break-words text-xs text-zinc-400">{summaryText}</p>
+        <p className="mt-2 break-words text-xs text-zinc-400" lang="und" dir="auto">
+          {summaryText}
+        </p>
       )}
     </button>
   );
@@ -302,10 +324,15 @@ const InspectorFieldList = memo(function InspectorFieldList({
   fields,
   emptyState,
 }: Readonly<{ fields: LogField[]; emptyState: string }>) {
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
   if (fields.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-black/20 p-4 text-sm text-muted-foreground">
-        {emptyState}
+      <div
+        className="rounded-lg border border-border bg-black/20 p-4 text-sm text-muted-foreground"
+        lang={languageFor(emptyState)}
+        dir={directionFor(emptyState)}
+      >
+        {t(emptyState)}
       </div>
     );
   }
@@ -314,11 +341,17 @@ const InspectorFieldList = memo(function InspectorFieldList({
     <div className="space-y-3">
       {fields.map((field) => (
         <section key={field.key} className="rounded-lg border border-border bg-black/20 p-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+          <h3
+            className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400"
+            lang="und"
+            dir="auto"
+          >
             {field.key}
           </h3>
           <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-zinc-100">
-            {field.prettyValue}
+            <span lang="und" dir="auto">
+              {field.prettyValue}
+            </span>
           </pre>
         </section>
       ))}
@@ -333,8 +366,9 @@ function LogInspector({
 }: Readonly<{
   line: ParsedLogLine | null;
   onClose: () => void;
-  onCopy: (text: string, description: string) => void;
+  onCopy: (text: string, description: string, values?: Record<string, string | number>) => void;
 }>) {
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
   const additionalFields = useMemo(
     () => line?.detailFields.filter((field) => field.key !== "err" && field.key !== "error") ?? [],
     [line]
@@ -350,20 +384,34 @@ function LogInspector({
           <>
             <SheetHeader className="border-b border-border p-6 pr-14">
               <div className="flex flex-wrap items-center gap-2">
-                <SheetTitle className="text-zinc-50">Log details</SheetTitle>
+                <SheetTitle
+                  className="text-zinc-50"
+                  lang={languageFor("Log details")}
+                  dir={directionFor("Log details")}
+                >
+                  {t("Log details")}
+                </SheetTitle>
                 <Badge variant="outline" className="border-zinc-700 bg-zinc-900 text-zinc-100">
                   {line.levelLabel}
                 </Badge>
                 {line.module && (
                   <Badge variant="outline" className="border-zinc-700 bg-zinc-900 text-zinc-300">
-                    {line.module}
+                    <span lang="und" dir="auto">
+                      {line.module}
+                    </span>
                   </Badge>
                 )}
               </div>
-              <SheetDescription className="text-zinc-400">
-                {formatDateTime(line.time)}
+              <SheetDescription
+                className="text-zinc-400"
+                lang={line.time ? "und" : languageFor("No timestamp")}
+                dir={line.time ? "auto" : directionFor("No timestamp")}
+              >
+                {line.time ? formatDateTime(line.time) : t("No timestamp")}
               </SheetDescription>
-              <p className="mt-2 text-sm text-zinc-100">{line.msg}</p>
+              <p className="mt-2 text-sm text-zinc-100" lang="und" dir="auto">
+                {line.msg}
+              </p>
               {line.summaryFields.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {line.summaryFields.map((field) => (
@@ -372,7 +420,9 @@ function LogInspector({
                       variant="outline"
                       className="border-zinc-700 bg-zinc-900/80 text-zinc-200"
                     >
-                      {field.key}: {field.displayValue}
+                      <span lang="und" dir="auto">
+                        {field.key}: {field.displayValue}
+                      </span>
                     </Badge>
                   ))}
                 </div>
@@ -380,18 +430,26 @@ function LogInspector({
             </SheetHeader>
 
             <div className="flex items-center justify-between gap-2 border-b border-border px-6 py-3">
-              <p className="text-sm text-zinc-400">
-                Full parsed payload retained for this log entry.
+              <p
+                className="text-sm text-zinc-400"
+                lang={languageFor("Full parsed payload retained for this log entry.")}
+                dir={directionFor("Full parsed payload retained for this log entry.")}
+              >
+                {t("Full parsed payload retained for this log entry.")}
               </p>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onCopy(line.raw, "Raw log line copied")}
-                  aria-label="Copy raw log line"
+                  aria-label={t("Copy raw log line")}
+                  lang={languageFor("Copy raw log line")}
+                  dir={directionFor("Copy raw log line")}
                 >
                   <Copy className="mr-1 h-4 w-4" />
-                  Copy raw
+                  <span lang={languageFor("Copy raw")} dir={directionFor("Copy raw")}>
+                    {t("Copy raw")}
+                  </span>
                 </Button>
                 <Button
                   variant="outline"
@@ -399,10 +457,14 @@ function LogInspector({
                   onClick={() =>
                     onCopy(JSON.stringify(line.payload, null, 2), "Parsed payload copied")
                   }
-                  aria-label="Copy parsed payload"
+                  aria-label={t("Copy parsed payload")}
+                  lang={languageFor("Copy parsed payload")}
+                  dir={directionFor("Copy parsed payload")}
                 >
                   <Copy className="mr-1 h-4 w-4" />
-                  Copy JSON
+                  <span lang={languageFor("Copy JSON")} dir={directionFor("Copy JSON")}>
+                    {t("Copy JSON")}
+                  </span>
                 </Button>
               </div>
             </div>
@@ -411,31 +473,75 @@ function LogInspector({
               <div className="space-y-4">
                 <section className="rounded-lg border border-border bg-black/20 p-4">
                   <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                    Standard fields
+                    <span
+                      lang={languageFor("Standard fields")}
+                      dir={directionFor("Standard fields")}
+                    >
+                      {t("Standard fields")}
+                    </span>
                   </h3>
                   <div className="grid gap-3 text-sm sm:grid-cols-2">
                     <div>
-                      <span className="text-zinc-500">Timestamp</span>
-                      <p className="mt-1 break-words text-zinc-100">{formatDateTime(line.time)}</p>
+                      <span
+                        className="text-zinc-500"
+                        lang={languageFor("Timestamp")}
+                        dir={directionFor("Timestamp")}
+                      >
+                        {t("Timestamp")}
+                      </span>
+                      <p
+                        className="mt-1 break-words text-zinc-100"
+                        lang={line.time ? "und" : languageFor("No timestamp")}
+                        dir={line.time ? "auto" : directionFor("No timestamp")}
+                      >
+                        {line.time ? formatDateTime(line.time) : t("No timestamp")}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-zinc-500">Level</span>
+                      <span
+                        className="text-zinc-500"
+                        lang={languageFor("Level")}
+                        dir={directionFor("Level")}
+                      >
+                        {t("Level")}
+                      </span>
                       <p className="mt-1 text-zinc-100">{line.levelLabel}</p>
                     </div>
                     <div>
-                      <span className="text-zinc-500">Module</span>
-                      <p className="mt-1 break-words text-zinc-100">{line.module ?? "-"}</p>
+                      <span
+                        className="text-zinc-500"
+                        lang={languageFor("Module")}
+                        dir={directionFor("Module")}
+                      >
+                        {t("Module")}
+                      </span>
+                      <p className="mt-1 break-words text-zinc-100" lang="und" dir="auto">
+                        {line.module ?? "-"}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-zinc-500">Message</span>
-                      <p className="mt-1 break-words text-zinc-100">{line.msg}</p>
+                      <span
+                        className="text-zinc-500"
+                        lang={languageFor("Message")}
+                        dir={directionFor("Message")}
+                      >
+                        {t("Message")}
+                      </span>
+                      <p className="mt-1 break-words text-zinc-100" lang="und" dir="auto">
+                        {line.msg}
+                      </p>
                     </div>
                   </div>
                 </section>
 
                 <section className="space-y-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                    Additional metadata
+                    <span
+                      lang={languageFor("Additional metadata")}
+                      dir={directionFor("Additional metadata")}
+                    >
+                      {t("Additional metadata")}
+                    </span>
                   </h3>
                   <InspectorFieldList
                     fields={additionalFields}
@@ -446,7 +552,12 @@ function LogInspector({
                 {line.errorField && (
                   <section className="space-y-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                      Structured error
+                      <span
+                        lang={languageFor("Structured error")}
+                        dir={directionFor("Structured error")}
+                      >
+                        {t("Structured error")}
+                      </span>
                     </h3>
                     <InspectorFieldList
                       fields={[line.errorField]}
@@ -457,10 +568,14 @@ function LogInspector({
 
                 <section className="rounded-lg border border-border bg-black/20 p-4">
                   <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                    Raw NDJSON
+                    <span lang={languageFor("Raw NDJSON")} dir={directionFor("Raw NDJSON")}>
+                      {t("Raw NDJSON")}
+                    </span>
                   </h3>
                   <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-zinc-100">
-                    {line.raw}
+                    <span lang="und" dir="auto">
+                      {line.raw}
+                    </span>
                   </pre>
                 </section>
               </div>
@@ -473,6 +588,21 @@ function LogInspector({
 }
 
 export default function LogsPage() {
+  useRegionalPreference();
+  const { language, t, languageFor, directionFor } = useInterfaceLanguage();
+  const moduleCollator = useMemo(() => getInterfaceCollator(language), [language]);
+  const localizedText = useCallback(
+    (source: string, values: Record<string, string | number> = {}) => {
+      const text = formatInterfaceMessage(source, values, language);
+      if (language === "en") return text;
+      return (
+        <span lang={languageFor(source)} dir={directionFor(source)}>
+          {text}
+        </span>
+      );
+    },
+    [directionFor, language, languageFor]
+  );
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -531,8 +661,8 @@ export default function LogsPage() {
     const set = new Set(
       lines.map((line) => line.module).filter((module): module is string => Boolean(module))
     );
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [lines]);
+    return Array.from(set).sort(moduleCollator.compare);
+  }, [lines, moduleCollator]);
 
   const minLevel = filterLevel === "all" ? 0 : Number.parseInt(filterLevel, 10);
   const normalizedFilterText = filterText.trim().toLowerCase();
@@ -593,32 +723,40 @@ export default function LogsPage() {
   const linesToRender = isMobile ? filteredLines.slice(-MOBILE_LOG_CAP) : visibleLines;
   const logCountSummary =
     isMobile && filteredLines.length > MOBILE_LOG_CAP
-      ? `Showing the latest ${MOBILE_LOG_CAP} of ${filteredLines.length} matching lines. Copy includes all matches.`
-      : `${filteredLines.length} lines displayed`;
+      ? formatInterfaceMessage(
+          "Showing the latest {shown} of {count} matching lines. Copy includes all matches.",
+          { shown: MOBILE_LOG_CAP, count: filteredLines.length },
+          language
+        )
+      : formatInterfaceMessage(
+          "{count} lines displayed",
+          { count: filteredLines.length },
+          language
+        );
 
   const copyText = useCallback(
-    (text: string, description: string) => {
+    (text: string, description: string, values: Record<string, string | number> = {}) => {
       void copyToClipboard(text).then((succeeded) => {
         if (succeeded) {
           toast({
-            title: "Copied",
-            description,
+            title: localizedText("Copied"),
+            description: localizedText(description, values),
           });
         } else {
           toast({
-            title: "Copy failed",
-            description: "Clipboard access denied",
+            title: localizedText("Copy failed"),
+            description: localizedText("Clipboard access denied"),
             variant: "destructive",
           });
         }
       });
     },
-    [toast]
+    [localizedText, toast]
   );
 
   const handleCopy = () => {
     const text = filteredLines.map((line) => line.raw).join("\n");
-    copyText(text, `${filteredLines.length} log lines copied to clipboard`);
+    copyText(text, "{count} log lines copied to clipboard", { count: filteredLines.length });
   };
 
   const handleClear = () => {
@@ -641,10 +779,20 @@ export default function LogsPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
             <ScrollText className="h-6 w-6" />
-            Server Logs
+            <span lang={languageFor("Server Logs")} dir={directionFor("Server Logs")}>
+              {t("Server Logs")}
+            </span>
           </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Real-time server output &mdash; {logCountSummary}
+          <p
+            className="mt-0.5 text-sm text-muted-foreground"
+            lang={languageFor("Real-time server output — {summary}")}
+            dir={directionFor("Real-time server output — {summary}")}
+          >
+            {formatInterfaceMessage(
+              "Real-time server output — {summary}",
+              { summary: logCountSummary },
+              language
+            )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -658,17 +806,23 @@ export default function LogsPage() {
                 return next;
               });
             }}
-            aria-label={autoScroll ? "Pause auto-scroll" : "Resume auto-scroll"}
+            aria-label={t(autoScroll ? "Pause auto-scroll" : "Resume auto-scroll")}
+            lang={languageFor(autoScroll ? "Pause auto-scroll" : "Resume auto-scroll")}
+            dir={directionFor(autoScroll ? "Pause auto-scroll" : "Resume auto-scroll")}
           >
             {autoScroll ? (
               <>
                 <PauseCircle className="mr-1 h-4 w-4" />
-                Pause
+                <span lang={languageFor("Pause")} dir={directionFor("Pause")}>
+                  {t("Pause")}
+                </span>
               </>
             ) : (
               <>
                 <PlayCircle className="mr-1 h-4 w-4" />
-                Resume
+                <span lang={languageFor("Resume")} dir={directionFor("Resume")}>
+                  {t("Resume")}
+                </span>
               </>
             )}
           </Button>
@@ -677,57 +831,101 @@ export default function LogsPage() {
             size="sm"
             onClick={handleCopy}
             disabled={filteredLines.length === 0}
-            aria-label="Copy log lines"
+            aria-label={t("Copy log lines")}
+            lang={languageFor("Copy log lines")}
+            dir={directionFor("Copy log lines")}
           >
             <Copy className="mr-1 h-4 w-4" />
-            Copy
+            <span lang={languageFor("Copy")} dir={directionFor("Copy")}>
+              {t("Copy")}
+            </span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={handleClear}
             disabled={lines.length === 0}
-            aria-label="Clear log lines"
+            aria-label={t("Clear log lines")}
+            lang={languageFor("Clear log lines")}
+            dir={directionFor("Clear log lines")}
           >
             <Trash2 className="mr-1 h-4 w-4" />
-            Clear
+            <span lang={languageFor("Clear")} dir={directionFor("Clear")}>
+              {t("Clear")}
+            </span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setSendLogsOpen(true)}
             disabled={filteredLines.length === 0}
-            aria-label="Send logs to support"
+            aria-label={t("Send logs to support")}
+            lang={languageFor("Send logs to support")}
+            dir={directionFor("Send logs to support")}
           >
             <Send className="mr-1 h-4 w-4" />
-            Send Logs
+            <span lang={languageFor("Send Logs")} dir={directionFor("Send Logs")}>
+              {t("Send Logs")}
+            </span>
           </Button>
         </div>
       </div>
 
       <div className="flex flex-shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <Select value={filterLevel} onValueChange={setFilterLevel}>
-          <SelectTrigger className="w-full sm:w-36" aria-label="Filter by log level">
-            <SelectValue placeholder="Level" />
+          <SelectTrigger
+            className="w-full sm:w-36"
+            aria-label={t("Filter by log level")}
+            lang={languageFor("Filter by log level")}
+            dir={directionFor("Filter by log level")}
+          >
+            <SelectValue placeholder={t("Level")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All levels</SelectItem>
-            <SelectItem value="10">Trace+</SelectItem>
-            <SelectItem value="20">Debug+</SelectItem>
-            <SelectItem value="30">Info+</SelectItem>
-            <SelectItem value="40">Warn+</SelectItem>
-            <SelectItem value="50">Error+</SelectItem>
+            <SelectItem
+              value="all"
+              lang={languageFor("All levels")}
+              dir={directionFor("All levels")}
+            >
+              {t("All levels")}
+            </SelectItem>
+            <SelectItem value="10" lang={languageFor("Trace+")} dir={directionFor("Trace+")}>
+              {t("Trace+")}
+            </SelectItem>
+            <SelectItem value="20" lang={languageFor("Debug+")} dir={directionFor("Debug+")}>
+              {t("Debug+")}
+            </SelectItem>
+            <SelectItem value="30" lang={languageFor("Info+")} dir={directionFor("Info+")}>
+              {t("Info+")}
+            </SelectItem>
+            <SelectItem value="40" lang={languageFor("Warn+")} dir={directionFor("Warn+")}>
+              {t("Warn+")}
+            </SelectItem>
+            <SelectItem value="50" lang={languageFor("Error+")} dir={directionFor("Error+")}>
+              {t("Error+")}
+            </SelectItem>
           </SelectContent>
         </Select>
 
         <Select value={filterModule} onValueChange={setFilterModule}>
-          <SelectTrigger className="w-full sm:w-40" aria-label="Filter by module">
-            <SelectValue placeholder="Module" />
+          <SelectTrigger
+            className="w-full sm:w-40"
+            aria-label={t("Filter by module")}
+            lang={languageFor("Filter by module")}
+            dir={directionFor("Filter by module")}
+          >
+            <SelectValue placeholder={t("Module")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All modules</SelectItem>
+            <SelectItem
+              value="all"
+              lang={languageFor("All modules")}
+              dir={directionFor("All modules")}
+            >
+              {t("All modules")}
+            </SelectItem>
             {modules.map((module) => (
-              <SelectItem key={module} value={module}>
+              <SelectItem key={module} value={module} lang="und" dir="auto">
                 {module}
               </SelectItem>
             ))}
@@ -739,9 +937,11 @@ export default function LogsPage() {
           <Input
             value={filterText}
             onChange={(event) => setFilterText(event.target.value)}
-            placeholder="Search message or any JSON field"
+            placeholder={t("Search message or any JSON field")}
+            lang={languageFor("Search message or any JSON field")}
+            dir={directionFor("Search message or any JSON field")}
             className="pl-9"
-            aria-label="Search log lines"
+            aria-label={t("Search log lines")}
           />
         </div>
       </div>
@@ -756,24 +956,50 @@ export default function LogsPage() {
           className="flex-1 overflow-auto rounded-lg border border-border bg-zinc-950 font-mono text-xs"
           onScroll={handleScroll}
           role="log"
-          aria-label="Server log output"
+          aria-label={t("Server log output")}
+          lang={languageFor("Server log output")}
+          dir={directionFor("Server log output")}
           aria-live="polite"
           aria-relevant="additions text"
           data-testid="logs-viewport"
         >
           {filteredLines.length === 0 && (
-            <p className="p-3 pt-8 text-center text-zinc-500">No log lines to display.</p>
+            <p
+              className="p-3 pt-8 text-center text-zinc-500"
+              lang={languageFor("No log lines to display.")}
+              dir={directionFor("No log lines to display.")}
+            >
+              {t("No log lines to display.")}
+            </p>
           )}
           {filteredLines.length > 0 && (
             <div className={isMobile ? "space-y-3 p-3" : "min-w-max p-3"}>
               {!isMobile && (
                 <>
                   <div className="mb-2 grid grid-cols-[5rem_4rem_6.5rem_minmax(18rem,2fr)_minmax(14rem,1.6fr)] gap-2 px-1 text-[11px] uppercase tracking-wide text-zinc-500">
-                    <span className="text-right">Time</span>
-                    <span className="text-center">Level</span>
-                    <span>Module</span>
-                    <span>Message</span>
-                    <span>Context</span>
+                    <span
+                      className="text-right"
+                      lang={languageFor("Time")}
+                      dir={directionFor("Time")}
+                    >
+                      {t("Time")}
+                    </span>
+                    <span
+                      className="text-center"
+                      lang={languageFor("Level")}
+                      dir={directionFor("Level")}
+                    >
+                      {t("Level")}
+                    </span>
+                    <span lang={languageFor("Module")} dir={directionFor("Module")}>
+                      {t("Module")}
+                    </span>
+                    <span lang={languageFor("Message")} dir={directionFor("Message")}>
+                      {t("Message")}
+                    </span>
+                    <span lang={languageFor("Context")} dir={directionFor("Context")}>
+                      {t("Context")}
+                    </span>
                   </div>
                   {topSpacerHeight > 0 && (
                     <div style={{ height: topSpacerHeight }} aria-hidden="true" />

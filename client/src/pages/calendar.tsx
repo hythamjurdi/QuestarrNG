@@ -1,5 +1,12 @@
+import {
+  formatRegionalNumber,
+  getRegionalDirection as getLocaleDirection,
+  getRegionalLocale,
+  getRegionalWeekStartsOn,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { coverSrc } from "@/lib/cover";
-import { useState, useMemo, useEffect } from "react";
+import { useId, useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,11 +25,19 @@ import { cn } from "@/lib/utils";
 import { Link, type RouteComponentProps } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import GameDownloadDialog from "@/components/GameDownloadDialog";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 
 type ViewMode = "year" | "month" | "week";
 
 interface GamesByDate {
   [date: string]: Game[];
+}
+
+export function formatReleaseCount(count: number, translate: (source: string) => string): string {
+  const source = count === 1 ? "release" : count === 2 ? "two releases" : "releases";
+  const label = translate(source);
+  if (count === 2) return label.replaceAll("{count}", formatRegionalNumber(count));
+  return `${formatRegionalNumber(count)} ${label}`;
 }
 
 export function formatDate(date: Date): string {
@@ -38,30 +53,105 @@ function toLocalDateKey(releaseDate: string): string {
   return /^\d{4}-\d{2}-\d{2}$/.test(releaseDate) ? releaseDate : formatDate(new Date(releaseDate));
 }
 
-function getMonthName(month: number): string {
-  return new Date(2000, month, 1).toLocaleDateString(undefined, { month: "long" });
+export function formatCalendarDate(
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+  locale = getRegionalLocale()
+): string {
+  return new Intl.DateTimeFormat(locale, { ...options, calendar: "gregory" }).format(date);
 }
 
-export function getWeekDays(date: Date): Date[] {
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
-  const monday = new Date(date);
-  monday.setDate(diff);
+export function formatCalendarTitle(
+  currentDate: Date,
+  viewMode: ViewMode,
+  locale?: string
+): string {
+  if (viewMode === "year") {
+    return formatCalendarDate(
+      currentDate,
+      {
+        year: "numeric",
+      },
+      locale
+    );
+  }
+
+  if (viewMode === "month") {
+    return formatCalendarDate(
+      currentDate,
+      {
+        month: "long",
+        year: "numeric",
+      },
+      locale
+    );
+  }
+
+  const weekDays = getWeekDays(new Date(currentDate));
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  };
+  return (
+    formatCalendarDate(weekDays[0]!, options, locale) +
+    " – " +
+    formatCalendarDate(weekDays[6]!, options, locale)
+  );
+}
+
+export function getGregorianMonthName(month: number, locale = getRegionalLocale()): string {
+  return formatCalendarDate(
+    new Date(2000, month, 1),
+    {
+      month: "long",
+    },
+    locale
+  );
+}
+
+function getRegionalLanguage(): string {
+  return (
+    getRegionalLocale() ?? (typeof navigator === "undefined" ? "en" : navigator.language || "en")
+  );
+}
+
+function getRegionalDirection(locale = getRegionalLanguage()): "ltr" | "rtl" {
+  return getLocaleDirection(locale);
+}
+
+function LocalizedText({ source }: { source: string }) {
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
+  return (
+    <span lang={languageFor(source)} dir={directionFor(source)}>
+      {t(source)}
+    </span>
+  );
+}
+
+export function getWeekDays(date: Date, weekStartsOn: number = getRegionalWeekStartsOn()): Date[] {
+  const daysSinceWeekStart = (date.getDay() - weekStartsOn + 7) % 7;
+  const firstDay = new Date(date);
+  firstDay.setDate(date.getDate() - daysSinceWeekStart);
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+    const d = new Date(firstDay);
+    d.setDate(firstDay.getDate() + i);
     return d;
   });
 }
 
-export function getDaysInMonth(year: number, month: number): Date[] {
+export function getDaysInMonth(
+  year: number,
+  month: number,
+  weekStartsOn: number = getRegionalWeekStartsOn()
+): Date[] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const days: Date[] = [];
 
   // Add days from previous month to fill the week
   const firstDayOfWeek = firstDay.getDay();
-  const daysToAdd = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+  const daysToAdd = (firstDayOfWeek - weekStartsOn + 7) % 7;
   for (let i = daysToAdd; i > 0; i--) {
     const d = new Date(year, month, 1 - i);
     days.push(d);
@@ -74,7 +164,7 @@ export function getDaysInMonth(year: number, month: number): Date[] {
 
   // Add days from next month to complete the week
   const lastDayOfWeek = lastDay.getDay();
-  const daysToAddEnd = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+  const daysToAddEnd = (weekStartsOn + 6 - lastDayOfWeek + 7) % 7;
   for (let i = 1; i <= daysToAddEnd; i++) {
     days.push(new Date(year, month + 1, i));
   }
@@ -85,6 +175,10 @@ export function getDaysInMonth(year: number, month: number): Date[] {
 type CalendarPageProps = { today?: Date } & Partial<RouteComponentProps>;
 
 export default function CalendarPage({ today: injectedToday }: CalendarPageProps = {}) {
+  const { language, t, languageFor, directionFor } = useInterfaceLanguage();
+  useRegionalPreference();
+  const regionalLocale = getRegionalLocale();
+  const regionalDirection = getLocaleDirection(regionalLocale);
   const [viewMode, setViewMode] = useState<ViewMode>("year");
   const [currentDate, setCurrentDate] = useState(() =>
     injectedToday ? new Date(injectedToday.getTime()) : new Date()
@@ -190,13 +284,8 @@ export default function CalendarPage({ today: injectedToday }: CalendarPageProps
 
   const currentYearStr = currentDate.getFullYear().toString();
 
-  const getTitle = () => {
-    if (viewMode === "year") return currentDate.getFullYear().toString();
-    if (viewMode === "month")
-      return `${getMonthName(currentDate.getMonth())} ${currentDate.getFullYear()}`;
-    const weekDays = getWeekDays(new Date(currentDate));
-    return `${formatDate(weekDays[0]!)} - ${formatDate(weekDays[6]!)}`;
-  };
+  const getTitle = () => formatCalendarTitle(currentDate, viewMode, getRegionalLocale());
+  const viewModeLabel = viewMode === "year" ? "Year" : viewMode === "month" ? "Month" : "Week";
 
   if (config && !config.igdb.configured) {
     return (
@@ -204,13 +293,16 @@ export default function CalendarPage({ today: injectedToday }: CalendarPageProps
         <div className="bg-muted p-4 rounded-full">
           <AlertCircle className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h2 className="text-2xl font-bold">IGDB Configuration Required</h2>
+        <h2 className="text-2xl font-bold">
+          <LocalizedText source="IGDB Configuration Required" />
+        </h2>
         <p className="text-muted-foreground max-w-md">
-          To track game release dates and view the calendar, you need to configure your IGDB
-          credentials in the settings.
+          <LocalizedText source="To track game release dates and view the calendar, you need to configure your IGDB credentials in the settings." />
         </p>
         <Link href="/settings">
-          <Button>Go to Settings</Button>
+          <Button>
+            <LocalizedText source="Go to Settings" />
+          </Button>
         </Link>
       </div>
     );
@@ -220,39 +312,80 @@ export default function CalendarPage({ today: injectedToday }: CalendarPageProps
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="space-y-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Release Calendar</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Track upcoming game releases</p>
+          <h1 className="text-2xl font-bold tracking-tight">
+            <LocalizedText source="Release Calendar" />
+          </h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            <LocalizedText source="Track upcoming game releases." />
+          </p>
         </div>
         <PageToolbar
           search={searchQuery}
           onSearchChange={setSearchQuery}
-          searchPlaceholder="Filter games..."
-          filterPills={<span className="text-base font-semibold">{getTitle()}</span>}
+          searchPlaceholder={t("Filter games...")}
+          searchClearLabel={t("Clear search")}
+          searchClearLang={languageFor("Clear search")}
+          searchClearDir={directionFor("Clear search")}
+          searchLang={languageFor("Filter games...")}
+          searchDir="auto"
+          searchEmptyDir={directionFor("Filter games...")}
+          filterPills={
+            <span className="text-base font-semibold" lang={regionalLocale} dir={regionalDirection}>
+              {getTitle()}
+            </span>
+          }
           actions={
             <>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={navigatePrevious}
-                aria-label="Previous period"
+                aria-label={t("Previous period")}
+                lang={languageFor("Previous period")}
+                dir={directionFor("Previous period")}
               >
-                <ChevronLeft className="h-5 w-5" />
+                {language === "ar" ? (
+                  <ChevronRight className="h-5 w-5" />
+                ) : (
+                  <ChevronLeft className="h-5 w-5" />
+                )}
               </Button>
-              <Button variant="ghost" size="icon" onClick={navigateNext} aria-label="Next period">
-                <ChevronRight className="h-5 w-5" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={navigateNext}
+                aria-label={t("Next period")}
+                lang={languageFor("Next period")}
+                dir={directionFor("Next period")}
+              >
+                {language === "ar" ? (
+                  <ChevronLeft className="h-5 w-5" />
+                ) : (
+                  <ChevronRight className="h-5 w-5" />
+                )}
               </Button>
               <div className="w-px h-5 bg-border" />
               <Button variant="outline" size="sm" onClick={goToToday}>
-                Today
+                <LocalizedText source="Today" />
               </Button>
               <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
-                <SelectTrigger className="w-[110px] h-8 text-sm">
+                <SelectTrigger
+                  className="w-[110px] h-8 text-sm"
+                  lang={languageFor(viewModeLabel)}
+                  dir={directionFor(viewModeLabel)}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="year">Year</SelectItem>
-                  <SelectItem value="month">Month</SelectItem>
-                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="year">
+                    <LocalizedText source="Year" />
+                  </SelectItem>
+                  <SelectItem value="month">
+                    <LocalizedText source="Month" />
+                  </SelectItem>
+                  <SelectItem value="week">
+                    <LocalizedText source="Week" />
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </>
@@ -261,10 +394,12 @@ export default function CalendarPage({ today: injectedToday }: CalendarPageProps
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">Loading calendar...</div>
+        <div className="text-center py-12 text-muted-foreground">
+          <LocalizedText source="Loading calendar..." />
+        </div>
       ) : wantedGames.length === 0 && undatedGames.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          No games in your wishlist. Add games to track their release dates.
+          <LocalizedText source="No games in your wishlist. Add games to track their release dates." />
         </div>
       ) : (
         <div className="space-y-6">
@@ -361,10 +496,16 @@ function YearView({
             )}
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">{getMonthName(month)}</h3>
+              <h3
+                className="font-semibold"
+                lang={getRegionalLanguage()}
+                dir={getRegionalDirection()}
+              >
+                {getGregorianMonthName(month)}
+              </h3>
               {gameCount > 0 && (
                 <Badge variant="secondary" className="text-xs">
-                  {gameCount}
+                  {formatRegionalNumber(gameCount)}
                 </Badge>
               )}
             </div>
@@ -372,8 +513,12 @@ function YearView({
               {gamesInMonth.length > 0 ? (
                 gamesInMonth.map(([date, games]) => (
                   <div key={date} className="text-sm">
-                    <div className="text-muted-foreground mb-1">
-                      {new Date(date).toLocaleDateString(undefined, {
+                    <div
+                      className="text-muted-foreground mb-1"
+                      lang={getRegionalLanguage()}
+                      dir={getRegionalDirection()}
+                    >
+                      {formatCalendarDate(new Date(date), {
                         month: "short",
                         day: "numeric",
                       })}
@@ -389,7 +534,9 @@ function YearView({
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-muted-foreground">No releases</p>
+                <p className="text-xs text-muted-foreground">
+                  <LocalizedText source="No releases" />
+                </p>
               )}
             </div>
           </div>
@@ -410,10 +557,26 @@ function MonthView({
   onGameClick: (game: Game) => void;
   today: Date;
 }) {
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
+  const labelIdPrefix = useId();
+  const regionalLocale = getRegionalLanguage();
+  const regionalDirection = getRegionalDirection(regionalLocale);
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  const days = getDaysInMonth(year, month);
-  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekStartsOn = getRegionalWeekStartsOn();
+  const days = getDaysInMonth(year, month, weekStartsOn);
+  const weekdayShort = new Intl.DateTimeFormat(getRegionalLocale(), {
+    calendar: "gregory",
+    weekday: "short",
+  });
+  const weekdayNarrow = new Intl.DateTimeFormat(getRegionalLocale(), {
+    calendar: "gregory",
+    weekday: "narrow",
+  });
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(2023, 0, 1 + ((weekStartsOn + index) % 7));
+    return { short: weekdayShort.format(date), narrow: weekdayNarrow.format(date) };
+  });
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const todayKey = formatDate(today);
 
@@ -432,11 +595,13 @@ function MonthView({
       <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
         {weekDays.map((day) => (
           <div
-            key={day}
+            key={day.short}
             className="text-center font-semibold text-xs md:text-sm text-muted-foreground py-1 md:py-2"
+            lang={regionalLocale}
+            dir={regionalDirection}
           >
-            <span className="md:hidden">{day[0]}</span>
-            <span className="hidden md:inline">{day}</span>
+            <span className="md:hidden">{day.narrow}</span>
+            <span className="hidden md:inline">{day.short}</span>
           </div>
         ))}
       </div>
@@ -448,15 +613,22 @@ function MonthView({
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
           const isSelected = selectedDayKey === dateKey;
-          const formattedDayLabel = day.toLocaleDateString(undefined, {
+          const formattedDayLabel = formatCalendarDate(day, {
             weekday: "long",
             month: "long",
             day: "numeric",
           });
-          const releaseLabel =
-            gamesOnDay.length === 1 ? "1 release" : `${gamesOnDay.length} releases`;
-          const mobileButtonLabel =
-            gamesOnDay.length > 0 ? `${formattedDayLabel}, ${releaseLabel}` : formattedDayLabel;
+          const releaseCountSource =
+            gamesOnDay.length === 1
+              ? "release"
+              : gamesOnDay.length === 2
+                ? "two releases"
+                : "releases";
+          const releaseLabel = formatReleaseCount(gamesOnDay.length, t);
+          const dateLabelId = `${labelIdPrefix}-${dateKey}-date`;
+          const releaseLabelId = `${labelIdPrefix}-${dateKey}-releases`;
+          const mobileLabelledBy =
+            gamesOnDay.length > 0 ? `${dateLabelId} ${releaseLabelId}` : dateLabelId;
 
           return (
             <div
@@ -473,19 +645,40 @@ function MonthView({
                 type="button"
                 onClick={() => handleCellClick(dateKey, gamesOnDay)}
                 className={cn(
-                  "w-full text-left md:pointer-events-none",
+                  "w-full text-start md:pointer-events-none",
                   gamesOnDay.length > 0 ? "cursor-pointer" : "cursor-default"
                 )}
-                aria-label={mobileButtonLabel}
+                aria-labelledby={mobileLabelledBy}
+                dir="auto"
               >
+                <span
+                  id={dateLabelId}
+                  className="sr-only"
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {formattedDayLabel}
+                </span>
+                {gamesOnDay.length > 0 && (
+                  <span
+                    id={releaseLabelId}
+                    className="sr-only"
+                    lang={languageFor(releaseCountSource)}
+                    dir={directionFor(releaseCountSource)}
+                  >
+                    {releaseLabel}
+                  </span>
+                )}
                 <div
                   className={cn(
                     "text-xs md:text-sm font-medium mb-0.5 md:mb-2",
                     !isCurrentMonth && "text-muted-foreground",
                     isToday && "text-primary font-bold"
                   )}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
                 >
-                  {day.getDate()}
+                  {formatRegionalNumber(day.getDate(), { useGrouping: false })}
                 </div>
                 {/* Mobile: colored dots per game */}
                 {gamesOnDay.length > 0 && (
@@ -501,7 +694,7 @@ function MonthView({
                     ))}
                     {gamesOnDay.length > 3 && (
                       <span className="text-[9px] leading-none text-muted-foreground">
-                        +{gamesOnDay.length - 3}
+                        +{formatRegionalNumber(gamesOnDay.length - 3)}
                       </span>
                     )}
                   </div>
@@ -528,8 +721,12 @@ function MonthView({
       {/* Mobile day detail — shown below grid when a day with games is tapped */}
       {selectedDayKey && selectedGames.length > 0 && (
         <div className="mt-3 p-3 bg-muted/50 rounded-lg md:hidden">
-          <p className="text-xs font-semibold text-muted-foreground mb-2">
-            {new Date(selectedDayKey).toLocaleDateString(undefined, {
+          <p
+            className="text-xs font-semibold text-muted-foreground mb-2"
+            lang={regionalLocale}
+            dir={regionalDirection}
+          >
+            {formatCalendarDate(new Date(selectedDayKey), {
               weekday: "long",
               month: "long",
               day: "numeric",
@@ -562,6 +759,8 @@ function WeekView({
   onGameClick: (game: Game) => void;
   today: Date;
 }) {
+  const regionalLocale = getRegionalLanguage();
+  const regionalDirection = getRegionalDirection(regionalLocale);
   const weekDays = getWeekDays(new Date(currentDate));
   const todayKey = formatDate(today);
 
@@ -574,8 +773,8 @@ function WeekView({
           const gamesOnDay = gamesByDate[dateKey] || [];
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
-          const dayName = day.toLocaleDateString(undefined, { weekday: "short" });
-          const monthName = day.toLocaleDateString(undefined, { month: "short" });
+          const dayName = formatCalendarDate(day, { weekday: "short" });
+          const monthName = formatCalendarDate(day, { month: "short" });
 
           return (
             <div
@@ -594,13 +793,25 @@ function WeekView({
                     "text-xs font-semibold uppercase tracking-wide",
                     isToday ? "text-primary" : "text-muted-foreground"
                   )}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
                 >
                   {dayName}
                 </span>
-                <span className={cn("text-xl font-bold leading-tight", isToday && "text-primary")}>
-                  {day.getDate()}
+                <span
+                  className={cn("text-xl font-bold leading-tight", isToday && "text-primary")}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {formatRegionalNumber(day.getDate(), { useGrouping: false })}
                 </span>
-                <span className="text-xs text-muted-foreground">{monthName}</span>
+                <span
+                  className="text-xs text-muted-foreground"
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {monthName}
+                </span>
               </div>
               <div className="w-px shrink-0 bg-border" />
               {/* Games column */}
@@ -617,7 +828,9 @@ function WeekView({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">No releases</p>
+                  <p className="text-xs text-muted-foreground">
+                    <LocalizedText source="No releases" />
+                  </p>
                 )}
               </div>
             </div>
@@ -632,7 +845,7 @@ function WeekView({
           const gamesOnDay = gamesByDate[dateKey] || [];
           const isToday = todayKey === dateKey;
           const isPast = dateKey < todayKey;
-          const dayName = day.toLocaleDateString(undefined, { weekday: "short" });
+          const dayName = formatCalendarDate(day, { weekday: "short" });
 
           return (
             <div
@@ -644,12 +857,26 @@ function WeekView({
               )}
             >
               <div className="text-center mb-3">
-                <div className={cn("font-semibold", isToday && "text-primary")}>{dayName}</div>
-                <div className={cn("text-2xl font-bold", isToday && "text-primary")}>
-                  {day.getDate()}
+                <div
+                  className={cn("font-semibold", isToday && "text-primary")}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {dayName}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {day.toLocaleDateString(undefined, { month: "short" })}
+                <div
+                  className={cn("text-2xl font-bold", isToday && "text-primary")}
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {formatRegionalNumber(day.getDate(), { useGrouping: false })}
+                </div>
+                <div
+                  className="text-xs text-muted-foreground"
+                  lang={regionalLocale}
+                  dir={regionalDirection}
+                >
+                  {formatCalendarDate(day, { month: "short" })}
                 </div>
               </div>
               <div className="space-y-2">
@@ -663,7 +890,9 @@ function WeekView({
                     />
                   ))
                 ) : (
-                  <p className="text-xs text-muted-foreground text-center">No releases</p>
+                  <p className="text-xs text-muted-foreground text-center">
+                    <LocalizedText source="No releases" />
+                  </p>
                 )}
               </div>
             </div>
@@ -688,9 +917,14 @@ function UndatedSection({
   return (
     <div>
       <div className="flex items-center gap-3 mb-3">
-        <h2 className="text-base font-semibold text-muted-foreground">No Release Date — {year}</h2>
+        <h2 className="text-base font-semibold text-muted-foreground">
+          <LocalizedText source="No Release Date" /> —{" "}
+          <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
+            {formatRegionalNumber(year, { useGrouping: false })}
+          </span>
+        </h2>
         <Badge variant="secondary" className="text-xs">
-          {games.length}
+          {formatRegionalNumber(games.length)}
         </Badge>
         <div className="flex-1 h-px bg-border" />
       </div>
@@ -726,7 +960,7 @@ function GameBadge({
             type="button"
             onClick={onClick}
             className={cn(
-              "flex items-center gap-1 p-1 rounded hover:opacity-80 transition-opacity w-full text-left",
+              "flex items-center gap-1 p-1 rounded hover:opacity-80 transition-opacity w-full text-start",
               isDelayed ? "bg-destructive/20 border border-destructive/30" : "bg-muted",
               muted && "opacity-50 grayscale-[0.5]"
             )}
@@ -740,7 +974,13 @@ function GameBadge({
               className={cn("text-xs truncate flex-1", isDelayed && "text-destructive font-medium")}
             >
               {game.title}
-              {isDelayed && " (Delayed)"}
+              {isDelayed && (
+                <>
+                  {" ("}
+                  <LocalizedText source="Delayed" />
+                  {")"}
+                </>
+              )}
             </span>
           </button>
         </TooltipTrigger>
@@ -749,12 +989,16 @@ function GameBadge({
             <p className="font-semibold">{game.title}</p>
             {isDelayed && (
               <Badge variant="destructive" className="mt-1 text-xs h-4">
-                Delayed
+                <LocalizedText source="Delayed" />
               </Badge>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
+            <p
+              className="text-xs text-muted-foreground mt-1"
+              lang={getRegionalLanguage()}
+              dir={getRegionalDirection()}
+            >
               {game.releaseDate &&
-                new Date(game.releaseDate).toLocaleDateString(undefined, {
+                formatCalendarDate(new Date(game.releaseDate), {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -762,11 +1006,13 @@ function GameBadge({
             </p>
             {isDelayed && game.originalReleaseDate && (
               <p className="text-xs text-muted-foreground">
-                Original:{" "}
-                {new Date(game.originalReleaseDate).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}
+                <LocalizedText source="Was originally scheduled for:" />{" "}
+                <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
+                  {formatCalendarDate(new Date(game.originalReleaseDate), {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
               </p>
             )}
           </div>
@@ -782,7 +1028,7 @@ function GameBadge({
           type="button"
           onClick={onClick}
           className={cn(
-            "flex items-center gap-2 p-2 rounded hover:opacity-80 transition-all w-full text-left",
+            "flex items-center gap-2 p-2 rounded hover:opacity-80 transition-all w-full text-start",
             isDelayed ? "bg-destructive/10 border border-destructive/20" : "bg-muted",
             muted && "opacity-50 grayscale-[0.5]"
           )}
@@ -799,14 +1045,18 @@ function GameBadge({
               </p>
               {isDelayed && (
                 <Badge variant="destructive" className="text-xs h-4 px-1">
-                  Delayed
+                  <LocalizedText source="Delayed" />
                 </Badge>
               )}
             </div>
             {!hideDate && (
-              <p className="text-xs text-muted-foreground">
+              <p
+                className="text-xs text-muted-foreground"
+                lang={getRegionalLanguage()}
+                dir={getRegionalDirection()}
+              >
                 {game.releaseDate &&
-                  new Date(game.releaseDate).toLocaleDateString(undefined, {
+                  formatCalendarDate(new Date(game.releaseDate), {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -819,30 +1069,36 @@ function GameBadge({
       <TooltipContent>
         <div className="max-w-xs">
           <p className="font-semibold">{game.title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {hideDate
-              ? "Release date TBD"
-              : game.releaseDate
-                ? new Date(game.releaseDate).toLocaleDateString(undefined, {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : null}
+          <p
+            className="text-xs text-muted-foreground mt-0.5"
+            lang={getRegionalLanguage()}
+            dir={getRegionalDirection()}
+          >
+            {hideDate ? (
+              <LocalizedText source="Release date TBD" />
+            ) : game.releaseDate ? (
+              formatCalendarDate(new Date(game.releaseDate), {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })
+            ) : null}
           </p>
           {isDelayed && (
             <div className="flex flex-col gap-0.5 mt-1">
               <Badge variant="destructive" className="w-fit text-xs h-4">
-                Delayed
+                <LocalizedText source="Delayed" />
               </Badge>
               {game.originalReleaseDate && (
                 <p className="text-xs text-muted-foreground">
-                  Was originally scheduled for:{" "}
-                  {new Date(game.originalReleaseDate).toLocaleDateString(undefined, {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  <LocalizedText source="Was originally scheduled for:" />{" "}
+                  <span lang={getRegionalLanguage()} dir={getRegionalDirection()}>
+                    {formatCalendarDate(new Date(game.originalReleaseDate), {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
                 </p>
               )}
             </div>

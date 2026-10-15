@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { formatRegionalNumber } from "@/lib/regional-format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getSocket } from "@/lib/socket";
 import type { RootFolder } from "@shared/schema";
 import { FileBrowser } from "./FileBrowser";
+import { InterfaceText } from "@/components/InterfaceText";
+import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
 
 interface ScanProgress {
   rootFolderId: string;
@@ -72,7 +75,11 @@ function formatBytes(bytes: number | null): string {
     value /= 1024;
     unitIndex += 1;
   }
-  return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+  return (
+    formatRegionalNumber(value, { maximumFractionDigits: value >= 10 || unitIndex === 0 ? 0 : 1 }) +
+    " " +
+    units[unitIndex]
+  );
 }
 
 // How long to keep polling scan status after starting a scan, until it shows up.
@@ -274,10 +281,15 @@ export function RootFolderDiscovery() {
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>Discover Existing Games</CardTitle>
+            <CardTitle>
+              <InterfaceText source={"Discover Existing Games"} />
+            </CardTitle>
             <CardDescription>
-              Scan extra folders on disk for games you already own but haven&apos;t imported yet —
-              separate from the Library Root set in Import settings.
+              <InterfaceText
+                source={
+                  "Scan extra folders on disk for games you already own but haven't imported yet — separate from the Library Root above."
+                }
+              />
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -289,21 +301,25 @@ export function RootFolderDiscovery() {
               onClick={() => scanMutation.mutate(undefined)}
             >
               <Search className="h-4 w-4" />
-              Scan All
+              <InterfaceText source={"Scan All"} />
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" /> Add Folder
+                  <Plus className="h-4 w-4" /> <InterfaceText source={"Add Folder"} />
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add Root Folder</DialogTitle>
+                  <DialogTitle>
+                    <InterfaceText source={"Add Root Folder"} />
+                  </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="root-folder-path">Path</Label>
+                    <Label htmlFor="root-folder-path">
+                      <InterfaceText source={"Path"} />
+                    </Label>
                     <div className="flex gap-2">
                       <Input
                         id="root-folder-path"
@@ -317,18 +333,22 @@ export function RootFolderDiscovery() {
                         size="icon"
                         aria-label="Browse for folder"
                         onClick={() => setIsFileBrowserOpen(true)}
+                        data-i18n-aria-label={"Browse for folder"}
                       >
                         <FolderOpen className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="root-folder-name">Label (optional)</Label>
+                    <Label htmlFor="root-folder-name">
+                      <InterfaceText source={"Label (optional)"} />
+                    </Label>
                     <Input
                       id="root-folder-name"
                       placeholder="Old NAS library"
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
+                      data-i18n-placeholder={"Old NAS library"}
                     />
                   </div>
                   <Button
@@ -337,7 +357,7 @@ export function RootFolderDiscovery() {
                     disabled={!newPath.trim() || addMutation.isPending}
                   >
                     {addMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Add Root Folder
+                    <InterfaceText source={"Add Root Folder"} />
                   </Button>
                 </div>
               </DialogContent>
@@ -349,10 +369,23 @@ export function RootFolderDiscovery() {
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            Games found here are added as <strong>owned</strong> and linked to their folder on disk,
-            but that folder stays outside your library root — it is never moved, renamed, or deleted
-            by Questarr unless you turn on <strong>Allow Delete</strong> for that folder below. With
-            it off (the default), removing a game with its files skips anything discovered here.
+            <InterfaceText source={"Games found here are added as"} />{" "}
+            <strong>
+              <InterfaceText source={"owned"} />
+            </strong>{" "}
+            <InterfaceText
+              source={
+                "and linked to their folder on disk, but that folder stays outside your library root — it is never moved, renamed, or deleted by Questarr unless you turn on"
+              }
+            />
+            <strong>
+              <InterfaceText source={"Allow Delete"} />
+            </strong>{" "}
+            <InterfaceText
+              source={
+                "for that folder below. With it off (the default), removing a game with its files skips anything discovered here."
+              }
+            />
           </AlertDescription>
         </Alert>
 
@@ -366,16 +399,27 @@ export function RootFolderDiscovery() {
           initialPath={newPath || "/"}
           root="/"
           title="Select Root Folder"
+          data-i18n-title={"Select Root Folder"}
         />
 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Path</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Free Space</TableHead>
-              <TableHead className="w-[80px]">Enabled</TableHead>
-              <TableHead className="w-[110px]">Allow Delete</TableHead>
+              <TableHead>
+                <InterfaceText source={"Path"} />
+              </TableHead>
+              <TableHead>
+                <InterfaceText source={"Status"} />
+              </TableHead>
+              <TableHead>
+                <InterfaceText source={"Free Space"} />
+              </TableHead>
+              <TableHead className="w-[80px]">
+                <InterfaceText source={"Enabled"} />
+              </TableHead>
+              <TableHead className="w-[110px]">
+                <InterfaceText source={"Allow Delete"} />
+              </TableHead>
               <TableHead className="w-[140px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -383,7 +427,7 @@ export function RootFolderDiscovery() {
             {rootFolders.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  No root folders configured yet
+                  <InterfaceText source={"No root folders configured yet"} />
                 </TableCell>
               </TableRow>
             )}
@@ -400,10 +444,13 @@ export function RootFolderDiscovery() {
                   <TableCell>
                     {folder.accessible === false ? (
                       <Badge variant="destructive" className="gap-1">
-                        <AlertTriangle className="h-3 w-3" /> Inaccessible
+                        <AlertTriangle className="h-3 w-3" />{" "}
+                        <InterfaceText source={"Inaccessible"} />
                       </Badge>
                     ) : (
-                      <Badge variant="secondary">Accessible</Badge>
+                      <Badge variant="secondary">
+                        <InterfaceText source={"Accessible"} />
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
@@ -418,7 +465,9 @@ export function RootFolderDiscovery() {
                       onCheckedChange={(enabled) =>
                         toggleMutation.mutate({ id: folder.id, enabled })
                       }
-                      aria-label={`Enable ${folder.path}`}
+                      aria-label={formatInterfaceMessage("Enable {path}", {
+                        path: String(folder.path ?? ""),
+                      })}
                     />
                   </TableCell>
                   <TableCell>
@@ -427,7 +476,9 @@ export function RootFolderDiscovery() {
                       onCheckedChange={(allowDelete) =>
                         allowDeleteMutation.mutate({ id: folder.id, allowDelete })
                       }
-                      aria-label={`Allow deleting files in ${folder.path}`}
+                      aria-label={formatInterfaceMessage("Allow deleting files in {path}", {
+                        path: String(folder.path ?? ""),
+                      })}
                     />
                   </TableCell>
                   <TableCell>
@@ -435,7 +486,9 @@ export function RootFolderDiscovery() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Scan ${folder.path}`}
+                        aria-label={formatInterfaceMessage("Scan {path}", {
+                          path: String(folder.path ?? ""),
+                        })}
                         disabled={
                           !folder.enabled ||
                           progress?.status === "running" ||
@@ -448,7 +501,9 @@ export function RootFolderDiscovery() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Recheck health of ${folder.path}`}
+                        aria-label={formatInterfaceMessage("Recheck health of {path}", {
+                          path: String(folder.path ?? ""),
+                        })}
                         disabled={healthCheckMutation.isPending}
                         onClick={() => healthCheckMutation.mutate(folder.id)}
                       >
@@ -457,7 +512,9 @@ export function RootFolderDiscovery() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Delete ${folder.path}`}
+                        aria-label={formatInterfaceMessage("Delete {path}", {
+                          path: String(folder.path ?? ""),
+                        })}
                         className="text-destructive hover:text-destructive"
                         onClick={() => deleteMutation.mutate(folder.id)}
                       >
@@ -474,7 +531,7 @@ export function RootFolderDiscovery() {
         {scanProgress.length > 0 && (
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Scan Progress
+              <InterfaceText source={"Scan Progress"} />
             </p>
             {scanProgress.map((p) => {
               let badgeVariant: "destructive" | "secondary" | "default";
@@ -496,10 +553,16 @@ export function RootFolderDiscovery() {
                     <Progress value={(p.processedCandidates / p.totalCandidates) * 100} />
                   )}
                   <p className="text-xs text-muted-foreground">
-                    {p.processedCandidates}/{p.totalCandidates} scanned · {p.matched} matched ·{" "}
-                    {p.unmatched} need review · {p.errors} errors
+                    {p.processedCandidates}/{p.totalCandidates}{" "}
+                    <InterfaceText source={"scanned ·"} /> {p.matched}{" "}
+                    <InterfaceText source={"matched ·"} /> {p.unmatched}{" "}
+                    <InterfaceText source={"need review ·"} /> {p.errors}{" "}
+                    <InterfaceText source={"errors"} />
                     {p.currentCandidate && p.status === "running" && (
-                      <> · currently: {p.currentCandidate}</>
+                      <>
+                        {" "}
+                        <InterfaceText source={"· currently:"} /> {p.currentCandidate}
+                      </>
                     )}
                   </p>
                   {p.errorMessage && <p className="text-xs text-destructive">{p.errorMessage}</p>}
@@ -512,7 +575,8 @@ export function RootFolderDiscovery() {
         {unmatched.length > 0 && (
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Needs Review ({unmatched.length})
+              <InterfaceText source={"Needs Review ("} />
+              {unmatched.length})
             </p>
             {unmatched.map((entry) => (
               <UnmatchedEntryCard
@@ -547,6 +611,7 @@ interface UnmatchedEntryCardProps {
  */
 function UnmatchedEntryCard({ entry, matchPending, onMatch }: UnmatchedEntryCardProps) {
   const { toast } = useToast();
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
   const queryClient = useQueryClient();
   const searchId = useId();
   const [query, setQuery] = useState("");
@@ -570,7 +635,7 @@ function UnmatchedEntryCard({ entry, matchPending, onMatch }: UnmatchedEntryCard
       );
     },
     onError: (error: Error) => {
-      toast({ title: "Search Failed", description: error.message, variant: "destructive" });
+      toast({ title: t("Search Failed"), description: error.message, variant: "destructive" });
     },
   });
 
@@ -586,7 +651,11 @@ function UnmatchedEntryCard({ entry, matchPending, onMatch }: UnmatchedEntryCard
       <p className="text-xs text-muted-foreground font-mono">{entry.absolutePath}</p>
       {entry.candidates.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          {searchMutation.isSuccess ? "No IGDB matches for that name." : "No IGDB matches found."}
+          <InterfaceText
+            source={
+              searchMutation.isSuccess ? "No IGDB matches for that name." : "No IGDB matches found."
+            }
+          />
         </p>
       ) : (
         <div className="flex flex-wrap gap-2">
@@ -605,14 +674,21 @@ function UnmatchedEntryCard({ entry, matchPending, onMatch }: UnmatchedEntryCard
         </div>
       )}
       <form className="flex gap-2" onSubmit={handleSearch}>
-        <Label htmlFor={searchId} className="sr-only">
-          Search IGDB for {entry.folderName}
+        <Label
+          htmlFor={searchId}
+          className="sr-only"
+          lang={languageFor("Search IGDB for {name}")}
+          dir={directionFor("Search IGDB for {name}")}
+        >
+          {formatInterfaceMessage("Search IGDB for {name}", { name: entry.folderName })}
         </Label>
         <Input
           id={searchId}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Not listed? Search IGDB by name"
+          placeholder={t("Not listed? Search IGDB by name")}
+          lang={languageFor("Not listed? Search IGDB by name")}
+          dir={directionFor("Not listed? Search IGDB by name")}
           className="h-9"
         />
         <Button
@@ -627,7 +703,9 @@ function UnmatchedEntryCard({ entry, matchPending, onMatch }: UnmatchedEntryCard
           ) : (
             <Search className="h-4 w-4" />
           )}
-          <span className="ml-1">Search</span>
+          <span className="ml-1" lang={languageFor("Search")} dir={directionFor("Search")}>
+            {t("Search")}
+          </span>
         </Button>
       </form>
     </div>

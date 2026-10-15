@@ -43,7 +43,7 @@ the contract changes.
 
 The Snapetech fork was created in September 2026. The v1.5.0 release was not
 published; its completed work shipped in v1.6.0. Fork releases from v1.6.0
-through [v1.10.0](https://github.com/snapetech/QuestarrNG/releases/tag/v1.10.0)
+through [v1.11.0](https://github.com/snapetech-org/QuestarrNG/releases/tag/v1.11.0)
 added the capabilities below.
 
 ## Product capabilities
@@ -124,18 +124,19 @@ added the capabilities below.
 | **1.9.1**       | Upstream Questarr sync, per-file categories and installed versions, HTTPS-only Prowlarr sync by default, non-root container defaults, and patched security tooling.                                      |
 | **1.9.2**       | SeerrNG request-contract v2 handshake and authenticated request-scoped bundles for multi-file game imports.                                                                                              |
 | **1.10.0**      | Real-Debrid OAuth and local staging, exact SeerrNG IGDB identity, verified Steam ownership and play-time estimates, and safer multi-file acquisition.                                                    |
+| **1.11.0**      | Browser-local interface language, regional date and number formatting, locale-aware calendars, and RTL-safe rendering of upstream titles and values.                                                     |
 
 For every released change, including fixes and action-required upgrade notes, use
 the [full changelog](CHANGELOG.md) and the
-[GitHub releases](https://github.com/snapetech/QuestarrNG/releases).
+[GitHub releases](https://github.com/snapetech-org/QuestarrNG/releases).
 
 ## Current SeerrNG provider compatibility
 
-QuestarrNG 1.10.0 advertises SeerrNG `apiVersion: 1` and
+QuestarrNG 1.11.0 advertises SeerrNG `apiVersion: 1` and
 `requestContractVersion: 2`. It supports the IGDB catalog, PC acquisition,
 request retry/cancel, single-file streaming, and request-scoped `.tar.gz`
 bundles for multi-file imports, plus exact request identity and Steam ownership
 estimates. Real-Debrid downloads can be staged locally before import. The
 handshake reports emulation acquisition as unsupported. See the
-[SeerrNG release note](https://github.com/snapetech/seerrng/blob/main/release-notes/questarr-catalog-estimates-and-bundles.md)
+[SeerrNG release note](https://github.com/snapetech-org/seerrng/blob/main/release-notes/questarr-catalog-estimates-and-bundles.md)
 and the current [QuestarrNG provider contract](contracts/seerrng-v2.openapi.yaml).

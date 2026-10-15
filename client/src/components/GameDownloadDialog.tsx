@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import {
+  formatRegionalNumber,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
+import { getInterfaceCollator, formatInterfaceMessage } from "@/lib/interface-locale";
+import React, { useState, useEffect, useMemo, useCallback, useRef, useId } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -184,7 +190,7 @@ function ReleaseScoreBadge({
 
 function formatDate(dateString: string): string {
   try {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getRegionalLocale());
   } catch {
     return dateString;
   }
@@ -194,6 +200,8 @@ import { apiRequest, ApiError } from "@/lib/queryClient";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatBytes, formatAge, isUsenetItem } from "@/lib/downloads-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
+import { InterfaceText } from "@/components/InterfaceText";
 
 type ReleaseMetadataBadgesProps = Readonly<{
   metadata: ReleaseMetadata;
@@ -260,7 +268,7 @@ function ReleaseMetadataBadges({
           variant="outline"
           className="h-5 px-1.5 text-xs border-muted-foreground/30 text-muted-foreground uppercase tracking-tighter"
         >
-          Scene
+          <InterfaceText source={"Scene"} />
         </Badge>
       )}
       {!isUsenet && downloadVolumeFactor === 0 && (
@@ -268,7 +276,7 @@ function ReleaseMetadataBadges({
           variant="secondary"
           className="h-5 px-1.5 text-[10px] bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border-none uppercase tracking-tighter"
         >
-          Freeleech
+          <InterfaceText source={"Freeleech"} />
         </Badge>
       )}
     </div>
@@ -334,6 +342,58 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     return promise;
   }, [game, queryClient]);
   const isMobile = useIsMobile();
+  const downloadLabelIdPrefix = useId();
+  const { t, language, languageFor, directionFor } = useInterfaceLanguage();
+  const regionalPreference = useRegionalPreference();
+  const formatNumber = (value: number) =>
+    formatRegionalNumber(value, undefined, regionalPreference);
+  const formatOptionalNumber = (value: number | undefined) =>
+    value === undefined ? "—" : formatNumber(value);
+  const interfaceCollator = useMemo(() => getInterfaceCollator(language), [language]);
+  const translateText = (source: string, values: Record<string, string | number> = {}) => {
+    let message = t(source);
+    for (const [key, value] of Object.entries(values))
+      message = message.replace(
+        `{${key}}`,
+        String(typeof value === "number" ? formatNumber(value) : value)
+      );
+    return message;
+  };
+  const localizedText = (source: string, values?: Record<string, string | number>) => {
+    const text = translateText(source, values);
+    // English is already declared on the document; avoid adding a span around
+    // every English label and preserve plain strings for English toast payloads.
+    if (language === "en") return text;
+    return (
+      <span lang={languageFor(source)} dir={directionFor(source)}>
+        {text}
+      </span>
+    );
+  };
+  const localizedAge = (days?: number) => {
+    if (days === undefined) return null;
+    if (days === 0) return localizedText("Today");
+    return (
+      <span lang={languageFor("Today")} dir={directionFor("Today")}>
+        {formatAge(days, language, regionalPreference)}
+      </span>
+    );
+  };
+  const localizedMultiSelectProps = (placeholderSource: string) => ({
+    placeholder: t(placeholderSource),
+    lang: languageFor(placeholderSource),
+    dir: directionFor(placeholderSource),
+    searchPlaceholder: translateText("Search..."),
+    searchLang: languageFor("Search..."),
+    searchDir: directionFor("Search..."),
+    emptyMessage: translateText("No items found."),
+    emptyLang: languageFor("No items found."),
+    emptyDir: directionFor("No items found."),
+    removeLabel: (label: string) => translateText("Remove {name}", { name: label }),
+    removeLang: languageFor("Remove {name}"),
+    removeDir: directionFor("Remove {name}"),
+  });
+  const categoryLabel = (category: DownloadCategory) => localizedText(getCategoryLabel(category));
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [downloadingGuid, setDownloadingGuid] = useState<string | null>(null);
@@ -596,10 +656,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       const enabledNames = new Set(enabledIndexers.map((i) => i.name));
       return resultIndexerNames
         .filter((name) => enabledNames.has(name))
-        .sort((a, b) => a.localeCompare(b));
+        .sort(interfaceCollator.compare);
     }
-    return [...resultIndexerNames].sort((a, b) => a.localeCompare(b));
-  }, [resultIndexerNames, enabledIndexers]);
+    return [...resultIndexerNames].sort(interfaceCollator.compare);
+  }, [resultIndexerNames, enabledIndexers, interfaceCollator]);
 
   const availableGroups = useMemo(() => {
     if (!searchResults?.items) return [];
@@ -608,8 +668,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         .map((item) => item.group)
         .filter((group): group is string => Boolean(group))
     );
-    return Array.from(groups).sort((a, b) => a.localeCompare(b));
-  }, [searchResults?.items]);
+    return Array.from(groups).sort(interfaceCollator.compare);
+  }, [searchResults?.items, interfaceCollator]);
 
   const preferredGroups = useMemo(
     () => parseJsonStringArray(userSettings?.preferredReleaseGroups),
@@ -649,9 +709,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     const allowed = new Set<string>(canonicalPlatformsForIgdbIds(userSettings?.importPlatformIds));
     return Array.from(platforms)
       .filter((p) => allowed.size === 0 || allowed.has(p))
-      .sort((a, b) => a.localeCompare(b))
+      .sort(interfaceCollator.compare)
       .map((p) => ({ label: p, value: p }));
-  }, [itemsMetadata, userSettings?.importPlatformIds]);
+  }, [itemsMetadata, userSettings?.importPlatformIds, interfaceCollator]);
 
   const itemPubDateTimestamps = useMemo(() => {
     if (!searchResults?.items) return new Map<string, number>();
@@ -754,7 +814,6 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   ];
   const hasUpdates = filteredCategorizedDownloads.update.length > 0;
   const hasRecommendedExtras = recommendedExtras.length > 0;
-  const updateAvailabilityDescription = `${filteredCategorizedDownloads.update.length} ${filteredCategorizedDownloads.update.length === 1 ? "update is" : "updates are"} available`;
   const bundleDialogTitle =
     hasUpdates && hasRecommendedExtras
       ? "Add updates and extras?"
@@ -801,15 +860,30 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       const downloaderNames = Array.from(
         new Set(successfulResults.map((r) => r.downloaderName).filter(Boolean))
       );
-      const titleSuffix = downloaderNames.length === 1 ? ` to ${downloaderNames[0]}` : "";
+      const title =
+        downloaderNames.length === 1
+          ? formatInterfaceMessage("Downloads sent: {count} to {downloaderName}", {
+              count: formatNumber(successCount),
+              downloaderName: downloaderNames[0]!,
+            })
+          : formatInterfaceMessage("Downloads sent: {count}", {
+              count: formatNumber(successCount),
+            });
       toast({
-        title: `${successCount} download(s) sent${titleSuffix}`,
+        title,
         description:
-          results.length > 1 ? `Added ${successCount} of ${results.length} downloads` : undefined,
+          results.length > 1
+            ? formatInterfaceMessage("Added {count} of {total} downloads", {
+                count: formatNumber(successCount),
+                total: formatNumber(results.length),
+              })
+            : undefined,
       });
       if (failedResults.length > 0) {
         toast({
-          title: `${failedResults.length} download(s) failed`,
+          title: formatInterfaceMessage("Downloads failed: {count}", {
+            count: formatNumber(failedResults.length),
+          }),
           description: failedResults.map(({ download }) => download.title).join(", "),
           variant: "destructive",
         });
@@ -858,13 +932,17 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         const awaitingConfirmation = Boolean(result.correlationTag);
         toast({
           title: awaitingConfirmation
-            ? "Checking qBittorrent"
-            : `Download sent to ${variables.downloaderName}`,
+            ? localizedText("Checking qBittorrent")
+            : formatInterfaceMessage("Download sent to {downloaderName}", {
+                downloaderName: String(variables.downloaderName ?? ""),
+              }),
           ...(awaitingConfirmation
             ? {
                 description:
                   result.message ||
-                  "The request was accepted, but qBittorrent has not confirmed the download yet. Check qBittorrent before retrying to avoid a duplicate.",
+                  localizedText(
+                    "The request was accepted, but qBittorrent has not confirmed the download yet. Check qBittorrent before retrying to avoid a duplicate."
+                  ),
               }
             : {}),
         });
@@ -1010,7 +1088,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         window.URL.revokeObjectURL(url);
         toast({
           title: `Bundle downloaded`,
-          description: `ZIP file with ${downloads.length} item(s)`,
+          description: formatInterfaceMessage("ZIP file item count: {count}", {
+            count: formatNumber(downloads.length),
+          }),
         });
       } catch (error) {
         toast({
@@ -1086,13 +1166,15 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   }) => (
     <button
       onClick={() => toggleSort(field)}
+      lang={languageFor(label)}
+      dir={directionFor(label)}
       className={cn(
         "flex items-center hover:text-foreground transition-colors uppercase tracking-wider font-bold",
         sortBy === field ? "text-foreground" : "text-muted-foreground/70",
         className
       )}
     >
-      {label}
+      {localizedText(label)}
       {sortBy === field ? (
         sortOrder === "asc" ? (
           <ArrowUp className="h-3 w-3 ml-1" />
@@ -1118,19 +1200,25 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     >
       <div className="space-y-2">
         <Label htmlFor="indexer" className="text-sm">
-          Indexer
+          {localizedText("Indexer")}
         </Label>
         <Select
           value={selectedIndexer}
           onValueChange={setSelectedIndexer}
           disabled={availableIndexers.length === 1}
         >
-          <SelectTrigger id="indexer">
-            <SelectValue placeholder="All Indexers" />
+          <SelectTrigger
+            id="indexer"
+            lang={languageFor("All Indexers")}
+            dir={directionFor("All Indexers")}
+          >
+            <SelectValue placeholder={t("All Indexers")} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">
-              {availableIndexers.length === 1 ? availableIndexers[0] : "All Indexers"}
+              {availableIndexers.length === 1
+                ? availableIndexers[0]
+                : localizedText("All Indexers")}
             </SelectItem>
             {availableIndexers.length > 1 &&
               availableIndexers.map((indexer) => (
@@ -1143,12 +1231,12 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       </div>
 
       <div className="space-y-2">
-        <Label className="text-sm">Release Groups</Label>
+        <Label className="text-sm">{localizedText("Release Groups")}</Label>
         <MultiSelect
+          {...localizedMultiSelectProps("Select groups...")}
           options={availableGroups.map((g) => ({ label: g as string, value: g as string }))}
           selected={selectedGroups}
           onChange={setSelectedGroups}
-          placeholder="Select groups..."
           className="w-full"
         />
         {selectedGroupsToSave.length > 0 && (
@@ -1174,12 +1262,14 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       </div>
 
       <div className="space-y-2">
-        <Label className="text-sm">Platform</Label>
+        <Label className="text-sm">{localizedText("Platform")}</Label>
         <MultiSelect
+          {...localizedMultiSelectProps(
+            availablePlatforms.length === 0 ? "No platforms detected" : "All platforms"
+          )}
           options={availablePlatforms}
           selected={selectedPlatforms}
           onChange={setSelectedPlatforms}
-          placeholder={availablePlatforms.length === 0 ? "No platforms detected" : "All platforms"}
           className="w-full"
           disabled={availablePlatforms.length === 0}
         />
@@ -1187,7 +1277,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
 
       <div className="space-y-2">
         <Label htmlFor="minSeeders" className="text-sm">
-          Min Seeders
+          {localizedText("Min Seeders")}
         </Label>
         <Input
           id="minSeeders"
@@ -1200,7 +1290,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       </div>
 
       <div className={cn("space-y-2", !isMobile && "col-span-4")}>
-        <Label className="text-sm">Categories</Label>
+        <Label className="text-sm">{localizedText("Categories")}</Label>
         <div className="flex flex-wrap gap-2">
           {(["main", "update", "dlc", "packs", "extra"] as const).map((cat) => (
             <div key={cat} className="flex items-center">
@@ -1210,7 +1300,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                 onCheckedChange={() => toggleCategory(cat)}
               />
               <label htmlFor={`cat-${cat}`} className="ml-2 text-sm cursor-pointer capitalize">
-                {getCategoryLabel(cat)}
+                {categoryLabel(cat)}
               </label>
             </div>
           ))}
@@ -1225,7 +1315,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     <div className="space-y-3">
       <Input
         type="text"
-        placeholder="Search for downloads..."
+        placeholder={t("Search for downloads...")}
+        lang={searchQuery ? "und" : languageFor("Search for downloads...")}
+        dir="auto"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         className="w-full"
@@ -1238,15 +1330,27 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
           className="flex items-center gap-2"
         >
           <SlidersHorizontal className="h-4 w-4" />
-          {showFilters ? "Hide Filters" : "Show Filters"}
+          {localizedText(showFilters ? "Hide Filters" : "Show Filters")}
         </Button>
         {minSeeders > 0 && (
           <Badge variant="secondary" className="text-xs">
-            Min Seeders: {minSeeders}
+            {localizedText("Min Seeders")}: {formatNumber(minSeeders)}
           </Badge>
         )}
         <Badge variant="outline" className="text-xs capitalize">
-          Sorted by: {sortBy} ({sortOrder === "asc" ? "Asc" : "Desc"})
+          {localizedText("Sorted by:")}{" "}
+          {localizedText(
+            (
+              {
+                seeders: "Health",
+                date: "Date",
+                size: "Size",
+                priority: "Priority",
+                score: "Score",
+              } as const
+            )[sortBy]
+          )}{" "}
+          ({localizedText(sortOrder === "asc" ? "Asc" : "Desc")})
         </Badge>
       </div>
       {filterPanel}
@@ -1265,18 +1369,27 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       {isSearching && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-muted-foreground">Searching...</span>
+          <span className="ml-2 text-muted-foreground">{localizedText("Searching...")}</span>
         </div>
       )}
 
       {!isSearching && searchResults && searchResults.items.length === 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>No Results Found</CardTitle>
+            <CardTitle>{localizedText("No Results Found")}</CardTitle>
             <CardDescription>
               {searchResults.blacklistedCount
-                ? `${searchResults.blacklistedCount} release(s) were found but are all blacklisted. Review your blacklist in the game settings.`
-                : "No downloads found for this game. Try configuring indexers in settings."}
+                ? searchResults.blacklistedCount === 1
+                  ? localizedText(
+                      "This result is blacklisted. Review the blacklist in game settings."
+                    )
+                  : localizedText(
+                      "All {count} results are blacklisted. Review the blacklist in game settings.",
+                      { count: searchResults.blacklistedCount }
+                    )
+                : localizedText(
+                    "No downloads found for this game. Try configuring indexers in settings."
+                  )}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -1327,15 +1440,15 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                   <Info className="mt-0.5 h-4 w-4 shrink-0" />
                   <div className="flex-1">
                     <span>
-                      No results match your preferred platform (
-                      <strong>{selectedPlatforms.join(", ")}</strong>).
+                      {localizedText("No results for selected platforms:")}{" "}
+                      <strong>{selectedPlatforms.join(", ")}</strong>
                     </span>{" "}
                     <button
                       type="button"
                       className="underline hover:text-amber-100 transition-colors"
                       onClick={() => setSelectedPlatforms([])}
                     >
-                      Show all results
+                      {localizedText("Show all results")}
                     </button>
                   </div>
                 </div>
@@ -1349,10 +1462,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                   <div key={category} className="relative">
                     <div className="flex items-center gap-2 mb-3 px-1">
                       <h3 className="font-bold text-lg capitalize tracking-tight">
-                        {getCategoryLabel(category)}
+                        {categoryLabel(category)}
                       </h3>
                       <Badge variant="secondary" className="text-xs font-semibold">
-                        {downloadsInCategory.length}
+                        {formatNumber(downloadsInCategory.length)}
                       </Badge>
                     </div>
 
@@ -1362,7 +1475,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                         <div className="sticky top-0 z-10 bg-muted/95 backdrop-blur-md p-3 text-xs font-bold flex items-center px-4 border-b rounded-t-md group">
                           <div className="flex-1 flex items-center">
                             <span className="text-muted-foreground/70 uppercase tracking-widest">
-                              Release Information
+                              {localizedText("Release Information")}
                             </span>
                           </div>
                           <div className="flex items-center gap-6 md:gap-10">
@@ -1396,13 +1509,16 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                               className="min-w-[70px] justify-end"
                             />
                             <div className="w-[112px] text-right text-muted-foreground/70 uppercase tracking-widest">
-                              Actions
+                              {localizedText("Actions")}
                             </div>
                           </div>
                         </div>
                       )}
 
-                      {downloadsInCategory.map((download: DownloadItem) => {
+                      {downloadsInCategory.map((download: DownloadItem, downloadIndex: number) => {
+                        const labelIdPrefix = `${downloadLabelIdPrefix}-${category}-${downloadIndex}`;
+                        const actionLabelId = `${labelIdPrefix}-action`;
+                        const titleLabelId = `${labelIdPrefix}-title`;
                         const isUsenet = isUsenetItem(download);
                         const downloadId = download.guid || download.link;
                         const isCurrentDownload = downloadingGuid === downloadId;
@@ -1434,7 +1550,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9"
-                                aria-label="More download options"
+                                aria-label={translateText("More download options")}
+                                lang={languageFor("More download options")}
+                                dir={directionFor("More download options")}
                               >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
@@ -1453,7 +1571,13 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                 }}
                               >
                                 <Copy className="h-4 w-4 mr-2" />
-                                Copy {isUsenet ? "NZB" : "Torrent"} Link
+                                <InterfaceText source={"Copy"} />{" "}
+                                {isUsenet ? (
+                                  <InterfaceText source={"NZB"} />
+                                ) : (
+                                  <InterfaceText source={"Torrent"} />
+                                )}{" "}
+                                <InterfaceText source={"Link"} />
                               </DropdownMenuItem>
 
                               {(() => {
@@ -1467,7 +1591,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                   <DropdownMenuSub>
                                     <DropdownMenuSubTrigger>
                                       <Download className="h-4 w-4 mr-2" />
-                                      Send to downloader
+                                      <InterfaceText source={"Send to downloader"} />
                                     </DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                       <DropdownMenuSubContent>
@@ -1497,7 +1621,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                 className="text-destructive focus:text-destructive"
                               >
                                 <Ban className="h-4 w-4 mr-2" />
-                                Blacklist release
+                                <InterfaceText source={"Blacklist release"} />
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -1558,10 +1682,14 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                               className="hover:underline cursor-pointer"
                                               onClick={(event) => event.stopPropagation()}
                                             >
-                                              {download.title}
+                                              <span id={titleLabelId} lang="und" dir="auto">
+                                                {download.title}
+                                              </span>
                                             </a>
                                           ) : (
-                                            <span>{download.title}</span>
+                                            <span id={titleLabelId} lang="und" dir="auto">
+                                              {download.title}
+                                            </span>
                                           )}
                                         </h4>
                                         {isNew && (
@@ -1569,7 +1697,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                             variant="default"
                                             className="h-4 px-1 text-[8px] uppercase bg-blue-600 hover:bg-blue-600 flex-shrink-0 mt-0.5"
                                           >
-                                            NEW
+                                            <InterfaceText source={"NEW"} />
                                           </Badge>
                                         )}
                                         <ReleaseScoreBadge
@@ -1590,17 +1718,25 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                             ? "min-w-[120px] gap-1.5 px-2"
                                             : "w-9 px-0"
                                         )}
-                                        aria-label={
-                                          isCurrentDownload
-                                            ? `Downloading... ${download.title.replace(/[._]/g, " ")}`
-                                            : `Download ${download.title.replace(/[._]/g, " ")}`
-                                        }
+                                        aria-labelledby={`${actionLabelId} ${titleLabelId}`}
                                         aria-busy={isCurrentDownload}
                                       >
+                                        <span
+                                          id={actionLabelId}
+                                          className="sr-only"
+                                          lang={languageFor("Download")}
+                                          dir={directionFor("Download")}
+                                        >
+                                          {isCurrentDownload
+                                            ? localizedText("Downloading...")
+                                            : translateText("Download")}
+                                        </span>
                                         {isCurrentDownload ? (
                                           <>
                                             <Loader2 className="h-4 w-4 animate-spin" />
-                                            <span>Downloading...</span>
+                                            <span>
+                                              <InterfaceText source={"Downloading..."} />
+                                            </span>
                                           </>
                                         ) : (
                                           <Download className="h-4 w-4" />
@@ -1638,9 +1774,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                     <span className={cn("flex items-center gap-0.5", healthColor)}>
                                       <Activity className="h-3 w-3" />
                                       {isUsenet
-                                        ? (download.grabs ?? 0)
-                                        : (download.seeders ?? 0)}{" "}
-                                      {isUsenet ? "grabs" : "seeds"}
+                                        ? formatNumber(download.grabs ?? 0)
+                                        : formatNumber(download.seeders ?? 0)}{" "}
+                                      {localizedText(isUsenet ? "grabs" : "seeders")}
                                     </span>
                                     <span>•</span>
                                     <span>{formatDate(download.pubDate)}</span>
@@ -1676,7 +1812,11 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                       </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      {isUsenet ? "Usenet (NZB)" : "Torrent"}
+                                      {isUsenet ? (
+                                        <InterfaceText source={"Usenet (NZB)"} />
+                                      ) : (
+                                        <InterfaceText source={"Torrent"} />
+                                      )}
                                     </TooltipContent>
                                   </Tooltip>
 
@@ -1689,10 +1829,14 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                         className="hover:underline cursor-pointer"
                                         onClick={(event) => event.stopPropagation()}
                                       >
-                                        {download.title}
+                                        <span id={titleLabelId} lang="und" dir="auto">
+                                          {download.title}
+                                        </span>
                                       </a>
                                     ) : (
-                                      <span>{download.title}</span>
+                                      <span id={titleLabelId} lang="und" dir="auto">
+                                        {download.title}
+                                      </span>
                                     )}
                                   </h4>
 
@@ -1701,7 +1845,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                       variant="default"
                                       className="h-4 px-1 text-[8px] uppercase bg-blue-600 hover:bg-blue-600"
                                     >
-                                      NEW
+                                      <InterfaceText source={"NEW"} />
                                     </Badge>
                                   )}
                                   <ReleaseScoreBadge evaluation={download.releaseEvaluation} />
@@ -1739,7 +1883,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                               <div className="flex items-center gap-6 md:gap-10 flex-shrink-0">
                                 {resultIndexerNames.length > 1 && (
                                   <div className="min-w-[70px] text-right font-mono text-xs font-bold">
-                                    {indexerPriorityMap.get(download.indexerName ?? "") ?? "—"}
+                                    {formatOptionalNumber(
+                                      indexerPriorityMap.get(download.indexerName ?? "")
+                                    )}
                                   </div>
                                 )}
 
@@ -1748,7 +1894,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                     {formatDate(download.pubDate)}
                                   </div>
                                   <div className="text-xs text-muted-foreground/50">
-                                    {formatAge(isUsenet ? download.age : hoursOld / 24)}
+                                    {localizedAge(isUsenet ? download.age : hoursOld / 24)}
                                   </div>
                                 </div>
 
@@ -1764,14 +1910,17 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                 >
                                   <div className="flex items-center gap-1 font-bold">
                                     <Activity className="h-3 w-3" />
-                                    {isUsenet ? (download.grabs ?? 0) : (download.seeders ?? 0)}
+                                    {isUsenet
+                                      ? formatNumber(download.grabs ?? 0)
+                                      : formatNumber(download.seeders ?? 0)}
                                   </div>
                                   <div className="text-xs uppercase font-bold opacity-70">
-                                    {isUsenet ? "Grabs" : "Seeds"}
+                                    {localizedText(isUsenet ? "grabs" : "seeders")}
                                   </div>
                                   {!isUsenet && download.leechers != null && (
                                     <div className="text-[10px] text-muted-foreground/60">
-                                      {download.leechers}L
+                                      {formatNumber(download.leechers)}
+                                      <InterfaceText source={"L"} />
                                     </div>
                                   )}
                                 </div>
@@ -1792,17 +1941,25 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                       "h-9 hover:bg-primary hover:text-primary-foreground transition-all",
                                       isCurrentDownload ? "min-w-[120px] gap-1.5 px-2" : "w-9 px-0"
                                     )}
-                                    aria-label={
-                                      isCurrentDownload
-                                        ? `Downloading... ${download.title.replace(/[._]/g, " ")}`
-                                        : `Download ${download.title.replace(/[._]/g, " ")}`
-                                    }
+                                    aria-labelledby={`${actionLabelId} ${titleLabelId}`}
                                     aria-busy={isCurrentDownload}
                                   >
+                                    <span
+                                      id={actionLabelId}
+                                      className="sr-only"
+                                      lang={languageFor("Download")}
+                                      dir={directionFor("Download")}
+                                    >
+                                      {isCurrentDownload
+                                        ? localizedText("Downloading...")
+                                        : translateText("Download")}
+                                    </span>
                                     {isCurrentDownload ? (
                                       <>
                                         <Loader2 className="h-4 w-4 animate-spin" />
-                                        <span>Downloading...</span>
+                                        <span>
+                                          <InterfaceText source={"Downloading..."} />
+                                        </span>
                                       </>
                                     ) : (
                                       <Download className="h-4 w-4" />
@@ -1826,7 +1983,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       {searchResults?.errors && searchResults.errors.length > 0 && (
         <Card className="border-destructive">
           <CardHeader>
-            <CardTitle className="text-sm text-destructive">Indexer Errors</CardTitle>
+            <CardTitle className="text-sm text-destructive">
+              {localizedText("Indexer Errors")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="text-sm space-y-1">
@@ -1846,22 +2005,44 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
 
   const bundleDialog = (
     <AlertDialog open={showBundleDialog} onOpenChange={setShowBundleDialog}>
-      <AlertDialogContent className="max-w-2xl">
+      <AlertDialogContent className="max-w-2xl" dir={directionFor("Download")}>
         <AlertDialogHeader>
-          <AlertDialogTitle>{bundleDialogTitle}</AlertDialogTitle>
+          <AlertDialogTitle>{localizedText(bundleDialogTitle)}</AlertDialogTitle>
           <AlertDialogDescription>
-            {hasUpdates && hasRecommendedExtras
-              ? `${updateAvailabilityDescription}. Updates are selected by default; small extras are optional and start unchecked.`
-              : hasUpdates
-                ? `${updateAvailabilityDescription}. Updates are selected by default; uncheck any you don't want with the main game.`
-                : "Each suggested extra is no larger than 25% of the main release size. Select any you'd like to download with the main game."}
+            {hasUpdates ? (
+              <>
+                {filteredCategorizedDownloads.update.length === 1
+                  ? localizedText(
+                      "One update is available for this game. Select whether to download it with the main game."
+                    )
+                  : filteredCategorizedDownloads.update.length === 2
+                    ? localizedText(
+                        "Two updates are available for this game. Select whether to download them with the main game."
+                      )
+                    : localizedText(
+                        "{count} updates are available for this game. Select which ones to download with the main game.",
+                        { count: filteredCategorizedDownloads.update.length }
+                      )}{" "}
+                {hasRecommendedExtras
+                  ? localizedText(
+                      "Updates are selected by default; small extras are optional and start unchecked."
+                    )
+                  : localizedText(
+                      "Updates are selected by default; uncheck any you don't want with the main game."
+                    )}
+              </>
+            ) : (
+              localizedText(
+                "Each suggested extra is no larger than 25% of the main release size. Select any you'd like to download with the main game."
+              )
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {filteredCategorizedDownloads.update.length > 0 && (
           <div className="my-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold">Available Updates:</div>
+              <div className="text-sm font-semibold">{localizedText("Available Updates:")}</div>
               <div className="flex gap-2">
                 <Button
                   variant="ghost"
@@ -1869,7 +2050,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                   onClick={selectAllUpdates}
                   className="h-7 text-xs"
                 >
-                  Select All
+                  {localizedText("Select All")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -1877,7 +2058,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                   onClick={deselectAllUpdates}
                   className="h-7 text-xs"
                 >
-                  Deselect All
+                  {localizedText("Deselect All")}
                 </Button>
               </div>
             </div>
@@ -1900,13 +2081,17 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                         className="mt-1"
                       />
                       <label htmlFor={`update-${index}`} className="flex-1 cursor-pointer text-sm">
-                        <div className="font-medium">{update.title}</div>
+                        <div className="font-medium" lang="und" dir="auto">
+                          {update.title}
+                        </div>
                         <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
                           {update.size && <span>{formatBytes(update.size)}</span>}
                           {update.seeders !== undefined && (
                             <>
                               <span>•</span>
-                              <span className="text-green-600">{update.seeders} seeders</span>
+                              <span className="text-green-600">
+                                {formatNumber(update.seeders)} {localizedText("seeders")}
+                              </span>
                             </>
                           )}
                         </div>
@@ -1917,19 +2102,24 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
               </ScrollArea>
             </div>
             <div className="text-xs text-muted-foreground mt-2">
-              {selectedUpdateIndices.size} of {filteredCategorizedDownloads.update.length} updates
-              selected
+              {localizedText("Selection: {count}/{total}", {
+                count: selectedUpdateIndices.size,
+                total: filteredCategorizedDownloads.update.length,
+              })}
             </div>
           </div>
         )}
 
         {recommendedExtras.length > 0 && (
           <div className="my-4">
-            <div className="text-sm font-semibold mb-2">Small extras (optional)</div>
+            <div className="text-sm font-semibold mb-2">
+              {localizedText("Small extras (optional)")}
+            </div>
             <div className="text-xs text-muted-foreground mb-2">
-              Each suggested extra is 25% or less of the{" "}
-              {selectedMainDownload?.size && formatBytes(selectedMainDownload.size)} main release.
-              Nothing here is selected automatically.
+              {localizedText("Each suggested extra is 25% or less of the")}{" "}
+              {selectedMainDownload?.size && formatBytes(selectedMainDownload.size)}{" "}
+              {localizedText("main release.")}{" "}
+              {localizedText("Nothing here is selected automatically.")}
             </div>
             <div className="border rounded-md">
               <ScrollArea style={{ height: Math.min(160, 24 + recommendedExtras.length * 64) }}>
@@ -1948,7 +2138,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                       <label htmlFor={`extra-${index}`} className="flex-1 cursor-pointer text-sm">
                         <div className="font-medium">{extra.title}</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {extra.size ? formatBytes(extra.size) : "Size unavailable"}
+                          {extra.size ? formatBytes(extra.size) : localizedText("Size unavailable")}
                         </div>
                       </label>
                     </div>
@@ -1960,7 +2150,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{localizedText("Cancel")}</AlertDialogCancel>
           <AlertDialogAction
             className={buttonVariants({ variant: "outline" })}
             onClick={() => {
@@ -1968,7 +2158,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
               else handleBundleDownload(false);
             }}
           >
-            Download game only
+            {localizedText("Download game only")}
           </AlertDialogAction>
           <AlertDialogAction
             onClick={() => {
@@ -1978,7 +2168,15 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
             disabled={selectedBundleAddons.length === 0}
           >
             <PackagePlus className="w-4 h-4 mr-2" />
-            Download with {selectedBundleAddonLabel}
+            {selectedExtraIndices.size > 0
+              ? formatInterfaceMessage("Download with {name}", { name: selectedBundleAddonLabel })
+              : selectedUpdateIndices.size === 1
+                ? localizedText("Download with one update")
+                : selectedUpdateIndices.size === 2
+                  ? localizedText("Download with two updates")
+                  : localizedText("Download with {count} updates", {
+                      count: selectedUpdateIndices.size,
+                    })}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -1991,13 +2189,16 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     return (
       <>
         <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
-          <DrawerContent className="h-[95vh] flex flex-col">
+          <DrawerContent className="h-[95vh] flex flex-col" dir={directionFor("Download")}>
             <DrawerHeader className="pt-2 pb-0 px-4 flex-shrink-0">
               <DrawerTitle className="text-base font-bold truncate">
-                Download {game.title}
+                {localizedText("Download")}{" "}
+                <span lang="und" dir="auto">
+                  {game.title}
+                </span>
               </DrawerTitle>
               <DrawerDescription className="sr-only">
-                Search results for torrents and NZBs matching this game.
+                {localizedText("Search results for torrents and NZBs matching this game.")}
               </DrawerDescription>
             </DrawerHeader>
 
@@ -2020,13 +2221,23 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[96vw] max-w-[2000px] max-h-[90vh] flex flex-col">
+        <DialogContent
+          className="w-[96vw] max-w-[2000px] max-h-[90vh] flex flex-col"
+          dir={directionFor("Download")}
+        >
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Download {game.title}</DialogTitle>
+            <DialogTitle>
+              {localizedText("Download")}{" "}
+              <span lang="und" dir="auto">
+                {game.title}
+              </span>
+            </DialogTitle>
             <DialogDescription>
-              Search results for torrents and NZBs matching this game.{" "}
+              {localizedText("Search results for torrents and NZBs matching this game.")}{" "}
               <span className="text-muted-foreground/80">
-                Tip: Enable auto-download in Settings to automatically download new releases.
+                {localizedText(
+                  "Tip: Enable auto-download in Settings to automatically download new releases."
+                )}
               </span>
             </DialogDescription>
           </DialogHeader>

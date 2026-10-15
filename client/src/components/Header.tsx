@@ -1,3 +1,4 @@
+import { formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Plus, Moon, Sun, HardDrive, AlertCircle, Loader2 } from "lucide-react";
@@ -25,11 +26,14 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Config } from "@shared/schema";
+import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
 
 const AddGameModal = lazy(() => import("./AddGameModal"));
 
 interface HeaderProps {
   title?: string;
+  titleLanguage?: string;
+  titleDirection?: "ltr" | "rtl";
 }
 
 interface StorageInfo {
@@ -39,15 +43,12 @@ interface StorageInfo {
   error?: string;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-}
-
-export default function Header({ title = "Library" }: HeaderProps) {
+export default function Header({
+  title = "Library",
+  titleLanguage = "en",
+  titleDirection = "ltr",
+}: HeaderProps) {
+  const { t, languageFor, directionFor } = useInterfaceLanguage();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
@@ -74,17 +75,19 @@ export default function Header({ title = "Library" }: HeaderProps) {
     },
     onSuccess: (data) => {
       toast({
-        title: "Steam Sync",
+        title: t("Steam Sync"),
         description:
           data.addedCount != null
-            ? `Synced ${data.addedCount} game(s) from your Steam Wishlist.`
-            : data.message || "Sync completed successfully",
+            ? formatInterfaceMessage("Synced {count} games from your Steam Wishlist.", {
+                count: data.addedCount,
+              })
+            : data.message || t("Sync completed successfully"),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Sync Failed",
-        description: error.message || "Failed to connect to server",
+        title: t("Sync Failed"),
+        description: error.message || t("Failed to connect to server"),
         variant: "destructive",
       });
     },
@@ -118,11 +121,18 @@ export default function Header({ title = "Library" }: HeaderProps) {
                   />
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  <p>Toggle Sidebar</p>
+                  <p lang={languageFor("Toggle Sidebar")} dir={directionFor("Toggle Sidebar")}>
+                    {t("Toggle Sidebar")}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </span>
-            <h1 className="truncate text-lg font-semibold sm:text-xl" data-testid="text-page-title">
+            <h1
+              className="truncate text-lg font-semibold sm:text-xl"
+              data-testid="text-page-title"
+              lang={titleLanguage}
+              dir={titleDirection}
+            >
               {title}
             </h1>
           </div>
@@ -132,13 +142,28 @@ export default function Header({ title = "Library" }: HeaderProps) {
             <div className="hidden items-center gap-2 sm:flex sm:gap-3">
               {isLoading && (
                 <span className="text-xs text-muted-foreground animate-pulse">
-                  Checking storage...
+                  <span
+                    lang={languageFor("Checking storage...")}
+                    dir={directionFor("Checking storage...")}
+                  >
+                    {t("Checking storage...")}
+                  </span>
                 </span>
               )}
-              {isError && <span className="text-xs text-destructive">Error</span>}
+              {isError && (
+                <span
+                  className="text-xs text-destructive"
+                  lang={languageFor("Error")}
+                  dir={directionFor("Error")}
+                >
+                  {t("Error")}
+                </span>
+              )}
               {!isLoading && !isError && storageInfo.length === 0 && (
                 <span className="hidden text-xs text-muted-foreground opacity-50 sm:inline">
-                  No downloaders
+                  <span lang={languageFor("No downloaders")} dir={directionFor("No downloaders")}>
+                    {t("No downloaders")}
+                  </span>
                 </span>
               )}
               {!isLoading &&
@@ -150,7 +175,15 @@ export default function Header({ title = "Library" }: HeaderProps) {
                         className="flex cursor-help items-center gap-1 border rounded-full px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted/50 sm:gap-1.5 sm:px-2.5 sm:py-1"
                         tabIndex={0}
                         role="button"
-                        aria-label={`Storage for ${info.downloaderName}: ${formatBytes(info.freeSpace)} available`}
+                        aria-label={formatInterfaceMessage(
+                          "Storage for {downloader}: {space} available",
+                          {
+                            downloader: info.downloaderName,
+                            space: formatBytes(info.freeSpace),
+                          }
+                        )}
+                        lang={languageFor("Storage for {downloader}: {space} available")}
+                        dir={directionFor("Storage for {downloader}: {space} available")}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") e.currentTarget.click();
                         }}
@@ -162,9 +195,17 @@ export default function Header({ title = "Library" }: HeaderProps) {
                     <TooltipContent>
                       <div className="text-center">
                         <p className="font-semibold">{info.downloaderName}</p>
-                        <p className="text-xs text-muted-foreground">Free Disk Space</p>
+                        <p
+                          className="text-xs text-muted-foreground"
+                          lang={languageFor("Free Disk Space")}
+                          dir={directionFor("Free Disk Space")}
+                        >
+                          {t("Free Disk Space")}
+                        </p>
                         {info.error && (
-                          <p className="mt-1 text-xs text-destructive">{info.error}</p>
+                          <p className="mt-1 text-xs text-destructive" lang="en" dir="auto">
+                            {info.error}
+                          </p>
                         )}
                       </div>
                     </TooltipContent>
@@ -183,7 +224,13 @@ export default function Header({ title = "Library" }: HeaderProps) {
                     className="h-10 gap-2 px-3 sm:h-9"
                   >
                     <Plus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Add Game</span>
+                    <span
+                      className="hidden sm:inline"
+                      lang={languageFor("Add Game")}
+                      dir={directionFor("Add Game")}
+                    >
+                      {t("Add Game")}
+                    </span>
                   </Button>
                 }
               >
@@ -196,7 +243,13 @@ export default function Header({ title = "Library" }: HeaderProps) {
                     className="h-10 gap-2 px-3 sm:h-9"
                   >
                     <Plus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Add Game</span>
+                    <span
+                      className="hidden sm:inline"
+                      lang={languageFor("Add Game")}
+                      dir={directionFor("Add Game")}
+                    >
+                      {t("Add Game")}
+                    </span>
                   </Button>
                 </AddGameModal>
               </Suspense>
@@ -214,7 +267,13 @@ export default function Header({ title = "Library" }: HeaderProps) {
                   ) : (
                     <SteamIcon className="w-4 h-4" />
                   )}
-                  <span className="hidden sm:inline">Sync Steam</span>
+                  <span
+                    className="hidden sm:inline"
+                    lang={languageFor("Sync Steam")}
+                    dir={directionFor("Sync Steam")}
+                  >
+                    {t("Sync Steam")}
+                  </span>
                 </Button>
               )}
 
@@ -226,7 +285,9 @@ export default function Header({ title = "Library" }: HeaderProps) {
                 className="h-10 w-10 sm:h-9 sm:w-9"
                 onClick={handleThemeToggle}
                 data-testid="button-theme-toggle"
-                aria-label="Toggle theme"
+                aria-label={t("Toggle theme")}
+                lang={languageFor("Toggle theme")}
+                dir={directionFor("Toggle theme")}
               >
                 {mounted &&
                   (theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />)}
@@ -241,13 +302,32 @@ export default function Header({ title = "Library" }: HeaderProps) {
       {config && !config.igdb.configured && (
         <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b-1">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Configuration Required</AlertTitle>
+          <AlertTitle
+            lang={languageFor("Configuration Required")}
+            dir={directionFor("Configuration Required")}
+          >
+            {t("Configuration Required")}
+          </AlertTitle>
           <AlertDescription className="flex items-center gap-2">
-            IGDB credentials are required. The application will only function for existing games
-            until configured.
+            <span
+              lang={languageFor(
+                "IGDB credentials are required. The application will only function for existing games until configured."
+              )}
+              dir={directionFor(
+                "IGDB credentials are required. The application will only function for existing games until configured."
+              )}
+            >
+              {t(
+                "IGDB credentials are required. The application will only function for existing games until configured."
+              )}
+            </span>
             <Link href="/settings">
-              <span className="underline font-bold cursor-pointer hover:text-white">
-                Configure in Settings
+              <span
+                className="underline font-bold cursor-pointer hover:text-white"
+                lang={languageFor("Configure in Settings")}
+                dir={directionFor("Configure in Settings")}
+              >
+                {t("Configure in Settings")}
               </span>
             </Link>
           </AlertDescription>

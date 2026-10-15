@@ -5,6 +5,7 @@ import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import StatsPage from "../src/pages/stats";
+import { formatRegionalPercent, setRegionalPreference } from "../src/lib/regional-format";
 import { createTestQueryClient } from "./test-utils";
 
 const { apiRequestMock, games } = vi.hoisted(() => ({
@@ -70,6 +71,7 @@ vi.mock("recharts", () => ({
 describe("StatsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setRegionalPreference("system");
     apiRequestMock.mockImplementation(async (_method: string, path: string) => ({
       json: async () => (path.startsWith("/api/games") ? games : { configured: false }),
     }));
@@ -106,5 +108,22 @@ describe("StatsPage", () => {
     expect(await screen.findByText("Genres: 2")).toBeInTheDocument();
     expect(screen.getByText("Platforms: 2")).toBeInTheDocument();
     expect(screen.getByText("Wishlist: 1")).toBeInTheDocument();
+  });
+
+  it("formats percentage cards with the selected regional locale", async () => {
+    setRegionalPreference("fr");
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <StatsPage />
+      </QueryClientProvider>
+    );
+
+    const cards = await screen.findAllByTestId("stats-card");
+    const completionCard = cards.find((card) => card.textContent?.startsWith("Completion Rate"));
+
+    expect(completionCard?.textContent).toBe(
+      `Completion Rate: ${formatRegionalPercent(0, { maximumFractionDigits: 0 })}`
+    );
   });
 });

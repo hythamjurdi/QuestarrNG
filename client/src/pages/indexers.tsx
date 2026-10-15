@@ -1,9 +1,14 @@
 import { isSameProwlarrUrl } from "@shared/prowlarr-url";
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiFetch, queryClient, clearSearchCache } from "@/lib/queryClient";
+import { apiFetch, throwIfResNotOk, queryClient, clearSearchCache } from "@/lib/queryClient";
 import { refreshIndexerQueries } from "@/lib/indexers-cache";
 import { asZodType, cn, compareEnabledPriorityName } from "@/lib/utils";
+import {
+  getInterfaceCollator,
+  useInterfaceLanguage,
+  formatInterfaceMessage,
+} from "@/lib/interface-locale";
 import { Plus, Edit, Trash2, Check, X, Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +48,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
 import PageHeader from "@/components/PageHeader";
 import { PriorityInput } from "@/components/PriorityInput";
+import { InterfaceText } from "@/components/InterfaceText";
 
 // Standard Newznab/Torznab gaming categories offered when syncing from
 // Prowlarr, since no single indexer's caps apply to the whole batch.
@@ -94,6 +100,8 @@ function PriorityControl({
 }
 
 export default function IndexersPage() {
+  const { language: interfaceLanguage } = useInterfaceLanguage();
+  const nameCollator = useMemo(() => getInterfaceCollator(interfaceLanguage), [interfaceLanguage]);
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isProwlarrDialogOpen, setIsProwlarrDialogOpen] = useState(false);
@@ -177,8 +185,8 @@ export default function IndexersPage() {
   );
 
   const sortedIndexers = useMemo(() => {
-    return [...indexers].sort(compareEnabledPriorityName);
-  }, [indexers]);
+    return [...indexers].sort((a, b) => compareEnabledPriorityName(a, b, nameCollator));
+  }, [indexers, nameCollator]);
 
   const diagnoseProwlarr = async () => {
     setDiagnosingProwlarr(true);
@@ -193,8 +201,8 @@ export default function IndexersPage() {
           allowInsecureLan: prowlarrInsecureLan,
         }),
       });
+      await throwIfResNotOk(response);
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Prowlarr diagnostics failed");
       setProwlarrDiagnostics(result);
     } catch (error) {
       toast({
@@ -225,10 +233,7 @@ export default function IndexersPage() {
           ...(prowlarrCategories.length > 0 ? { categories: prowlarrCategories } : {}),
         }),
       });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details?.[0]?.msg || error.error || "Failed to sync from Prowlarr");
-      }
+      await throwIfResNotOk(response);
       return response.json();
     },
     onSuccess: (data) => {
@@ -264,7 +269,7 @@ export default function IndexersPage() {
         headers,
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to add indexer");
+      await throwIfResNotOk(response);
       return response.json();
     },
     onSuccess: () => {
@@ -287,7 +292,7 @@ export default function IndexersPage() {
         headers,
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to update indexer");
+      await throwIfResNotOk(response);
       return response.json();
     },
     onSuccess: () => {
@@ -307,7 +312,7 @@ export default function IndexersPage() {
       const response = await apiFetch(`/api/indexers/${id}`, {
         method: "DELETE",
       });
-      if (!response.ok) throw new Error("Failed to delete indexer");
+      await throwIfResNotOk(response);
     },
     onSuccess: () => {
       void refreshIndexerQueries(queryClient);
@@ -327,7 +332,7 @@ export default function IndexersPage() {
         headers,
         body: JSON.stringify({ enabled }),
       });
-      if (!response.ok) throw new Error("Failed to toggle indexer");
+      await throwIfResNotOk(response);
       return response.json();
     },
     onSuccess: () => {
@@ -344,7 +349,7 @@ export default function IndexersPage() {
         headers,
         body: JSON.stringify({ priority }),
       });
-      if (!response.ok) throw new Error("Failed to update priority");
+      await throwIfResNotOk(response);
       return response.json();
     },
     onSuccess: () => {
@@ -362,10 +367,7 @@ export default function IndexersPage() {
           method: "POST",
           headers,
         });
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to test indexer connection");
-        }
+        await throwIfResNotOk(response);
         return response.json() as Promise<{ success: boolean; message: string }>;
       } else if (data.formData) {
         // Test with form data (new indexer)
@@ -374,10 +376,7 @@ export default function IndexersPage() {
           headers,
           body: JSON.stringify(data.formData),
         });
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to test indexer connection");
-        }
+        await throwIfResNotOk(response);
         return response.json() as Promise<{ success: boolean; message: string }>;
       } else {
         throw new Error("Either id or formData must be provided");
@@ -543,6 +542,7 @@ export default function IndexersPage() {
     <div className="h-full overflow-auto p-4 sm:p-6">
       <PageHeader
         title="Indexers"
+        data-i18n-title={"Indexers"}
         description="Manage Torznab and Newznab indexers for game discovery"
         actions={
           <>
@@ -553,7 +553,7 @@ export default function IndexersPage() {
               data-testid="button-sync-prowlarr"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Sync Prowlarr
+              <InterfaceText source={"Sync Prowlarr"} />
             </Button>
             <Button
               className="h-10 justify-center sm:h-9"
@@ -561,7 +561,7 @@ export default function IndexersPage() {
               data-testid="button-add-indexer"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Indexer
+              <InterfaceText source={"Add Indexer"} />
             </Button>
           </>
         }
@@ -590,13 +590,15 @@ export default function IndexersPage() {
                       variant={indexer.protocol === "torznab" ? "default" : "secondary"}
                       className="uppercase"
                     >
-                      {indexer.protocol === "json-catalog"
-                        ? "JSON catalog"
-                        : indexer.protocol === "newznab"
-                          ? "Newznab"
-                          : indexer.protocol === "g4u"
-                            ? "g4u.to"
-                            : "Torznab"}
+                      {indexer.protocol === "json-catalog" ? (
+                        "JSON catalog"
+                      ) : indexer.protocol === "newznab" ? (
+                        <InterfaceText source={"Newznab"} />
+                      ) : indexer.protocol === "g4u" ? (
+                        "g4u.to"
+                      ) : (
+                        <InterfaceText source={"Torznab"} />
+                      )}
                     </Badge>
                     <Badge
                       variant={indexer.enabled ? "default" : "secondary"}
@@ -605,12 +607,12 @@ export default function IndexersPage() {
                       {indexer.enabled ? (
                         <>
                           <Check className="h-3 w-3 mr-1" />
-                          Enabled
+                          <InterfaceText source={"Enabled"} />
                         </>
                       ) : (
                         <>
                           <X className="h-3 w-3 mr-1" />
-                          Disabled
+                          <InterfaceText source={"Disabled"} />
                         </>
                       )}
                     </Badge>
@@ -627,8 +629,11 @@ export default function IndexersPage() {
                       onClick={() => testConnectionMutation.mutate({ id: indexer.id })}
                       disabled={testingIndexerId === indexer.id}
                       title="Test connection"
-                      aria-label={`Test connection for ${indexer.name}`}
+                      aria-label={formatInterfaceMessage("Test connection for {name}", {
+                        name: String(indexer.name ?? ""),
+                      })}
                       data-testid={`button-test-indexer-${indexer.id}`}
+                      data-i18n-title={"Test connection"}
                     >
                       <Activity className="h-4 w-4" />
                     </Button>
@@ -643,7 +648,9 @@ export default function IndexersPage() {
                       variant="outline"
                       size="icon"
                       onClick={() => handleEdit(indexer)}
-                      aria-label={`Edit ${indexer.name}`}
+                      aria-label={formatInterfaceMessage("Edit {name}", {
+                        name: String(indexer.name ?? ""),
+                      })}
                       data-testid={`button-edit-indexer-${indexer.id}`}
                     >
                       <Edit className="h-4 w-4" />
@@ -652,7 +659,9 @@ export default function IndexersPage() {
                       variant="outline"
                       size="icon"
                       onClick={() => deleteMutation.mutate(indexer.id)}
-                      aria-label={`Delete ${indexer.name}`}
+                      aria-label={formatInterfaceMessage("Delete {name}", {
+                        name: String(indexer.name ?? ""),
+                      })}
                       data-testid={`button-delete-indexer-${indexer.id}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -667,10 +676,20 @@ export default function IndexersPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {indexer.rssEnabled && <Badge variant="outline">RSS Enabled</Badge>}
-                  {indexer.autoSearchEnabled && <Badge variant="outline">Auto Search</Badge>}
+                  {indexer.rssEnabled && (
+                    <Badge variant="outline">
+                      <InterfaceText source={"RSS Enabled"} />
+                    </Badge>
+                  )}
+                  {indexer.autoSearchEnabled && (
+                    <Badge variant="outline">
+                      <InterfaceText source={"Auto Search"} />
+                    </Badge>
+                  )}
                   {indexer.categories && indexer.categories.length > 0 && (
-                    <Badge variant="outline">{indexer.categories.length} Categories</Badge>
+                    <Badge variant="outline">
+                      {indexer.categories.length} <InterfaceText source={"Categories"} />
+                    </Badge>
                   )}
                 </div>
               </CardContent>
@@ -679,15 +698,20 @@ export default function IndexersPage() {
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>No Indexers Configured</CardTitle>
+              <CardTitle>
+                <InterfaceText source={"No Indexers Configured"} />
+              </CardTitle>
               <CardDescription>
-                Add your first Torznab indexer to start discovering games. Popular options include
-                Jackett, Prowlarr, or direct Torznab-compatible trackers.
+                <InterfaceText
+                  source={
+                    "Add your first Torznab indexer to start discovering games. Popular options include Jackett, Prowlarr, or direct Torznab-compatible trackers."
+                  }
+                />
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={handleAdd} data-testid="button-add-indexer-empty">
-                Add Indexer
+                <InterfaceText source={"Add Indexer"} />
               </Button>
             </CardContent>
           </Card>
@@ -697,27 +721,41 @@ export default function IndexersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingIndexer ? "Edit Indexer" : "Add Indexer"}</DialogTitle>
+            <DialogTitle>
+              {editingIndexer ? (
+                <InterfaceText source={"Edit Indexer"} />
+              ) : (
+                <InterfaceText source={"Add Indexer"} />
+              )}
+            </DialogTitle>
             <DialogDescription>
-              Configure a Torznab (torrent) or Newznab (Usenet) indexer for game discovery and
-              downloads.
+              <InterfaceText
+                source={
+                  "Configure a Torznab (torrent) or Newznab (Usenet) indexer for game discovery and downloads."
+                }
+              />
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <p className="text-sm text-muted-foreground">Fields marked * are required.</p>
+              <p className="text-sm text-muted-foreground">
+                <InterfaceText source={"Fields marked * are required."} />
+              </p>
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <RequiredFormLabel required>Name</RequiredFormLabel>
+                    <RequiredFormLabel required>
+                      <InterfaceText source={"Name"} />
+                    </RequiredFormLabel>
                     <FormControl>
                       <Input
                         placeholder="Jackett"
                         required
                         {...field}
                         data-testid="input-indexer-name"
+                        data-i18n-placeholder={"Jackett"}
                       />
                     </FormControl>
                     <FormMessage />
@@ -729,23 +767,38 @@ export default function IndexersPage() {
                 name="protocol"
                 render={({ field }) => (
                   <FormItem>
-                    <RequiredFormLabel required>Protocol</RequiredFormLabel>
+                    <RequiredFormLabel required>
+                      <InterfaceText source={"Protocol"} />
+                    </RequiredFormLabel>
                     <Select onValueChange={field.onChange} value={field.value || "torznab"}>
                       <FormControl>
                         <SelectTrigger aria-required="true" data-testid="select-indexer-protocol">
-                          <SelectValue placeholder="Select source type" />
+                          <SelectValue
+                            placeholder="Select protocol"
+                            data-i18n-placeholder={"Select protocol"}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="torznab">Torznab (Torrent)</SelectItem>
+                        <SelectItem value="torznab">
+                          <InterfaceText source={"Torznab (Torrent)"} />
+                        </SelectItem>
                         <SelectItem value="json-catalog">JSON catalog (Hydra format)</SelectItem>
-                        <SelectItem value="newznab">Newznab (Usenet)</SelectItem>
-                        <SelectItem value="g4u">g4u.to (Usenet)</SelectItem>
+                        <SelectItem value="newznab">
+                          <InterfaceText source={"Newznab (Usenet)"} />
+                        </SelectItem>
+                        <SelectItem value="g4u">
+                          <InterfaceText source={"g4u.to (Usenet)"} />
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Torznab for torrent indexers, Newznab for Usenet indexers, g4u.to for the
-                      g4u.to VIP API, or a public HTTPS JSON catalog containing torrent links.
+                      <InterfaceText
+                        source={
+                          "Torznab for torrent indexers, Newznab for Usenet indexers, g4u.to for the g4u.to VIP API"
+                        }
+                      />{" "}
+                      or a public HTTPS JSON catalog containing torrent links.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -757,13 +810,15 @@ export default function IndexersPage() {
                 render={({ field }) => (
                   <FormItem>
                     <RequiredFormLabel required>
-                      {form.watch("protocol") === "json-catalog"
-                        ? "Catalog HTTPS URL"
-                        : form.watch("protocol") === "newznab"
-                          ? "Newznab URL"
-                          : form.watch("protocol") === "g4u"
-                            ? "g4u.to URL"
-                            : "Torznab URL"}
+                      {form.watch("protocol") === "json-catalog" ? (
+                        "Catalog HTTPS URL"
+                      ) : form.watch("protocol") === "newznab" ? (
+                        <InterfaceText source={"Newznab URL"} />
+                      ) : form.watch("protocol") === "g4u" ? (
+                        "g4u.to URL"
+                      ) : (
+                        <InterfaceText source={"Torznab URL"} />
+                      )}
                     </RequiredFormLabel>
                     <FormControl>
                       <Input
@@ -791,7 +846,7 @@ export default function IndexersPage() {
                 render={({ field }) => (
                   <FormItem>
                     <RequiredFormLabel required={form.watch("protocol") !== "json-catalog"}>
-                      API Key
+                      <InterfaceText source={"API Key"} />
                     </RequiredFormLabel>
                     <FormControl>
                       <Input
@@ -805,6 +860,7 @@ export default function IndexersPage() {
                         required={form.watch("protocol") !== "json-catalog"}
                         {...field}
                         data-testid="input-indexer-apikey"
+                        data-i18n-placeholder={"Enter API key"}
                       />
                     </FormControl>
                     <FormMessage />
@@ -818,11 +874,15 @@ export default function IndexersPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-2">
                       <div className="space-y-0">
-                        <FormLabel className="text-sm">Allow insecure LAN connection</FormLabel>
+                        <FormLabel className="text-sm">
+                          <InterfaceText source={"Allow insecure LAN connection"} />
+                        </FormLabel>
                         <FormDescription className="text-xs">
-                          Sends the API key over plain HTTP (no encryption). Only enable this for a
-                          trusted local-network indexer that does not support HTTPS. Enabling this
-                          on an internet-facing indexer exposes your API key in clear text.
+                          <InterfaceText
+                            source={
+                              "Sends the API key over plain HTTP (no encryption). Only enable this for a trusted local-network indexer that does not support HTTPS. Enabling this on an internet-facing indexer exposes your API key in clear text."
+                            }
+                          />
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -841,7 +901,9 @@ export default function IndexersPage() {
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority</FormLabel>
+                    <FormLabel>
+                      <InterfaceText source={"Priority"} />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -862,7 +924,9 @@ export default function IndexersPage() {
                   name="categories"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Categories</FormLabel>
+                      <FormLabel>
+                        <InterfaceText source={"Categories"} />
+                      </FormLabel>
                       <FormControl>
                         <MultiSelect
                           options={availableCategories}
@@ -884,9 +948,17 @@ export default function IndexersPage() {
                         />
                       </FormControl>
                       <FormDescription>
-                        {editingIndexer
-                          ? "Select the Torznab categories to search. Leave empty to use all available categories."
-                          : "Add the indexer first, then edit it to select categories."}
+                        {editingIndexer ? (
+                          <InterfaceText
+                            source={
+                              "Select the Torznab categories to search. Leave empty to use all available categories."
+                            }
+                          />
+                        ) : (
+                          <InterfaceText
+                            source={"Add the indexer first, then edit it to select categories."}
+                          />
+                        )}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -900,7 +972,7 @@ export default function IndexersPage() {
                   onClick={() => setIsDialogOpen(false)}
                   data-testid="button-cancel"
                 >
-                  Cancel
+                  <InterfaceText source={"Cancel"} />
                 </Button>
                 <Button
                   type="button"
@@ -918,7 +990,11 @@ export default function IndexersPage() {
                   data-testid="button-test-connection-dialog"
                 >
                   <Activity className="h-4 w-4 mr-2" />
-                  {testingIndexerId === "new" ? "Testing..." : "Test Connection"}
+                  {testingIndexerId === "new" ? (
+                    <InterfaceText source={"Testing..."} />
+                  ) : (
+                    <InterfaceText source={"Test Connection"} />
+                  )}
                 </Button>
                 <Button
                   type="submit"
@@ -940,16 +1016,21 @@ export default function IndexersPage() {
       <Dialog open={isProwlarrDialogOpen} onOpenChange={setIsProwlarrDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Sync from Prowlarr</DialogTitle>
+            <DialogTitle>
+              <InterfaceText source={"Sync from Prowlarr"} />
+            </DialogTitle>
             <DialogDescription>
-              Automatically import all your indexers from Prowlarr. This will add new indexers and
-              update existing ones.
+              <InterfaceText
+                source={
+                  "Automatically import all your indexers from Prowlarr. This will add new indexers and update existing ones."
+                }
+              />
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="prowlarr-url" className="text-sm font-medium leading-none">
-                Prowlarr URL
+                <InterfaceText source={"Prowlarr URL"} />
               </label>
               <Input
                 id="prowlarr-url"
@@ -963,7 +1044,7 @@ export default function IndexersPage() {
             </div>
             <div className="space-y-2">
               <label htmlFor="prowlarr-apikey" className="text-sm font-medium leading-none">
-                API Key
+                <InterfaceText source={"API Key"} />
               </label>
               <Input
                 id="prowlarr-apikey"
@@ -978,10 +1059,11 @@ export default function IndexersPage() {
                 aria-describedby={
                   prowlarrApiKey === SAVED_KEY_PLACEHOLDER ? "prowlarr-apikey-saved" : undefined
                 }
+                data-i18n-placeholder={"Enter Prowlarr API Key"}
               />
               {prowlarrApiKey === SAVED_KEY_PLACEHOLDER && (
                 <p id="prowlarr-apikey-saved" className="text-xs text-muted-foreground">
-                  Using the saved key. Type a new one to replace it.
+                  <InterfaceText source={"Using the saved key. Type a new one to replace it."} />
                 </p>
               )}
             </div>
@@ -991,10 +1073,14 @@ export default function IndexersPage() {
             >
               <div className="space-y-1">
                 <h3 id="prowlarr-defaults-heading" className="text-sm font-medium leading-none">
-                  Apply to all synced indexers
+                  <InterfaceText source={"Apply to all synced indexers"} />
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Leave a field empty to keep what Prowlarr or the existing indexer already has.
+                  <InterfaceText
+                    source={
+                      "Leave a field empty to keep what Prowlarr or the existing indexer already has."
+                    }
+                  />
                 </p>
               </div>
               <div className="flex flex-row items-start justify-between gap-3">
@@ -1003,11 +1089,14 @@ export default function IndexersPage() {
                     htmlFor="prowlarr-insecure-lan"
                     className="text-sm font-medium leading-none"
                   >
-                    Allow insecure LAN connection
+                    <InterfaceText source={"Allow insecure LAN connection"} />
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    Required when Prowlarr is reached over plain HTTP, otherwise the API key is not
-                    sent and every indexer answers 401. Only for a trusted local network.
+                    <InterfaceText
+                      source={
+                        "Required when Prowlarr is reached over plain HTTP, otherwise the API key is not sent and every indexer answers 401. Only for a trusted local network."
+                      }
+                    />
                   </p>
                 </div>
                 <Checkbox
@@ -1032,13 +1121,16 @@ export default function IndexersPage() {
                   className="text-xs text-amber-700 in-[.dark]:text-amber-500"
                   data-testid="text-prowlarr-insecure-lan-warning"
                 >
-                  This Prowlarr URL uses plain HTTP. Unless you tick the box above, Questarr will
-                  not send the API key and the synced indexers will answer 401.
+                  <InterfaceText
+                    source={
+                      "This Prowlarr URL uses plain HTTP. Unless you tick the box above, Questarr will not send the API key and the synced indexers will answer 401."
+                    }
+                  />
                 </p>
               )}
               <div className="space-y-2">
                 <label htmlFor="prowlarr-priority" className="text-sm font-medium leading-none">
-                  Priority
+                  <InterfaceText source={"Priority"} />
                 </label>
                 <Input
                   id="prowlarr-priority"
@@ -1055,16 +1147,17 @@ export default function IndexersPage() {
                   aria-invalid={prowlarrPriorityInvalid}
                   aria-describedby={prowlarrPriorityInvalid ? "prowlarr-priority-error" : undefined}
                   data-testid="input-prowlarr-priority"
+                  data-i18n-placeholder={"Keep Prowlarr's priority"}
                 />
                 {prowlarrPriorityInvalid && (
                   <p id="prowlarr-priority-error" className="text-xs text-destructive">
-                    Priority must be a whole number between 1 and 100.
+                    <InterfaceText source={"Priority must be a whole number between 1 and 100."} />
                   </p>
                 )}
               </div>
               <div className="space-y-2">
                 <span id="prowlarr-categories-label" className="text-sm font-medium leading-none">
-                  Categories
+                  <InterfaceText source={"Categories"} />
                 </span>
                 <MultiSelect
                   options={PROWLARR_SYNC_CATEGORIES}
@@ -1077,19 +1170,40 @@ export default function IndexersPage() {
                   emptyMessage="No categories available"
                   aria-labelledby="prowlarr-categories-label"
                   data-testid="multi-select-prowlarr-categories"
+                  data-i18n-placeholder={"Keep existing categories"}
                 />
               </div>
             </section>
             {prowlarrDiagnostics && (
               <div className="rounded-lg border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="font-medium">Prowlarr management API</div>
+                  <div className="font-medium">
+                    <InterfaceText source={"Prowlarr management API"} />
+                  </div>
                   <Badge
                     variant={prowlarrDiagnostics.management.success ? "default" : "destructive"}
                   >
-                    {prowlarrDiagnostics.management.success
-                      ? `Connected${prowlarrDiagnostics.management.version ? ` · ${prowlarrDiagnostics.management.version}` : ""}`
-                      : `Failed${prowlarrDiagnostics.management.status ? ` · HTTP ${prowlarrDiagnostics.management.status}` : ""}`}
+                    {prowlarrDiagnostics.management.success ? (
+                      <>
+                        <InterfaceText source="Connected" />
+                        {prowlarrDiagnostics.management.version && (
+                          <>
+                            {" "}
+                            · <bdi dir="ltr">{prowlarrDiagnostics.management.version}</bdi>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <InterfaceText source="Failed" />
+                        {prowlarrDiagnostics.management.status && (
+                          <>
+                            {" "}
+                            · HTTP <bdi dir="ltr">{prowlarrDiagnostics.management.status}</bdi>
+                          </>
+                        )}
+                      </>
+                    )}
                   </Badge>
                 </div>
                 {prowlarrDiagnostics.management.error && (
@@ -1113,9 +1227,27 @@ export default function IndexersPage() {
                           )}
                         </div>
                         <Badge variant={item.success ? "secondary" : "destructive"}>
-                          {item.success
-                            ? `Connected${item.status ? ` · HTTP ${item.status}` : ""}`
-                            : `Failed${item.status ? ` · HTTP ${item.status}` : ""}`}
+                          {item.success ? (
+                            <>
+                              <InterfaceText source="Connected" />
+                              {item.status && (
+                                <>
+                                  {" "}
+                                  · HTTP <bdi dir="ltr">{item.status}</bdi>
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <InterfaceText source="Failed" />
+                              {item.status && (
+                                <>
+                                  {" "}
+                                  · HTTP <bdi dir="ltr">{item.status}</bdi>
+                                </>
+                              )}
+                            </>
+                          )}
                         </Badge>
                       </li>
                     ))}
@@ -1129,7 +1261,7 @@ export default function IndexersPage() {
                 onClick={() => setIsProwlarrDialogOpen(false)}
                 data-testid="button-cancel-prowlarr"
               >
-                Cancel
+                <InterfaceText source={"Cancel"} />
               </Button>
               <Button
                 variant="outline"
@@ -1140,7 +1272,7 @@ export default function IndexersPage() {
                 {diagnosingProwlarr ? (
                   <>
                     <Activity className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
+                    <InterfaceText source={"Testing..."} />
                   </>
                 ) : (
                   "Test indexers"
@@ -1159,7 +1291,7 @@ export default function IndexersPage() {
                 {syncProwlarrMutation.isPending ? (
                   <>
                     <Activity className="mr-2 h-4 w-4 animate-spin" />
-                    Syncing...
+                    <InterfaceText source={"Syncing..."} />
                   </>
                 ) : (
                   "Sync Indexers"

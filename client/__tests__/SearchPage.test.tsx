@@ -6,6 +6,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SearchPage from "../src/pages/search";
 import { createTestQueryClient } from "./test-utils";
+import { setRegionalPreference } from "@/lib/regional-format";
+import { setInterfaceLanguage } from "@/lib/interface-locale";
 
 const toastSpy = vi.fn();
 const mockApiRequest = vi.fn();
@@ -123,6 +125,7 @@ const USENET_ITEM = {
   pubDate: "2026-01-15T12:00:00Z",
   size: 1073741824,
   grabs: 12,
+  age: 5,
   downloadType: "usenet" as const,
 };
 
@@ -185,6 +188,8 @@ describe("SearchPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     capturedIntersectionCallback = null;
+    setRegionalPreference("system");
+    setInterfaceLanguage("en");
     setupApiRequest();
   });
 
@@ -208,6 +213,21 @@ describe("SearchPage", () => {
       expect(screen.getByTestId("card-torrent-0")).toBeInTheDocument();
     });
     expect(screen.getByText("Game.Name.v1.0-GROUP")).toBeInTheDocument();
+  });
+
+  it("formats search result ages with the interface language and regional digits", async () => {
+    setInterfaceLanguage("ar");
+    setRegionalPreference("es");
+    setupApiRequest({ items: [USENET_ITEM], total: 1 });
+    renderSearch();
+    typeSearch("game name");
+
+    const expectedAge = new Intl.RelativeTimeFormat("ar")
+      .format(-5, "day")
+      .replace(new Intl.NumberFormat("ar").format(5), new Intl.NumberFormat("es").format(5));
+    const age = await screen.findByText(expectedAge, { exact: true });
+    expect(age).toHaveAttribute("lang", "ar");
+    expect(age).toHaveAttribute("dir", "rtl");
   });
 
   it("shows results count header", async () => {

@@ -5,6 +5,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import GameCard from "../src/components/GameCard";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { setRegionalPreference } from "@/lib/regional-format";
 
 vi.mock("lucide-react", () => ({
   Download: () => <div data-testid="icon-download" />,
@@ -68,6 +69,7 @@ describe("GameCard", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
+    setRegionalPreference("system");
     Object.defineProperty(globalThis, "matchMedia", {
       writable: true,
       value: vi.fn().mockImplementation((query) => ({
@@ -109,7 +111,6 @@ describe("GameCard", () => {
 
   it("makes rating and release-date tooltip triggers keyboard-focusable", () => {
     renderComponent();
-
     expect(screen.getByRole("img", { name: "IGDB rating: 8.5 out of 10" })).toHaveAttribute(
       "tabindex",
       "0"
@@ -120,17 +121,26 @@ describe("GameCard", () => {
     );
   });
 
-  it("displays a rating of 0 as a valid IGDB score", () => {
+  it("shows full release dates in the selected regional format", async () => {
+    setRegionalPreference("ja");
+    renderComponent({ game: { ...mockGame, releaseDate: "2024-02-03T00:00:00.000Z" } });
+    fireEvent.pointerMove(screen.getByTestId("text-release-1"), { pointerType: "mouse" });
+    const fullDate = await screen.findByText("2024/02/03");
+    expect(fullDate).toHaveAttribute("lang", "ja");
+    expect(fullDate).toHaveAttribute("dir", "ltr");
+  });
+
+  it("displays a rating of 0 as 'N/A' since 0 is unrated", () => {
     renderComponent({ game: { ...mockGame, rating: 0 } });
-    expect(screen.getByTestId("text-rating-1")).toHaveTextContent("0/10");
-    const ratingGroup = screen.getByRole("img", { name: "IGDB rating: 0 out of 10" });
+    expect(screen.getByTestId("text-rating-1")).toHaveTextContent("N/A");
+    const ratingGroup = screen.getByRole("img", { name: /Not rated/i });
     expect(ratingGroup).toBeInTheDocument();
   });
 
   it("shows 'N/A' and 'Not rated' aria-label when rating is null", () => {
     renderComponent({ game: { ...mockGame, rating: null } });
     expect(screen.getByTestId("text-rating-1")).toHaveTextContent("N/A");
-    const ratingGroup = screen.getByRole("img", { name: "IGDB rating: Not rated" });
+    const ratingGroup = screen.getByRole("img", { name: /Not rated/i });
     expect(ratingGroup).toBeInTheDocument();
   });
 

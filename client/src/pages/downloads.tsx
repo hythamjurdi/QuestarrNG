@@ -1,6 +1,17 @@
+import {
+  formatRegionalNumber,
+  formatRegionalPercent,
+  useRegionalPreference,
+} from "@/lib/regional-format";
+import {
+  getInterfaceCollator,
+  getInterfaceLanguageDirection,
+  useInterfaceLanguage,
+  formatInterfaceMessage,
+} from "@/lib/interface-locale";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiFetch } from "@/lib/queryClient";
+import { queryClient, apiFetch, throwIfResNotOk } from "@/lib/queryClient";
 import {
   formatBytes,
   formatSpeed,
@@ -58,6 +69,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import DownloadDetailsModal from "@/components/DownloadDetailsModal";
+import { InterfaceText } from "@/components/InterfaceText";
+
 const ClaimDownloadModal = lazy(() => import("@/components/ClaimDownloadModal"));
 const ClaimBatchModal = lazy(() => import("@/components/ClaimBatchModal"));
 
@@ -108,7 +121,39 @@ const STATUS_COLORS: Record<DownloadStatusType, string> = {
   imported: "text-green-600",
 };
 
+const DOWNLOAD_STATUS_LABELS: Record<DownloadStatusType, string> = {
+  downloading: "Downloading",
+  seeding: "Seeding",
+  completed: "Completed",
+  paused: "Paused",
+  error: "Error",
+  repairing: "Repairing...",
+  unpacking: "Unpacking...",
+  completed_pending_import: "Pending Import",
+  manual_review_required: "Manual Review Required",
+  imported: "Imported",
+};
+
+function getDownloadStatusSource(status: string): string {
+  return Object.hasOwn(DOWNLOAD_STATUS_LABELS, status)
+    ? DOWNLOAD_STATUS_LABELS[status as DownloadStatusType]
+    : status;
+}
+
+function DownloadStatusText({ status }: { status: string }) {
+  const source = getDownloadStatusSource(status);
+  return source === status ? (
+    <span lang="und" dir="auto">
+      {status}
+    </span>
+  ) : (
+    <InterfaceText source={source} />
+  );
+}
+
 export default function Downloads() {
+  const regionalPreference = useRegionalPreference();
+  const { language: interfaceLanguage, t } = useInterfaceLanguage();
   const { toast } = useToast();
   const hasShownErrorsRef = useRef<Set<string>>(new Set());
   const [selectedDownload, setSelectedDownload] = useState<DownloadListItem | null>(null);
@@ -197,7 +242,9 @@ export default function Downloads() {
         const errorKey = `${error.downloaderId}-${error.error}`;
         if (!hasShownErrorsRef.current.has(errorKey)) {
           toast({
-            title: `Downloader Error: ${error.downloaderName}`,
+            title: formatInterfaceMessage("Downloader Error: {downloaderName}", {
+              downloaderName: String(error.downloaderName ?? ""),
+            }),
             description: error.error,
             variant: "destructive",
           });
@@ -229,7 +276,7 @@ export default function Downloads() {
         `/api/downloaders/${downloaderId}/downloads/${downloadId}/pause`,
         { method: "POST" }
       );
-      if (!response.ok) throw new Error("Failed to pause download");
+      await throwIfResNotOk(response);
       return response.json();
     },
     onSuccess: (result) => {
@@ -257,7 +304,7 @@ export default function Downloads() {
         `/api/downloaders/${downloaderId}/downloads/${downloadId}/resume`,
         { method: "POST" }
       );
-      if (!response.ok) throw new Error("Failed to resume download");
+      await throwIfResNotOk(response);
       return response.json();
     },
     onSuccess: (result) => {
@@ -287,7 +334,7 @@ export default function Downloads() {
         `/api/downloaders/${downloaderId}/downloads/${downloadId}?deleteFiles=${deleteFiles}`,
         { method: "DELETE" }
       );
-      if (!response.ok) throw new Error("Failed to remove download");
+      await throwIfResNotOk(response);
       return response.json();
     },
     onSuccess: (result) => {
@@ -338,8 +385,9 @@ export default function Downloads() {
       const entry = map.get(d.downloaderId)!;
       entry.counts[d.status] = (entry.counts[d.status] ?? 0) + 1;
     }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [filteredDownloads]);
+    const collator = getInterfaceCollator(interfaceLanguage);
+    return Array.from(map.values()).sort((a, b) => collator.compare(a.name, b.name));
+  }, [filteredDownloads, interfaceLanguage]);
 
   if (isLoading) {
     return (
@@ -388,9 +436,11 @@ export default function Downloads() {
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Downloads</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            <InterfaceText source={"Downloads"} />
+          </h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Monitor and manage active downloads
+            <InterfaceText source={"Monitor and manage active downloads"} />
           </p>
         </div>
         <Button
@@ -399,9 +449,12 @@ export default function Downloads() {
           onClick={() => refetch()}
           data-testid="button-refresh"
           aria-label="Refresh downloads"
+          data-i18n-aria-label={"Refresh downloads"}
         >
           <RefreshCw className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">Refresh</span>
+          <span className="hidden md:inline">
+            <InterfaceText source={"Refresh"} />
+          </span>
         </Button>
       </div>
 
@@ -420,10 +473,14 @@ export default function Downloads() {
                     key={s}
                     onClick={() => setStatusFilter(s)}
                     className={`flex items-center gap-1 hover:underline transition-colors ${STATUS_COLORS[s]}`}
-                    aria-label={`Filter by ${s}`}
+                    aria-label={formatInterfaceMessage("Filter by {s}", { s: String(s ?? "") })}
+                    data-i18n-aria-label={"Filter by {s}"}
+                    data-i18n-aria-label-values={JSON.stringify({ s: String(s ?? "") })}
                   >
                     <span className="font-semibold">{dl.counts[s]}</span>
-                    <span className="text-muted-foreground">{s}</span>
+                    <span className="text-muted-foreground">
+                      <DownloadStatusText status={s} />
+                    </span>
                   </button>
                 ))}
               </div>
@@ -443,6 +500,8 @@ export default function Downloads() {
             placeholder="Filter downloads..."
             className="pl-9 h-10 md:h-8 w-full md:w-48 text-sm"
             aria-label="Filter downloads"
+            data-i18n-placeholder={"Filter downloads..."}
+            data-i18n-aria-label={"Filter downloads"}
           />
           {searchQuery && (
             <button
@@ -450,6 +509,7 @@ export default function Downloads() {
               onClick={() => setSearchQuery("")}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               aria-label="Clear search"
+              data-i18n-aria-label={"Clear search"}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -457,16 +517,17 @@ export default function Downloads() {
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
           <span className="hidden md:block text-xs font-medium text-muted-foreground uppercase tracking-wider shrink-0">
-            Status
+            <InterfaceText source={"Status"} />
           </span>
           <Tabs
             value={statusFilter}
             onValueChange={(value) => setStatusFilter(value as DownloadStatusType | "all")}
             aria-label="Filter downloads by status"
+            data-i18n-aria-label={"Filter downloads by status"}
           >
             <TabsList data-testid="filter-tabs">
               <TabsTrigger value="all" data-testid="filter-all">
-                All
+                <InterfaceText source={"All"} />
               </TabsTrigger>
               <TabsTrigger
                 value="downloading"
@@ -474,8 +535,12 @@ export default function Downloads() {
                 data-testid="filter-downloading"
               >
                 <Download className="h-3 w-3" />
-                <span className="md:hidden">DL</span>
-                <span className="hidden md:inline">Downloading</span>
+                <span className="md:hidden">
+                  <InterfaceText source={"DL"} />
+                </span>
+                <span className="hidden md:inline">
+                  <InterfaceText source={"Downloading"} />
+                </span>
               </TabsTrigger>
               <TabsTrigger
                 value="seeding"
@@ -483,8 +548,12 @@ export default function Downloads() {
                 data-testid="filter-seeding"
               >
                 <ArrowUp className="h-3 w-3" />
-                <span className="md:hidden">Seed</span>
-                <span className="hidden md:inline">Seeding</span>
+                <span className="md:hidden">
+                  <InterfaceText source={"Seed"} />
+                </span>
+                <span className="hidden md:inline">
+                  <InterfaceText source={"Seeding"} />
+                </span>
               </TabsTrigger>
               <TabsTrigger
                 value="completed"
@@ -492,8 +561,12 @@ export default function Downloads() {
                 data-testid="filter-completed"
               >
                 <CheckCircle2 className="h-3 w-3" />
-                <span className="md:hidden">Done</span>
-                <span className="hidden md:inline">Completed</span>
+                <span className="md:hidden">
+                  <InterfaceText source={"Done"} />
+                </span>
+                <span className="hidden md:inline">
+                  <InterfaceText source={"Completed"} />
+                </span>
               </TabsTrigger>
               <TabsTrigger
                 value="paused"
@@ -501,7 +574,9 @@ export default function Downloads() {
                 data-testid="filter-paused"
               >
                 <Pause className="h-3 w-3" />
-                <span className="hidden md:inline">Paused</span>
+                <span className="hidden md:inline">
+                  <InterfaceText source={"Paused"} />
+                </span>
               </TabsTrigger>
               <TabsTrigger
                 value="error"
@@ -509,7 +584,9 @@ export default function Downloads() {
                 data-testid="filter-error"
               >
                 <AlertCircle className="h-3 w-3" />
-                <span className="hidden md:inline">Error</span>
+                <span className="hidden md:inline">
+                  <InterfaceText source={"Error"} />
+                </span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -518,22 +595,33 @@ export default function Downloads() {
         <div className="flex flex-wrap items-center gap-2 md:contents">
           <div className="flex items-center gap-2">
             <span className="hidden md:inline text-xs font-medium text-muted-foreground uppercase tracking-wider shrink-0">
-              Protocol
+              <InterfaceText source={"Protocol"} />
             </span>
             <Tabs
               value={typeFilter}
               onValueChange={(value) => setTypeFilter(value as DownloadType | "all")}
               aria-label="Filter downloads by protocol"
+              data-i18n-aria-label={"Filter downloads by protocol"}
             >
               <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="all">
+                  <InterfaceText source={"All"} />
+                </TabsTrigger>
                 <TabsTrigger value="torrent">
-                  <span className="md:hidden">Tor</span>
-                  <span className="hidden md:inline">Torrents</span>
+                  <span className="md:hidden">
+                    <InterfaceText source={"Tor"} />
+                  </span>
+                  <span className="hidden md:inline">
+                    <InterfaceText source={"Torrents"} />
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger value="usenet">
-                  <span className="md:hidden">NZB</span>
-                  <span className="hidden md:inline">Usenet</span>
+                  <span className="md:hidden">
+                    <InterfaceText source={"NZB"} />
+                  </span>
+                  <span className="hidden md:inline">
+                    <InterfaceText source={"Usenet"} />
+                  </span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -551,7 +639,7 @@ export default function Downloads() {
             data-testid="filter-source-questarr"
           >
             <Download className="h-3 w-3" />
-            Questarr only
+            <InterfaceText source={"Questarr only"} />
           </Button>
 
           <Button
@@ -560,10 +648,15 @@ export default function Downloads() {
             onClick={() => setBatchModalOpen(true)}
             className="ml-auto flex items-center gap-2"
             aria-label="Scan unlinked downloads"
+            data-i18n-aria-label={"Scan unlinked downloads"}
           >
             <ScanLine className="h-4 w-4" />
-            <span className="sm:hidden">Scan</span>
-            <span className="hidden sm:inline">Scan Unlinked</span>
+            <span className="sm:hidden">
+              <InterfaceText source={"Scan"} />
+            </span>
+            <span className="hidden sm:inline">
+              <InterfaceText source={"Scan Unlinked"} />
+            </span>
           </Button>
         </div>
       </div>
@@ -578,7 +671,7 @@ export default function Downloads() {
         >
           <Tag className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>
-            Category filter active —{" "}
+            <InterfaceText source={"Category filter active —"} />{" "}
             {categoryBannerEntries.map(({ name, category }) => `${name}: "${category}"`).join(", ")}
           </span>
         </div>
@@ -616,19 +709,30 @@ export default function Downloads() {
                           download.ratio !== undefined &&
                           shouldShowRatioBadge(download.ratio) &&
                           shouldShowTorrentMetrics(download) && (
-                            <Badge variant="outline">{download.ratio.toFixed(2)}</Badge>
+                            <Badge variant="outline">
+                              {formatRegionalNumber(download.ratio, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Badge>
                           )}
                         <Badge
                           variant={getStatusBadgeVariant(download.status)}
                           className="capitalize"
-                          aria-label={`Status: ${download.status}`}
+                          aria-label={formatInterfaceMessage("Status: {status}", {
+                            status: t(getDownloadStatusSource(download.status)),
+                          })}
                         >
-                          {download.status}
+                          <DownloadStatusText status={download.status} />
                         </Badge>
                         <Badge
                           className={`text-xs border-none ${getDownloadTypeColor(download.downloadType || "torrent")}`}
                         >
-                          {download.downloadType === "usenet" ? "NZB" : "Torrent"}
+                          {download.downloadType === "usenet" ? (
+                            <InterfaceText source={"NZB"} />
+                          ) : (
+                            <InterfaceText source={"Torrent"} />
+                          )}
                         </Badge>
                       </div>
                       {/* Desktop: full badge list */}
@@ -637,15 +741,19 @@ export default function Downloads() {
                           variant={getStatusBadgeVariant(download.status)}
                           className="capitalize"
                           data-testid={`badge-status-${download.id}`}
-                          aria-label={`Status: ${download.status}`}
+                          aria-label={formatInterfaceMessage("Status: {status}", {
+                            status: t(getDownloadStatusSource(download.status)),
+                          })}
                         >
-                          {download.status}
+                          <DownloadStatusText status={download.status} />
                         </Badge>
                         <Badge
                           variant="outline"
                           className="capitalize"
                           data-testid={`badge-downloader-${download.id}`}
-                          aria-label={`Downloader: ${download.downloaderName}`}
+                          aria-label={formatInterfaceMessage("Downloader: {downloaderName}", {
+                            downloaderName: String(download.downloaderName ?? ""),
+                          })}
                         >
                           {download.downloaderName}
                         </Badge>
@@ -657,12 +765,12 @@ export default function Downloads() {
                           {download.downloadType === "usenet" ? (
                             <>
                               <Newspaper className="h-3 w-3 mr-1" />
-                              USENET
+                              <InterfaceText source={"USENET"} />
                             </>
                           ) : (
                             <>
                               <Download className="h-3 w-3 mr-1" />
-                              TORRENT
+                              <InterfaceText source={"TORRENT"} />
                             </>
                           )}
                         </Badge>
@@ -670,7 +778,10 @@ export default function Downloads() {
                           <Badge
                             variant="outline"
                             data-testid={`badge-size-${download.id}`}
-                            aria-label={`Downloaded ${formatBytes(download.downloaded || 0)} of ${formatBytes(download.size!)}`}
+                            aria-label={formatInterfaceMessage("Downloaded {size} of {size2}", {
+                              size: String(formatBytes(download.downloaded || 0) ?? ""),
+                              size2: String(formatBytes(download.size!) ?? ""),
+                            })}
                           >
                             {formatBytes(download.downloaded || 0)} / {formatBytes(download.size!)}
                           </Badge>
@@ -680,9 +791,12 @@ export default function Downloads() {
                           <Badge
                             variant="outline"
                             data-testid={`badge-repair-${download.id}`}
-                            aria-label={`Repair: ${formatRepairStatus(download.repairStatus!)}`}
+                            aria-label={formatInterfaceMessage("Repair: {status}", {
+                              status: t(formatRepairStatus(download.repairStatus!)),
+                            })}
                           >
-                            Repair: {formatRepairStatus(download.repairStatus!)}
+                            <InterfaceText source="Repair:" />{" "}
+                            <InterfaceText source={formatRepairStatus(download.repairStatus!)} />
                           </Badge>
                         )}
                         {/* Usenet-specific: Unpack Status */}
@@ -690,16 +804,21 @@ export default function Downloads() {
                           <Badge
                             variant="outline"
                             data-testid={`badge-unpack-${download.id}`}
-                            aria-label={`Unpack: ${formatUnpackStatus(download.unpackStatus!)}`}
+                            aria-label={formatInterfaceMessage("Unpack: {status}", {
+                              status: t(formatUnpackStatus(download.unpackStatus!)),
+                            })}
                           >
-                            Unpack: {formatUnpackStatus(download.unpackStatus!)}
+                            <InterfaceText source="Unpack:" />{" "}
+                            <InterfaceText source={formatUnpackStatus(download.unpackStatus!)} />
                           </Badge>
                         )}
                         {shouldShowSpeedBadge(download.downloadSpeed) && (
                           <Badge
                             variant="outline"
                             data-testid={`badge-download-speed-${download.id}`}
-                            aria-label={`Download speed: ${formatSpeed(download.downloadSpeed!)}`}
+                            aria-label={formatInterfaceMessage("Download speed: {value}", {
+                              value: String(formatSpeed(download.downloadSpeed!) ?? ""),
+                            })}
                           >
                             ↓ {formatSpeed(download.downloadSpeed!)}
                           </Badge>
@@ -709,7 +828,9 @@ export default function Downloads() {
                             <Badge
                               variant="outline"
                               data-testid={`badge-upload-speed-${download.id}`}
-                              aria-label={`Upload speed: ${formatSpeed(download.uploadSpeed!)}`}
+                              aria-label={formatInterfaceMessage("Upload speed: {value}", {
+                                value: String(formatSpeed(download.uploadSpeed!) ?? ""),
+                              })}
                             >
                               ↑ {formatSpeed(download.uploadSpeed!)}
                             </Badge>
@@ -718,9 +839,12 @@ export default function Downloads() {
                           <Badge
                             variant="outline"
                             data-testid={`badge-eta-${download.id}`}
-                            aria-label={`Estimated time remaining: ${formatETA(download.eta!)}`}
+                            aria-label={formatInterfaceMessage(
+                              "Estimated time remaining: {value}",
+                              { value: String(formatETA(download.eta!) ?? "") }
+                            )}
                           >
-                            ETA: {formatETA(download.eta!)}
+                            <InterfaceText source={"ETA:"} /> {formatETA(download.eta!)}
                           </Badge>
                         )}
                         {/* Torrent-specific: Peers */}
@@ -729,7 +853,13 @@ export default function Downloads() {
                             <Badge
                               variant="outline"
                               data-testid={`badge-peers-${download.id}`}
-                              aria-label={`${download.seeders} seeders, ${download.leechers || 0} leechers`}
+                              aria-label={formatInterfaceMessage(
+                                "{seeders} seeders, {value} leechers",
+                                {
+                                  seeders: String(download.seeders ?? ""),
+                                  value: String((download.leechers || 0) ?? ""),
+                                }
+                              )}
                             >
                               {download.seeders}↑ / {download.leechers || 0}↓
                             </Badge>
@@ -739,9 +869,19 @@ export default function Downloads() {
                           <Badge
                             variant="outline"
                             data-testid={`badge-age-${download.id}`}
-                            aria-label={`Age: ${formatAge(download.age)}`}
+                            aria-label={formatInterfaceMessage("Age: {age}", {
+                              age: String(
+                                formatAge(download.age, interfaceLanguage, regionalPreference) ?? ""
+                              ),
+                            })}
                           >
-                            Age: {formatAge(download.age)}
+                            <InterfaceText source={"Age:"} />{" "}
+                            <span
+                              lang={interfaceLanguage}
+                              dir={getInterfaceLanguageDirection(interfaceLanguage)}
+                            >
+                              {formatAge(download.age, interfaceLanguage, regionalPreference)}
+                            </span>
                           </Badge>
                         )}
                         {/* Usenet-specific: Grabs */}
@@ -749,9 +889,11 @@ export default function Downloads() {
                           <Badge
                             variant="outline"
                             data-testid={`badge-grabs-${download.id}`}
-                            aria-label={`${download.grabs} grabs`}
+                            aria-label={formatInterfaceMessage("{grabs} grabs", {
+                              grabs: String(download.grabs ?? ""),
+                            })}
                           >
-                            {download.grabs} grabs
+                            {download.grabs} <InterfaceText source={"grabs"} />
                           </Badge>
                         )}
                         {shouldShowRatioBadge(download.ratio) &&
@@ -759,9 +901,25 @@ export default function Downloads() {
                             <Badge
                               variant="outline"
                               data-testid={`badge-ratio-${download.id}`}
-                              aria-label={`Share ratio: ${download.ratio?.toFixed(2) ?? "0.00"}`}
+                              aria-label={formatInterfaceMessage("Share ratio: {value}", {
+                                value: String(
+                                  formatRegionalNumber(
+                                    download.ratio ?? 0,
+                                    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                                    regionalPreference
+                                  ) ?? ""
+                                ),
+                              })}
                             >
-                              Ratio: {download.ratio?.toFixed(2) ?? "0.00"}
+                              <InterfaceText source={"Ratio:"} />{" "}
+                              {formatRegionalNumber(
+                                download.ratio ?? 0,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                                regionalPreference
+                              )}
                             </Badge>
                           )}
                         {importConfig?.enablePostProcessing && download.gameStatus === "owned" && (
@@ -770,8 +928,10 @@ export default function Downloads() {
                             data-testid={`badge-imported-${download.id}`}
                             aria-label="Files have been imported to your library"
                             title="Files have been imported to your library"
+                            data-i18n-aria-label={"Files have been imported to your library"}
+                            data-i18n-title={"Files have been imported to your library"}
                           >
-                            Imported
+                            <InterfaceText source={"Imported"} />
                           </Badge>
                         )}
                       </div>
@@ -786,7 +946,9 @@ export default function Downloads() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                aria-label={`Resume ${download.name || "download"}`}
+                                aria-label={formatInterfaceMessage("Resume {value}", {
+                                  value: String((download.name || "download") ?? ""),
+                                })}
                                 onClick={() => handleResume(download)}
                                 disabled={resumeMutation.isPending}
                                 data-testid={`button-resume-${download.id}`}
@@ -795,7 +957,9 @@ export default function Downloads() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Resume</p>
+                              <p>
+                                <InterfaceText source={"Resume"} />
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         ) : (
@@ -804,7 +968,9 @@ export default function Downloads() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                aria-label={`Pause ${download.name || "download"}`}
+                                aria-label={formatInterfaceMessage("Pause {value}", {
+                                  value: String((download.name || "download") ?? ""),
+                                })}
                                 onClick={() => handlePause(download)}
                                 disabled={pauseMutation.isPending}
                                 data-testid={`button-pause-${download.id}`}
@@ -813,7 +979,9 @@ export default function Downloads() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Pause</p>
+                              <p>
+                                <InterfaceText source={"Pause"} />
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -824,7 +992,9 @@ export default function Downloads() {
                         <Button
                           variant="outline"
                           size="icon"
-                          aria-label={`Options for ${download.name || "download"}`}
+                          aria-label={formatInterfaceMessage("Options for {value}", {
+                            value: String((download.name || "download") ?? ""),
+                          })}
                           data-testid={`button-menu-${download.id}`}
                         >
                           <MoreHorizontal className="h-4 w-4" />
@@ -836,21 +1006,21 @@ export default function Downloads() {
                           data-testid={`button-details-${download.id}`}
                         >
                           <Info className="h-4 w-4 mr-2" />
-                          View Details
+                          <InterfaceText source={"View Details"} />
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setClaimTarget(download)}
                           data-testid={`button-link-${download.id}`}
                         >
                           <Link2 className="h-4 w-4 mr-2" />
-                          Link to Game
+                          <InterfaceText source={"Link to Game"} />
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleRemove(download, false)}
                           data-testid={`button-remove-${download.id}`}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Remove Download
+                          <InterfaceText source={"Remove Download"} />
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleRemove(download, true)}
@@ -858,7 +1028,7 @@ export default function Downloads() {
                           data-testid={`button-remove-files-${download.id}`}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Remove & Delete Files
+                          <InterfaceText source={"Remove & Delete Files"} />
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -868,15 +1038,32 @@ export default function Downloads() {
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span data-testid={`text-progress-label-${download.id}`}>Progress</span>
+                    <span data-testid={`text-progress-label-${download.id}`}>
+                      <InterfaceText source={"Progress"} />
+                    </span>
                     <span data-testid={`text-progress-value-${download.id}`}>
-                      {download.progress.toFixed(1)}%
+                      {formatRegionalPercent(
+                        download.progress,
+                        {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        },
+                        regionalPreference
+                      )}
                     </span>
                   </div>
                   <Progress
                     value={download.progress}
                     className="h-2"
-                    aria-label={`Download progress: ${download.progress.toFixed(1)}%`}
+                    aria-label={formatInterfaceMessage("Download progress: {progress}", {
+                      progress: String(
+                        formatRegionalPercent(
+                          download.progress,
+                          { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+                          regionalPreference
+                        ) ?? ""
+                      ),
+                    })}
                     data-testid={`progress-bar-${download.id}`}
                   />
                   {download.error && (
@@ -884,7 +1071,7 @@ export default function Downloads() {
                       className="text-sm text-destructive mt-2"
                       data-testid={`text-error-${download.id}`}
                     >
-                      Error: {download.error}
+                      <InterfaceText source={"Error:"} /> {download.error}
                     </div>
                   )}
                 </div>
@@ -895,34 +1082,22 @@ export default function Downloads() {
           <Card data-testid="card-no-downloads">
             <CardHeader>
               <CardTitle data-testid="text-no-downloads-title">
-                {(() => {
-                  if (downloads.length === 0) return "No Active Downloads";
-                  const statusLabel =
-                    statusFilter === "all"
-                      ? "Active"
-                      : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1);
-                  const typeLabel =
-                    typeFilter === "all"
-                      ? ""
-                      : typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1) + " ";
-                  return `No ${statusLabel} ${typeLabel}Downloads`;
-                })()}
+                {downloads.length === 0 ? (
+                  <InterfaceText source={"No Active Downloads"} />
+                ) : (
+                  <InterfaceText source={"No downloads match the current filters"} />
+                )}
               </CardTitle>
               <CardDescription data-testid="text-no-downloads-description">
-                {(() => {
-                  if (downloads.length === 0) {
-                    return "Use the Search page to find and download games from your configured indexers.";
-                  }
-                  const activeFilters: string[] = [];
-                  if (statusFilter !== "all") activeFilters.push(`Status: ${statusFilter}`);
-                  if (typeFilter !== "all")
-                    activeFilters.push(
-                      `Protocol: ${typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1)}`
-                    );
-                  const filterText =
-                    activeFilters.length > 0 ? ` (${activeFilters.join(", ")})` : "";
-                  return `No downloads match the current filters${filterText}. Try adjusting the filters.`;
-                })()}
+                {downloads.length === 0 ? (
+                  <InterfaceText
+                    source={
+                      "Use the Search page to find and download games from your configured indexers."
+                    }
+                  />
+                ) : (
+                  <InterfaceText source={"Try adjusting the filters."} />
+                )}
               </CardDescription>
             </CardHeader>
           </Card>

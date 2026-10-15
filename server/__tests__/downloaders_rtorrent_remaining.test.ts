@@ -615,7 +615,7 @@ describe("rtorrent remaining regression coverage", () => {
       client.computeDigestHeader(
         "POST",
         "/RPC2",
-        'Digest realm="rtorrent", nonce="abc", qop="auth", opaque="xyz"',
+        'Digest realm="rtorrent", nonce="abc", qop="auth", opaque="xyz", algorithm="SHA-256"',
         "user",
         "pass"
       )
@@ -625,7 +625,7 @@ describe("rtorrent remaining regression coverage", () => {
       client.computeDigestHeader(
         "POST",
         "/RPC2",
-        'Digest realm="rtorrent", nonce="abc"',
+        'Digest realm="rtorrent", nonce="abc", algorithm="SHA-256"',
         "user",
         "pass"
       )
@@ -790,7 +790,7 @@ describe("rtorrent remaining regression coverage", () => {
         headers: {
           get: (name: string) =>
             name.toLowerCase() === "www-authenticate"
-              ? 'Digest realm="rtorrent", nonce="abc", qop="auth"'
+              ? 'Digest realm="rtorrent", nonce="abc", qop="auth", algorithm="SHA-256"'
               : null,
         },
       } as Response)
@@ -814,7 +814,7 @@ describe("rtorrent remaining regression coverage", () => {
         headers: {
           get: (name: string) =>
             name.toLowerCase() === "www-authenticate"
-              ? 'Digest realm="rtorrent", nonce="abc", qop="auth"'
+              ? 'Digest realm="rtorrent", nonce="abc", qop="auth", algorithm="SHA-256"'
               : null,
         },
       } as Response)

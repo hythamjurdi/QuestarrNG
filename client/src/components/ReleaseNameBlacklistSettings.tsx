@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Ban } from "lucide-react";
 import TagListSettingsCard from "@/components/TagListSettingsCard";
-import BlacklistedReleasesList from "@/components/BlacklistedReleasesList";
 
 interface ReleaseNameBlacklistSettingsProps {
   blacklistTerms: string[];
@@ -40,14 +39,13 @@ export default function ReleaseNameBlacklistSettings({
         helperText: "Press Enter or click + to add a term. Comparison is case-insensitive.",
         emptyText: "No blacklisted terms configured. All release names will be considered.",
         addAriaLabel: "Add blacklisted term",
-        removeAriaLabel: (term) => `Remove ${term}`,
       }}
       buildPayload={() => ({ releaseNameBlacklist: JSON.stringify(terms) })}
       successTitle="Release Blacklist Saved"
       successDescription="Your blacklisted release name terms have been saved."
       saveLabel="Save Blacklist"
       onReset={() => setTerms([])}
-      footer={<BlacklistedReleasesList />}
+      data-i18n-title={"Release Name Blacklist"}
     />
   );
 }

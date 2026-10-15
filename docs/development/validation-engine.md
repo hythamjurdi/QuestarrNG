@@ -5,6 +5,15 @@ native test inventory it saw before execution. It runs the existing npm, Vitest,
 Playwright, TypeScript, and build commands; it does not replace their assertions
 or coverage thresholds.
 
+## GitHub runner routing
+
+The `sca-scan` and `windows-service` jobs may use the organization `trusted-main`
+runner group on pushes and manual runs targeting `main` only after
+`TRUSTED_MAIN_RUNNERS_ENABLED` is set to `true`. Until then, they use
+GitHub-hosted runners. Pull requests, release branches, and the Bubblewrap test
+and build jobs remain on GitHub-hosted runners. The organization runner group
+restricts access to the approved workflow on `refs/heads/main`.
+
 Run the default local gate with:
 
 ```sh
@@ -157,11 +166,15 @@ offline with no GitHub token or repository secrets in the sandbox. Synthetic
 host and resolver files support local socket tests without restoring host
 network or DNS settings. Regular test and build jobs also use the reviewed launcher, prefetch dependencies inside
 Bubblewrap, and produce source-bound receipts. Coverage and JUnit files are
-copied to the short-lived artifact with size and symlink checks. On Ubuntu 24.04, the job
-loads an ephemeral AppArmor profile attached to `/usr/bin/bwrap` so Bubblewrap
-can create its namespace while the runner-wide unprivileged-user-namespace
-restriction stays enabled. Local runs may skip the integration check when
-Bubblewrap is unavailable. Use the complete GitHub-hosted validation run for
+copied to the short-lived artifact with size and symlink checks. For same-repository pull requests authored by `snapetech`, the workflow can use
+the `Default` runner group when `TRUSTED_MAIN_RUNNERS_ENABLED` is `true`;
+fork and bot pull requests remain on GitHub-hosted runners. Candidate files stay
+in the read-only Bubblewrap sandbox, with no token or secrets inside it. When a
+runner restricts unprivileged user namespaces, the job loads or replaces the
+AppArmor profile attached to `/usr/bin/bwrap`, so repeated jobs on persistent
+runners remain usable while the restriction stays enabled. Other runner hosts
+must pass the same Bubblewrap namespace preflight. Local runs may
+skip the integration check when Bubblewrap is unavailable. Use the complete GitHub-hosted validation run for
 the full test suite.
 
 The regular pull-request CI workflow contains no Codecov secret reference. It
@@ -188,12 +201,34 @@ The npm runtime installer and lockfiles are archived from the same selected
 trusted revision as the launcher: the base commit when it contains the engine,
 or the pinned bootstrap commit for an older base.
 
-During a run, the engine writes a task summary to stderr when each task starts
-and finishes, and repeats it every minute while a task is still running. This
-keeps progress visible in a terminal or live GitHub Actions log without mixing
-status text into the final JSON summary on stdout. Native case counts are
-authoritative when each native command finishes; the heartbeat reports task
-status and elapsed time while that command is running.
+The engine runs up to two independent tasks together when their dependencies
+and output groups allow it. The dependency graph still determines what can
+start; coverage, type checking, production builds, and browser tests share a
+resource group so they do not compete for the runner's limited CPU and memory.
+Each receipt retains its task stage and concurrency group. The engine checks the
+candidate source before and after each concurrent batch and rejects passing
+results if the source changes while tasks are running.
+
+During a run, the engine writes a task summary to stderr when tasks start and
+finish, and repeats it every minute while work is still running. Active task
+names and elapsed times are shown together. This keeps progress visible in a
+terminal or live GitHub Actions log without mixing status text into the final
+JSON summary on stdout. Native case counts are authoritative when each native
+command finishes; the heartbeat reports task status and elapsed time while
+commands are running.
+
+Runtime probes and child commands inherit only the executable path, platform
+process variables, locale, and timezone. Each task receives run-owned home,
+temporary, and XDG configuration/cache directories; registered task settings
+remain task-scoped. Unapproved `passEnv` requests fail during planning. `CI` is
+forced to `true`, and test tasks use
+`NODE_ENV=test` so ambient credentials, proxy settings, loader options, and
+workflow context do not leak into test processes. Task environment directories
+are removed when each command finishes, leaving logs and the receipt as the
+run's retained evidence. CI explicitly shares the runner-local npm cache
+between `setup-node` and the dependency-install task; only that task receives
+the cache path, and local runs without it use a cache under their temporary home
+that is removed with the task environment.
 
 Runtime probes and child commands inherit only the executable path, platform
 process variables, locale, and timezone. Each task receives run-owned home,
@@ -224,6 +259,12 @@ inventory lane ran with nonzero test cases. A retry cannot satisfy the gate
 with receipts from an earlier attempt. The test job still enforces the existing
 coverage thresholds and uploads its JUnit and coverage results through the
 trusted Codecov workflow.
+
+Pull-request CI cancels runs for superseded commits. Reconciliation still uses
+`always()` so failures produce a current-run result, and also checks
+`!cancelled()` so an obsolete canceled run releases the per-pull-request
+concurrency slot instead of holding the latest run in the queue. The current
+commit still receives full fail-closed reconciliation.
 
 Playwright E2E stays opt-in in local runs because it installs and launches a real
 browser. Select `--task playwright-e2e` to include the browser installation and

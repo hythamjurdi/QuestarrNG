@@ -1,3 +1,8 @@
+import {
+  formatRegionalPercent,
+  getRegionalLocale,
+  useRegionalPreference,
+} from "@/lib/regional-format";
 import { useState, useRef } from "react";
 import { toPng } from "html-to-image";
 import { Share2, Loader2, Download } from "lucide-react";
@@ -15,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { LibraryStats } from "@/lib/stats";
+import { InterfaceText } from "@/components/InterfaceText";
 
 interface ShareDiscordDialogProps {
   open: boolean;
@@ -51,6 +57,7 @@ export default function ShareDiscordDialog({
   discordConfigured,
 }: ShareDiscordDialogProps) {
   const { toast } = useToast();
+  const regionalPreference = useRegionalPreference();
   const cardRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<Set<StatId>>(
     new Set<StatId>(["overview", "status", "quickinfo"])
@@ -128,9 +135,11 @@ export default function ShareDiscordDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="w-5 h-5" />
-            Share Stats
+            <InterfaceText source={"Share Stats"} />
           </DialogTitle>
-          <DialogDescription>Choose which stats to include in the image.</DialogDescription>
+          <DialogDescription>
+            <InterfaceText source={"Choose which stats to include in the image."} />
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-2">
@@ -142,7 +151,7 @@ export default function ShareDiscordDialog({
                 onCheckedChange={() => toggle(opt.id)}
               />
               <Label htmlFor={`share-${opt.id}`} className="cursor-pointer font-normal">
-                {opt.label}
+                <InterfaceText source={opt.label} />
               </Label>
             </div>
           ))}
@@ -164,9 +173,11 @@ export default function ShareDiscordDialog({
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
               <span style={{ fontSize: 32 }}>🎮</span>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 700 }}>Questarr Library Stats</div>
+                <div style={{ fontSize: 18, fontWeight: 700 }}>
+                  <InterfaceText source={"Questarr Library Stats"} />
+                </div>
                 <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                  {displayDate.toLocaleDateString(undefined, {
+                  {displayDate.toLocaleDateString(getRegionalLocale(regionalPreference), {
                     month: "long",
                     day: "numeric",
                     year: "numeric",
@@ -187,7 +198,14 @@ export default function ShareDiscordDialog({
                 {[
                   { label: "Total Games", value: stats.totalGames },
                   { label: "Avg. Rating", value: stats.avgRating },
-                  { label: "Completion", value: `${stats.completionRate}%` },
+                  {
+                    label: "Completion",
+                    value: formatRegionalPercent(
+                      stats.completionRate,
+                      { maximumFractionDigits: 0 },
+                      regionalPreference
+                    ),
+                  },
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -201,7 +219,9 @@ export default function ShareDiscordDialog({
                     <div style={{ fontSize: 26, fontWeight: 700, color: "#3b82f6" }}>
                       {item.value}
                     </div>
-                    <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>{item.label}</div>
+                    <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
+                      <InterfaceText source={item.label} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -219,7 +239,7 @@ export default function ShareDiscordDialog({
                     marginBottom: 8,
                   }}
                 >
-                  Status Breakdown
+                  <InterfaceText source={"Status Breakdown"} />
                 </div>
                 <div
                   style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: 8 }}
@@ -265,7 +285,7 @@ export default function ShareDiscordDialog({
                         {item.value}
                       </div>
                       <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>
-                        {item.label}
+                        <InterfaceText source={item.label} />
                       </div>
                     </div>
                   ))}
@@ -285,13 +305,13 @@ export default function ShareDiscordDialog({
                     marginBottom: 8,
                   }}
                 >
-                  Quick Info
+                  <InterfaceText source={"Quick Info"} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {[
-                    { label: "Top Genre", value: stats.topGenre?.name || "N/A" },
-                    { label: "Top Platform", value: stats.topPlatform?.name || "N/A" },
-                    { label: "Top Publisher", value: stats.topPublisher?.name || "N/A" },
+                    { label: "Top Genre", value: stats.topGenre?.name || null },
+                    { label: "Top Platform", value: stats.topPlatform?.name || null },
+                    { label: "Top Publisher", value: stats.topPublisher?.name || null },
                     { label: "Unique Devs", value: String(stats.uniqueDevelopers) },
                   ].map((item) => (
                     <div
@@ -305,8 +325,12 @@ export default function ShareDiscordDialog({
                         alignItems: "center",
                       }}
                     >
-                      <span style={{ fontSize: 11, color: "#9ca3af" }}>{item.label}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>{item.value}</span>
+                      <span style={{ fontSize: 11, color: "#9ca3af" }}>
+                        <InterfaceText source={item.label} />
+                      </span>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>
+                        {item.value ?? <InterfaceText source={"N/A"} />}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -322,25 +346,25 @@ export default function ShareDiscordDialog({
                 color: "#6b7280",
               }}
             >
-              Shared via Questarr
+              <InterfaceText source={"Shared via Questarr"} />
             </div>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            Cancel
+            <InterfaceText source={"Cancel"} />
           </Button>
           <Button variant="outline" onClick={handleDownload} disabled={busy || selected.size === 0}>
             {downloading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Downloading...
+                <InterfaceText source={"Downloading..."} />
               </>
             ) : (
               <>
                 <Download className="w-4 h-4 mr-2" />
-                Download
+                <InterfaceText source={"Download"} />
               </>
             )}
           </Button>
@@ -349,12 +373,12 @@ export default function ShareDiscordDialog({
               {sharing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Sharing...
+                  <InterfaceText source={"Sharing..."} />
                 </>
               ) : (
                 <>
                   <Share2 className="w-4 h-4 mr-2" />
-                  Share to Discord
+                  <InterfaceText source={"Share to Discord"} />
                 </>
               )}
             </Button>

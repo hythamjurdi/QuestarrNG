@@ -77,6 +77,13 @@ updates:
     labels:
       - "dependencies"
     groups:
+      nuget-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
       security-updates:
         applies-to: security-updates
         patterns:
@@ -139,6 +146,13 @@ updates:
     cooldown:
       default-days: 7
     groups:
+      docker-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
       security-updates:
         applies-to: security-updates
         patterns:
@@ -150,26 +164,14 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
-
-  - package-ecosystem: docker
-    directory: /casaos
-    schedule:
-      interval: daily
-    cooldown:
-      default-days: 7
     groups:
-      security-updates:
-        applies-to: security-updates
+      docker-minor-patch:
+        applies-to: version-updates
         patterns:
           - "*"
-
-  - package-ecosystem: docker
-    directory: /doezer-questarr
-    schedule:
-      interval: daily
-    cooldown:
-      default-days: 7
-    groups:
+        update-types:
+          - minor
+          - patch
       security-updates:
         applies-to: security-updates
         patterns:
