@@ -200,7 +200,7 @@ export function IgdbTestConnectionButton({
       {state === "error" && (
         <p className="flex items-center gap-1.5 text-xs text-destructive">
           <XCircle className="h-3.5 w-3.5 shrink-0" />
-          {errorMessage ?? "Connection failed."}
+          <InterfaceText source={errorMessage ?? "Connection failed."} />
         </p>
       )}
     </div>

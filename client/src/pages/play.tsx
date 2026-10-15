@@ -6,6 +6,7 @@ import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import { InfiltrationGame, type ObjectiveState, type StealthState } from "@/game/infiltration-game";
 import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
 import { InterfaceText } from "@/components/InterfaceText";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
 
 function randomSeed() {
   // A fresh procedural layout per run isn't security-sensitive, but crypto.getRandomValues
@@ -54,6 +55,7 @@ function objectiveText({ inside, needsKeycard, hasKeycard }: ObjectiveState): st
 export default function PlayPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { t } = useInterfaceLanguage();
   const [, setGhostUnlocked] = useLocalStorageState(GHOST_UNLOCK_KEY, false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -94,31 +96,39 @@ export default function PlayPage() {
 
   // Written straight to the DOM: this fires on a 10Hz cadence from the render
   // loop, and routing it through state would re-render the page around the canvas.
-  const applyStealth = useCallback(({ stance, awareness, illumination }: StealthState) => {
-    const percent = Math.round(awareness * 100);
-    if (detectionFillRef.current) {
-      detectionFillRef.current.style.width = `${percent}%`;
-      detectionFillRef.current.style.backgroundColor = detectionColor(awareness);
-    }
-    // The bar carries the value for assistive tech, since width and colour alone
-    // convey nothing without sight.
-    detectionBarRef.current?.setAttribute("aria-valuenow", String(percent));
-
-    // Only write text that actually changed. These nodes are rewritten ten times
-    // a second, and needless mutations are wasted work whatever is reading them.
-    if (stanceRef.current) {
-      const label = stance === "crouched" ? "Crouched" : "Standing";
-      if (stanceRef.current.textContent !== label) stanceRef.current.textContent = label;
-    }
-    if (exposureRef.current) {
-      const hidden = illumination < 0.25;
-      const label = hidden ? "In shadow" : "In the open";
-      if (exposureRef.current.textContent !== label) {
-        exposureRef.current.textContent = label;
-        exposureRef.current.className = hidden ? "text-sky-300" : "text-white/40";
+  const applyStealth = useCallback(
+    ({ stance, awareness, illumination }: StealthState) => {
+      const percent = Math.round(awareness * 100);
+      if (detectionFillRef.current) {
+        detectionFillRef.current.style.width = `${percent}%`;
+        detectionFillRef.current.style.backgroundColor = detectionColor(awareness);
       }
-    }
-  }, []);
+      // The bar carries the value for assistive tech, since width and colour alone
+      // convey nothing without sight.
+      detectionBarRef.current?.setAttribute("aria-valuenow", String(percent));
+
+      // Only write text that actually changed. These nodes are rewritten ten times
+      // a second, and needless mutations are wasted work whatever is reading them.
+      if (stanceRef.current) {
+        const label = t(stance === "crouched" ? "Crouched" : "Standing");
+        if (stanceRef.current.textContent !== label) stanceRef.current.textContent = label;
+      }
+      if (exposureRef.current) {
+        const hidden = illumination < 0.25;
+        const label = t(hidden ? "In shadow" : "In the open");
+        if (exposureRef.current.textContent !== label) {
+          exposureRef.current.textContent = label;
+          exposureRef.current.className = hidden ? "text-sky-300" : "text-white/40";
+        }
+      }
+    },
+    [t]
+  );
+
+  const applyStealthRef = useRef(applyStealth);
+  useEffect(() => {
+    applyStealthRef.current = applyStealth;
+  }, [applyStealth]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -129,7 +139,7 @@ export default function PlayPage() {
       onObjectiveChange: setObjective,
       onCaught: () => callbacksRef.current.onCaught(),
       onWin: () => callbacksRef.current.onWin(),
-      onStealthChange: (stealth) => applyStealth(stealth),
+      onStealthChange: (stealth) => applyStealthRef.current(stealth),
       onHackProgress: (progress, canInteract) => {
         if (progressFillRef.current) {
           progressFillRef.current.style.width = `${progress * 100}%`;
@@ -146,8 +156,8 @@ export default function PlayPage() {
       game.dispose();
       gameRef.current = null;
     };
-    // applyStealth is a stable useCallback, so this still mounts exactly once.
-  }, [applyStealth]);
+    // The engine mounts once and reads the current localized callback through its ref.
+  }, []);
 
   const handleStart = useCallback(() => {
     setWon(false);

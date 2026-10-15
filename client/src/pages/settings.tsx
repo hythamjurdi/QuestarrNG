@@ -61,7 +61,11 @@ import {
   useRegionalPreference,
 } from "@/lib/regional-format";
 import { GHOST_UNLOCK_KEY } from "@/lib/ghost-mode";
-import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
+import {
+  translateInterfaceLabel,
+  formatInterfaceMessage,
+  useInterfaceLanguage,
+} from "@/lib/interface-locale";
 import {
   THEMES,
   THEME_CONFIGS,
@@ -912,7 +916,7 @@ export default function SettingsPage() {
     onSuccess: (data) => {
       toast({
         title: "Settings Updated",
-        description: data.successMessage,
+        description: translateInterfaceLabel(data.successMessage),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
     },
@@ -921,7 +925,7 @@ export default function SettingsPage() {
 
       let message = error.message;
       if (message.includes("Unexpected token") || message.includes("JSON")) {
-        message = "Server response invalid. Please restart the server.";
+        message = translateInterfaceLabel("Server response invalid. Please restart the server.");
       }
 
       toast({
@@ -956,7 +960,7 @@ export default function SettingsPage() {
       if (data.successMessage) {
         toast({
           title: "Settings Updated",
-          description: data.successMessage,
+          description: translateInterfaceLabel(data.successMessage),
         });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
@@ -966,7 +970,7 @@ export default function SettingsPage() {
 
       let message = error.message;
       if (message.includes("Unexpected token") || message.includes("JSON")) {
-        message = "Server response invalid. Please restart the server.";
+        message = translateInterfaceLabel("Server response invalid. Please restart the server.");
       }
 
       toast({
@@ -1878,7 +1882,7 @@ export default function SettingsPage() {
                     {Object.entries(blacklistByGame).map(([gameId, entries]) => (
                       <div key={gameId}>
                         <h4 className="text-sm font-semibold mb-2">
-                          {entries[0]?.gameTitle ?? "Unknown game"}
+                          {entries[0]?.gameTitle ?? <InterfaceText source="Unknown game" />}
                         </h4>
                         <div className="space-y-2">
                           {entries.map((entry) => (
@@ -2192,7 +2196,9 @@ export default function SettingsPage() {
                             key={key}
                             className={`border-b last:border-0 ${isGroupStart ? "border-t-2 border-t-muted" : ""}`}
                           >
-                            <td className="py-3 pr-2 sm:pr-4 text-sm">{label}</td>
+                            <td className="py-3 pr-2 sm:pr-4 text-sm">
+                              <InterfaceText source={label} />
+                            </td>
                             <td className="py-3 px-3 sm:px-6 text-center">
                               <Switch
                                 aria-label={formatInterfaceMessage("In-App: {label}", {
