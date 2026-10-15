@@ -16,6 +16,34 @@ vi.mock("@/lib/queryClient", () => ({
   apiRequest: mockApiRequest,
 }));
 
+vi.mock("@/components/ui/select", () => {
+  const SelectContext = React.createContext<(value: string) => void>(() => {});
+  return {
+    Select: ({
+      children,
+      onValueChange,
+    }: {
+      children: React.ReactNode;
+      onValueChange: (value: string) => void;
+    }) => <SelectContext.Provider value={onValueChange}>{children}</SelectContext.Provider>,
+    SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+      <button type="button" role="combobox">
+        {children}
+      </button>
+    ),
+    SelectValue: () => null,
+    SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => {
+      const onValueChange = React.useContext(SelectContext);
+      return (
+        <button type="button" role="option" onClick={() => onValueChange(value)}>
+          {children}
+        </button>
+      );
+    },
+  };
+});
+
 // Real react-query's useMutation wraps mutationFn in an internal cache/state machine that
 // makes onSuccess/onError hard to observe synchronously in a test. This mock instead runs
 // mutationFn (and, on rejection, onError; on success, onSuccess) directly, so a test can
@@ -114,6 +142,30 @@ describe("ImportReviewModal", () => {
       root: "/",
       title: "Select Destination",
     });
+  });
+
+  it("warns that the exact source path is transferred and may contain unrelated files", () => {
+    renderModal();
+
+    const sourcePath = screen.getByLabelText(/Source Path/);
+    expect(sourcePath).toHaveAttribute("aria-describedby", "import-review-source-path-help");
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "This is the exact file or folder Questarr will transfer. Move removes the source; choosing a parent downloads folder can include unrelated files."
+    );
+  });
+
+  it("explains the volume and source-lifetime tradeoffs for hardlinks and symlinks", async () => {
+    renderModal();
+
+    fireEvent.click(await screen.findByRole("option", { name: "Hardlink" }));
+
+    expect(screen.getByText(/same volume/)).toBeInTheDocument();
+    expect(screen.queryByText(/link breaks/)).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole("option", { name: "Symlink" }));
+
+    expect(screen.getByText(/link breaks/)).toBeInTheDocument();
+    expect(screen.queryByText(/same volume/)).not.toBeInTheDocument();
   });
 
   describe("password-protected archives", () => {

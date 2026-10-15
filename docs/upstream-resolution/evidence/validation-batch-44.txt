@@ -1,0 +1,20 @@
+Batch 44 validation — October 13, 2026
+
+- `npm run test:coverage`: passed; 254 test files passed, 1 skipped; 4,117
+  tests passed, 7 skipped. Coverage: statements 84.02%, branches 76.83%,
+  functions 80.98%, lines 85.47%.
+- `npm run check`: passed.
+- `npm run lint`: passed.
+- `npm run format:check`: passed.
+- `npm run secretlint`: passed.
+- `git diff --check`: passed.
+- `npm run build`: passed after the production code changes; the only later
+  addition was the NotificationItem accessibility regression test.
+- Codecov configuration validator: valid.
+- Wishlist release-category rollover was exercised in the running
+  `npm run dev:test` application. The screenshot is
+  `docs/pr-evidence/upstream-wishlist-date-rollover-batch-44.png`.
+
+The dev:test run used a disposable local SQLite database and port 5102. The
+server and its task-scoped temporary database and scripts were removed after
+capturing the screenshot.

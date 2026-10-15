@@ -4,14 +4,15 @@ services:
     build: .
     user: "${PUID:-1000}:${PGID:-1000}"
     ports:
-      - "${HOST_SIDE_PORT:-5000}:${CONTAINER_INTERNAL_SIDE_PORT:-5000}"
+      - "${HOST_SIDE_PORT:-${PORT:-5000}}:${CONTAINER_INTERNAL_SIDE_PORT:-${PORT:-5000}}"
       - "${SSL_PORT:-9898}:${SSL_PORT:-9898}"
     environment:
-      - PORT=${CONTAINER_INTERNAL_SIDE_PORT:-5000}
+      - PORT=${CONTAINER_INTERNAL_SIDE_PORT:-${PORT:-5000}}
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       # - SQLITE_DB_PATH=/app/data/sqlite.db  # Default path for sqlite db, uncomment and change if needed
       # - QUESTARR_BASE_PATH=/Questarr  # Serve from a subdirectory behind a reverse proxy, see docs/REVERSE_PROXY.md
+      # - TRUST_PROXY=1  # Behind a reverse proxy: use real client IPs for rate limits, see docs/REVERSE_PROXY.md
     volumes:
       # Persist SQLite database and other data
       - ./data:/app/data

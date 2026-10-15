@@ -1,0 +1,16 @@
+2026-10-12 local integration checkpoint
+Checkout: QuestarrNG-upstream-resolution / codex/upstream-resolution
+npm run test:coverage -- --maxWorkers=4
+TMPDIR=/home/keith/questarr-upstream-temp
+245 test files passed; 1 skipped
+3997 tests passed; 7 skipped
+Statements 84.62%; branches 77.44%; functions 82.02%; lines 86.02%
+npm run check: passed
+npm run lint: passed
+npm run secretlint: passed
+npm run build: passed (existing large-chunk advisory)
+npm run check:licenses: passed, 434 production packages
+npm run check:overrides: passed
+Earlier /tmp-full and hidden-temp-path failures were environmental; the complete
+suite was rerun using a writable, non-hidden task-specific temporary directory.
+Full Playwright suite: 46 passed (52.3s), 2 workers, npm run dev:test.

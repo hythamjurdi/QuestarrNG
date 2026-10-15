@@ -17,7 +17,7 @@ export default defineConfig({
     testTimeout: 20000,
     coverage: {
       provider: "v8",
-      reporter: ["text", "json", "json-summary", "html"],
+      reporter: ["text", "json", "json-summary", "html", "lcov"],
       thresholds: {
         statements: 83,
         branches: 76,

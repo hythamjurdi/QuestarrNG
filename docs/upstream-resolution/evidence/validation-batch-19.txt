@@ -1,0 +1,47 @@
+Upstream PRs #169–175 review and validation
+
+PR #169: verified that genre and platform query filters are sorted before
+request caching. Added regression tests for both input orders.
+
+PR #170: verified that Discover shows an animated loading indicator in each
+genre/platform dropdown while its list query is fetching.
+
+PR #171: closed upstream as a duplicate. Added defense-in-depth path checks to
+Transmission and rTorrent download requests so absolute and parent-traversing
+overrides are rejected before making requests. Configured downloader roots can
+remain absolute.
+
+PR #172: cached processed IGDB search results by query, limit, and local filter
+options. Successful results use a 15-minute TTL; empty results use 5 minutes.
+Failed API calls do not create empty cache entries.
+
+PR #173: verified the existing carousel navigation tooltips and added a
+regression test for the disabled first-page/last-page guidance.
+
+PR #174: request validation rejects absolute POSIX/Windows paths and
+parent-directory segments, while downloader configuration still accepts an
+absolute root directory and rejects traversal.
+
+PR #175: the method-level IGDB cache covers both successful and empty search
+results. A regression test verifies that repeated empty searches skip the
+search approaches, and another verifies local year filters use distinct cache
+entries.
+
+Validation:
+
+- Focused IGDB, middleware, downloader, and carousel tests: 117 passed across
+  four files.
+- Full `npm test`: 4,050 passed and 7 skipped; 249 test files passed and one
+  was skipped.
+- `npm run check`: passed.
+- `npm run lint`: passed.
+- `npm run format:check`: passed.
+- `npm run build`: passed. Vite reported its existing advisory for chunks over
+  500 kB.
+- `npm run dev:test` with a temporary test account and stubbed search/downloader
+  responses. The headless Playwright screenshot shows the live download dialog
+  and its relative-path guidance at
+  `docs/pr-evidence/upstream-relative-download-path-guidance.png`.
+
+The task-scoped NFS browser/test scratch was removed after use. No temporary
+Questarr work remains on the NFS share.

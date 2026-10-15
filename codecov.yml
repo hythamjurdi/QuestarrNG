@@ -6,4 +6,19 @@ coverage:
         threshold: 5%
     project:
       default:
-        threshold: 2%
+        target: auto
+        threshold: 1%
+
+comment:
+  layout: "header, diff, files, footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+  hide_project_coverage: false
+
+ignore:
+  - "dist/**"
+  - "node_modules/**"
+  - "tests/e2e/**"
+  - "**/*.config.*"

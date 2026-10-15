@@ -18,6 +18,8 @@ export function makeGame(overrides: Partial<Game> = {}): Game {
     status: "wanted",
     userId: "u1",
     igdbId: null,
+    rawgId: null,
+    rawgSlug: null,
     steamAppId: null,
     summary: null,
     coverUrl: null,

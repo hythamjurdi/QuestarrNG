@@ -1,14 +1,14 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Settings2, AlertCircle } from "lucide-react";
+import { Loader2, Settings2, AlertCircle, Search } from "lucide-react";
 import GameCarouselSection from "@/components/GameCarouselSection";
 import { visibleIgdbPlatforms } from "@shared/platforms";
 import { useHiddenMutation } from "@/hooks/use-hidden-mutation";
 import { useToast } from "@/hooks/use-toast";
 import { mapGameToInsertGame } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
-import { hideDiscoveryGame } from "@/lib/discover-hidden-mutation";
+import { addDiscoveryGameToLibrary, hideDiscoveryGame } from "@/lib/discover-hidden-mutation";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,7 @@ import { Rss } from "lucide-react";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import { ACQUIRED_GAME_STATUSES, type Game, type Config, type UserSettings } from "@shared/schema";
 import { type GameStatus } from "@/components/StatusBadge";
+import { Input } from "@/components/ui/input";
 import { useInterfaceLanguage, formatInterfaceMessage } from "@/lib/interface-locale";
 import { InterfaceText } from "@/components/InterfaceText";
 
@@ -99,19 +100,30 @@ export default function DiscoverPage() {
   );
   const [selectedGenre, setSelectedGenre] = useState<string>("Adventure");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("PC");
+  const [selectedProvider, setSelectedProvider] = useState("igdb");
   const [showSettings, setShowSettings] = useState(false);
+  const [rawgSearch, setRawgSearch] = useState("");
   const [hideOwned, setHideOwned] = useLocalStorageState("discoverHideOwned", false);
   const [hideWanted, setHideWanted] = useLocalStorageState("discoverHideWanted", false);
 
   // ⚡ Bolt: Using the useDebounce hook to limit the frequency of API calls
   const debouncedGenre = useDebounce(selectedGenre, 300);
   const debouncedPlatform = useDebounce(selectedPlatform, 300);
+  const debouncedRawgSearch = useDebounce(rawgSearch, 400);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: config } = useQuery<Config>({
     queryKey: ["/api/config"],
   });
+  useEffect(() => {
+    if (!config) return;
+    if (selectedProvider === "igdb" && !config.igdb.configured) {
+      setSelectedProvider(config.rawg?.configured ? "rawg" : "rss");
+    } else if (selectedProvider === "rawg" && !config.rawg?.configured) {
+      setSelectedProvider(config.igdb.configured ? "igdb" : "rss");
+    }
+  }, [config, selectedProvider]);
 
   const { data: userSettings } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
@@ -119,30 +131,43 @@ export default function DiscoverPage() {
 
   // Fetch local games to filter hidden ones
   const { data: localGames = EMPTY_GAMES } = useQuery<Game[]>({
-    queryKey: ["/api/games?includeHidden=true"], // We need all games to know which are hidden
+    // Same key as Library and Stats with hidden games shown: it sits under
+    // ["/api/games"], so every game mutation's invalidation refreshes it.
+    queryKey: ["/api/games", "", true], // We need all games to know which are hidden
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/games?includeHidden=true");
       return response.json();
     },
-    enabled: !!config?.igdb.configured,
+    enabled: !!config?.igdb.configured || !!config?.rawg?.configured,
   });
 
   // ⚡ Bolt: Consolidate multiple O(N) array traversals into a single pass
-  const { hiddenIgdbIds, ownedIgdbIds, wantedIgdbIds, igdbToLocalIdMap, hiddenGames } =
-    useMemo(() => {
-      const hidden = new Set<number>();
-      const owned = new Set<number>();
-      const wanted = new Set<number>();
-      const idMap = new Map<number, string>();
-      const hiddenList: Game[] = [];
+  const {
+    hiddenIgdbIds,
+    ownedIgdbIds,
+    wantedIgdbIds,
+    igdbToLocalIdMap,
+    rawgToLocalIdMap,
+    hiddenRawgIds,
+    ownedRawgIds,
+    wantedRawgIds,
+    hiddenGames,
+  } = useMemo(() => {
+    const hidden = new Set<number>();
+    const owned = new Set<number>();
+    const wanted = new Set<number>();
+    const idMap = new Map<number, string>();
+    const hiddenList: Game[] = [];
+    const hiddenRawg = new Set<number>();
+    const ownedRawg = new Set<number>();
+    const wantedRawg = new Set<number>();
+    const rawgIdMap = new Map<number, string>();
 
-      for (const g of localGames) {
-        if (g.hidden) hiddenList.push(g);
+    for (const g of localGames) {
+      if (g.hidden) hiddenList.push(g);
 
-        if (!g.igdbId) continue;
-
+      if (g.igdbId != null) {
         idMap.set(g.igdbId, g.id);
-
         if (g.hidden) hidden.add(g.igdbId);
         if (
           g.status === "downloading" ||
@@ -152,32 +177,111 @@ export default function DiscoverPage() {
         }
         if (g.status === "wanted" && !g.hidden) wanted.add(g.igdbId);
       }
+      if (g.rawgId == null) continue;
+      rawgIdMap.set(g.rawgId, g.id);
+      if (g.hidden) hiddenRawg.add(g.rawgId);
+      if (
+        g.status === "downloading" ||
+        (ACQUIRED_GAME_STATUSES as readonly string[]).includes(g.status)
+      ) {
+        ownedRawg.add(g.rawgId);
+      }
+      if (g.status === "wanted" && !g.hidden) wantedRawg.add(g.rawgId);
+    }
 
-      return {
-        hiddenIgdbIds: hidden,
-        ownedIgdbIds: owned,
-        wantedIgdbIds: wanted,
-        igdbToLocalIdMap: idMap,
-        hiddenGames: hiddenList,
-      };
-    }, [localGames]);
+    return {
+      hiddenIgdbIds: hidden,
+      ownedIgdbIds: owned,
+      wantedIgdbIds: wanted,
+      igdbToLocalIdMap: idMap,
+      rawgToLocalIdMap: rawgIdMap,
+      hiddenRawgIds: hiddenRawg,
+      ownedRawgIds: ownedRawg,
+      wantedRawgIds: wantedRawg,
+      hiddenGames: hiddenList,
+    };
+  }, [localGames]);
+
+  // Carousels cache their already-filtered lists, so their keys carry what the
+  // filter depends on: tracking, hiding or changing a game's status refetches them.
+  // The IDs themselves, not counts, so a swap that keeps a count still re-keys.
+  const carouselFilterKey = useMemo(() => {
+    const signature = (ids: Set<number>) => [...ids].sort((a, b) => a - b).join(",");
+    return [
+      signature(hiddenIgdbIds),
+      hideOwned ? signature(ownedIgdbIds) : "owned-shown",
+      hideWanted ? signature(wantedIgdbIds) : "",
+    ];
+  }, [hiddenIgdbIds, ownedIgdbIds, wantedIgdbIds, hideOwned, hideWanted]);
+  const rawgCarouselFilterKey = useMemo(
+    () => [
+      ...carouselFilterKey,
+      [...hiddenRawgIds].sort((a, b) => a - b).join(","),
+      hideOwned ? [...ownedRawgIds].sort((a, b) => a - b).join(",") : "owned-shown",
+      hideWanted ? [...wantedRawgIds].sort((a, b) => a - b).join(",") : "",
+    ],
+    [carouselFilterKey, hiddenRawgIds, ownedRawgIds, wantedRawgIds, hideOwned, hideWanted]
+  );
+
+  // Keep each carousel key stable until one of its own filters changes. React.memo
+  // can then skip unaffected carousels when a different filter or page control moves.
+  const igdbCarouselQueryKeys = useMemo(
+    () => ({
+      popular: ["/api/igdb/popular", ...carouselFilterKey],
+      recent: ["/api/igdb/recent", ...carouselFilterKey],
+      upcoming: ["/api/igdb/upcoming", ...carouselFilterKey],
+    }),
+    [carouselFilterKey]
+  );
+  const genreCarouselQueryKey = useMemo(
+    () => ["/api/igdb/genre", debouncedGenre, ...carouselFilterKey],
+    [debouncedGenre, carouselFilterKey]
+  );
+  const platformCarouselQueryKey = useMemo(
+    () => ["/api/igdb/platform", debouncedPlatform, ...carouselFilterKey],
+    [debouncedPlatform, carouselFilterKey]
+  );
+  const rawgCarouselQueryKeys = useMemo(
+    () => ({
+      popular: ["/api/rawg/popular", ...rawgCarouselFilterKey],
+      recent: ["/api/rawg/recent", ...rawgCarouselFilterKey],
+      upcoming: ["/api/rawg/upcoming", ...rawgCarouselFilterKey],
+    }),
+    [rawgCarouselFilterKey]
+  );
+  const rawgSearchCarouselQueryKey = useMemo(
+    () => ["/api/rawg/search", debouncedRawgSearch, ...rawgCarouselFilterKey],
+    [debouncedRawgSearch, rawgCarouselFilterKey]
+  );
 
   const filterGames = useCallback(
     (games: Game[]) => {
       return games.filter((g: Game) => {
-        if (!g.igdbId) return true;
-
-        if (hiddenIgdbIds.has(g.igdbId)) return false;
-
-        if (hideOwned && ownedIgdbIds.has(g.igdbId)) return false;
-
-        if (hideWanted && wantedIgdbIds.has(g.igdbId)) return false;
+        if (g.igdbId != null) {
+          if (hiddenIgdbIds.has(g.igdbId)) return false;
+          if (hideOwned && ownedIgdbIds.has(g.igdbId)) return false;
+          if (hideWanted && wantedIgdbIds.has(g.igdbId)) return false;
+        }
+        if (g.rawgId != null) {
+          if (hiddenRawgIds.has(g.rawgId)) return false;
+          if (hideOwned && ownedRawgIds.has(g.rawgId)) return false;
+          if (hideWanted && wantedRawgIds.has(g.rawgId)) return false;
+        }
 
         return true;
       });
     },
 
-    [hiddenIgdbIds, ownedIgdbIds, wantedIgdbIds, hideOwned, hideWanted]
+    [
+      hiddenIgdbIds,
+      ownedIgdbIds,
+      wantedIgdbIds,
+      hiddenRawgIds,
+      ownedRawgIds,
+      wantedRawgIds,
+      hideOwned,
+      hideWanted,
+    ]
   );
 
   // Fetch available genres with caching and error handling
@@ -277,7 +381,7 @@ export default function DiscoverPage() {
     setSelectedPlatform(displayPlatforms[0]!.name);
   }, [config, displayPlatforms, selectedPlatform]);
 
-  const trackGameMutation = useMutation({
+  const { mutate: trackGame } = useMutation({
     mutationFn: async (game: Game) => {
       const gameData = mapGameToInsertGame(game);
 
@@ -317,9 +421,14 @@ export default function DiscoverPage() {
 
   // Hide game mutation
 
-  const hideGameMutation = useHiddenMutation<Game>({
+  const { mutate: hideGame } = useHiddenMutation<Game>({
     mutationFn: async (game: Game) => {
-      const localId = game.igdbId ? igdbToLocalIdMap.get(game.igdbId) : undefined;
+      const localId =
+        game.igdbId != null
+          ? igdbToLocalIdMap.get(game.igdbId)
+          : game.rawgId != null
+            ? rawgToLocalIdMap.get(game.rawgId)
+            : undefined;
       return hideDiscoveryGame(game, localId);
     },
     hiddenSuccessMessage: t("Game hidden from discovery"),
@@ -329,7 +438,7 @@ export default function DiscoverPage() {
 
   // Add game mutation (for status changes on Discovery games)
 
-  const addGameMutation = useMutation({
+  const { mutate: addGame } = useMutation({
     mutationFn: async ({
       game,
 
@@ -352,16 +461,11 @@ export default function DiscoverPage() {
 
         return response.json();
       } else {
-        // Add new game with status
-
-        const gameData = mapGameToInsertGame(game);
-
-        const response = await apiRequest("POST", "/api/games", {
-          ...gameData,
-
-          status,
-        });
-
+        // Add new game with status. If it is already in the library (the
+        // local list was stale), update that row's status instead.
+        const added = await addDiscoveryGameToLibrary(game, status);
+        if (added.status === status) return added;
+        const response = await apiRequest("PATCH", `/api/games/${added.id}/status`, { status });
         return response.json();
       }
     },
@@ -398,7 +502,7 @@ export default function DiscoverPage() {
           predicate: (query) => {
             const key = query.queryKey[0] as string;
 
-            return key.startsWith("/api/igdb/");
+            return key.startsWith("/api/igdb/") || key.startsWith("/api/rawg/");
           },
         });
 
@@ -414,21 +518,25 @@ export default function DiscoverPage() {
       const game = findGameInQueries();
 
       if (game) {
-        const localId = game.igdbId ? igdbToLocalIdMap.get(game.igdbId) : undefined;
+        const localId =
+          game.igdbId != null
+            ? igdbToLocalIdMap.get(game.igdbId)
+            : game.rawgId != null
+              ? rawgToLocalIdMap.get(game.rawgId)
+              : undefined;
 
-        addGameMutation.mutate({ game, status: newStatus, localId });
+        addGame({ game, status: newStatus, localId });
       }
     },
 
-    [queryClient, addGameMutation, igdbToLocalIdMap]
+    [queryClient, addGame, igdbToLocalIdMap, rawgToLocalIdMap]
   );
 
   const handleTrackGame = useCallback(
     (game: Game) => {
-      trackGameMutation.mutate(game);
+      trackGame(game);
     },
-
-    [trackGameMutation]
+    [trackGame]
   );
 
   const handleToggleHidden = useCallback(
@@ -445,7 +553,7 @@ export default function DiscoverPage() {
             predicate: (query) => {
               const key = query.queryKey[0] as string;
 
-              return key.startsWith("/api/igdb/");
+              return key.startsWith("/api/igdb/") || key.startsWith("/api/rawg/");
             },
           });
 
@@ -461,12 +569,12 @@ export default function DiscoverPage() {
         const game = findGameInQueries();
 
         if (game) {
-          hideGameMutation.mutate(game);
+          hideGame(game);
         }
       }
     },
 
-    [queryClient, hideGameMutation]
+    [queryClient, hideGame]
   );
 
   // ⚡ Bolt: Memoizing fetch functions with `useCallback` ensures they have stable
@@ -526,31 +634,43 @@ export default function DiscoverPage() {
     return filterGames(games);
   }, [debouncedPlatform, displayPlatforms, filterGames]);
 
-  if (config && !config.igdb.configured) {
+  const fetchRawgPopular = useCallback(async (): Promise<Game[]> => {
+    const response = await apiRequest("GET", "/api/rawg/popular?limit=20");
+    return filterGames(await response.json());
+  }, [filterGames]);
+  const fetchRawgRecent = useCallback(async (): Promise<Game[]> => {
+    const response = await apiRequest("GET", "/api/rawg/recent?limit=20");
+    return filterGames(await response.json());
+  }, [filterGames]);
+  const fetchRawgUpcoming = useCallback(async (): Promise<Game[]> => {
+    const response = await apiRequest("GET", "/api/rawg/upcoming?limit=20");
+    return filterGames(await response.json());
+  }, [filterGames]);
+  const fetchRawgSearch = useCallback(async (): Promise<Game[]> => {
+    const query = debouncedRawgSearch.trim();
+    if (!query) return [];
+    const response = await apiRequest(
+      "GET",
+      `/api/rawg/search?q=${encodeURIComponent(query)}&limit=20`
+    );
+    return filterGames(await response.json());
+  }, [debouncedRawgSearch, filterGames]);
+
+  if (config && !config.igdb.configured && !config.rawg?.configured) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
         <div className="bg-muted p-4 rounded-full">
           <AlertCircle className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h2
-          className="text-2xl font-bold"
-          lang={languageFor("IGDB Configuration Required")}
-          dir={directionFor("IGDB Configuration Required")}
-        >
-          {t("IGDB Configuration Required")}
+        <h2 className="text-2xl font-bold">
+          <InterfaceText source={"Game Metadata Provider Required"} />
         </h2>
-        <p
-          className="text-muted-foreground max-w-md"
-          lang={languageFor(
-            "To discover and browse games, you need to configure your IGDB credentials in the settings."
-          )}
-          dir={directionFor(
-            "To discover and browse games, you need to configure your IGDB credentials in the settings."
-          )}
-        >
-          {t(
-            "To discover and browse games, you need to configure your IGDB credentials in the settings."
-          )}
+        <p className="text-muted-foreground max-w-md">
+          <InterfaceText
+            source={
+              "Configure IGDB or the optional RAWG provider in Settings to discover and browse games."
+            }
+          />
         </p>
         <Link href="/settings">
           <Button>{textNode("Go to Settings")}</Button>
@@ -564,7 +684,7 @@ export default function DiscoverPage() {
   return (
     <div className="h-full w-full overflow-x-hidden overflow-y-auto" data-testid="discover-page">
       <div className="p-6 space-y-8 max-w-full">
-        <Tabs defaultValue="igdb" className="space-y-6">
+        <Tabs value={selectedProvider} onValueChange={setSelectedProvider} className="space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1
@@ -589,9 +709,14 @@ export default function DiscoverPage() {
 
             <div className="flex items-center gap-3 shrink-0">
               <TabsList>
-                <TabsTrigger value="igdb">
+                <TabsTrigger value="igdb" disabled={!config?.igdb.configured}>
                   <InterfaceText source={"IGDB"} />
                 </TabsTrigger>
+                {config?.rawg?.configured && (
+                  <TabsTrigger value="rawg">
+                    <InterfaceText source={"RAWG"} />
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="rss" className="gap-2">
                   <Rss className="h-4 w-4" /> <InterfaceText source={"RSS"} />
                 </TabsTrigger>
@@ -629,7 +754,7 @@ export default function DiscoverPage() {
             <GameCarouselSection
               title="Popular Games"
               data-i18n-title={"Popular Games"}
-              queryKey={["/api/igdb/popular", hiddenIgdbIds.size, hideOwned, hideWanted]}
+              queryKey={igdbCarouselQueryKeys.popular}
               queryFn={fetchPopularGames}
               staleTime={DISCOVERY_STALE_TIME}
               onStatusChange={handleStatusChange}
@@ -642,7 +767,7 @@ export default function DiscoverPage() {
             <GameCarouselSection
               title="Recent Releases"
               data-i18n-title={"Recent Releases"}
-              queryKey={["/api/igdb/recent", hiddenIgdbIds.size, hideOwned, hideWanted]}
+              queryKey={igdbCarouselQueryKeys.recent}
               queryFn={fetchRecentGames}
               staleTime={DISCOVERY_STALE_TIME}
               onStatusChange={handleStatusChange}
@@ -655,7 +780,7 @@ export default function DiscoverPage() {
             <GameCarouselSection
               title="Coming Soon"
               data-i18n-title={"Coming Soon"}
-              queryKey={["/api/igdb/upcoming", hiddenIgdbIds.size, hideOwned, hideWanted]}
+              queryKey={igdbCarouselQueryKeys.upcoming}
               queryFn={fetchUpcomingGames}
               staleTime={DISCOVERY_STALE_TIME}
               onStatusChange={handleStatusChange}
@@ -691,17 +816,12 @@ export default function DiscoverPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {/* Keep the label in sync with its debounced query while the filter settles. */}
               <GameCarouselSection
                 title={formatInterfaceMessage("{selectedGenre} Games", {
-                  selectedGenre: String(selectedGenre ?? ""),
+                  selectedGenre: String(debouncedGenre ?? ""),
                 })}
-                queryKey={[
-                  "/api/igdb/genre",
-                  debouncedGenre,
-                  hiddenIgdbIds.size,
-                  hideOwned,
-                  hideWanted,
-                ]}
+                queryKey={genreCarouselQueryKey}
                 queryFn={fetchGamesByGenre}
                 staleTime={DISCOVERY_STALE_TIME}
                 onStatusChange={handleStatusChange}
@@ -743,17 +863,12 @@ export default function DiscoverPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {/* Match the label to the same debounced platform used by its query. */}
                 <GameCarouselSection
                   title={formatInterfaceMessage("{selectedPlatform} Games", {
                     selectedPlatform: String(selectedPlatform ?? ""),
                   })}
-                  queryKey={[
-                    "/api/igdb/platform",
-                    debouncedPlatform,
-                    hiddenIgdbIds.size,
-                    hideOwned,
-                    hideWanted,
-                  ]}
+                  queryKey={platformCarouselQueryKey}
                   queryFn={fetchGamesByPlatform}
                   staleTime={DISCOVERY_STALE_TIME}
                   onStatusChange={handleStatusChange}
@@ -764,6 +879,71 @@ export default function DiscoverPage() {
               </div>
             )}
           </TabsContent>
+
+          {config?.rawg?.configured && (
+            <TabsContent value="rawg" className="space-y-8">
+              <div className="space-y-2">
+                <label htmlFor="rawg-discover-search" className="text-sm font-medium">
+                  Search RAWG games
+                </label>
+                <div className="relative max-w-xl">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="rawg-discover-search"
+                    className="pl-9"
+                    placeholder="Search by game title"
+                    value={rawgSearch}
+                    onChange={(event) => setRawgSearch(event.target.value)}
+                  />
+                </div>
+              </div>
+              {debouncedRawgSearch.trim() ? (
+                <GameCarouselSection
+                  title="RAWG Search Results"
+                  queryKey={rawgSearchCarouselQueryKey}
+                  queryFn={fetchRawgSearch}
+                  staleTime={DISCOVERY_STALE_TIME}
+                  onStatusChange={handleStatusChange}
+                  onTrackGame={handleTrackGame}
+                  onToggleHidden={handleToggleHidden}
+                  isDiscovery={true}
+                />
+              ) : (
+                <>
+                  <GameCarouselSection
+                    title="Popular Games"
+                    queryKey={rawgCarouselQueryKeys.popular}
+                    queryFn={fetchRawgPopular}
+                    staleTime={DISCOVERY_STALE_TIME}
+                    onStatusChange={handleStatusChange}
+                    onTrackGame={handleTrackGame}
+                    onToggleHidden={handleToggleHidden}
+                    isDiscovery={true}
+                  />
+                  <GameCarouselSection
+                    title="Recent Releases"
+                    queryKey={rawgCarouselQueryKeys.recent}
+                    queryFn={fetchRawgRecent}
+                    staleTime={DISCOVERY_STALE_TIME}
+                    onStatusChange={handleStatusChange}
+                    onTrackGame={handleTrackGame}
+                    onToggleHidden={handleToggleHidden}
+                    isDiscovery={true}
+                  />
+                  <GameCarouselSection
+                    title="Upcoming Games"
+                    queryKey={rawgCarouselQueryKeys.upcoming}
+                    queryFn={fetchRawgUpcoming}
+                    staleTime={DISCOVERY_STALE_TIME}
+                    onStatusChange={handleStatusChange}
+                    onTrackGame={handleTrackGame}
+                    onToggleHidden={handleToggleHidden}
+                    isDiscovery={true}
+                  />
+                </>
+              )}
+            </TabsContent>
+          )}
 
           <TabsContent value="rss" className="space-y-6">
             <div className="flex justify-between items-center bg-muted/30 p-4 rounded-lg">

@@ -105,9 +105,10 @@ describe("release image manifest verification", () => {
     );
     const attachStep = steps[attachIndex];
 
-    expect(tagsStep.run).toContain("$IMAGE:sha-${GITHUB_SHA}");
+    expect(tagsStep.run).toContain("node scripts/fork-image-tags.mjs");
     expect(tagsStep.run).not.toContain("$IMAGE:latest");
     expect(tagsStep.run).not.toContain("$IMAGE:${GITHUB_REF_NAME#v}");
+    expect(steps[buildIndex].with.tags).toBe("${{ steps.tags.outputs.tags }}");
     expect(verifyIndex).toBeGreaterThan(buildIndex);
     expect(scanSteps).toHaveLength(2);
     expect(attachIndex).toBeGreaterThan(verifyIndex);

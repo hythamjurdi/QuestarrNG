@@ -241,6 +241,12 @@ No dependency version changes.
 
 - **PyJWT** 2.13.0 → 2.15.0 in the hash-pinned Semgrep toolchain, resolving the open Dependabot security alerts for the scanner's transitive JWT parser.
 
+## v1.9.1 → v1.10.0
+
+### Development dependencies
+
+- **Semgrep** 1.179.0 → 1.180.0 — refreshes the hash-pinned CI scanner and supports the existing PyJWT 2.15.1 pin. This scanner runs in CI and is not included in the production image.
+
 ---
 
 ## Footnote: devDependencies (build-time only, not shipped to production)

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Server,
@@ -52,6 +52,7 @@ import { ApiKeysCard } from "@/components/ApiKeysCard";
 import AutoDownloadRulesSettings from "@/components/AutoDownloadRulesSettings";
 import PreferredReleaseGroupsSettings from "@/components/PreferredReleaseGroupsSettings";
 import ReleaseNameBlacklistSettings from "@/components/ReleaseNameBlacklistSettings";
+import ReleaseScoringSettings from "@/components/ReleaseScoringSettings";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import {
   getRegionalLocale,
@@ -79,10 +80,10 @@ import {
   type Config,
   type UserSettings,
   type DownloadRules,
-  type ReleaseBlacklist,
   type NotificationPreferences,
   type NotificationEvent,
   type DownloaderDebugLoggingResponse,
+  type ReleaseBlacklist,
 } from "@shared/schema";
 import { parseJsonStringArray, CANONICAL_PLATFORMS } from "@shared/title-utils";
 import PlatformsSettings from "@/components/PlatformsSettings";
@@ -320,23 +321,35 @@ export default function SettingsPage() {
     queryKey: ["/api/settings/igdb"],
     queryFn: () => apiRequest("GET", "/api/settings/igdb").then((res) => res.json()),
   });
+  const { data: rawgSettings } = useQuery<{ configured: boolean; apiKey: string }>({
+    queryKey: ["/api/settings/rawg"],
+    queryFn: () => apiRequest("GET", "/api/settings/rawg").then((res) => res.json()),
+  });
 
   const {
     data: userSettings,
     isLoading: settingsLoading,
     error: settingsError,
+    refetch: refetchSettings,
   } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
-    retry: 3, // Retry up to 3 times as migrations might be running
+    // Database migrations run before the server starts accepting requests, so
+    // retrying here only delays the actionable error shown below.
+    retry: false,
+    // The error alert has an explicit retry action; don't retry on remount.
+    retryOnMount: false,
   });
 
   const { data: user } = useQuery<{ id: string; username: string; steamId64?: string }>({
     queryKey: ["/api/auth/me"],
   });
 
-  const { data: blacklistEntries, isLoading: blacklistLoading } = useQuery<
-    (ReleaseBlacklist & { gameTitle: string })[]
-  >({
+  const {
+    data: blacklistEntries,
+    isLoading: blacklistLoading,
+    isError: blacklistError,
+    refetch: refetchBlacklist,
+  } = useQuery<(ReleaseBlacklist & { gameTitle: string })[]>({
     queryKey: ["/api/blacklist"],
   });
 
@@ -354,8 +367,8 @@ export default function SettingsPage() {
   });
 
   const blacklistByGame = useMemo(() => {
-    if (!blacklistEntries) return {};
-    return blacklistEntries.reduce<Record<string, (ReleaseBlacklist & { gameTitle: string })[]>>(
+    const entries = Array.isArray(blacklistEntries) ? blacklistEntries : [];
+    return entries.reduce<Record<string, (ReleaseBlacklist & { gameTitle: string })[]>>(
       (acc, entry) => {
         (acc[entry.gameId] ??= []).push(entry);
         return acc;
@@ -445,6 +458,7 @@ export default function SettingsPage() {
   // Local state for forms
   const [igdbClientId, setIgdbClientId] = useState("");
   const [igdbClientSecret, setIgdbClientSecret] = useState("");
+  const [rawgApiKey, setRawgApiKey] = useState("");
   const [showClientSecret, setShowClientSecret] = useState(false);
   const [downloadRules, setDownloadRules] = useState<DownloadRules | null>(null);
   const [preferredReleaseGroups, setPreferredReleaseGroups] = useState<string[]>([]);
@@ -989,6 +1003,57 @@ export default function SettingsPage() {
     },
   });
 
+  const saveRawg = async () => {
+    try {
+      await apiRequest("POST", "/api/settings/rawg", {
+        apiKey: rawgApiKey || (rawgSettings?.configured ? "********" : ""),
+      });
+      setRawgApiKey("");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/settings/rawg"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/config"] }),
+      ]);
+      toast({ title: "RAWG settings saved" });
+    } catch (error) {
+      toast({
+        title: "Could not save RAWG settings",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    }
+  };
+  const testRawg = async () => {
+    try {
+      const response = await apiRequest("POST", "/api/settings/rawg/test", {
+        apiKey: rawgApiKey || (rawgSettings?.configured ? "********" : ""),
+      });
+      const result = await response.json();
+      toast({ title: result.message ?? "RAWG API key is valid" });
+    } catch (error) {
+      toast({
+        title: "RAWG connection failed",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    }
+  };
+  const removeRawg = async () => {
+    try {
+      await apiRequest("DELETE", "/api/settings/rawg");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/settings/rawg"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/config"] }),
+      ]);
+      toast({ title: "RAWG provider removed" });
+    } catch (error) {
+      toast({
+        title: "Could not remove RAWG settings",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    }
+  };
+
   const refreshMetadataMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/games/refresh-metadata");
@@ -1042,7 +1107,7 @@ export default function SettingsPage() {
     },
   });
 
-  const isLoading = configLoading || settingsLoading;
+  const isLoading = configLoading || (settingsLoading && !settingsError);
   const error = configError;
 
   const handleSaveAutoSearch = () => {
@@ -1335,19 +1400,30 @@ export default function SettingsPage() {
       </div>
 
       <div className="w-full space-y-6">
-        {/* Database Migration Alert */}
+        {/* Settings load failure guidance */}
         {settingsError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>
-              <InterfaceText source={"Database Migration Required"} />
+              <InterfaceText source={"Settings unavailable"} />
             </AlertTitle>
             <AlertDescription>
               <InterfaceText
-                source={"The user settings table hasn't been created yet. Please run"}
+                source={
+                  "QuestarrNG applies database migrations automatically at startup. Restart the current service or container to retry. For source installations, run"
+                }
               />{" "}
               <code className="px-1 py-0.5 bg-muted rounded">npm run db:migrate</code>{" "}
-              <InterfaceText source={"to update the database schema, then restart the server."} />
+              <InterfaceText
+                source={
+                  "from the project directory. If this persists, check the server logs and database connection."
+                }
+              />
+              <div className="mt-3">
+                <Button variant="outline" size="sm" onClick={() => void refetchSettings()}>
+                  <InterfaceText source={"Try again"} />
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         )}
@@ -1762,6 +1838,7 @@ export default function SettingsPage() {
               blacklistTerms={releaseNameBlacklist}
               onTermsChange={setReleaseNameBlacklist}
             />
+            <ReleaseScoringSettings settings={userSettings} />
 
             {/* Blacklisted Releases */}
             <Card>
@@ -1783,7 +1860,16 @@ export default function SettingsPage() {
                   <div className="text-sm text-muted-foreground">
                     <InterfaceText source={"Loading..."} />
                   </div>
-                ) : !blacklistEntries || blacklistEntries.length === 0 ? (
+                ) : blacklistError ? (
+                  <div className="flex items-center gap-3 text-sm text-destructive">
+                    <span>
+                      <InterfaceText source={"Could not load blacklisted releases."} />
+                    </span>
+                    <Button variant="outline" size="sm" onClick={() => refetchBlacklist()}>
+                      <InterfaceText source={"Retry"} />
+                    </Button>
+                  </div>
+                ) : !Array.isArray(blacklistEntries) || blacklistEntries.length === 0 ? (
                   <div className="text-sm text-muted-foreground">
                     <InterfaceText source={"No blacklisted releases."} />
                   </div>
@@ -2576,6 +2662,73 @@ export default function SettingsPage() {
                         <InterfaceText source={"Save API Key"} />
                       </>
                     )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card id="rawg-config">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Key className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle className="text-lg">RAWG Game Database</CardTitle>
+                </div>
+                <CardDescription>
+                  Optional game search and discovery provider. IGDB and its SeerrNG identity remain
+                  available alongside RAWG.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Status</span>
+                  <Badge variant={rawgSettings?.configured ? "default" : "secondary"}>
+                    {rawgSettings?.configured ? "Configured" : "Not configured"}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rawg-api-key">RAWG API key</Label>
+                  <Input
+                    id="rawg-api-key"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder={
+                      rawgSettings?.configured
+                        ? "Enter a new key to replace the saved key"
+                        : "Enter your RAWG API key"
+                    }
+                    value={rawgApiKey}
+                    onChange={(event) => setRawgApiKey(event.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    <a
+                      className="underline"
+                      href="https://rawg.io/apidocs"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Get a RAWG API key
+                    </a>
+                    . The key is encrypted at rest. RAWG attribution appears in the app sidebar.
+                  </p>
+                </div>
+                <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                  {rawgSettings?.configured && (
+                    <Button variant="outline" onClick={removeRawg}>
+                      Remove RAWG
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={testRawg}
+                    disabled={!rawgApiKey.trim() && !rawgSettings?.configured}
+                  >
+                    Test connection
+                  </Button>
+                  <Button
+                    onClick={saveRawg}
+                    disabled={!rawgApiKey.trim() && !rawgSettings?.configured}
+                  >
+                    Save RAWG key
                   </Button>
                 </div>
               </CardContent>

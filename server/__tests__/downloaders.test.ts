@@ -163,6 +163,21 @@ describe("TransmissionClient", () => {
   });
 
   describe("addDownload", () => {
+    it.each(["../outside", "/etc/passwd", "C:\\Windows\\system32"])(
+      "rejects unsafe download path overrides before making requests: %s",
+      async (downloadPath) => {
+        const result = await client.addDownload({
+          url: "magnet:?xt=urn:btih:hash123",
+          title: "Test Release",
+          downloadPath,
+        });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toMatch(/invalid download path/i);
+        expect(fetchMock).not.toHaveBeenCalled();
+      }
+    );
+
     it("should add magnet link successfully", async () => {
       // Mock torrent-add success response
       fetchMock.mockResolvedValueOnce({
@@ -377,7 +392,22 @@ describe("RTorrentClient", () => {
   });
 
   describe("addDownload", () => {
-    it("should add download with downloadPath and category", async () => {
+    it.each(["../outside", "/etc/passwd", "C:\\Windows\\system32"])(
+      "rejects unsafe download path overrides before making requests: %s",
+      async (downloadPath) => {
+        const result = await client.addDownload({
+          url: "magnet:?xt=urn:btih:hash123",
+          title: "Test Release",
+          downloadPath,
+        });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toMatch(/invalid download path/i);
+        expect(fetchMock).not.toHaveBeenCalled();
+      }
+    );
+
+    it("should use the configured downloadPath with a category", async () => {
       // Mock for torrent download
       fetchMock.mockResolvedValueOnce({
         ok: true,
@@ -400,7 +430,6 @@ describe("RTorrentClient", () => {
         url: "http://indexer.com/release.torrent",
         title: "Test Release",
         category: "games",
-        downloadPath: "/downloads",
       });
 
       expect(result.success).toBe(true);
@@ -433,7 +462,6 @@ describe("RTorrentClient", () => {
       const result = await client.addDownload({
         url: "http://indexer.com/release.torrent",
         title: "Test Release",
-        downloadPath: "/downloads",
       });
 
       expect(result.success).toBe(true);
@@ -463,7 +491,6 @@ describe("RTorrentClient", () => {
       const result = await client.addDownload({
         url: "http://indexer.com/release.torrent",
         title: "Test Release",
-        downloadPath: "/invalid/path",
       });
 
       // Should succeed — the inline command is part of the atomic load.raw_start call

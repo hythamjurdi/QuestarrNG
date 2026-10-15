@@ -18,7 +18,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { type Game, type DownloadStatus } from "@shared/schema";
+import { type Game, type DownloadStatus, type Config } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
 import { GitHubVersionLink } from "@/components/GitHubVersionLink";
 import {
@@ -28,7 +28,12 @@ import {
   type AppNavItem,
 } from "@/components/navigation-items";
 import { withBasePath } from "@/lib/app-path";
-import { getInterfaceLanguageDirection, useInterfaceLanguage } from "@/lib/interface-locale";
+import { cn } from "@/lib/utils";
+import {
+  formatInterfaceMessage,
+  getInterfaceLanguageDirection,
+  useInterfaceLanguage,
+} from "@/lib/interface-locale";
 import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
 import { InterfaceText } from "@/components/InterfaceText";
 
@@ -38,11 +43,12 @@ interface AppSidebarProps {
 }
 
 // Stable reference for useQuery's no-data fallback so `games` doesn't change
-// identity on every render (which would otherwise defeat wishlistCount's memo).
+// identity on every render (which would otherwise defeat the count memos).
 const EMPTY_GAMES: Game[] = [];
 
 export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<AppSidebarProps>) {
   const { logout, user } = useAuth();
+  const { data: appConfig } = useQuery<Config>({ queryKey: ["/api/config"] });
   const { language, t, languageFor, directionFor } = useInterfaceLanguage();
   useRegionalPreference();
 
@@ -63,12 +69,14 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
   // once and allocates an intermediate array that's immediately discarded.
   // Memoized so heavily re-rendered components like this sidebar don't recompute
   // on every render.
-  const wishlistCount = useMemo(() => {
-    let count = 0;
+  const { wishlistCount, playingCount } = useMemo(() => {
+    let wanted = 0;
+    let playing = 0;
     for (const game of games) {
-      if (game.status === "wanted") count++;
+      if (game.status === "wanted") wanted++;
+      else if (game.status === "playing") playing++;
     }
-    return count;
+    return { wishlistCount: wanted, playingCount: playing };
   }, [games]);
 
   const activeDownloadsCount = useMemo(() => {
@@ -83,17 +91,54 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
 
   type NavItemWithBadge = Omit<AppNavItem, "children"> & {
     badge?: string | undefined;
+    badgeLabel?: string | undefined;
+    badgeClassName?: string | undefined;
+    badgeVariant?: "secondary" | "outline" | undefined;
     children?: NavItemWithBadge[] | undefined;
   };
 
   const withBadge = (item: AppNavItem): NavItemWithBadge => {
     let badge: string | undefined;
-    if (item.title === "Wishlist" && wishlistCount > 0) {
+    let badgeLabel: string | undefined;
+    let badgeClassName: string | undefined;
+    let badgeVariant: NavItemWithBadge["badgeVariant"];
+    if (item.title === "All Games" && games.length > 0) {
+      badge = formatRegionalNumber(games.length);
+      badgeLabel = formatInterfaceMessage("All Games, {count} games", { count: badge }, language);
+      badgeVariant = "outline";
+    } else if (item.title === "Wishlist" && wishlistCount > 0) {
       badge = formatRegionalNumber(wishlistCount);
+      badgeLabel = formatInterfaceMessage(
+        wishlistCount === 1 ? "Wishlist, {count} game" : "Wishlist, {count} games",
+        { count: badge },
+        language
+      );
+    } else if (item.title === "Playing" && playingCount > 0) {
+      badge = formatRegionalNumber(playingCount);
+      badgeLabel = formatInterfaceMessage(
+        playingCount === 1 ? "Playing, {count} game" : "Playing, {count} games",
+        { count: badge },
+        language
+      );
+      badgeClassName = "border-transparent bg-cyan-600 text-white";
     } else if (item.title === "Downloads" && activeDownloadsCount > 0) {
       badge = formatRegionalNumber(activeDownloadsCount);
+      badgeLabel = formatInterfaceMessage(
+        activeDownloadsCount === 1
+          ? "Downloads, {count} active download"
+          : "Downloads, {count} active downloads",
+        { count: badge },
+        language
+      );
     }
-    return { ...item, badge, children: item.children?.map(withBadge) };
+    return {
+      ...item,
+      badge,
+      badgeLabel,
+      badgeClassName,
+      badgeVariant,
+      children: item.children?.map(withBadge),
+    };
   };
 
   const navigation = primaryNavigation.map(withBadge);
@@ -138,7 +183,15 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
             <SidebarMenu>
               {navigation.map((item) =>
                 item.children && item.children.length > 0 ? (
-                  <Collapsible key={item.title} defaultOpen className="group/collapsible" asChild>
+                  <Collapsible
+                    key={item.title}
+                    defaultOpen={
+                      item.children?.some((child) => child.url === activeItem) ||
+                      (item.defaultOpen ?? true)
+                    }
+                    className="group/collapsible"
+                    asChild
+                  >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
@@ -174,9 +227,7 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                                   className="flex items-center justify-between w-full"
                                   lang={languageFor(child.title)}
                                   dir={directionFor(child.title)}
-                                  aria-label={
-                                    child.badge ? `${t(child.title)} (${child.badge})` : undefined
-                                  }
+                                  aria-label={child.badgeLabel}
                                 >
                                   <div className="flex items-center gap-2">
                                     <child.icon className="w-4 h-4" aria-hidden="true" />
@@ -189,9 +240,10 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                                   </div>
                                   {child.badge && (
                                     <Badge
-                                      variant="secondary"
-                                      className="ml-auto text-xs"
+                                      variant={child.badgeVariant ?? "secondary"}
+                                      className={cn("ml-auto text-xs", child.badgeClassName)}
                                       aria-hidden="true"
+                                      data-testid={`badge-${child.title.toLowerCase().replace(/\s+/g, "-")}`}
                                     >
                                       {child.badge}
                                     </Badge>
@@ -216,7 +268,7 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
                         className="flex items-center justify-between w-full"
                         lang={languageFor(item.title)}
                         dir={directionFor(item.title)}
-                        aria-label={item.badge ? `${t(item.title)} (${item.badge})` : undefined}
+                        aria-label={item.badgeLabel}
                       >
                         <div className="flex items-center gap-2">
                           <item.icon className="w-4 h-4" aria-hidden="true" />
@@ -305,6 +357,14 @@ export default function AppSidebar({ activeItem = "/", onNavigate }: Readonly<Ap
       </SidebarContent>
 
       <SidebarFooter>
+        {appConfig?.rawg?.configured && (
+          <div className="px-3 pb-2 text-center text-xs text-muted-foreground">
+            Game metadata by{" "}
+            <a className="underline" href="https://rawg.io" target="_blank" rel="noreferrer">
+              RAWG
+            </a>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

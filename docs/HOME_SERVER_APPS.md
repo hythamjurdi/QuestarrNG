@@ -1,21 +1,23 @@
 # Home server app store integrations
 
 Questarr ships ready-made app definitions for the main self-hosting platforms, so it can be
-installed without hand-writing a Compose file. Every definition points at the same published image
-(`ghcr.io/snapetech-org/questarrng:latest`, `linux/amd64`) and uses the same two mounts:
+installed without hand-writing a Compose file. The standard Compose, CasaOS, Umbrel, Cosmos, and
+Unraid definitions point at the same published image
+(`ghcr.io/snapetech-org/questarrng:latest`) and use the same two mounts:
 
 | Container path | Purpose                                                                         |
 | -------------- | ------------------------------------------------------------------------------- |
 | `/app/data`    | Questarr data, including the SQLite database. Required, must be persisted.      |
 | `/data`        | Optional. The same root your download client writes into, used to import games. |
 
-If you mount `/data`, add a matching entry under **Settings → Path Mappings** with **Local Path**
+If you mount the optional game-library `/data` path, add a matching entry under **Settings → Path Mappings** with **Local Path**
 `/data` and **Remote Path** set to the exact path your download client reports for that root.
 Leave it unmounted if you import manually.
 
-The application container runs as a non-root UID/GID. Make sure `/app/data` is writable by
-the configured `PUID`/`PGID`; on Compose based installs these values also set the container
-user. Existing appdata keeps its ownership, so keep the same IDs when upgrading.
+The regular application container runs as a non-root UID/GID. Make sure `/app/data` is writable by
+the configured `PUID`/`PGID`; on Compose-based installs these values also set the container
+user. Existing appdata keeps its ownership, so keep the same IDs when upgrading. The Home
+Assistant add-on has different storage semantics and is documented separately below.
 
 | File                                       | Platform                        |
 | ------------------------------------------ | ------------------------------- |
@@ -24,6 +26,35 @@ user. Existing appdata keeps its ownership, so keep the same IDs when upgrading.
 | `cosmos/questarr.cosmos-compose.json`      | Cosmos Cloud (ServApp)          |
 | `unraid/questarr.xml`                      | Unraid (Community Applications) |
 | `questarr/config.yaml`                     | Home Assistant add-on           |
+
+## Home Assistant add-on
+
+The add-on uses Home Assistant Supervisor's persistent `/data` volume for
+Questarr application state. The image links `/app/data` to `/data`, so the
+SQLite database and other app state survive add-on replacement and restart.
+This `/data` is **not** the optional game-library mount described above. The
+current add-on manifest exposes the web port but does not define a separate
+download or library mount.
+
+The add-on process runs as the unprivileged `questarr` account with UID/GID
+`1000:1000`; PUID and PGID are not configurable add-on options. On startup, a
+small helper with only the `CAP_CHOWN` capability corrects ownership beneath
+`/data`, without following symlinks. The app then checks that the persistent
+directory and any existing database are writable and stops with a clear error
+if they are not. This handles stale ownership on a writable Supervisor volume;
+it cannot repair a missing, read-only, incorrectly bound, or server-restricted
+volume. Correct the storage mapping or host-side permissions in that case.
+
+Install steps and troubleshooting notes are also in the [add-on README](../questarr/README.md).
+
+## NAS bind-mount checks
+
+For Docker Compose on a NAS, confirm that the host source path exists and is
+bound to the intended container path. A startup permission error can also come
+from a mistaken source path or volume mapping, even when the intended host
+directory appears writable. On normal Docker deployments, check the configured
+PUID/PGID against the host directory owner; on the Home Assistant add-on, check
+the Supervisor `/data` volume instead of trying to add PUID/PGID options.
 
 ## CasaOS
 

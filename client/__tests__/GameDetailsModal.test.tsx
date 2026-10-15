@@ -194,6 +194,7 @@ global.fetch = vi.fn();
 function makeFetchMock(overrides: Record<string, unknown> = {}) {
   const defaults: Record<string, unknown> = {
     "/api/nexusmods/game-domain": { configured: false, domain: null },
+    "/api/hltb/lookup": { data: null },
     "/xrel-status": { crackTypes: [] },
   };
   const routes = { ...defaults, ...overrides };
@@ -232,6 +233,17 @@ describe("GameDetailsModal", () => {
     expect(screen.getByTestId("text-rating-1")).toHaveTextContent("8.5/10");
     expect(screen.getByTestId("text-release-date-1")).toHaveTextContent("2023");
     expect(screen.getByTestId("img-cover-1")).toBeInTheDocument();
+  });
+
+  it("shows a zero IGDB score throughout game details", () => {
+    renderComponent({ ...mockGame, rating: 0 } as typeof mockGame);
+    expect(screen.getByText("IGDB score")).toBeInTheDocument();
+    expect(screen.getAllByText("0/10")).toHaveLength(2);
+    expect(screen.getByTestId("text-rating-1")).toHaveTextContent("0/10");
+
+    fireEvent.click(screen.getByRole("tab", { name: /links & ratings/i }));
+    expect(screen.getByText("IGDB Users")).toBeInTheDocument();
+    expect(screen.getByText("0.0")).toBeInTheDocument();
   });
 
   describe("Crack Status", () => {
@@ -277,6 +289,75 @@ describe("GameDetailsModal", () => {
     expect(screen.getByTestId("badge-genre-adventure")).toBeInTheDocument();
     expect(screen.getByTestId("badge-platform-pc")).toBeInTheDocument();
     expect(screen.getByTestId("badge-platform-ps5")).toBeInTheDocument();
+  });
+
+  it("shows HowLongToBeat estimates and uses the matched game link", async () => {
+    const hltbUrl = "https://howlongtobeat.com/game/12345";
+    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+      makeFetchMock({
+        "/api/hltb/lookup": {
+          data: {
+            id: 12345,
+            name: "Test Game",
+            gameplayMain: 25,
+            gameplayMainExtra: 40,
+            gameplayCompletionist: 65,
+            url: hltbUrl,
+          },
+        },
+      })
+    );
+
+    renderComponent();
+
+    const section = await screen.findByTestId("section-hltb");
+    expect(within(section).getByText("Main Story")).toBeInTheDocument();
+    expect(within(section).getByText("25h")).toBeInTheDocument();
+    expect(within(section).getByText("Main + Extras")).toBeInTheDocument();
+    expect(within(section).getByText("40h")).toBeInTheDocument();
+    expect(within(section).getByText("Completionist")).toBeInTheDocument();
+    expect(within(section).getByText("65h")).toBeInTheDocument();
+    expect(within(section).getByRole("link")).toHaveAttribute("href", hltbUrl);
+
+    fireEvent.click(screen.getByRole("tab", { name: /links & ratings/i }));
+    await waitFor(() => {
+      const hltbLinks = screen.getAllByRole("link", { name: /howlongtobeat/i, hidden: true });
+      expect(hltbLinks.some((link) => link.getAttribute("href") === hltbUrl)).toBe(true);
+    });
+  });
+
+  it("hides empty HLTB estimates but keeps the matched page link", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+      makeFetchMock({
+        "/api/hltb/lookup": {
+          data: {
+            id: 12345,
+            name: "Test Game",
+            gameplayMain: 0,
+            gameplayMainExtra: 0,
+            gameplayCompletionist: 0,
+            url: "https://howlongtobeat.com/game/12345",
+          },
+        },
+      })
+    );
+
+    renderComponent();
+    await waitFor(() => {
+      expect(screen.queryByTestId("section-hltb")).not.toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("tab", { name: /links & ratings/i }));
+
+    const hltbLink = await screen.findByRole("link", { name: /howlongtobeat/i, hidden: true });
+    expect(hltbLink).toHaveAttribute("href", "https://howlongtobeat.com/game/12345");
+  });
+
+  it("uses a title-search link when HLTB has no match", async () => {
+    renderComponent();
+    fireEvent.click(screen.getByRole("tab", { name: /links & ratings/i }));
+
+    const hltbLink = await screen.findByRole("link", { name: /howlongtobeat/i, hidden: true });
+    expect(hltbLink).toHaveAttribute("href", "https://howlongtobeat.com/?q=Test%20Game");
   });
 
   it("updates and clears the automatic download target", async () => {
@@ -955,6 +1036,25 @@ describe("GameDetailsModal", () => {
       expect(await screen.findByText(/no files found on disk/i)).toBeInTheDocument();
     });
 
+    it("explains when scan limits return a partial file list", async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+        makeFetchMock({
+          "/api/games/1/files": {
+            files: [{ name: "game.exe", path: "/games/game.exe", category: "main", size: 1024 }],
+            truncated: true,
+          },
+        })
+      );
+      renderComponent();
+
+      fireEvent.mouseDown(screen.getByRole("tab", { name: /files/i }));
+
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        "Showing a partial file list because the scan reached a safety limit."
+      );
+      expect(screen.getByText("game.exe")).toBeInTheDocument();
+    });
+
     it("renders a flat list when files belong to a single category", async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
         makeFetchMock({
@@ -1009,6 +1109,99 @@ describe("GameDetailsModal", () => {
       renderComponent(discoveryGame);
 
       expect(screen.queryByRole("tab", { name: /files/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Discover games (temporary igdb- id)", () => {
+    const discoveryGame = {
+      ...mockGame,
+      id: "igdb-123",
+      igdbId: 123,
+    } as unknown as import("@shared/schema").Game;
+    const libraryId = "0f8fad5b-d9cb-469f-a165-70867728950e";
+    const libraryGame = { ...mockGame, id: libraryId, igdbId: 123, userRating: 6 };
+
+    type FetchCall = [string, RequestInit | undefined];
+    const fetchCalls = () => (global.fetch as ReturnType<typeof vi.fn>).mock.calls as FetchCall[];
+    const callsTo = (method: string, url: string) =>
+      fetchCalls().filter(([u, init]) => u === url && (init?.method ?? "GET") === method);
+
+    function mockLibrary(games: unknown[], postResponse?: unknown) {
+      const base = makeFetchMock({ "/api/games?includeHidden=true": games });
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+        (url: string, init?: RequestInit) => {
+          if (url === "/api/games" && init?.method === "POST") {
+            return Promise.resolve({
+              ok: true,
+              status: 201,
+              json: vi.fn().mockResolvedValue(postResponse),
+            });
+          }
+          return base(url);
+        }
+      );
+    }
+
+    it("hides a game that isn't in the library by adding it as hidden", async () => {
+      mockLibrary([], { ...libraryGame, hidden: true });
+      renderComponent(discoveryGame);
+
+      fireEvent.click(screen.getByTestId("button-toggle-hidden-quick-igdb-123"));
+
+      await waitFor(() => expect(callsTo("POST", "/api/games")).toHaveLength(1));
+      const body = JSON.parse(String(callsTo("POST", "/api/games")[0]![1]!.body));
+      expect(body).toMatchObject({ igdbId: 123, hidden: true });
+      expect(fetchCalls().some(([url]) => url.includes("igdb-123"))).toBe(false);
+    });
+
+    it("hides the library copy when the game is already tracked", async () => {
+      mockLibrary([libraryGame]);
+      renderComponent(discoveryGame);
+
+      await waitFor(() => expect(callsTo("GET", "/api/games?includeHidden=true")).toHaveLength(1));
+      // Wait for the library list to land: the rating shows the library value.
+      expect(await screen.findByText("3/5")).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("button-toggle-hidden-quick-igdb-123"));
+
+      await waitFor(() =>
+        expect(callsTo("PATCH", `/api/games/${libraryId}/hidden`)).toHaveLength(1)
+      );
+      expect(callsTo("POST", "/api/games")).toHaveLength(0);
+    });
+
+    it("offers no Remove button for a game that isn't in the library", async () => {
+      mockLibrary([]);
+      renderComponent(discoveryGame);
+
+      await waitFor(() => expect(callsTo("GET", "/api/games?includeHidden=true")).toHaveLength(1));
+      expect(screen.queryByTestId("button-remove-game-quick-igdb-123")).not.toBeInTheDocument();
+    });
+
+    it("removes the library copy without touching files", async () => {
+      mockLibrary([libraryGame]);
+      renderComponent(discoveryGame);
+
+      fireEvent.click(await screen.findByTestId("button-remove-game-quick-igdb-123"));
+      const dialog = await screen.findByRole("alertdialog");
+      fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
+
+      await waitFor(() =>
+        expect(callsTo("DELETE", `/api/games/${libraryId}?deleteFiles=false`)).toHaveLength(1)
+      );
+    });
+
+    it("adds an untracked game to the library before saving its rating", async () => {
+      mockLibrary([], libraryGame);
+      renderComponent(discoveryGame);
+
+      fireEvent.click(screen.getByRole("tab", { name: /links/i }));
+      fireEvent.click(await screen.findByRole("button", { name: "Rate 4 out of 5" }));
+
+      await waitFor(() =>
+        expect(callsTo("PATCH", `/api/games/${libraryId}/user-rating`)).toHaveLength(1)
+      );
+      const body = JSON.parse(String(callsTo("POST", "/api/games")[0]![1]!.body));
+      expect(body).toMatchObject({ igdbId: 123, status: "wanted" });
     });
   });
 

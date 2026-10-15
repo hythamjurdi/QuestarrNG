@@ -1,0 +1,76 @@
+Batch 9 review and validation — 2026-10-12
+
+Shared download contract (#3, #17)
+- Added DownloadStatusType and DownloadType to shared/schema.ts and reused the
+  shared DownloadStatus in downloads-utils.ts, downloads.tsx, and
+  use-background-notifications.ts. Removed the client-side duplicate interfaces.
+- `npm run check` passed; downloads utility tests passed (77 tests).
+- `npm run test:e2e -- tests/e2e/upstream-download-status.evidence.spec.ts` passed
+  (2 tests including setup). Screenshot captured after the loading skeleton
+  disappeared: docs/pr-evidence/upstream-download-status.png.
+
+Typed database environment (#2, #8, #14, #16)
+- server/config.ts now validates DB_DIALECT, DATABASE_URL, and
+  DATABASE_POOL_MAX with Zod and exports typed database settings. SQLite stays
+  the default; DATABASE_URL alone does not switch a legacy install to Postgres.
+- server/db.ts and both SQLite/Postgres connection modules use the typed config.
+- Config tests cover defaults, a valid Postgres URL, required URL and URL-scheme
+  failures, invalid pool size, and an old stale URL that must leave SQLite active.
+
+Indexer/downloader PATCH validation (#13)
+- Shared partial Zod schemas now parse PATCH bodies before storage. Omitted
+  values are removed and unknown fields are stripped, while existing request
+  sanitizers and safe-URL checks remain in place.
+- Route tests prove unexpected properties are not passed to either storage
+  update method; the focused route suite passed (80 tests).
+
+Copilot instructions (#6, #7, #66)
+- Replaced stale React 18/Vite 5/Node 22 and SQLite-only guidance with the
+  current React 19/Vite 8/Express 5 stack, dual database layout, current source
+  structure, validation commands, safe URL/secret handling, and required running
+  UI evidence for client changes.
+
+Production image checks (#237, #245)
+- Built the production target from pushed checkpoint e6ddab92 on kspls0.
+- The image resolves `nanoid` at runtime and contains both
+  /app/migrations/meta/_journal.json and
+  /app/migrations-pg/meta/_journal.json.
+- A fresh container applied its SQLite migrations, returned HTTP 200 from
+  /api/health, and returned the expected HTTP 401 from the protected SeerrNG
+  ping route. The temporary image, container, volume, and clone were removed.
+
+Not applicable (#260)
+- The issue logs show ENOTFOUND for the configured Docker hostname `db`. The
+  maintainer explained the internal PostgreSQL port must stay 5432 when mapping
+  a different host port, and the reporter later confirmed a clean pull fixed
+  the setup. This does not call for an application code change.
+
+Existing early-request implementations verified in the current fork (#1, #4,
+#5, #9–#12, #15, #18–#25)
+- Global structured error handling is installed after routes in server/index.ts;
+  security/error tests cover sanitized responses. Add-game mapping filters
+  database-generated and future-state fields. tsconfig.json excludes examples.
+- GET /api/indexers/search aggregates enabled indexers. Discovery cards open the
+  game download flow; search-result rows offer direct downloader selection.
+- qBittorrent authentication, adding, listing, and details are implemented.
+  Download details expose files and trackers. The aggregated downloads API
+  reads every enabled client's getAllDownloads result; the page has completed
+  status filters, and Usenet clients query history/archive.
+- Indexer setup has a category multi-select and test-connection actions. The
+  discovery carousel uses previous/next controls. Setup/login, cookie/JWT
+  sessions, and password updates are present and covered by auth tests.
+
+Validation results for this batch:
+- `npm run check` — passed.
+- `npm run lint` — passed.
+- `npm run format:check` — passed.
+- `npm run build` — passed (Vite retains its existing large-chunk warning).
+- `npm run db:check:pg` — passed.
+- `npm run test:run -- --maxWorkers=4` — 247 files passed, 1 skipped;
+  4,016 tests passed, 7 skipped.
+- `npm run test:run -- server/__tests__/api_routes_extended.test.ts` — 80 tests
+  passed after the strict optional-property fix.
+- `npm run test:run -- client/__tests__/downloads-utils.test.ts` — 77 tests
+  passed.
+- `npm run test:e2e -- tests/e2e/upstream-download-status.evidence.spec.ts` —
+  2 passed; the screenshot shows the settled page state, not the loading skeleton.

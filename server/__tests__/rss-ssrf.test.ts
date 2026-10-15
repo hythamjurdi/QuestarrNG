@@ -101,6 +101,14 @@ vi.mock("../middleware.js", () => ({
     res: import("express").Response,
     next: import("express").NextFunction
   ) => next(),
+  validate:
+    () =>
+    (
+      req: import("express").Request,
+      res: import("express").Response,
+      next: import("express").NextFunction
+    ) =>
+      next(),
   sanitizeSearchQuery: [],
   sanitizeGameId: [],
   sanitizeIgdbId: [],
@@ -124,6 +132,7 @@ vi.mock("../middleware.js", () => ({
   sanitizeRootFolderId: [],
   sanitizeLibraryScanData: [],
   sanitizeUnmatchedMatchData: [],
+  sanitizeUnmatchedSearchData: [],
   sanitizeJournalEntryId: [],
   sanitizeMilestoneId: [],
   sanitizeScreenshotId: [],

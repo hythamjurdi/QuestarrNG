@@ -128,6 +128,16 @@ describe("Security Headers", () => {
     expect(csp).toContain("https://images.igdb.com");
   });
 
+  it("does not force HTTP-only deployments to upgrade to HTTPS", async () => {
+    mockConfig.ssl.enabled = false;
+    const app = await createApp();
+    const response = await request(app).get("/api/auth/status");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["strict-transport-security"]).toBeUndefined();
+    expect(response.headers["content-security-policy"]).not.toContain("upgrade-insecure-requests");
+  });
+
   // ZAP's baseline scan flags a bare scheme (e.g. "https:") in any directive as a
   // wildcard-directive alert (rule 10055) -- it permits loading from *any* host on that
   // scheme. This was fixed once already (font-src/style-src inherited it from helmet's

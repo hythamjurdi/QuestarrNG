@@ -251,6 +251,48 @@ describe("checkGameUpdates", () => {
     expect(update?.data.earlyAccess).toBe(true);
   });
 
+  it("marks and notifies an explicitly delayed IGDB release date", async () => {
+    vi.mocked(storage.getAllGames).mockResolvedValue([
+      {
+        id: "game-delayed",
+        title: "Delayed Game",
+        igdbId: 3001,
+        releaseDate: "2023-06-15",
+        originalReleaseDate: "2023-06-15",
+        releaseStatus: "upcoming",
+      } as Game,
+    ]);
+    vi.mocked(igdbClient.getGamesByIds).mockResolvedValue([
+      {
+        id: 3001,
+        first_release_date: Math.floor(new Date("2023-06-15T00:00:00Z").getTime() / 1000),
+        release_dates: [
+          {
+            date: Math.floor(new Date("2023-06-15T00:00:00Z").getTime() / 1000),
+            status: { name: "Delayed" },
+          },
+        ],
+      },
+    ] as never);
+
+    await checkGameUpdates();
+
+    expect(igdbClient.getGamesByIds).toHaveBeenCalledWith([3001], {
+      includeReleaseDateStatuses: true,
+    });
+    const updates = vi.mocked(storage.updateGamesBatch).mock.calls[0]?.[0];
+    expect(updates?.find((update) => update.id === "game-delayed")?.data.releaseStatus).toBe(
+      "delayed"
+    );
+    expect(storage.addNotificationsBatch).toHaveBeenCalledWith([
+      expect.objectContaining({
+        title: "Game Delayed",
+        type: "delayed",
+        message: "Delayed Game has been delayed to 2023-06-15",
+      }),
+    ]);
+  });
+
   it("should handle network errors from IGDB gracefully", async () => {
     const mockGames: Partial<Game>[] = [{ id: "game-1", igdbId: 1001 }];
     vi.mocked(storage.getAllGames).mockResolvedValue(mockGames as Game[]);

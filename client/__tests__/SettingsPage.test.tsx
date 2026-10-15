@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 import React from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SettingsPage from "../src/pages/settings";
 import { setInterfaceLanguage } from "../src/lib/interface-locale";
 import { setRegionalPreference } from "../src/lib/regional-format";
@@ -86,9 +86,28 @@ const defaultUserSettings = {
   preferredPlatform: "",
   xrelSceneReleases: true,
   xrelP2pReleases: false,
+  hideAdultContent: true,
+  hideAgeRestrictedContent: true,
   hideShelvedByDefault: true,
   hideOwnedInHasResults: true,
 };
+
+async function defaultFetch(input: RequestInfo | URL): Promise<Response> {
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+  if (url.includes("/api/config")) {
+    return { ok: true, json: async () => defaultConfig } as Response;
+  }
+  if (url.includes("/api/blacklist")) {
+    return { ok: true, json: async () => [] } as Response;
+  }
+  if (url.includes("/api/api-keys")) {
+    return { ok: true, json: async () => [] } as Response;
+  }
+  if (url.includes("/api/settings")) {
+    return { ok: true, json: async () => defaultUserSettings } as Response;
+  }
+  return { ok: true, json: async () => ({}) } as Response;
+}
 
 describe("SettingsPage", () => {
   beforeEach(() => {
@@ -97,30 +116,122 @@ describe("SettingsPage", () => {
     setRegionalPreference("system");
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-      if (url.includes("/api/config")) {
+      if (url.includes("/api/config"))
         return { ok: true, json: async () => defaultConfig } as Response;
-      }
-      if (url.includes("/api/blacklist")) {
-        return { ok: true, json: async () => [] } as Response;
-      }
-      if (url.includes("/api/api-keys")) {
-        return { ok: true, json: async () => [] } as Response;
-      }
-      if (url.includes("/api/settings")) {
+      if (url.includes("/api/blacklist")) return { ok: true, json: async () => [] } as Response;
+      if (url.includes("/api/api-keys")) return { ok: true, json: async () => [] } as Response;
+      if (url.includes("/api/settings"))
         return { ok: true, json: async () => defaultUserSettings } as Response;
-      }
       return { ok: true, json: async () => ({}) } as Response;
     }) as typeof fetch;
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.removeItem("questarr-selected-theme");
+    document.documentElement.classList.remove("theme-win2k");
+  });
+
   it("renders the Settings heading", async () => {
+    const testQueryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText("Settings")).toBeInTheDocument();
+  });
+
+  it("saves the two content filters independently", async () => {
+    const { apiRequest } = await import("@/lib/queryClient");
     render(
       <QueryClientProvider client={createTestQueryClient()}>
         <SettingsPage />
       </QueryClientProvider>
     );
 
+    const hideErotic = await screen.findByRole("switch", { name: "Hide erotic content" });
+    const hideAgeRestricted = screen.getByRole("switch", {
+      name: "Hide age-restricted content",
+    });
+    expect(hideErotic).toBeChecked();
+    expect(hideAgeRestricted).toBeChecked();
+
+    fireEvent.click(hideErotic);
+    expect(hideErotic).not.toBeChecked();
+    expect(hideAgeRestricted).toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save Content Filtering" }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith("PATCH", "/api/settings", {
+        hideAdultContent: false,
+        hideAgeRestrictedContent: true,
+      });
+    });
+  });
+
+  it("applies the Windows 2000 theme when selected", async () => {
+    const testQueryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Settings");
+    fireEvent.click(screen.getByRole("button", { name: /Windows 2000/ }));
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveClass("theme-win2k");
+      expect(localStorage.getItem("questarr-selected-theme")).toBe("win2k");
+    });
+  });
+
+  it("explains automatic migrations and source-only recovery when settings fail to load", async () => {
+    const successfulFetch = defaultFetch;
+    let failSettingsRequest = true;
+    let settingsRequests = 0;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url === "/api/settings") {
+        settingsRequests += 1;
+        if (failSettingsRequest) {
+          return {
+            ok: false,
+            status: 500,
+            text: async () => "settings unavailable",
+            json: async () => ({}),
+          } as Response;
+        }
+      }
+      return successfulFetch(input);
+    });
+
+    const testQueryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
     expect(await screen.findByText("Settings")).toBeInTheDocument();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Settings unavailable");
+    expect(alert).toHaveTextContent("migrations automatically at startup");
+    expect(alert).toHaveTextContent("source installations");
+    expect(alert).toHaveTextContent("npm run db:migrate");
+    expect(alert).not.toHaveTextContent("npm run db:push");
+    expect(settingsRequests).toBe(1);
+
+    failSettingsRequest = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+    expect(settingsRequests).toBe(2);
   });
 
   it("translates the selected browser-default regional format", async () => {
@@ -156,7 +267,7 @@ describe("SettingsPage", () => {
   });
 
   it("hides interval and downstream toggles when auto-search is disabled", async () => {
-    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url.includes("/api/config"))
         return { ok: true, json: async () => defaultConfig } as Response;
@@ -168,7 +279,7 @@ describe("SettingsPage", () => {
         } as Response;
       }
       return { ok: true, json: async () => ({}) } as Response;
-    }) as typeof fetch;
+    });
 
     render(
       <QueryClientProvider client={createTestQueryClient()}>
@@ -262,7 +373,7 @@ describe("SettingsPage", () => {
     expect(screen.getByTestId("preferred-release-groups")).toBeInTheDocument();
   });
 
-  it("switches to the Platforms tab and renders the platform picker", async () => {
+  it("renders the platform picker in the dedicated Platforms tab", async () => {
     render(
       <QueryClientProvider client={createTestQueryClient()}>
         <SettingsPage />
@@ -270,11 +381,13 @@ describe("SettingsPage", () => {
     );
 
     await screen.findByText("Settings");
+    expect(screen.getByRole("tab", { name: "Platforms" })).toBeInTheDocument();
+    expect(screen.queryByText("Choose the platforms you use.", { exact: false })).toBeNull();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Platforms" }));
 
     expect(
       await screen.findByText("Choose the platforms you use.", { exact: false })
-    ).toBeInTheDocument();
+    ).toBeVisible();
   });
 
   it("switches to the Integrations tab and saves a Steam ID", async () => {
@@ -390,7 +503,7 @@ describe("SettingsPage", () => {
 
   it("switches to the Discovery & Downloads tab, lists a blacklist entry, and removes it", async () => {
     const { apiRequest } = await import("@/lib/queryClient");
-    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url.includes("/api/config"))
         return { ok: true, json: async () => defaultConfig } as Response;
@@ -412,7 +525,7 @@ describe("SettingsPage", () => {
       if (url.includes("/api/settings"))
         return { ok: true, json: async () => defaultUserSettings } as Response;
       return { ok: true, json: async () => ({}) } as Response;
-    }) as typeof fetch;
+    });
 
     render(
       <QueryClientProvider client={createTestQueryClient()}>
@@ -479,7 +592,7 @@ describe("SettingsPage", () => {
   });
 
   it("clamps an out-of-range persisted IGDB rate limit when loading settings", async () => {
-    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url.includes("/api/settings")) {
         return {
@@ -497,7 +610,7 @@ describe("SettingsPage", () => {
         return { ok: true, json: async () => [] } as Response;
       }
       return { ok: true, json: async () => ({}) } as Response;
-    }) as typeof fetch;
+    });
 
     render(
       <QueryClientProvider client={createTestQueryClient()}>
@@ -510,6 +623,66 @@ describe("SettingsPage", () => {
 
     const rateLimitInput = await screen.findByLabelText("IGDB API Rate Limit (requests/second)");
     expect(rateLimitInput).toHaveValue(4);
+  });
+
+  it("clamps the Steam wishlist sync interval and saves the selected setting", async () => {
+    const { apiRequest } = await import("@/lib/queryClient");
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Settings");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Integrations" }));
+
+    const enabled = await screen.findByRole("switch", { name: "Auto-Sync Wishlist" });
+    fireEvent.click(enabled);
+    const interval = await screen.findByLabelText("Sync Interval (hours)");
+
+    fireEvent.change(interval, { target: { value: "-1" } });
+    expect(interval).toHaveValue(1);
+    fireEvent.change(interval, { target: { value: "999" } });
+    expect(interval).toHaveValue(168);
+    fireEvent.click(screen.getByRole("button", { name: "Save Sync Settings" }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith(
+        "PATCH",
+        "/api/settings",
+        expect.objectContaining({ steamSyncEnabled: true, steamSyncIntervalHours: 168 })
+      );
+    });
+  });
+
+  it("preserves unsaved Steam sync choices across a background settings refresh", async () => {
+    const testQueryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Settings");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Integrations" }));
+
+    const enabled = await screen.findByRole("switch", { name: "Auto-Sync Wishlist" });
+    fireEvent.click(enabled);
+    const interval = await screen.findByLabelText("Sync Interval (hours)");
+    fireEvent.change(interval, { target: { value: "36" } });
+    expect(interval).toHaveValue(36);
+
+    await act(async () => {
+      testQueryClient.setQueryData(["/api/settings"], {
+        ...defaultUserSettings,
+        searchIntervalHours: 12,
+        steamSyncEnabled: false,
+        steamSyncIntervalHours: 24,
+      });
+    });
+
+    expect(enabled).toBeChecked();
+    expect(interval).toHaveValue(36);
   });
 
   it("switches to the System tab and toggles downloader debug logging", async () => {
@@ -543,6 +716,35 @@ describe("SettingsPage", () => {
       });
     });
     await waitFor(() => expect(debugSwitch).toBeChecked());
+  });
+
+  it("keeps automatic telemetry opt-in off by default and saves the user's choice", async () => {
+    const { apiRequest } = await import("@/lib/queryClient");
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <SettingsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Settings");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "System" }));
+
+    const telemetrySwitch = await screen.findByRole("switch", {
+      name: "Automatically send error reports",
+    });
+    expect(telemetrySwitch).not.toBeChecked();
+    expect(screen.getByText(/Off by default/)).toBeInTheDocument();
+
+    fireEvent.click(telemetrySwitch);
+    expect(telemetrySwitch).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Save Telemetry" }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith("PATCH", "/api/settings", {
+        telemetryEnabled: true,
+      });
+    });
   });
 
   it("disables downloader debug logging switch and shows an error when the setting fails to load", async () => {

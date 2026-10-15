@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AppSidebar from "@/components/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -97,6 +97,7 @@ describe("AppSidebar translated labels", () => {
       </QueryClientProvider>
     );
 
+    fireEvent.click(screen.getByTestId("nav-more"));
     const wishlistButton = screen.getByTestId("nav-wishlist");
     const downloadsButton = screen.getByTestId("nav-downloads");
     expect(within(wishlistButton).getByText("2", { exact: true })).toBeInTheDocument();
@@ -109,11 +110,11 @@ describe("AppSidebar translated labels", () => {
     expect(within(screen.getByTestId("nav-downloads")).getByText(arabicTwo)).toBeInTheDocument();
     expect(screen.getByTestId("nav-wishlist")).toHaveAttribute(
       "aria-label",
-      expect.stringContaining(`(${arabicTwo})`)
+      expect.stringContaining(arabicTwo)
     );
     expect(screen.getByTestId("nav-downloads")).toHaveAttribute(
       "aria-label",
-      expect.stringContaining(`(${arabicTwo})`)
+      expect.stringContaining(arabicTwo)
     );
   });
 });

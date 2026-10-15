@@ -1,12 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 
-const { mockStorage, mockImportManager, mockPlatformMappingService, fsMock } = vi.hoisted(() => ({
+const {
+  mockStorage,
+  mockImportManager,
+  mockPathMappingService,
+  mockPlatformMappingService,
+  fsMock,
+} = vi.hoisted(() => ({
   mockStorage: {
     getImportConfig: vi.fn(),
     getRomMConfig: vi.fn(),
+    updateRomMConfig: vi.fn(),
     getEnabledDownloaders: vi.fn(),
     getPendingImportReviews: vi.fn(),
+    getUnlinkedImportReviews: vi.fn(),
+    getQuarantinedDownloads: vi.fn(),
     getGame: vi.fn(),
     getPlatformMappings: vi.fn(),
     addPlatformMapping: vi.fn(),
@@ -19,6 +28,7 @@ const { mockStorage, mockImportManager, mockPlatformMappingService, fsMock } = v
     updateUserSettings: vi.fn(),
     createUserSettings: vi.fn(),
     getGameDownload: vi.fn(),
+    relinkGameDownload: vi.fn(),
     updateGameDownloadStatus: vi.fn(),
     completeUnlinkedGameDownload: vi.fn(),
   },
@@ -29,6 +39,9 @@ const { mockStorage, mockImportManager, mockPlatformMappingService, fsMock } = v
   mockPlatformMappingService: {
     initializeDefaults: vi.fn(),
     updateMapping: vi.fn(),
+  },
+  mockPathMappingService: {
+    translatePath: vi.fn(),
   },
   fsMock: {
     stat: vi.fn(),
@@ -41,11 +54,17 @@ const { mockStorage, mockImportManager, mockPlatformMappingService, fsMock } = v
 vi.mock("../storage.js", () => ({ storage: mockStorage }));
 vi.mock("../services/index.js", () => ({
   importManager: mockImportManager,
+  pathMappingService: mockPathMappingService,
   platformMappingService: mockPlatformMappingService,
 }));
 vi.mock("fs-extra", () => ({ default: fsMock }));
+vi.mock("../library-scanner.js", () => ({
+  rescanAllEnabledRootFolders: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { importRouter } from "../routes/import.js";
+import { IncompleteScanError } from "../services/ImportManager.js";
+import { rescanAllEnabledRootFolders } from "../library-scanner.js";
 import {
   makeImportConfig,
   makeRomMConfig,
@@ -60,6 +79,9 @@ beforeEach(() => {
   mockStorage.getRomMConfig.mockResolvedValue(makeRomMConfig());
   mockStorage.getPathMappings.mockResolvedValue([]);
   mockStorage.getEnabledDownloaders.mockResolvedValue([]);
+  mockStorage.getPendingImportReviews.mockResolvedValue([]);
+  mockStorage.getUnlinkedImportReviews.mockResolvedValue([]);
+  mockStorage.getQuarantinedDownloads.mockResolvedValue([]);
   mockImportManager.confirmImport.mockResolvedValue(undefined);
   mockImportManager.planConfirmImport.mockResolvedValue({
     originalPath: "/local/game.iso",
@@ -67,6 +89,44 @@ beforeEach(() => {
     files: [],
     hasArchive: false,
     totalCount: 0,
+  });
+});
+
+describe("PATCH /api/imports/romm", () => {
+  it("saves current settings when a legacy client includes the fixed multi-file default", async () => {
+    const savedConfig = makeRomMConfig({ enabled: true });
+    mockStorage.updateRomMConfig.mockResolvedValue(savedConfig);
+
+    const res = await request(createApp()).patch("/api/imports/romm").send({
+      enabled: true,
+      multiFilePlacement: "subfolder",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(savedConfig);
+    expect(mockStorage.updateRomMConfig).toHaveBeenCalledWith(
+      "user-1",
+      makeRomMConfig({ enabled: true })
+    );
+  });
+
+  it("continues rejecting unrelated unknown settings", async () => {
+    const res = await request(createApp())
+      .patch("/api/imports/romm")
+      .send({ multiFilePlacement: "subfolder", unexpectedSetting: true });
+
+    expect(res.status).toBe(400);
+    expect(mockStorage.updateRomMConfig).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/imports/pending", () => {
+  it("scopes orphaned import recovery items to the authenticated user", async () => {
+    const res = await request(createApp()).get("/api/imports/pending");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+    expect(mockStorage.getUnlinkedImportReviews).toHaveBeenCalledWith("user-1");
   });
 });
 
@@ -405,18 +465,13 @@ describe("DELETE /api/imports/:id", () => {
     expect(res.status).toBe(500);
   });
 
-  it("skips a game_link_required download via the unscoped fallback lookup", async () => {
-    // The userId-scoped lookup can never find a game_link_required download
-    // (it has no game row to join ownership through), so it must fall back
-    // to an unscoped lookup that only accepts a game_link_required record,
-    // then complete it via the atomic completeUnlinkedGameDownload path.
-    mockStorage.getGameDownload
-      .mockResolvedValueOnce(undefined) // scoped lookup: getGameDownload(id, userId)
-      .mockResolvedValueOnce({
-        id: "dl-unlinked",
-        gameId: "missing-game",
-        status: "game_link_required",
-      }); // unscoped fallback: getGameDownload(id)
+  it("skips an owned game_link_required download through an owner-scoped transition", async () => {
+    mockStorage.getGameDownload.mockResolvedValue({
+      id: "dl-unlinked",
+      gameId: "missing-game",
+      ownerUserId: "user-1",
+      status: "game_link_required",
+    });
     mockStorage.completeUnlinkedGameDownload.mockResolvedValue({
       id: "dl-unlinked",
       status: "completed",
@@ -426,20 +481,18 @@ describe("DELETE /api/imports/:id", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(mockStorage.getGameDownload).toHaveBeenCalledTimes(2);
-    expect(mockStorage.getGameDownload).toHaveBeenNthCalledWith(2, "dl-unlinked");
-    expect(mockStorage.completeUnlinkedGameDownload).toHaveBeenCalledWith("dl-unlinked");
+    expect(mockStorage.getGameDownload).toHaveBeenCalledExactlyOnceWith("dl-unlinked", "user-1");
+    expect(mockStorage.completeUnlinkedGameDownload).toHaveBeenCalledWith("dl-unlinked", "user-1");
     expect(mockStorage.updateGameDownloadStatus).not.toHaveBeenCalled();
   });
 
   it("returns 409 when a game_link_required download is relinked before it can be skipped", async () => {
-    // A concurrent POST /:id/link raced ahead and relinked this download
-    // between the fallback lookup and the completion write — the atomic
-    // conditional update loses that race and must not silently overwrite
-    // the relink with "completed".
-    mockStorage.getGameDownload
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce({ id: "dl-race", gameId: "g1", status: "game_link_required" });
+    mockStorage.getGameDownload.mockResolvedValue({
+      id: "dl-race",
+      gameId: "g1",
+      ownerUserId: "user-1",
+      status: "game_link_required",
+    });
     mockStorage.completeUnlinkedGameDownload.mockResolvedValue(undefined);
 
     const res = await request(createApp()).delete("/api/imports/dl-race");
@@ -448,24 +501,93 @@ describe("DELETE /api/imports/:id", () => {
     expect(mockStorage.updateGameDownloadStatus).not.toHaveBeenCalled();
   });
 
-  it("does not use the unscoped fallback for a download that isn't game_link_required", async () => {
-    // A download that's simply outside the caller's ownership (e.g. belongs
-    // to another user, or genuinely doesn't exist) must stay 404 — the
-    // fallback is only a carve-out for the ownerless game_link_required case.
-    mockStorage.getGameDownload
-      .mockResolvedValueOnce(undefined) // scoped lookup fails
-      .mockResolvedValueOnce({ id: "dl-2", gameId: "g2", status: "manual_review_required" }); // exists, but not unlinked
+  it("does not reveal or skip another user's orphaned download", async () => {
+    mockStorage.getGameDownload.mockResolvedValue(undefined);
 
-    const res = await request(createApp()).delete("/api/imports/dl-2");
+    const res = await request(createApp()).delete("/api/imports/dl-foreign");
 
     expect(res.status).toBe(404);
+    expect(mockStorage.getGameDownload).toHaveBeenCalledExactlyOnceWith("dl-foreign", "user-1");
+    expect(mockStorage.completeUnlinkedGameDownload).not.toHaveBeenCalled();
     expect(mockStorage.updateGameDownloadStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/imports/:id/link", () => {
+  it("links an owned recovery download to a game in the same user's library", async () => {
+    mockStorage.getGameDownload.mockResolvedValue({
+      id: "dl-link",
+      gameId: "missing-game",
+      ownerUserId: "user-1",
+      status: "game_link_required",
+    });
+    mockStorage.getGame.mockResolvedValue({ id: "game-1", userId: "user-1" });
+    mockStorage.relinkGameDownload.mockResolvedValue({
+      id: "dl-link",
+      gameId: "game-1",
+      ownerUserId: "user-1",
+      status: "manual_review_required",
+    });
+
+    const res = await request(createApp())
+      .post("/api/imports/dl-link/link")
+      .send({ gameId: "game-1" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(mockStorage.getGameDownload).toHaveBeenCalledExactlyOnceWith("dl-link", "user-1");
+    expect(mockStorage.relinkGameDownload).toHaveBeenCalledWith("dl-link", "game-1", "user-1");
+  });
+
+  it("does not link an owned download to another user's game", async () => {
+    mockStorage.getGameDownload.mockResolvedValue({
+      id: "dl-link",
+      gameId: "missing-game",
+      ownerUserId: "user-1",
+      status: "game_link_required",
+    });
+    mockStorage.getGame.mockResolvedValue({ id: "game-2", userId: "user-2" });
+
+    const res = await request(createApp())
+      .post("/api/imports/dl-link/link")
+      .send({ gameId: "game-2" });
+
+    expect(res.status).toBe(404);
+    expect(mockStorage.relinkGameDownload).not.toHaveBeenCalled();
+  });
+
+  it("does not reveal another user's recovery download", async () => {
+    mockStorage.getGameDownload.mockResolvedValue(undefined);
+
+    const res = await request(createApp())
+      .post("/api/imports/dl-foreign/link")
+      .send({ gameId: "game-1" });
+
+    expect(res.status).toBe(404);
+    expect(mockStorage.getGameDownload).toHaveBeenCalledExactlyOnceWith("dl-foreign", "user-1");
+    expect(mockStorage.getGame).not.toHaveBeenCalled();
   });
 });
 
 // ─── POST /:id/confirm — additional coverage ──────────────────────────────────
 
 describe("POST /api/imports/:id/confirm — Source path error", () => {
+  it("accepts the symlink transfer mode offered by import review", async () => {
+    const res = await request(createApp()).post("/api/imports/dl-link/confirm").send({
+      strategy: "pc",
+      proposedPath: "/data/PC/game",
+      originalPath: "/downloads/game.rom",
+      transferMode: "symlink",
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockImportManager.confirmImport).toHaveBeenCalledWith(
+      "dl-link",
+      expect.objectContaining({ transferMode: "symlink" }),
+      "user-1"
+    );
+  });
+
   it("returns 400 when source path cannot be resolved", async () => {
     mockImportManager.confirmImport.mockRejectedValue(
       new Error(
@@ -494,6 +616,22 @@ describe("POST /api/imports/:id/confirm — Source path error", () => {
     expect(res.body.error).toMatch(/not found/i);
   });
 
+  it("returns the incomplete-scan reason so the user can see it before confirming again", async () => {
+    mockImportManager.confirmImport.mockRejectedValue(
+      new IncompleteScanError(
+        "ClamAV did not scan this download. Confirm again to import it anyway."
+      )
+    );
+
+    const res = await request(createApp()).post("/api/imports/dl-1/confirm").send({
+      strategy: "pc",
+      proposedPath: "/data/PC/game",
+    });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/ClamAV did not scan/);
+  });
+
   it("returns 500 on unexpected confirm error", async () => {
     mockImportManager.confirmImport.mockRejectedValue(new Error("Something exploded"));
 
@@ -503,5 +641,41 @@ describe("POST /api/imports/:id/confirm — Source path error", () => {
     });
 
     expect(res.status).toBe(500);
+  });
+});
+
+describe("PATCH /api/imports/config — root folder scan on enabling post-processing", () => {
+  beforeEach(() => {
+    mockStorage.getUserSettings.mockResolvedValue({ userId: "user-1" });
+    mockStorage.updateUserSettings.mockResolvedValue(undefined);
+  });
+
+  it("scans every enabled root folder when post-processing is switched on", async () => {
+    mockStorage.getImportConfig.mockResolvedValue(
+      makeImportConfig({ enablePostProcessing: false })
+    );
+
+    const res = await request(createApp())
+      .patch("/api/imports/config")
+      .send({ enablePostProcessing: true });
+
+    expect(res.status).toBe(200);
+    expect(rescanAllEnabledRootFolders).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not scan when post-processing was already on", async () => {
+    mockStorage.getImportConfig.mockResolvedValue(makeImportConfig({ enablePostProcessing: true }));
+
+    await request(createApp()).patch("/api/imports/config").send({ autoUnpack: true });
+
+    expect(rescanAllEnabledRootFolders).not.toHaveBeenCalled();
+  });
+
+  it("does not scan when post-processing is switched off", async () => {
+    mockStorage.getImportConfig.mockResolvedValue(makeImportConfig({ enablePostProcessing: true }));
+
+    await request(createApp()).patch("/api/imports/config").send({ enablePostProcessing: false });
+
+    expect(rescanAllEnabledRootFolders).not.toHaveBeenCalled();
   });
 });

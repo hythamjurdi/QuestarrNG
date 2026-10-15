@@ -1,0 +1,283 @@
+# Upstream issue and PR audit process
+
+This guide describes how to review Doezer/Questarr's issue and pull-request
+history, make the useful changes in QuestarrNG, and leave enough evidence for
+another maintainer to check each conclusion. The [campaign README](README.md)
+is the progress log; the [ledger](ledger.json) is the per-item record; the
+[inventory](inventory.md) is its generated index.
+
+## Goal and ownership
+
+The audit covers every issue and pull request in the collected upstream
+inventory, regardless of whether GitHub marks it open, closed, or merged. The
+work is done in QuestarrNG. For each item, the fork must either implement and
+verify the requested behavior, verify that the behavior already exists, or
+record a reasoned disposition such as superseded or not applicable.
+
+“Resolved” here means that QuestarrNG has addressed the request or has a clear,
+evidence-backed explanation for its disposition. It does not mean that a
+QuestarrNG commit changes Doezer/Questarr's GitHub status. Doezer's maintainers
+own upstream acceptance, merging, release decisions, and administrative issue
+or PR closure. The intended deliverable is a tested, reviewable set of changes
+that upstream can accept, adapt, or decline.
+
+The review must account for QuestarrNG's existing behavior and integrations.
+Historical patches are evidence and context, not instructions to apply code
+blindly. In particular, check that a change preserves fork-specific SeerrNG,
+deployment, database, security, and user-facing behavior where applicable.
+
+## Current snapshot
+
+The issue and PR lists were refreshed in a live GitHub audit against upstream
+main `0b538fe4b0a2269edcc8fd3e71e2bbc240291868` on **October 14, 2026**. That
+sanitized source snapshot contains 232 issues and 931 pull requests (1,163
+records total); the ledger was generated at **03:40:13 UTC**. After Batch
+83's source review, the ledger and generated inventory were regenerated from
+the live snapshot, preserving prior dispositions and recording all eight Batch
+83 dispositions. Each PR's conversation, review threads, diff, changed files,
+and checks, and each issue's comments and timeline, were rechecked individually.
+The ledger's `capturedAt` records generation time, not an individual GitHub request
+timestamp. Its review-status counts after Batch 83 are:
+
+| Ledger status            | Count | Meaning at this snapshot                                                               |
+| ------------------------ | ----: | -------------------------------------------------------------------------------------- |
+| `verified`               |   690 | Acceptance checks have evidence showing the behavior is present and works.             |
+| `superseded`             |   224 | A later request or implementation replaces the original; the relationship is recorded. |
+| `not-applicable`         |    14 | The source does not call for an actionable QuestarrNG change; the reason is recorded.  |
+| `needs-implementation`   |     0 | An actionable behavior gap remains.                                                    |
+| `implemented-unverified` |     6 | Implementation exists, but a required verification remains outstanding.                |
+| `unreviewed`             |   229 | No completed source-by-source disposition has been recorded yet.                       |
+
+These are review states, separate from upstream's open, closed, or merged state.
+After Batch 83, the ledger has 934 assigned dispositions and no
+`needs-implementation` records. The only `sourceChangedSinceReview` flag is
+open PR #1194, whose updated body remains queued for its chronological review.
+All eight Batch 83 records were confirmed unchanged from their source snapshots
+before disposition. The audit serializes object keys in a stable order to
+prevent JSON property ordering from changing future digests. See `capturedAt`,
+`forkHead`, and `upstreamHead` in the ledger for inventory-generation metadata. The branch
+metadata is refreshed after each reviewed batch. See the campaign README's
+[Batch 83 record](README.md#batch-83--october-14-2026) for implementation,
+validation, visual evidence, and task-scratch cleanup.
+
+Six items remain implemented-but-unverified. Four integrations still require
+live-service verification. PR #729's DCO checker is covered by synthetic Git
+history tests, but rollout is not complete: the workflow must reach the default
+branch, maintainers must decide when to require its status check, and historical
+campaign commits need a human-approved sign-off strategy. Never add DCO trailers
+on another contributor's behalf. PR #933's service project builds, but its Inno
+Setup installer and Windows installation/service lifecycle still require
+verification.
+
+## Records and source of truth
+
+| Artifact                       | Purpose                                                                                                                       | Editing rule                                                                                                              |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| [`ledger.json`](ledger.json)   | Authoritative per-item review status, findings, acceptance checks, evidence, dependencies, source digest, and upstream state. | Update the affected records as findings change. Preserve upstream identity and do not infer completion from GitHub state. |
+| [`inventory.md`](inventory.md) | Searchable table of all source records and their current review labels.                                                       | Generated by `scripts/audit-upstream.mjs`; do not hand-edit.                                                              |
+| [`sources.json`](sources.json) | Sanitized snapshot of issue and PR list-export fields used to build the inventory.                                            | Regenerate with the audit script. It is not a substitute for full discussion and review-thread collection.                |
+| [`evidence/`](evidence/)       | Batch validation results and focused before/after records.                                                                    | Add one clearly named evidence file per completed batch; retain useful historical evidence.                               |
+| [`README.md`](README.md)       | Campaign overview and narrative implementation history.                                                                       | Keep the current status clear and link implementation claims to code, tests, and evidence.                                |
+
+The ledger's `review` object contains `status`, `findings`, `acceptance`,
+`evidence`, and `dependencies`. `sourceChangedSinceReview` flags source changes
+found during a later inventory refresh. A source change requires renewed
+triage; it must never be cleared just to keep a prior status.
+
+Before writing a source snapshot, the audit redacts PostgreSQL connection strings and
+credential-bearing URL query values such as access tokens, API keys, client
+secrets, and passwords. This includes signed guest-share links embedded in
+public discussion comments. The generated snapshot keeps surrounding context
+for review without retaining a usable credential. If redaction is the only
+difference from the previous snapshot, the audit preserves the existing source
+digest so privacy cleanup does not masquerade as an upstream content change.
+Digest comparison and generation recursively sort object keys while preserving
+array order, so JSON property ordering cannot create a false source-change flag.
+Never print raw source exports; keep any temporary export task-scoped and
+remove it after use.
+
+## What to inspect for each source item
+
+### Issues
+
+Read the issue body, all comments, edits, timeline events, labels, and links to
+related issues or PRs. Check whether the author clarified, withdrew, narrowed,
+or confirmed the request. Distinguish a feature request from a support report,
+a proposal that lacks a usable specification, or a report already fixed by a
+later change. For bugs, identify a reproducible trigger and the expected
+behavior. For requests, split bundled asks into separately testable acceptance
+checks where necessary.
+
+### Pull requests
+
+Read the PR description, commit list, complete diff, changed files, conversation
+comments, review threads, requested changes, check results, and linked issues.
+Check the latest head, not only the original patch. Record material review
+feedback and determine whether the same behavior arrived in QuestarrNG through
+another commit, a squash/rebase, a later PR, or independent code. A merged PR
+may have been reverted or only partially applied; a closed PR may have a
+replacement.
+
+### Upstream and fork history
+
+Use commit ancestry to find likely relationships, then inspect the actual code
+and user behavior. Git history cannot establish that a request works: patches
+can be reverted, changed, incomplete, or present under different commit IDs.
+The inventory's `historyEvidence` values are mechanical observations only:
+
+- `merge-commit-in-fork-history`
+- `merge-commit-in-upstream-main-only`
+- `merge-commit-not-in-either-main-history`
+- `no-merge-commit`
+
+None of these values is a review status or sufficient proof of resolution.
+
+## Status definitions
+
+Use only the statuses present in the ledger schema:
+
+- **`unreviewed`** — source-by-source review and disposition are incomplete.
+- **`needs-implementation`** — the source describes an actionable request and
+  an acceptance-relevant gap remains in QuestarrNG.
+- **`implemented-unverified`** — the change is in the fork, but an identified
+  acceptance check has not passed. Name the missing check and what would satisfy
+  it; do not treat implementation alone as completion.
+- **`verified`** — findings explain the result, acceptance checks describe the
+  relevant behavior, and evidence demonstrates those checks passed in the fork.
+- **`superseded`** — a later item, accepted clarification, or current behavior
+  replaces the original request. Link the replacement and verify the resulting
+  behavior when it is actionable.
+- **`not-applicable`** — the source does not require an implementation in this
+  fork (for example, an explicitly withdrawn request or an upstream-only
+  administrative action). Explain why, with source evidence. “Not convenient”
+  or “already closed” is not a reason.
+
+Do not create ad hoc terminal labels such as `duplicate` or `decision-required`.
+For duplicates, use `superseded` and link the canonical item. If a decision is
+still pending, keep the item open in `unreviewed` or `needs-implementation` and
+record the question in `findings` or `dependencies`.
+
+## Review and implementation workflow
+
+1. **Refresh the source baseline.** Confirm the `upstream` remote and fetch its
+   current `main`. Refresh the issue and PR list exports with all pages, then
+   regenerate the snapshot. The script rejects duplicate or potentially
+   truncated exports and redacts database connection strings from published
+   snapshots. A refresh preserves existing human reviews and marks records
+   whose source digest changed; it does not promote their statuses.
+2. **Read the full source context.** For each issue, fetch its complete comment
+   and timeline history. For each PR, fetch all conversation and review
+   threads, changed files, commits, and checks. The list exports in
+   `sources.json` do not guarantee comment pagination and do not contain full
+   PR review threads or diffs.
+3. **Write findings before coding.** Record what the author asked for, how the
+   current fork behaves, relevant upstream history, related requests, and any
+   uncertainty. Break compound requests into explicit acceptance checks.
+4. **Implement in dependency-aware batches.** Preserve existing fork behavior,
+   use focused changes, and add regression coverage for the request and its
+   failure cases. For persisted data, check migration and behavior against both
+   SQLite and PostgreSQL where supported. Keep attribution and applicable
+   license notices with adapted upstream code.
+5. **Verify the user journey.** Test the behavior at the relevant layers: API,
+   authorization, persistence, background work, external-provider failure, and
+   UI as applicable. A unit test alone is not evidence for a full integration.
+   UI changes under `client/src/**` require a running `npm run dev:test` session
+   and a screenshot or recording of the actual behavior; include that visual
+   evidence in the PR description.
+6. **Record reproducible evidence.** Update each ledger entry with concise
+   findings, concrete acceptance checks, paths to tests or implementation, and
+   the matching batch validation file. Record live-service requirements and
+   limitations explicitly. Do not include secrets or credentials.
+7. **Regenerate and review the inventory.** Check that every edited record is
+   present in the generated table, statuses match the ledger, changed sources
+   have been re-reviewed, and the source count still matches upstream.
+8. **Commit and push the batch.** Keep commits reviewable, add the batch summary
+   and validation evidence to this campaign README, and push the campaign
+   branch. Do not close upstream items or merge to the fork's `main` as a
+   shortcut around the campaign completion gate.
+
+### Snapshot refresh commands
+
+Run from the repository root. The campaign workspace uses the `rtk` command
+wrapper when it is installed; if it is unavailable, run the same commands
+without the `rtk` prefix:
+
+```sh
+rtk git fetch upstream
+rtk node scripts/audit-upstream.mjs
+```
+
+The script obtains current all-state issue and PR exports with `gh` when no
+directory is provided. To import equivalent exports collected separately, pass
+the directory containing `questarr-upstream-issues.json` and
+`questarr-upstream-prs.json`:
+
+```sh
+rtk node scripts/audit-upstream.mjs /path/to/export-directory
+```
+
+The import path records the time the ledger was generated, not the time of each
+GitHub request. For a final review, verify that export collection was
+complete and separately collect full issue timelines and PR discussions,
+review threads, diffs, and checks.
+
+## Evidence standard
+
+Each status should be auditable without relying on an undocumented assumption.
+Good evidence includes:
+
+- a source link, comment, review, or linked replacement that explains the
+  author's intent or the disposition;
+- the relevant QuestarrNG implementation and focused regression tests;
+- acceptance results for authorization, error handling, persistence, and
+  supported databases where they apply;
+- a validation batch record with the commands and outcomes actually run;
+- running UI evidence for client changes; and
+- an explicit limitation when a real API key, service, platform, or upstream
+  maintainer action is still required.
+
+Keep claims proportional to the evidence. A passing mocked provider test does
+not prove a live provider account works. A successful build does not prove the
+interface is usable. A commit in either repository does not prove that a
+request survived later reverts. If a requirement cannot be tested safely or
+reliably in this environment, record it as `implemented-unverified` or
+`needs-implementation` as appropriate and state the remaining check.
+
+## Task scratch and cleanup
+
+Keep generated databases, browser output, temporary configs, downloaded test
+services, and other scratch data in a unique directory for the current batch.
+Use local temporary storage when it has enough capacity. The LVM-backed NFS
+share is available for large or speed-insensitive scratch work, but confirm the
+current host, mounted path, and available space before writing; never assume a
+mount path from an earlier session. Do not put temporary files in a shared
+unscoped directory.
+
+Run end-to-end tests against a task-owned database and a confirmed-free port.
+Do not reset or stop an already-running app or database unless the process and
+data are owned by the current task. At completion, stop only task-owned
+processes, remove only files created in the task directory, restore any
+pre-existing auth or browser state that a test temporarily touched, and leave
+ambiguous files and user data intact. Record the scratch location, what was
+removed, and any pre-existing data deliberately preserved in the batch evidence.
+
+## Campaign completion and merge gate
+
+The campaign is ready for final review only when all of the following hold:
+
+- a fresh, complete source inventory has been reviewed against the latest
+  upstream state;
+- no record remains `unreviewed`, `needs-implementation`, or
+  `implemented-unverified`;
+- each `verified` record has evidence for its acceptance checks, and every
+  `superseded` or `not-applicable` record has a source-backed rationale;
+- changes discovered through `sourceChangedSinceReview` have been re-reviewed;
+- the complete combined test, typecheck, lint, format, security, and production
+  build checks pass, with material environment limits documented;
+- required running UI evidence is present; and
+- the ledger, generated inventory, batch history, and user-facing docs agree
+  with the delivered behavior.
+
+Only after this gate should the campaign branch be proposed for merge into
+QuestarrNG `main`. Upstream maintainers remain responsible for deciding whether
+to accept the work into Doezer/Questarr.

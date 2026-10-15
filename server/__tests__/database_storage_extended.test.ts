@@ -384,8 +384,8 @@ describe("DatabaseStorage Extended Coverage", () => {
       return { userId, game, downloader };
     }
 
-    it("getUnlinkedImportReviews returns only game_link_required downloads", async () => {
-      const { game, downloader } = await setup();
+    it("getUnlinkedImportReviews returns only game_link_required downloads owned by the user", async () => {
+      const { userId, game, downloader } = await setup();
 
       const unlinked = await storage.addGameDownload({
         gameId: game.id,
@@ -406,8 +406,46 @@ describe("DatabaseStorage Extended Coverage", () => {
         fileSize: null,
       } as InsertGameDownload);
 
-      const results = await storage.getUnlinkedImportReviews();
+      const otherUserId = await createUser();
+      const otherGame = await storage.addGame({
+        title: "Other User's Game",
+        userId: otherUserId,
+      } as InsertGame);
+      const otherUnlinked = await storage.addGameDownload({
+        gameId: otherGame.id,
+        downloaderId: downloader.id,
+        downloadHash: "hash-other-unlinked",
+        downloadTitle: "Other-Orphaned-GROUP",
+        status: "game_link_required",
+        downloadType: "torrent",
+        fileSize: null,
+      } as InsertGameDownload);
+
+      const results = await storage.getUnlinkedImportReviews(userId);
       expect(results.map((d) => d.id)).toEqual([unlinked?.id]);
+      expect((await storage.getUnlinkedImportReviews(otherUserId)).map((d) => d.id)).toEqual([
+        otherUnlinked?.id,
+      ]);
+    });
+
+    it("captures download ownership and scopes direct lookups even when game link is required", async () => {
+      const { userId, game, downloader } = await setup();
+      const download = await storage.addGameDownload({
+        gameId: game.id,
+        downloaderId: downloader.id,
+        downloadHash: "hash-owned-orphan",
+        downloadTitle: "Owned-Orphan-GROUP",
+        status: "game_link_required",
+        downloadType: "torrent",
+        fileSize: null,
+      } as InsertGameDownload);
+
+      expect(download?.ownerUserId).toBe(userId);
+      expect(await storage.getGameDownload(download!.id, userId)).toMatchObject({
+        id: download!.id,
+        ownerUserId: userId,
+      });
+      expect(await storage.getGameDownload(download!.id, "another-user")).toBeUndefined();
     });
 
     it("getQuarantinedDownloads returns only quarantined downloads owned by the given user", async () => {
@@ -483,10 +521,19 @@ describe("DatabaseStorage Extended Coverage", () => {
         fileSize: null,
       } as InsertGameDownload);
 
-      const updated = await storage.relinkGameDownload(download!.id, correctGame.id);
+      const otherUserId = await createUser();
+      const otherGame = await storage.addGame({
+        title: "Foreign Game",
+        userId: otherUserId,
+      } as InsertGame);
+
+      expect(await storage.relinkGameDownload(download!.id, otherGame.id, userId)).toBeUndefined();
+      expect((await storage.getGameDownload(download!.id))?.status).toBe("game_link_required");
+
+      const updated = await storage.relinkGameDownload(download!.id, correctGame.id, userId);
       expect(updated?.gameId).toBe(correctGame.id);
       expect(updated?.status).toBe("manual_review_required");
-      expect(await storage.getUnlinkedImportReviews()).toHaveLength(0);
+      expect(await storage.getUnlinkedImportReviews(userId)).toHaveLength(0);
     });
 
     it("relinkGameDownload is a no-op once already relinked (race-safe)", async () => {
@@ -516,8 +563,8 @@ describe("DatabaseStorage Extended Coverage", () => {
         fileSize: null,
       } as InsertGameDownload);
 
-      await storage.relinkGameDownload(download!.id, firstGame.id);
-      const second = await storage.relinkGameDownload(download!.id, secondGame.id);
+      await storage.relinkGameDownload(download!.id, firstGame.id, userId);
+      const second = await storage.relinkGameDownload(download!.id, secondGame.id, userId);
 
       expect(second).toBeUndefined();
       const current = await storage.getGameDownload(download!.id);
@@ -525,7 +572,7 @@ describe("DatabaseStorage Extended Coverage", () => {
     });
 
     it("completeUnlinkedGameDownload dismisses a game_link_required download as completed", async () => {
-      const { game, downloader } = await setup();
+      const { userId, game, downloader } = await setup();
 
       const download = await storage.addGameDownload({
         gameId: game.id,
@@ -537,10 +584,15 @@ describe("DatabaseStorage Extended Coverage", () => {
         fileSize: null,
       } as InsertGameDownload);
 
-      const updated = await storage.completeUnlinkedGameDownload(download!.id);
+      expect(
+        await storage.completeUnlinkedGameDownload(download!.id, "another-user")
+      ).toBeUndefined();
+      expect((await storage.getGameDownload(download!.id))?.status).toBe("game_link_required");
+
+      const updated = await storage.completeUnlinkedGameDownload(download!.id, userId);
       expect(updated?.status).toBe("completed");
       expect(updated?.completedAt).not.toBeNull();
-      expect(await storage.getUnlinkedImportReviews()).toHaveLength(0);
+      expect(await storage.getUnlinkedImportReviews(userId)).toHaveLength(0);
     });
 
     it("completeUnlinkedGameDownload is a no-op once already relinked (race-safe)", async () => {
@@ -564,9 +616,9 @@ describe("DatabaseStorage Extended Coverage", () => {
       } as InsertGameDownload);
 
       // Simulates a concurrent POST /:id/link winning the race first.
-      await storage.relinkGameDownload(download!.id, correctGame.id);
+      await storage.relinkGameDownload(download!.id, correctGame.id, userId);
 
-      const result = await storage.completeUnlinkedGameDownload(download!.id);
+      const result = await storage.completeUnlinkedGameDownload(download!.id, userId);
       expect(result).toBeUndefined();
 
       // The relink must survive untouched — not clobbered back to "completed".

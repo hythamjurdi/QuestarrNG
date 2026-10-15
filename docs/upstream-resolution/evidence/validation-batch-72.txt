@@ -1,0 +1,38 @@
+# Batch 72 validation — 2026-10-13
+
+Batch 72 reviewed issues #836 and #843 and PRs #837–842 and #844–845. All ten source digests matched the refreshed upstream inventory. Review included issue comments and timelines, PR diffs and commit history, review threads and replies, linked requests, and available checks. Existing behavior was confirmed for nine records; PR #845 also received a bounded polling fix and regression coverage.
+
+## Behavior and regression evidence
+
+- Issue #836 is addressed by NZBGet history parsing for `SUCCESS/GOOD`, `SUCCESS/UNPACK`, `SUCCESS/HEALTH`, and `SUCCESS/ALL`; non-success statuses retain failure handling. This follows the linked upstream correction in PR #855.
+- PR #837 persists and publishes the missing-download transition: when post-processing is enabled it creates manual review and notifies the user; otherwise it marks the download completed and owned. The upstream request to publish `downloadUpdate` after persistence is present in both paths.
+- PR #838 is present in the dependency versions and test setup. The focus/blur recursion guard remains bounded, and logger transport-target tests use a local `Writable` stub rather than starting Pino worker threads.
+- PR #839 uses `wrap-anywhere`. The real-browser 390×844 screenshot from Batch 71 shows the card at 358px and the page at 390px with no horizontal overflow: [mobile evidence](validation-batch-71-mobile-download-card.png).
+- PR #840 keeps failed imports retryable and isolates best-effort auto-delete after successful finalization, so a delete failure cannot demote an imported download.
+- PR #841 compares normalized date primitives in the wishlist sort helper, with explicit missing-value ordering and stable ties.
+- PR #842 has item-specific Pause and Resume names on download actions and a Start Download name on search results. The Downloads and Search tests assert the accessible names.
+- Issue #843 is already avoided by this fork: `git ls-files .gitmodules .github/wiki` returns no paths, so there is no Home Assistant SSH wiki submodule to clone. Upstream removed that submodule in linked PR #846.
+- PR #844 is covered by the base-path configuration, API/static/socket handlers, reverse-proxy guide, and route tests.
+- PR #845 correlates accepted qBittorrent adds by unique tag, retains compatibility fallbacks and cleanup, and now caps hash resolution at one 15-second deadline. The deadline signal is passed through polling and re-authentication. If no hash is confirmed, the request remains tracked and the user is told to check qBittorrent before retrying; the code does not upload a duplicate torrent.
+
+## Test and build results
+
+- Focused B72 validation: **710 tests passed across 15 files** (13.16 seconds), including qBittorrent, NZBGet, cron status handling, import recovery, wishlist sorting, download/search actions, logger configuration, and reverse-proxy routes.
+- Full Vitest suite: **4,255 passed, 7 skipped; 271 files passed and 1 skipped** (272 files total, 30.58 seconds).
+- `npm run check` (TypeScript): passed.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed after formatting `server/downloaders/qbittorrent.ts`.
+- `npm run build`: passed. Vite retained the existing advisory that the main bundle exceeds 500 kB.
+- `npm run secretlint`: passed.
+- `npm run check:overrides`: passed; the script confirmed all documented dependency overrides remain needed.
+- `npm run check:licenses`: passed for 417 production package versions.
+- `git diff --check`: passed.
+- The production dependency audit could not complete: npm's registry advisory bulk endpoint returned an error. No package or lockfile changed in this batch, and the failure is retained as an external validation limit rather than reported as a pass.
+
+No files under `client/src/**` changed in Batch 72. The accessibility additions are test-only; the required live mobile visual evidence for PR #839 remains the Batch 71 browser screenshot linked above.
+
+## Scratch and campaign state
+
+No NFS scratch was needed. A task-scoped local temporary worktree was used to restore the pre-batch ignored `dist` output from the Batch 71 source snapshot after the production build; the worktree and temporary directory were removed. The temporary source-export directory used to regenerate the ledger and inventory is also removed. The campaign branch remains separate from `main`.
+
+After this batch, the ledger records 624 verified, 191 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 330 unreviewed items (1,163 total). The merge gate remains closed.

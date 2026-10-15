@@ -387,6 +387,64 @@ describe("xREL Client", () => {
     });
   });
 
+  describe("getLatestGames", () => {
+    const release = (id: number, type: "master_game" | "movie"): XrelSceneRelease => ({
+      id: String(id),
+      dirname: `Release.${id}-GROUP`,
+      link_href: `/release/${id}.html`,
+      time: 1600000000 + id,
+      group_name: "GROUP",
+      ext_info: { type, title: `Release ${id}` },
+    });
+
+    const response = (list: XrelSceneRelease[]) => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        list,
+        // The latest endpoint does not reliably include total_pages.
+        pagination: { current_page: 1, per_page: 100 },
+        total_count: list.length,
+      }),
+    });
+
+    it("checks another raw page to establish whether the current game page has a next page", async () => {
+      const firstPage = [
+        ...Array.from({ length: 20 }, (_, index) => release(index + 1, "master_game")),
+        ...Array.from({ length: 80 }, (_, index) => release(index + 21, "movie")),
+      ];
+      fetchMock
+        .mockResolvedValueOnce(response(firstPage))
+        .mockResolvedValueOnce(response([release(101, "master_game")]));
+
+      const result = await xrelClient.getLatestGames({ page: 1, perPage: 20 });
+
+      expect(result.list).toHaveLength(20);
+      expect(result.pagination).toEqual({ current_page: 1, per_page: 20, has_next_page: true });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      const secondRequest = new URL(String(fetchMock.mock.calls[1][0]));
+      expect(secondRequest.searchParams.get("page")).toBe("2");
+    });
+
+    it("disables next when later raw pages contain no additional game releases", async () => {
+      const firstPage = [
+        ...Array.from({ length: 20 }, (_, index) => release(index + 1, "master_game")),
+        ...Array.from({ length: 80 }, (_, index) => release(index + 21, "movie")),
+      ];
+      fetchMock
+        .mockResolvedValueOnce(response(firstPage))
+        .mockResolvedValueOnce(
+          response(Array.from({ length: 5 }, (_, index) => release(index + 101, "movie")))
+        );
+
+      const result = await xrelClient.getLatestGames({ page: 1, perPage: 20 });
+
+      expect(result.list).toHaveLength(20);
+      expect(result.pagination).toEqual({ current_page: 1, per_page: 20, has_next_page: false });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("titleMatches", () => {
     it("should match identical titles", () => {
       expect(xrelClient.titleMatches("Game Name", "Game Name")).toBe(true);

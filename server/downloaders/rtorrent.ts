@@ -10,6 +10,7 @@ import parseTorrent from "parse-torrent";
 import crypto from "crypto";
 import { isSafeUrl, safeFetch } from "../ssrf.js";
 import type { DownloadRequest, DownloaderClient, XMLValue } from "./types.js";
+import { isSafeDownloadPathOverride } from "./path-safety.js";
 import {
   assertCredentialsAllowed,
   buildBasicAuthHeader,
@@ -89,6 +90,13 @@ export class RTorrentClient implements DownloaderClient {
   async addDownload(
     request: DownloadRequest
   ): Promise<{ success: boolean; id?: string; message: string }> {
+    if (request.downloadPath && !isSafeDownloadPathOverride(request.downloadPath)) {
+      return {
+        success: false,
+        message: "Invalid download path: use a relative path without parent-directory segments",
+      };
+    }
+
     try {
       if (!request.url) {
         return { success: false, message: "Download URL is required" };
@@ -214,7 +222,10 @@ export class RTorrentClient implements DownloaderClient {
     }
   }
 
-  async getDownloadStatus(id: string): Promise<DownloadStatus | null> {
+  async getDownloadStatus(
+    id: string,
+    options?: { throwOnError?: boolean }
+  ): Promise<DownloadStatus | null> {
     try {
       // Get detailed information about a specific download using multicall
       const result = await this.makeXMLRPCRequest("d.multicall2", [
@@ -248,6 +259,7 @@ export class RTorrentClient implements DownloaderClient {
       return null;
     } catch (error) {
       downloadersLogger.error({ error }, "error getting download status (rtorrent)");
+      if (options?.throwOnError) throw error;
       return null;
     }
   }
@@ -302,16 +314,33 @@ export class RTorrentClient implements DownloaderClient {
         "f.priority=",
       ]);
 
-      // Get trackers using t.multicall
-      const trackersResult = await this.makeXMLRPCRequest("t.multicall", [
-        id,
-        "",
+      // Get tracker health, announce times, and scrape counts in one call.
+      // If an older rTorrent does not expose the health fields, retry with the
+      // fields supported by earlier releases and report enabled trackers as updating.
+      const trackerFields = [
         "t.url=",
         "t.group=",
         "t.is_enabled=",
         "t.scrape_complete=",
         "t.scrape_incomplete=",
-      ]);
+        "t.activity_time_last=",
+        "t.activity_time_next=",
+        "t.failed_counter=",
+        "t.success_counter=",
+        "t.is_busy=",
+      ];
+      let trackersResult: unknown;
+      let trackerHealthAvailable = true;
+      try {
+        trackersResult = await this.makeXMLRPCRequest("t.multicall", [id, "", ...trackerFields]);
+      } catch {
+        trackerHealthAvailable = false;
+        trackersResult = await this.makeXMLRPCRequest("t.multicall", [
+          id,
+          "",
+          ...trackerFields.slice(0, 5),
+        ]);
+      }
 
       // Map status
       let status: DownloadStatus["status"];
@@ -349,15 +378,37 @@ export class RTorrentClient implements DownloaderClient {
       });
 
       // Map trackers
-      const trackers: DownloadTracker[] = (trackersResult || []).map((tracker: unknown[]) => {
-        // rTorrent tracker tuple: [url, group, isEnabled, seeders, leechers, ...optional fields]
-        const [url, group, isEnabled, seeders, leechers, lastScrape, lastAnnounce, lastError] =
-          tracker;
+      const toIsoTimestamp = (value: unknown): string | undefined => {
+        const seconds = Number(value);
+        if (!Number.isFinite(seconds) || seconds <= 0) return undefined;
+        const date = new Date(seconds * 1000);
+        return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+      };
+
+      const trackers: DownloadTracker[] = ((trackersResult || []) as unknown[][]).map((tracker) => {
+        // rTorrent returns t.multicall fields in the same order as requested.
+        const [
+          url,
+          group,
+          isEnabled,
+          seeders,
+          leechers,
+          activityTimeLast,
+          activityTimeNext,
+          failedCounter,
+          successCounter,
+          isBusy,
+        ] = tracker;
         let trackerStatus: DownloadTracker["status"] = "inactive";
         if (isEnabled) {
-          if (lastError && typeof lastError === "string" && lastError.length > 0) {
+          if (trackerHealthAvailable && Number(failedCounter) > 0) {
             trackerStatus = "error";
-          } else if (lastScrape === 0 || lastAnnounce === 0) {
+          } else if (
+            !trackerHealthAvailable ||
+            Number(isBusy) > 0 ||
+            !Number.isFinite(Number(successCounter)) ||
+            Number(successCounter) <= 0
+          ) {
             trackerStatus = "updating";
           } else {
             trackerStatus = "working";
@@ -369,9 +420,11 @@ export class RTorrentClient implements DownloaderClient {
           status: trackerStatus,
           seeders: (seeders as number) >= 0 ? (seeders as number) : undefined,
           leechers: (leechers as number) >= 0 ? (leechers as number) : undefined,
+          lastAnnounce: toIsoTimestamp(activityTimeLast),
+          nextAnnounce: toIsoTimestamp(activityTimeNext),
           error:
-            lastError && typeof lastError === "string" && lastError.length > 0
-              ? lastError
+            trackerHealthAvailable && Number(failedCounter) > 0
+              ? `${Number(failedCounter)} tracker request(s) failed`
               : undefined,
         };
       });

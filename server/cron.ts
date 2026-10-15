@@ -12,8 +12,13 @@ import {
   searchAllIndexers,
   filterBlacklistedReleases,
   filterByReleaseNameBlacklist,
+  scoreSearchItems,
   type SearchItem,
 } from "./search.js";
+import {
+  parseSavedReleaseScoringConfig,
+  type SavedReleaseScoringConfig,
+} from "../shared/release-scoring.js";
 import { typesafeClient, type ReleaseType } from "./typesafe.js";
 import { xrelClient, DEFAULT_XREL_BASE } from "./xrel.js";
 import { steamService } from "./steam.js";
@@ -24,7 +29,9 @@ import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   ACQUIRED_GAME_STATUSES,
   isUserCuratedGameStatus,
+  type DownloadStatus,
   type Game,
+  type GameDownload,
   type InsertNotification,
   type NotificationEvent,
   type NotificationPreferences,
@@ -32,6 +39,7 @@ import {
 import { categorizeDownload } from "../shared/download-categorizer.js";
 import { isReleasePossiblyNewer } from "../shared/version-utils.js";
 import { recordVersionFromCompletedDownload } from "./game-version.js";
+import { rssService } from "./rss.js";
 import {
   releaseMatchesGame,
   normalizeTitle,
@@ -82,10 +90,56 @@ export async function withGameOperationLock<T>(
 // "downloading" forever.
 const downloadTagMissCount = new Map<string, number>();
 const ASYNC_TAG_RESOLVE_THRESHOLD = 3;
+
+// When a torrent client first reported an error for a download. Torrent errors are
+// often transient (a tracker message in rTorrent, Transmission's errorString, a
+// qBittorrent missingFiles while a disk remounts), so the download keeps being
+// tracked until the error has lasted this long. Usenet failures are final.
+const downloadErrorSince = new Map<string, number>();
+const TORRENT_ERROR_GRACE_MS = 30 * 60 * 1000;
+
+// Last state the client reported for each tracked download. When a download
+// vanishes, this tells "removed right after finishing" (clients that purge
+// completed jobs) apart from "removed mid-download".
+const lastSeenRemote = new Map<string, { progress: number; status: DownloadStatus["status"] }>();
+const PROBABLY_FINISHED_PROGRESS = 90;
+const PROBABLY_FINISHED_STATUSES = new Set<DownloadStatus["status"]>([
+  "completed",
+  "seeding",
+  "unpacking",
+  "repairing",
+]);
+
+const ACTIVE_DOWNLOAD_STATUSES = new Set([
+  "downloading",
+  "paused",
+  "unpacking",
+  "completed_pending_import",
+]);
+
+// Download statuses that mean the release itself didn't work out; auto-search
+// won't grab the same release again for that game.
+const FAILED_DOWNLOAD_STATUSES = new Set(["failed", "error"]);
+
+let downloadStatusCheckRunning = false;
+
+/** Clears the in-memory per-download tracking. Test isolation only. */
+export function resetDownloadStatusTracking(): void {
+  for (const tracked of [
+    downloadMissCount,
+    downloadTagMissCount,
+    downloadErrorSince,
+    lastSeenRemote,
+  ]) {
+    tracked.clear();
+  }
+  downloadStatusCheckRunning = false;
+}
 const AUTO_SEARCH_CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 const STEAM_SYNC_CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour (per-user interval gates actual sync)
 const XREL_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours (xREL search rate limit: 2/5s)
 const CLIENT_VERSION_LOG_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours
+const RSS_REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 // Every status where the user already has the game, so update/pack searches
 // keep running while it's being played or shelved too.
 const OWNED_STATUSES = new Set<string>([...ACQUIRED_GAME_STATUSES, "downloading"]);
@@ -197,7 +251,8 @@ function releaseHealth(item: SearchItem): number {
 export function categorizeSearchItems(
   items: SearchItem[],
   rules: AutoSearchRules,
-  indexerPriorityMap?: Map<string, number>
+  indexerPriorityMap?: Map<string, number>,
+  preferReleaseScore = false
 ): AutoSearchCategorizedItems {
   const sortedItems = items
     // Usenet releases have no seeders, so the seeder floor only applies to
@@ -205,6 +260,11 @@ export function categorizeSearchItems(
     // for sorting is the grab count instead.
     .filter((item) => item.downloadType === "usenet" || (item.seeders ?? 0) >= rules.minSeeders)
     .sort((a, b) => {
+      if (preferReleaseScore) {
+        const scoreDifference =
+          (b.releaseEvaluation?.score ?? -Infinity) - (a.releaseEvaluation?.score ?? -Infinity);
+        if (scoreDifference !== 0) return scoreDifference;
+      }
       if (rules.sortBy === "seeders") {
         return releaseHealth(b) - releaseHealth(a);
       }
@@ -232,7 +292,9 @@ export function categorizeSearchItems(
         acc.mainItems.push(item);
       } else if (category === "update") {
         acc.updateItems.push(item);
-      } else if (category === "packs") {
+      } else if (category === "packs" || category === "dlc" || category === "extra") {
+        // Auto-search stores one broad packs/add-ons availability flag, so
+        // DLC and extras share that existing notification channel.
         acc.packsItems.push(item);
       }
 
@@ -333,6 +395,38 @@ function applyRequestedVariantFilter(
   });
 }
 
+interface AutoSearchFilterOptions {
+  preferredPlatform: string | null | undefined;
+  operatingSystem: string | null | undefined;
+  architecture: string | null | undefined;
+  preferredGroups: string[];
+  strictPreferredGroups: boolean;
+  indexerPriorityMap: Map<string, number>;
+}
+
+/** Apply the shared auto-search filters before optionally applying category-specific checks. */
+function filterAndDeduplicateAutoSearchItems(
+  items: SearchItem[],
+  options: AutoSearchFilterOptions,
+  additionalFilter?: (item: SearchItem) => boolean
+): SearchItem[] {
+  const platformFiltered = applyPreferredPlatformFilter(items, options.preferredPlatform);
+  const variantFiltered = applyRequestedVariantFilter(
+    platformFiltered,
+    options.operatingSystem,
+    options.architecture
+  );
+  const groupFiltered = applyPreferredGroupsFilter(
+    variantFiltered,
+    options.preferredGroups,
+    options.strictPreferredGroups
+  );
+  const categoryFiltered = additionalFilter
+    ? groupFiltered.filter(additionalFilter)
+    : groupFiltered;
+  return deduplicateByTitle(categoryFiltered, options.indexerPriorityMap);
+}
+
 const AUTO_SEARCH_PAGE_SIZE = 10;
 // How many result pages auto-search walks when the global release-name blacklist hides a
 // whole page, before concluding that no eligible release exists.
@@ -374,10 +468,21 @@ async function searchAndCategorizeItemsForGame(
   game: Pick<Game, "id" | "title">,
   downloadRules: string | null,
   indexerPriorityMap?: Map<string, number>,
-  blacklistTerms: string[] = []
+  blacklistTerms: string[] = [],
+  releaseScoring?: SavedReleaseScoringConfig | null,
+  preferredPlatform?: string | null
 ): Promise<AutoSearchCategorizedItems | null> {
+  if (releaseScoring === null) {
+    igdbLogger.warn(
+      { gameTitle: game.title },
+      "Skipping auto-search because the saved release scoring profile is invalid"
+    );
+    return null;
+  }
+
   let matchedItems: SearchItem[] = [];
-  let globallyFiltered: SearchItem[] = [];
+  let eligibleItems: SearchItem[] = [];
+  const blacklisted = await storage.getReleaseBlacklistSet(game.id);
 
   for (let page = 0; page < AUTO_SEARCH_MAX_PAGES; page++) {
     const { items, errors } = await searchAllIndexers({
@@ -405,22 +510,30 @@ async function searchAndCategorizeItemsForGame(
       return null;
     }
 
-    // Filter out releases matching the user's global release-name blacklist before anything
-    // else touches them (including the AI auto-download check further down the pipeline).
-    globallyFiltered = filterByReleaseNameBlacklist(matchedItems, blacklistTerms);
+    // Apply both blacklists before scoring or any AI auto-download check.
+    const globallyFiltered = filterByReleaseNameBlacklist(matchedItems, blacklistTerms);
+    eligibleItems = filterBlacklistedReleases(globallyFiltered, blacklisted);
+    if (releaseScoring) {
+      eligibleItems = scoreSearchItems(
+        eligibleItems,
+        { gameTitle: game.title, platform: preferredPlatform ?? null },
+        releaseScoring.profile,
+        releaseScoring.formats,
+        true
+      );
+    }
 
-    // Only page further when the blacklist hid this whole page and more results may exist.
-    if (globallyFiltered.length > 0 || items.length < AUTO_SEARCH_PAGE_SIZE) break;
+    // A profile can reject every release on this page. Continue so a stronger result later in
+    // the indexer response can still be considered, subject to the same bounded page limit.
+    if (eligibleItems.length > 0 || items.length < AUTO_SEARCH_PAGE_SIZE) break;
   }
 
-  // Filter out per-game blacklisted releases
-  const blacklisted = await storage.getReleaseBlacklistSet(game.id);
-  const nonBlacklisted = filterBlacklistedReleases(globallyFiltered, blacklisted);
-
-  if (nonBlacklisted.length === 0) {
+  if (eligibleItems.length === 0) {
     igdbLogger.debug(
       { gameTitle: game.title, matchedCount: matchedItems.length },
-      "All matched items were blacklisted"
+      releaseScoring
+        ? "No release passed blacklists and scoring"
+        : "All matched items were blacklisted"
     );
     return null;
   }
@@ -433,7 +546,7 @@ async function searchAndCategorizeItemsForGame(
     rules = getAutoSearchRules(null);
   }
 
-  return categorizeSearchItems(nonBlacklisted, rules, indexerPriorityMap);
+  return categorizeSearchItems(eligibleItems, rules, indexerPriorityMap, Boolean(releaseScoring));
 }
 
 export function startCronJobs() {
@@ -444,6 +557,7 @@ export function startCronJobs() {
       downloadStatus: `every ${DOWNLOAD_CHECK_INTERVAL_MS / 1000} seconds`,
       autoSearch: `every ${AUTO_SEARCH_CHECK_INTERVAL_MS / 1000 / 60} minutes`,
       steamSync: `every ${STEAM_SYNC_CHECK_INTERVAL_MS / 1000 / 60} minutes (per-user interval gated)`,
+      rssFeeds: `every ${RSS_REFRESH_INTERVAL_MS / 1000 / 60} minutes`,
     },
     "Cron job intervals configured"
   );
@@ -457,6 +571,7 @@ export function startCronJobs() {
     checkXrelReleases().catch((err) => igdbLogger.error({ err }, "Error in checkXrelReleases"));
     checkSteamWishlist().catch((err) => igdbLogger.error({ err }, "Error in checkSteamWishlist"));
     logClientVersions().catch((err) => igdbLogger.warn({ err }, "Error in logClientVersions"));
+    rssService.refreshFeeds().catch((err) => igdbLogger.error({ err }, "Error in refreshFeeds"));
   }, 10000);
 
   // Schedule periodic checks
@@ -483,6 +598,10 @@ export function startCronJobs() {
   setInterval(() => {
     logClientVersions().catch((err) => igdbLogger.warn({ err }, "Error in logClientVersions"));
   }, CLIENT_VERSION_LOG_INTERVAL_MS);
+
+  setInterval(() => {
+    rssService.refreshFeeds().catch((err) => igdbLogger.error({ err }, "Error in refreshFeeds"));
+  }, RSS_REFRESH_INTERVAL_MS);
 
   const IMPORT_TASK_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
   const runImportTaskCleanup = () => {
@@ -538,7 +657,7 @@ export async function checkGameUpdates() {
   // Batch fetch from IGDB
   let igdbGames;
   try {
-    igdbGames = await igdbClient.getGamesByIds(igdbIds);
+    igdbGames = await igdbClient.getGamesByIds(igdbIds, { includeReleaseDateStatuses: true });
   } catch (error) {
     if (error instanceof Error) {
       const err = error as Error & { code?: string };
@@ -613,13 +732,23 @@ export async function checkGameUpdates() {
       }
     }
 
-    if (!igdbGame.first_release_date) continue;
+    const now = new Date();
+    const hasUpcomingDelayedRelease =
+      igdbGame.release_dates?.some(
+        (releaseDate) =>
+          releaseDate.status?.name?.trim().toLowerCase() === "delayed" &&
+          (releaseDate.date === undefined || releaseDate.date * 1000 > now.getTime())
+      ) ?? false;
 
-    const currentReleaseDate = new Date(igdbGame.first_release_date * 1000);
-    const currentReleaseDateStr = currentReleaseDate.toISOString().split("T")[0]!;
+    if (!igdbGame.first_release_date && !hasUpcomingDelayedRelease) continue;
+
+    const currentReleaseDate = igdbGame.first_release_date
+      ? new Date(igdbGame.first_release_date * 1000)
+      : null;
+    const currentReleaseDateStr = currentReleaseDate?.toISOString().split("T")[0] ?? null;
 
     // Initialize originalReleaseDate if not set
-    if (!game.originalReleaseDate) {
+    if (!game.originalReleaseDate && currentReleaseDateStr) {
       if (game.releaseDate) {
         queueUpdate({ originalReleaseDate: game.releaseDate });
         game.originalReleaseDate = game.releaseDate;
@@ -628,21 +757,24 @@ export async function checkGameUpdates() {
           releaseDate: currentReleaseDateStr,
           originalReleaseDate: currentReleaseDateStr,
         });
-        continue;
+        if (!hasUpcomingDelayedRelease) continue;
+        game.originalReleaseDate = currentReleaseDateStr;
       }
     }
 
-    // Now compare
-    const storedOriginalDate = new Date(game.originalReleaseDate!);
-    const diffTime = currentReleaseDate.getTime() - storedOriginalDate.getTime();
+    // Keep the date-shift check as a fallback for IGDB records without a status.
+    const storedOriginalDate = game.originalReleaseDate ? new Date(game.originalReleaseDate) : null;
+    const diffTime =
+      currentReleaseDate && storedOriginalDate
+        ? currentReleaseDate.getTime() - storedOriginalDate.getTime()
+        : 0;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     let newReleaseStatus: "released" | "upcoming" | "delayed" | "tbd";
-    const now = new Date();
 
-    if (currentReleaseDate <= now) {
+    if (currentReleaseDate && currentReleaseDate <= now) {
       newReleaseStatus = "released";
-    } else if (diffDays > DELAY_THRESHOLD_DAYS) {
+    } else if (hasUpcomingDelayedRelease || diffDays > DELAY_THRESHOLD_DAYS) {
       newReleaseStatus = "delayed";
     } else {
       newReleaseStatus = "upcoming";
@@ -664,7 +796,9 @@ export async function checkGameUpdates() {
     }
 
     // If release date or status changed, update DB
-    if (game.releaseDate !== currentReleaseDateStr || game.releaseStatus !== newReleaseStatus) {
+    const releaseDateChanged =
+      currentReleaseDateStr !== null && game.releaseDate !== currentReleaseDateStr;
+    if (releaseDateChanged || game.releaseStatus !== newReleaseStatus) {
       igdbLogger.info(
         {
           game: game.title,
@@ -678,13 +812,15 @@ export async function checkGameUpdates() {
       );
 
       queueUpdate({
-        releaseDate: currentReleaseDateStr,
+        ...(currentReleaseDateStr ? { releaseDate: currentReleaseDateStr } : {}),
         releaseStatus: newReleaseStatus,
       });
 
       // Send notification if game is delayed
       if (newReleaseStatus === "delayed" && game.releaseStatus !== "delayed") {
-        const message = `${game.title} has been delayed to ${currentReleaseDateStr}`;
+        const message = currentReleaseDateStr
+          ? `${game.title} has been delayed to ${currentReleaseDateStr}`
+          : `${game.title} has been delayed`;
         const prefs = await getGameUpdatePrefs(game.userId!);
         if (prefs.gameDelayed.inApp) {
           notificationsToSend.push({
@@ -727,7 +863,25 @@ export async function checkGameUpdates() {
   );
 }
 
+/**
+ * Polls every download client for the downloads Questarr tracks and moves each one
+ * along: completion (and import), errors, and downloads that vanished from the client.
+ * A run that is still going when the next tick fires makes that tick a no-op.
+ */
 export async function checkDownloadStatus() {
+  if (downloadStatusCheckRunning) {
+    igdbLogger.debug("Previous download status check still running — skipping this tick");
+    return;
+  }
+  downloadStatusCheckRunning = true;
+  try {
+    await runDownloadStatusCheck();
+  } finally {
+    downloadStatusCheckRunning = false;
+  }
+}
+
+async function runDownloadStatusCheck() {
   const downloadingDownloads = await storage.getDownloadingGameDownloads();
 
   if (downloadingDownloads.length === 0) {
@@ -743,11 +897,13 @@ export async function checkDownloadStatus() {
       downloadMissCount.delete(key);
     }
   });
-  downloadTagMissCount.forEach((_, key) => {
-    if (!activeDownloadIds.has(key)) {
-      downloadTagMissCount.delete(key);
-    }
-  });
+  for (const tracked of [downloadTagMissCount, downloadErrorSince, lastSeenRemote]) {
+    tracked.forEach((_, key) => {
+      if (!activeDownloadIds.has(key)) {
+        tracked.delete(key);
+      }
+    });
+  }
 
   // Group by downloader
   const downloadsByDownloader = new Map<string, typeof downloadingDownloads>();
@@ -763,7 +919,12 @@ export async function checkDownloadStatus() {
       const downloader = await storage.getDownloader(downloaderId);
       if (!downloader || !downloader.enabled) continue;
 
-      const activeDownloads = await DownloaderManager.getAllDownloads(downloader);
+      // throwOnError: an unreachable client must not look like a client that
+      // no longer has any of our downloads, or an outage would mark them all
+      // failed. The catch at the bottom skips this downloader for the tick.
+      const activeDownloads = await DownloaderManager.getAllDownloads(downloader, {
+        throwOnError: true,
+      });
       const activeDownloadMap = new Map(activeDownloads.map((t) => [t.id.toLowerCase(), t]));
 
       igdbLogger.debug(
@@ -837,22 +998,16 @@ export async function checkDownloadStatus() {
                 "failed",
                 "The download client never registered this download."
               );
-              notifyUser("downloadUpdate", download.gameId);
+              const failedGame = await storage.getGame(download.gameId);
+              notifyUser("downloadUpdate", download.gameId, failedGame?.userId);
               // Mirror the normal error path: reset the game to "wanted"
               // only when no sibling download for the same game is still
               // actively downloading.
               const siblings = await storage.getDownloadsByGameId(download.gameId);
-              const activeStatuses = new Set([
-                "downloading",
-                "paused",
-                "unpacking",
-                "completed_pending_import",
-              ]);
               const hasActiveSibling = siblings.some(
-                (s) => s.id !== download.id && activeStatuses.has(s.status)
+                (s) => s.id !== download.id && ACTIVE_DOWNLOAD_STATUSES.has(s.status)
               );
               if (!hasActiveSibling) {
-                const failedGame = await storage.getGame(download.gameId);
                 if (
                   failedGame &&
                   failedGame.status !== "wanted" &&
@@ -887,15 +1042,23 @@ export async function checkDownloadStatus() {
           }
         }
 
-        // Skip rows whose import is already in flight — the earlier tick's
+        // Skip rows whose import is already in flight — an earlier tick's
         // processImport() is still extracting (large archives take minutes).
         // Re-invoking here would start a second extraction into the same
         // directory and clobber the in-flight one.
-        if (download.status === "unpacking" || download.status === "completed_pending_import") {
+        if (importManager.isImportInFlight(download.id)) {
           igdbLogger.debug(
             { downloadId: download.id, status: download.status },
             "Skipping download — import already in progress"
           );
+          continue;
+        }
+
+        // A mid-import status with no import running means the process stopped
+        // (restart, crash) while importing. Nothing would ever pick the row up
+        // again, so hand it to the user through Pending Imports.
+        if (download.status === "unpacking" || download.status === "completed_pending_import") {
+          await recoverInterruptedImport(download);
           continue;
         }
 
@@ -941,6 +1104,13 @@ export async function checkDownloadStatus() {
         if (remoteDownload) {
           // Clear any previous miss count — download is alive.
           downloadMissCount.delete(download.id);
+          lastSeenRemote.set(download.id, {
+            progress: remoteDownload.progress,
+            status: remoteDownload.status,
+          });
+          if (remoteDownload.status !== "error") {
+            downloadErrorSince.delete(download.id);
+          }
 
           igdbLogger.debug(
             {
@@ -990,14 +1160,15 @@ export async function checkDownloadStatus() {
                   ...details,
                   downloadDir: details.downloadDir,
                 });
-                try {
-                  await importManager.processImport(download.id, remoteImportPath);
-                } catch (error) {
+                // Not awaited: an extraction can take many minutes, and this tick
+                // still has other downloads to check. ImportManager tracks the
+                // running import, which the next ticks skip.
+                importManager.processImport(download.id, remoteImportPath).catch((error) => {
                   igdbLogger.error(
                     { error, downloadId: download.id, remoteImportPath },
                     "Failed to start import pipeline after download completion"
                   );
-                }
+                });
               } else {
                 shouldSendCompletionNotification = false;
                 await storage.updateGameDownloadStatus(download.id, "manual_review_required");
@@ -1049,8 +1220,7 @@ export async function checkDownloadStatus() {
             }
 
             // Notify frontend to refresh downloads for this game.
-            // TODO: scope this to a per-user socket room once multi-user socket auth is wired up.
-            notifyUser("downloadUpdate", download.gameId);
+            notifyUser("downloadUpdate", download.gameId, game?.userId);
 
             // Send notification
             const message = `Download finished for ${gameTitle}`;
@@ -1076,15 +1246,37 @@ export async function checkDownloadStatus() {
             let isDefinitiveError = false;
 
             if (remoteDownload.status === "error") {
-              newDownloadStatus = "failed";
-              newGameStatus = "wanted"; // Reset to wanted on error
-              newErrorMessage =
+              const remoteError =
                 remoteDownload.error?.trim() || "Aborted by downloader (no details provided)";
-              isDefinitiveError = true;
-              igdbLogger.warn(
-                { title: download.downloadTitle, error: newErrorMessage },
-                "Download error detected"
-              );
+              const now = Date.now();
+              const errorSince = downloadErrorSince.get(download.id) ?? now;
+              downloadErrorSince.set(download.id, errorSince);
+              const isTorrent = (remoteDownload.downloadType ?? download.downloadType) !== "usenet";
+
+              if (isTorrent && now - errorSince < TORRENT_ERROR_GRACE_MS) {
+                // Keep tracking it: the client may recover (tracker back, disk
+                // remounted) and finish the download, which would never be
+                // imported once the row is "failed". Show the error meanwhile.
+                newDownloadStatus = download.status === "paused" ? "paused" : "downloading";
+                newGameStatus = "downloading";
+                newErrorMessage = remoteError;
+                if (errorSince === now) {
+                  igdbLogger.warn(
+                    { title: download.downloadTitle, error: remoteError },
+                    "Download client reports an error — waiting to see if it clears"
+                  );
+                }
+              } else {
+                downloadErrorSince.delete(download.id);
+                newDownloadStatus = "failed";
+                newGameStatus = "wanted"; // Reset to wanted on error
+                newErrorMessage = remoteError;
+                isDefinitiveError = true;
+                igdbLogger.warn(
+                  { title: download.downloadTitle, error: newErrorMessage },
+                  "Download error detected"
+                );
+              }
             } else if (remoteDownload.status === "paused") {
               newDownloadStatus = "paused";
               newGameStatus = "downloading"; // Still consider it downloading (user can resume)
@@ -1116,8 +1308,8 @@ export async function checkDownloadStatus() {
                 "Updated download status"
               );
               // Notify frontend to refresh downloads for this game.
-              // TODO: scope this to a per-user socket room once multi-user socket auth is wired up.
-              notifyUser("downloadUpdate", download.gameId);
+              const updatedGame = await storage.getGame(download.gameId);
+              notifyUser("downloadUpdate", download.gameId, updatedGame?.userId);
             }
 
             if (isDefinitiveError && shouldPersistDownloadUpdate) {
@@ -1215,6 +1407,22 @@ export async function checkDownloadStatus() {
             continue;
           }
 
+          const lastSeen = lastSeenRemote.get(download.id);
+          if (
+            lastSeen &&
+            (lastSeen.progress >= PROBABLY_FINISHED_PROGRESS ||
+              PROBABLY_FINISHED_STATUSES.has(lastSeen.status))
+          ) {
+            // It was finished or nearly so: a client that drops jobs once they
+            // complete (SABnzbd/NZBGet without history, qBittorrent removing at
+            // ratio 0) did this, not a failure. Failing it would reset the game
+            // to "wanted" and auto-search would grab the same release again.
+            downloadMissCount.delete(download.id);
+            lastSeenRemote.delete(download.id);
+            await handleProbablyFinishedDisappearance(download, lastSeen.progress);
+            continue;
+          }
+
           // Threshold reached. A download disappearing from the downloader (queue and
           // history) is far more consistent with a failure that a cleanup script or the
           // user removed (e.g. SABnzbd repair failure, torrent client "remove on error")
@@ -1248,14 +1456,8 @@ export async function checkDownloadStatus() {
           // the game status as-is to avoid a false regression. Mirrors the active-status
           // set used for the analogous async tag-resolution failure path above.
           const siblings = await storage.getDownloadsByGameId(download.gameId);
-          const activeStatuses = new Set([
-            "downloading",
-            "paused",
-            "unpacking",
-            "completed_pending_import",
-          ]);
           const hasActiveSibling = siblings.some(
-            (s) => s.id !== download.id && activeStatuses.has(s.status)
+            (s) => s.id !== download.id && ACTIVE_DOWNLOAD_STATUSES.has(s.status)
           );
           const willResetGame =
             !hasActiveSibling &&
@@ -1272,7 +1474,7 @@ export async function checkDownloadStatus() {
               "to import it manually.";
 
           await storage.updateGameDownloadStatus(download.id, "failed", missedErrorMessage);
-          notifyUser("downloadUpdate", download.gameId);
+          notifyUser("downloadUpdate", download.gameId, game?.userId);
 
           if (willResetGame) {
             await storage.updateGameStatus(
@@ -1313,6 +1515,114 @@ export async function checkDownloadStatus() {
       }
     }
   }
+}
+
+/**
+ * Hands a download whose import was cut short (the process stopped mid-import) to the
+ * user: Pending Imports lists "manual_review_required" rows and lets them retry.
+ */
+async function recoverInterruptedImport(download: GameDownload): Promise<void> {
+  igdbLogger.warn(
+    { downloadId: download.id, status: download.status },
+    "Import was interrupted before it finished — moving it to manual review"
+  );
+  await storage.updateGameDownloadStatus(
+    download.id,
+    "manual_review_required",
+    "The import was interrupted before it finished (Questarr was probably restarted). " +
+      "Review it to run the import again."
+  );
+  const game = await storage.getGame(download.gameId);
+  notifyUser("downloadUpdate", download.gameId, game?.userId);
+  try {
+    const notification = await storage.addNotification({
+      type: "warning",
+      title: "Import needs attention",
+      message: `The import of "${game?.title ?? download.downloadTitle}" was interrupted. Review it in Pending Imports to run it again.`,
+      link: "/downloads",
+      userId: game?.userId ?? undefined,
+    });
+    notifyUser("notification", notification, notification.userId);
+  } catch (error) {
+    igdbLogger.error(
+      { error, downloadId: download.id },
+      "Failed to create interrupted-import notification"
+    );
+  }
+}
+
+/**
+ * A download that vanished from its client once finished (or nearly): with post-processing
+ * the user imports it from Pending Imports; without it, it counts as completed, as a
+ * finished download normally would. The game is never reset to "wanted".
+ */
+async function handleProbablyFinishedDisappearance(
+  download: GameDownload,
+  lastProgress: number
+): Promise<void> {
+  const game = await storage.getGame(download.gameId);
+  const gameTitle = game?.title ?? download.downloadTitle;
+  const importConfig = await storage.getImportConfig(game?.userId ?? undefined);
+
+  igdbLogger.warn(
+    { downloadId: download.id, gameId: download.gameId, lastProgress },
+    "Download disappeared from the downloader after finishing — the client probably " +
+      "removed it on completion"
+  );
+
+  if (!importConfig.enablePostProcessing) {
+    await storage.updateGameDownloadStatus(download.id, "completed");
+    await recordVersionFromCompletedDownload(
+      storage,
+      download.gameId,
+      download.downloadTitle,
+      download.category
+    );
+    if (!isUserCuratedGameStatus(game?.status)) {
+      await storage.updateGameStatus(
+        download.gameId,
+        { status: "owned" },
+        { preserveCurated: true }
+      );
+    }
+    notifyUser("downloadUpdate", download.gameId, game?.userId);
+    return;
+  }
+
+  await storage.updateGameDownloadStatus(
+    download.id,
+    "manual_review_required",
+    "The download client removed this download once it finished, so its files could not " +
+      "be located automatically. Review it and point the import at the downloaded files."
+  );
+  notifyUser("downloadUpdate", download.gameId, game?.userId);
+  try {
+    const notification = await storage.addNotification({
+      type: "warning",
+      title: "Import needs attention",
+      message: `"${gameTitle}" finished downloading but the download client removed it before Questarr could import it. Review it in Pending Imports and select the downloaded files.`,
+      link: "/downloads",
+      userId: game?.userId ?? undefined,
+    });
+    notifyUser("notification", notification, notification.userId);
+  } catch (error) {
+    igdbLogger.error(
+      { error, downloadId: download.id },
+      "Failed to create removed-on-completion notification"
+    );
+  }
+}
+
+/**
+ * Whether this exact release was already grabbed for the game and failed. Auto-search
+ * skips it so a release that keeps failing (or vanishing) isn't downloaded in a loop.
+ */
+async function releaseAlreadyFailedForGame(gameId: string, releaseTitle: string) {
+  const key = normalizeTitle(releaseTitle);
+  const downloads = await storage.getDownloadsByGameId(gameId);
+  return downloads.some(
+    (d) => FAILED_DOWNLOAD_STATUSES.has(d.status) && normalizeTitle(d.downloadTitle) === key
+  );
 }
 
 /**
@@ -1388,6 +1698,9 @@ export async function checkAutoSearch(
         const preferredGroups = parseJsonStringArray(settings.preferredReleaseGroups);
         const preferredPlatform = settings.preferredPlatform ?? null;
         const blacklistTerms = parseJsonStringArray(settings.releaseNameBlacklist);
+        const releaseScoring = settings.releaseScoringEnabled
+          ? (parseSavedReleaseScoringConfig(settings.releaseScoringProfile) ?? null)
+          : undefined;
 
         for (const game of wantedGames) {
           try {
@@ -1404,7 +1717,9 @@ export async function checkAutoSearch(
               game,
               settings.downloadRules,
               indexerPriorityMap,
-              blacklistTerms
+              blacklistTerms,
+              releaseScoring,
+              resolveGamePlatformPreference(game, preferredPlatform)
             );
             if (!searchResult) {
               // No results at all (zero results or all blacklisted) — clear the badge
@@ -1416,24 +1731,19 @@ export async function checkAutoSearch(
             // notifications on the false→true transition instead of firing every cycle.
             const wasAvailable = game.searchResultsAvailable;
 
-            // Apply platform filter first (strict), then preferred groups filter, then
-            // de-duplicate releases that appear on multiple indexers (keep highest-priority indexer).
             const effectivePlatform = resolveGamePlatformPreference(game, preferredPlatform);
-            const platformFilteredMain = applyPreferredPlatformFilter(
-              searchResult.mainItems,
-              effectivePlatform
-            );
-            const variantFilteredMain = applyRequestedVariantFilter(
-              platformFilteredMain,
-              game.targetOperatingSystem,
-              game.targetArchitecture
-            );
-            const groupFilteredMain = applyPreferredGroupsFilter(
-              variantFilteredMain,
+            const filterOptions: AutoSearchFilterOptions = {
+              preferredPlatform: effectivePlatform,
+              operatingSystem: game.targetOperatingSystem,
+              architecture: game.targetArchitecture,
               preferredGroups,
-              settings.filterByPreferredGroups ?? false
+              strictPreferredGroups: settings.filterByPreferredGroups ?? false,
+              indexerPriorityMap,
+            };
+            const mainItems = filterAndDeduplicateAutoSearchItems(
+              searchResult.mainItems,
+              filterOptions
             );
-            const mainItems = deduplicateByTitle(groupFilteredMain, indexerPriorityMap);
 
             // Handle main items
             if (mainItems.length === 0) {
@@ -1462,12 +1772,20 @@ export async function checkAutoSearch(
                   // flagged for review (a stale/differently-scored AI response would
                   // otherwise let it through) and avoids a repeat paid TypeSafe call for
                   // the same release every cycle.
-                  const alreadyHeld = await storage.hasAiAutoDownloadHold(game.id, releaseKey);
-                  const aiHoldReason = alreadyHeld
-                    ? null
-                    : await getAiAutoDownloadHoldReason(item, effectivePlatform);
+                  const alreadyFailed = await releaseAlreadyFailedForGame(game.id, item.title);
+                  const alreadyHeld =
+                    !alreadyFailed && (await storage.hasAiAutoDownloadHold(game.id, releaseKey));
+                  const aiHoldReason =
+                    alreadyFailed || alreadyHeld
+                      ? null
+                      : await getAiAutoDownloadHoldReason(item, effectivePlatform);
 
-                  if (alreadyHeld) {
+                  if (alreadyFailed) {
+                    igdbLogger.info(
+                      { gameTitle: game.title, releaseTitle: item.title },
+                      "Skipping auto-download: this release already failed for this game"
+                    );
+                  } else if (alreadyHeld) {
                     igdbLogger.debug(
                       { gameTitle: game.title },
                       "Skipping auto-download: release already held for AI review"
@@ -1560,7 +1878,7 @@ export async function checkAutoSearch(
                             await storage.updateGameSearchResultsAvailable(game.id, false);
 
                             const groupSuffix = item.group ? ` [${item.group}]` : "";
-                            if (prefs.autoDownload.inApp) {
+                            if (prefs.autoDownload.inApp || prefs.autoDownload.apprise) {
                               const notification = await storage.addNotification({
                                 userId,
                                 type: "success",
@@ -1568,7 +1886,9 @@ export async function checkAutoSearch(
                                 message: `Started downloading ${game.title}${groupSuffix} via ${item.downloadType === "usenet" ? "Usenet" : "Torrent"}`,
                                 link: "/",
                               });
-                              notifyUser("notification", notification, notification.userId);
+                              if (prefs.autoDownload.inApp) {
+                                notifyUser("notification", notification, notification.userId);
+                              }
                               if (prefs.autoDownload.apprise) void appriseClient.send(notification);
                             }
 
@@ -1634,10 +1954,15 @@ export async function checkAutoSearch(
               game,
               settings.downloadRules,
               indexerPriorityMap,
-              blacklistTerms
+              blacklistTerms,
+              releaseScoring,
+              resolveGamePlatformPreference(game, preferredPlatform)
             );
             if (!searchResult) {
               await storage.updateGameSearchResultsAvailable(game.id, false);
+              if (game.searchResultsAvailable || game.updateSearchResultsAvailable) {
+                notifyUser("gameUpdated", game.id, game.userId ?? undefined);
+              }
               continue;
             }
 
@@ -1645,48 +1970,39 @@ export async function checkAutoSearch(
             const wasPacksAvailable = game.packsSearchResultsAvailable;
 
             const effectivePlatform = resolveGamePlatformPreference(game, preferredPlatform);
-            const platformFilteredUpdate = applyPreferredPlatformFilter(
-              searchResult.updateItems,
-              effectivePlatform
-            );
-            const variantFilteredUpdate = applyRequestedVariantFilter(
-              platformFilteredUpdate,
-              game.targetOperatingSystem,
-              game.targetArchitecture
-            );
-            const groupFilteredUpdate = applyPreferredGroupsFilter(
-              variantFilteredUpdate,
+            const filterOptions: AutoSearchFilterOptions = {
+              preferredPlatform: effectivePlatform,
+              operatingSystem: game.targetOperatingSystem,
+              architecture: game.targetArchitecture,
               preferredGroups,
-              settings.filterByPreferredGroups ?? false
-            );
+              strictPreferredGroups: settings.filterByPreferredGroups ?? false,
+              indexerPriorityMap,
+            };
             // Drop update releases whose version is provably not newer than the one the user
             // has installed, so a game already on v1.5 isn't flagged for a v1.4 patch.
-            const versionFilteredUpdate = groupFilteredUpdate.filter((item) =>
-              isReleasePossiblyNewer(item.title, game.installedVersion)
+            const updateItems = filterAndDeduplicateAutoSearchItems(
+              searchResult.updateItems,
+              filterOptions,
+              (item) => isReleasePossiblyNewer(item.title, game.installedVersion)
             );
-            const updateItems = deduplicateByTitle(versionFilteredUpdate, indexerPriorityMap);
 
             // Packs/add-ons are content for owned games, surfaced like updates.
-            const platformFilteredPacks = applyPreferredPlatformFilter(
+            const packsItems = filterAndDeduplicateAutoSearchItems(
               searchResult.packsItems,
-              effectivePlatform
+              filterOptions
             );
-            const variantFilteredPacks = applyRequestedVariantFilter(
-              platformFilteredPacks,
-              game.targetOperatingSystem,
-              game.targetArchitecture
-            );
-            const groupFilteredPacks = applyPreferredGroupsFilter(
-              variantFilteredPacks,
-              preferredGroups,
-              settings.filterByPreferredGroups ?? false
-            );
-            const packsItems = deduplicateByTitle(groupFilteredPacks, indexerPriorityMap);
 
             await storage.updateGameSearchResultsByCategory(game.id, {
               updates: updateItems.length > 0,
               packs: packsItems.length > 0,
             });
+
+            if (
+              wasUpdateAvailable !== updateItems.length > 0 ||
+              wasPacksAvailable !== packsItems.length > 0
+            ) {
+              notifyUser("gameUpdated", game.id, game.userId ?? undefined);
+            }
 
             // Keep availability badges current even when this status is muted.
             if (
@@ -2022,7 +2338,7 @@ export async function syncUserSteamWishlist(
     });
     taskId = task.id;
     await storage.startImportTask(taskId);
-    notifyUser("importTaskUpdate", { taskId, status: "in_progress" });
+    notifyUser("importTaskUpdate", { taskId, status: "in_progress" }, userId);
 
     igdbLogger.info({ userId, steamId: user.steamId64 }, "Syncing Steam Wishlist");
 
@@ -2102,7 +2418,7 @@ export async function syncUserSteamWishlist(
       skippedItems: skippedCount,
       failedItems: failedSteamAppIds.length,
     });
-    notifyUser("importTaskUpdate", { taskId, status: finalStatus });
+    notifyUser("importTaskUpdate", { taskId, status: finalStatus }, userId);
 
     const steamPrefs = resolvePrefs(settings);
     if (addedGames.length > 0 && steamPrefs.steamSync.inApp) {
@@ -2131,7 +2447,7 @@ export async function syncUserSteamWishlist(
           errorMessage: errMessage,
         })
         .catch(() => undefined);
-      notifyUser("importTaskUpdate", { taskId, status: "failed" });
+      notifyUser("importTaskUpdate", { taskId, status: "failed" }, userId);
     }
 
     return { success: false, message: errMessage };

@@ -1,0 +1,37 @@
+Batch 40 validation — upstream items #376–391
+Date: October 12, 2026
+
+Review dispositions:
+- Issue #376: The requester agreed that Shelved better describes the proposed dropped status; personal ratings and journal notes already exist, with notes saved by an explicit Add action. Added private per-user custom lists with create, rename, delete, search, and multi-list game membership. API and storage operations enforce ownership; database schemas cover SQLite and PostgreSQL.
+- Issue #377: Authenticated Steam wishlist linking and synchronization are present. The upstream OAuth callback was not required for the fork's manual public-wishlist flow.
+- PRs #378–381: Current locked development and production dependency versions exceed all requested targets.
+- Issue #382: Plain HTTP remains functional when SSL is disabled; HTTPS upgrade and HSTS headers are enabled only with SSL configuration, and redirect is applied only after the HTTPS listener starts.
+- PR #383: Superseded. Its wildcard CORS and disabled-HSTS proposal is unnecessary for HTTP compatibility and weaker than QuestarrNG's explicit-origin and SSL-aware configuration.
+- PRs #384–387: Statistics, DNS-rebinding-resistant SSRF checks, server-side status filters, and descriptive accessible game action labels are present.
+- Issues #388–391: Multi-architecture ARM64 publishing, responsive card grids, health sort direction, and populated/filtering release-group options are verified.
+
+Regression coverage:
+- server/__tests__/game-lists-storage.test.ts — per-user isolation, idempotent membership, and cascade behavior in memory storage.
+- server/__tests__/api_routes_extended.test.ts — list API validation, duplicate names, authorization, membership, and not-found behavior.
+- server/__tests__/database_storage_integration.test.ts — list ownership and persistence using SQLite DatabaseStorage.
+- client/__tests__/GameDownloadDialog.test.tsx — result ordering changes with Health sort direction; detected release groups populate options and filter results.
+- client/__tests__/MobileBottomNav.test.tsx — Custom Lists appears in the mobile navigation menu.
+- server/__tests__/security.test.ts — HTTP-only deployments do not emit HSTS or an HTTPS-upgrade CSP directive.
+
+Visual evidence:
+- `docs/pr-evidence/upstream-custom-lists-batch-40.png` was captured from the running app using a headless Playwright browser. The test account had synthetic library games; the page created a list and added two games. No external IGDB credentials were used.
+- `npm run dev:test` initialized the isolated `data/test.db`, then could not bind its default port 5100 because another process already owned it. The task-owned test app ran on port 5201 against that isolated database for the screenshot.
+
+Repository checks:
+- `npm run test` — 253 files passed, 1 skipped; 4,111 tests passed, 7 skipped.
+- `npm run check` — passed.
+- `npm run build` — passed; Vite reported its existing large-chunk advisory.
+- `npm run lint` — passed with zero warnings.
+- `npm run format:check` — passed.
+- `npm run secretlint` — passed.
+- `npm run db:check:pg` — passed.
+- `git diff --check` — passed.
+
+Scratch and cleanup:
+- Used `/home/keith/questarrng-upstream-resolution-batch40-tmp` for the test-run temporary directory and ledger update script because `/tmp` was full. No files were written to NFS.
+- The screenshot is retained as review evidence. The temporary database, task-owned server, and scratch directory are removed after validation.

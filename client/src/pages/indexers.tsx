@@ -1,3 +1,4 @@
+import { isSameProwlarrUrl } from "@shared/prowlarr-url";
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch, throwIfResNotOk, queryClient, clearSearchCache } from "@/lib/queryClient";
@@ -46,6 +47,7 @@ import { insertIndexerSchema, type Indexer, type InsertIndexer } from "@shared/s
 import { useToast } from "@/hooks/use-toast";
 import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
 import PageHeader from "@/components/PageHeader";
+import { PriorityInput } from "@/components/PriorityInput";
 import { InterfaceText } from "@/components/InterfaceText";
 
 // Standard Newznab/Torznab gaming categories offered when syncing from
@@ -94,55 +96,7 @@ function PriorityControl({
   priority: number;
   onSave: (id: string, priority: number) => void;
 }) {
-  const [value, setValue] = useState(priority);
-
-  useEffect(() => {
-    setValue(priority);
-  }, [priority]);
-
-  const save = (next: number) => {
-    const clamped = Math.max(1, Math.min(100, next));
-    if (clamped !== priority) onSave(id, clamped);
-    setValue(clamped);
-  };
-
-  return (
-    <div className="flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold">
-      <span className="text-muted-foreground">
-        <InterfaceText source={"Priority"} />
-      </span>
-      <button
-        type="button"
-        className="text-muted-foreground hover:text-foreground w-3.5 text-center leading-none"
-        onClick={() => save(value - 1)}
-        aria-label="Decrease priority"
-        data-i18n-aria-label={"Decrease priority"}
-      >
-        −
-      </button>
-      <input
-        type="number"
-        min={1}
-        max={100}
-        value={value}
-        onChange={(e) => setValue(Number.parseInt(e.target.value, 10) || 1)}
-        onBlur={(e) => save(Number.parseInt(e.target.value, 10) || 1)}
-        onKeyDown={(e) => e.key === "Enter" && save(value)}
-        className="w-7 bg-transparent text-center outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-        aria-label="Priority value"
-        data-i18n-aria-label={"Priority value"}
-      />
-      <button
-        type="button"
-        className="text-muted-foreground hover:text-foreground w-3.5 text-center leading-none"
-        onClick={() => save(value + 1)}
-        aria-label="Increase priority"
-        data-i18n-aria-label={"Increase priority"}
-      >
-        +
-      </button>
-    </div>
-  );
+  return <PriorityInput id={id} priority={priority} onSave={onSave} />;
 }
 
 export default function IndexersPage() {
@@ -220,7 +174,10 @@ export default function IndexersPage() {
       setProwlarrPrefilled(true);
       setProwlarrUrl(value);
       // The saved key is only valid for the saved URL; ask for it again elsewhere.
-      if (prowlarrApiKey === SAVED_KEY_PLACEHOLDER && value !== savedProwlarrSettings?.url) {
+      if (
+        prowlarrApiKey === SAVED_KEY_PLACEHOLDER &&
+        !isSameProwlarrUrl(savedProwlarrSettings?.url, value)
+      ) {
         setProwlarrApiKey("");
       }
     },
@@ -280,8 +237,6 @@ export default function IndexersPage() {
       return response.json();
     },
     onSuccess: (data) => {
-      void refreshIndexerQueries(queryClient);
-      void queryClient.invalidateQueries({ queryKey: ["/api/indexers/prowlarr/settings"] });
       clearSearchCache();
       setIsProwlarrDialogOpen(false);
       setProwlarrDiagnostics(null);
@@ -289,6 +244,13 @@ export default function IndexersPage() {
         title: "Sync successful",
         description: data.message,
       });
+    },
+    onSettled: async () => {
+      // A failed sync can still persist HTTP consent revocation locally.
+      await Promise.all([
+        refreshIndexerQueries(queryClient),
+        queryClient.invalidateQueries({ queryKey: ["/api/indexers/prowlarr/settings"] }),
+      ]);
     },
     onError: (error) => {
       toast({
@@ -457,7 +419,11 @@ export default function IndexersPage() {
     },
   });
 
-  const onSubmit = (data: InsertIndexer) => {
+  const onSubmit = (formData: InsertIndexer) => {
+    const data =
+      formData.protocol === "json-catalog"
+        ? { ...formData, apiKey: "", allowInsecureLan: false, categories: [] }
+        : formData;
     if (editingIndexer) {
       updateMutation.mutate({ id: editingIndexer.id, data });
     } else {
@@ -624,12 +590,14 @@ export default function IndexersPage() {
                       variant={indexer.protocol === "torznab" ? "default" : "secondary"}
                       className="uppercase"
                     >
-                      {indexer.protocol === "newznab" ? (
+                      {indexer.protocol === "json-catalog" ? (
+                        "JSON catalog"
+                      ) : indexer.protocol === "newznab" ? (
                         <InterfaceText source={"Newznab"} />
                       ) : indexer.protocol === "g4u" ? (
                         "g4u.to"
                       ) : (
-                        "Torznab"
+                        <InterfaceText source={"Torznab"} />
                       )}
                     </Badge>
                     <Badge
@@ -751,7 +719,7 @@ export default function IndexersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingIndexer ? (
@@ -815,6 +783,7 @@ export default function IndexersPage() {
                         <SelectItem value="torznab">
                           <InterfaceText source={"Torznab (Torrent)"} />
                         </SelectItem>
+                        <SelectItem value="json-catalog">JSON catalog (Hydra format)</SelectItem>
                         <SelectItem value="newznab">
                           <InterfaceText source={"Newznab (Usenet)"} />
                         </SelectItem>
@@ -828,7 +797,8 @@ export default function IndexersPage() {
                         source={
                           "Torznab for torrent indexers, Newznab for Usenet indexers, g4u.to for the g4u.to VIP API"
                         }
-                      />
+                      />{" "}
+                      or a public HTTPS JSON catalog containing torrent links.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -840,22 +810,26 @@ export default function IndexersPage() {
                 render={({ field }) => (
                   <FormItem>
                     <RequiredFormLabel required>
-                      {form.watch("protocol") === "newznab" ? (
+                      {form.watch("protocol") === "json-catalog" ? (
+                        "Catalog HTTPS URL"
+                      ) : form.watch("protocol") === "newznab" ? (
                         <InterfaceText source={"Newznab URL"} />
                       ) : form.watch("protocol") === "g4u" ? (
                         "g4u.to URL"
                       ) : (
-                        "Torznab URL"
+                        <InterfaceText source={"Torznab URL"} />
                       )}
                     </RequiredFormLabel>
                     <FormControl>
                       <Input
                         placeholder={
-                          form.watch("protocol") === "newznab"
-                            ? "http://localhost:8080/api"
-                            : form.watch("protocol") === "g4u"
-                              ? "https://api.g4u.to/api"
-                              : "http://localhost:9117/api/v2.0/indexers/all/results/torznab/"
+                          form.watch("protocol") === "json-catalog"
+                            ? "https://example.com/catalog.json"
+                            : form.watch("protocol") === "newznab"
+                              ? "http://localhost:8080/api"
+                              : form.watch("protocol") === "g4u"
+                                ? "https://api.g4u.to/api"
+                                : "http://localhost:9117/api/v2.0/indexers/all/results/torznab/"
                         }
                         required
                         {...field}
@@ -871,14 +845,19 @@ export default function IndexersPage() {
                 name="apiKey"
                 render={({ field }) => (
                   <FormItem>
-                    <RequiredFormLabel required>
+                    <RequiredFormLabel required={form.watch("protocol") !== "json-catalog"}>
                       <InterfaceText source={"API Key"} />
                     </RequiredFormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter API key"
-                        required
+                        placeholder={
+                          form.watch("protocol") === "json-catalog"
+                            ? "Not used for public JSON catalogs"
+                            : "Enter API key"
+                        }
+                        disabled={form.watch("protocol") === "json-catalog"}
+                        required={form.watch("protocol") !== "json-catalog"}
                         {...field}
                         data-testid="input-indexer-apikey"
                         data-i18n-placeholder={"Enter API key"}
@@ -888,33 +867,35 @@ export default function IndexersPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="allowInsecureLan"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-2">
-                    <div className="space-y-0">
-                      <FormLabel className="text-sm">
-                        <InterfaceText source={"Allow insecure LAN connection"} />
-                      </FormLabel>
-                      <FormDescription className="text-xs">
-                        <InterfaceText
-                          source={
-                            "Sends the API key over plain HTTP (no encryption). Only enable this for a trusted local-network indexer that does not support HTTPS. Enabling this on an internet-facing indexer exposes your API key in clear text."
-                          }
+              {form.watch("protocol") !== "json-catalog" && (
+                <FormField
+                  control={form.control}
+                  name="allowInsecureLan"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-2">
+                      <div className="space-y-0">
+                        <FormLabel className="text-sm">
+                          <InterfaceText source={"Allow insecure LAN connection"} />
+                        </FormLabel>
+                        <FormDescription className="text-xs">
+                          <InterfaceText
+                            source={
+                              "Sends the API key over plain HTTP (no encryption). Only enable this for a trusted local-network indexer that does not support HTTPS. Enabling this on an internet-facing indexer exposes your API key in clear text."
+                            }
+                          />
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Checkbox
+                          checked={!!field.value}
+                          onCheckedChange={(checked) => field.onChange(!!checked)}
+                          data-testid="checkbox-indexer-allow-insecure-lan"
                         />
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Checkbox
-                        checked={!!field.value}
-                        onCheckedChange={(checked) => field.onChange(!!checked)}
-                        data-testid="checkbox-indexer-allow-insecure-lan"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="priority"
@@ -937,50 +918,53 @@ export default function IndexersPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="categories"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      <InterfaceText source={"Categories"} />
-                    </FormLabel>
-                    <FormControl>
-                      <MultiSelect
-                        options={availableCategories}
-                        selected={field.value || []}
-                        onChange={field.onChange}
-                        placeholder={
-                          loadingCategories
-                            ? "Loading categories..."
-                            : availableCategories.length > 0
-                              ? "Select categories..."
-                              : "Save indexer first to load categories"
-                        }
-                        emptyMessage="No categories available"
-                        disabled={
-                          loadingCategories || (!editingIndexer && availableCategories.length === 0)
-                        }
-                        data-testid="multi-select-categories"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {editingIndexer ? (
-                        <InterfaceText
-                          source={
-                            "Select the Torznab categories to search. Leave empty to use all available categories."
+              {form.watch("protocol") !== "json-catalog" && (
+                <FormField
+                  control={form.control}
+                  name="categories"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        <InterfaceText source={"Categories"} />
+                      </FormLabel>
+                      <FormControl>
+                        <MultiSelect
+                          options={availableCategories}
+                          selected={field.value || []}
+                          onChange={field.onChange}
+                          placeholder={
+                            loadingCategories
+                              ? "Loading categories..."
+                              : availableCategories.length > 0
+                                ? "Select categories..."
+                                : "Save indexer first to load categories"
                           }
+                          emptyMessage="No categories available"
+                          disabled={
+                            loadingCategories ||
+                            (!editingIndexer && availableCategories.length === 0)
+                          }
+                          data-testid="multi-select-categories"
                         />
-                      ) : (
-                        <InterfaceText
-                          source={"Add the indexer first, then edit it to select categories."}
-                        />
-                      )}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormDescription>
+                        {editingIndexer ? (
+                          <InterfaceText
+                            source={
+                              "Select the Torznab categories to search. Leave empty to use all available categories."
+                            }
+                          />
+                        ) : (
+                          <InterfaceText
+                            source={"Add the indexer first, then edit it to select categories."}
+                          />
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <div className="flex justify-end space-x-2">
                 <Button
                   type="button"

@@ -1,0 +1,34 @@
+Batch 28 review and validation
+==============================
+
+Items reviewed
+--------------
+
+The eight merged Dependabot PRs #252–259 contain older action or package
+updates. The fork already uses newer pins:
+
+- #252 login action: `step-security/docker-login-action` v4.6.0.
+- #253 Buildx action: `step-security/setup-buildx-action` v4.2.0.
+- #254 checkout action: the pinned SHA matches the official v7.0.1 tag and is
+  newer than v6.0.1. Several workflow comments incorrectly said v6.2.0; those
+  comments now identify the pinned v7.0.1 tag accurately.
+- #255 react-hook-form: package manifest and lockfile v7.89.0.
+- #256 fast-xml-parser: package manifest and lockfile v5.11.2.
+- #257 @tanstack/react-query: manifest ^5.104.0, lockfile v5.104.1.
+- #258 drizzle-orm: manifest ^0.45.3, lockfile v0.45.3.
+- #259 recharts: manifest ^3.10.1, lockfile v3.10.1.
+
+The requested versions are superseded; no dependency rollback or action change
+was made. GitHub PR conversations and merge metadata were checked. No reviews
+or additional comments were present on these PRs.
+
+Validation
+----------
+
+- Compared `package.json`, `package-lock.json`, and action references in
+  `.github/workflows/ci.yml` and `.github/workflows/deploy.yml`.
+- Verified the checkout commit against the official
+  `actions/checkout` v7.0.1 tag.
+- No application code or dependency files changed in this batch; only stale
+  workflow comments were corrected. No tests were rerun. Typecheck and focused
+  suite results are recorded in batch 27.

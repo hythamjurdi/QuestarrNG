@@ -1,0 +1,55 @@
+Batch 24 review and validation
+==============================
+
+Items reviewed
+--------------
+
+- Issues #208 and #209 verified: download results remain scrollable on desktop
+  and mobile; extended search provides an editable query and platform, indexer,
+  group, seeders, category, and sort controls.
+- Issue #210 verified after adding a question issue template alongside the
+  existing bug and feature templates. README, license, and contribution/docs
+  requests (#211 and #215) are already satisfied.
+- Issues #212 and #214 verified: calendar supports year/month/week views and
+  TBA games; Wishlist separates released, upcoming, and TBA entries. Issue #222
+  has a compact details header that leaves room for the close action.
+- Issue #213 superseded by upstream’s later removal of the Trending route, page,
+  and navigation (commits ef839c0 and b2f8f16).
+- Issue #216 verified: completing a main-game download updates the game to
+  owned.
+- Issue #217 implemented and verified: safe torrent/NZB links have a visible
+  direct file-download action distinct from adding to a downloader; magnet-only
+  results do not show it. When updates are available, users can choose whether
+  to include them. Mobile titles now wrap at word boundaries.
+- Issue #219 verified: background release checks recognize IGDB’s explicit
+  Delayed status, retain date-shift detection as fallback, and notify on the
+  transition to delayed.
+- Issues #220 and #221 verified: the header reports downloader storage, and
+  scheduled searches are configurable for wanted games that are not owned or
+  already downloading.
+- PR #223 superseded: its applicable dependency, test-mock, contribution guide,
+  and PR template work is already present. The fork’s current npm tooling
+  supersedes its pnpm-only guidance. PRs #224 and #225 are verified: notification
+  controls have accessible names, and metadata refresh batches IGDB lookups and
+  database writes.
+
+Validation
+----------
+
+- `npm test -- --run client/__tests__/GameDownloadDialog.test.tsx` — 1 file
+  passed; 46 tests passed, 1 skipped.
+- Focused regression run before the final mobile wrapping adjustment:
+  7 files passed; 219 tests passed, 441 skipped. This included Calendar,
+  GameDetailsModal, scheduled-search, delayed-release, download completion,
+  and metadata-refresh coverage.
+- `npm run check` — passed.
+- `npm run lint` — passed.
+- `npm run format:check` — passed.
+- Headless browser against `npm run dev:test` rendered representative torrent
+  and update results. Direct download and the update-choice dialog were checked
+  at desktop width, and the result cards were checked at mobile width. Screenshots:
+  `docs/pr-evidence/upstream-direct-download.png`,
+  `docs/pr-evidence/upstream-direct-download-bundle.png`, and
+  `docs/pr-evidence/upstream-direct-download-mobile.png`.
+- GitHub’s PR pages and IGDB documentation were consulted for #213 and PRs
+  #223–225, and to confirm release-date status names are IGDB reference data.

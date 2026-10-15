@@ -111,6 +111,13 @@ const GameCard = ({
     onViewDetails?.(game.id);
   };
 
+  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element) || !cardRef.current?.contains(target)) return;
+    if (target.closest("button, a, input, textarea, select, [role='button']")) return;
+    handleDetailsClick();
+  };
+
   const handleDownloadClick = async () => {
     console.warn(`Download triggered for game: ${resolvedGame.title}`);
 
@@ -151,12 +158,13 @@ const GameCard = ({
   return (
     <Card
       ref={cardRef}
-      onClick={handleDetailsClick}
+      onClick={handleCardClick}
       className={`group hover-elevate transition-all duration-200 mx-auto min-w-0 w-full max-w-full cursor-pointer flex flex-col h-full overflow-hidden sm:max-w-[225px] ${game.hidden ? "opacity-60 grayscale" : ""}`}
       data-testid={`card-game-${game.id}`}
-      aria-label={formatInterfaceMessage("View details for {title}", { title: game.title })}
-      lang={languageFor("View details for {title}")}
-      dir={directionFor("View details for {title}")}
+      role="group"
+      aria-label={formatInterfaceMessage("Game card for {title}", { title: game.title })}
+      lang={languageFor("Game card for {title}")}
+      dir={directionFor("Game card for {title}")}
     >
       <div className="relative">
         {/* ⚡ Bolt: Lazy loading images prevents fetching all game covers upfront,
@@ -240,7 +248,10 @@ const GameCard = ({
             </Tooltip>
           </div>
         )}
-        <SearchResultsBadge visible={game.searchResultsAvailable ?? false} />
+        <SearchResultsBadge
+          visible={game.searchResultsAvailable ?? false}
+          updatesAvailable={!isDiscovery && game.updateSearchResultsAvailable}
+        />
         {!isMobile && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-t-md bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
             {isDiscovery && (
@@ -283,13 +294,24 @@ const GameCard = ({
           lang="und"
           dir="auto"
         >
-          {game.title}
+          <button
+            type="button"
+            className="w-full rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleDetailsClick();
+            }}
+            aria-label={`View details for ${game.title}`}
+            data-testid={`button-details-${game.id}`}
+          >
+            {game.title}
+          </button>
         </h3>
         <div className="mb-2 flex min-w-0 items-center gap-1 text-[10px] text-muted-foreground sm:gap-2 sm:text-xs">
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 role="img"
                 aria-label={
                   hasUserVisibleRating
@@ -304,6 +326,7 @@ const GameCard = ({
                 dir={directionFor(
                   hasUserVisibleRating ? "IGDB rating: {rating} out of 10" : "Not rated"
                 )}
+                tabIndex={0}
               >
                 <Star className="w-3 h-3 text-accent" aria-hidden="true" />
                 <span data-testid={`text-rating-${game.id}`}>
@@ -321,13 +344,14 @@ const GameCard = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   role="img"
                   aria-label={formatInterfaceMessage("My rating: {rating} out of 10", {
                     rating: game.userRating,
                   })}
                   lang={languageFor("My rating: {rating} out of 10")}
                   dir={directionFor("My rating: {rating} out of 10")}
+                  tabIndex={0}
                 >
                   <Star className="w-3 h-3 fill-primary text-primary" aria-hidden="true" />
                   <span data-testid={`text-user-rating-${game.id}`}>{game.userRating}/10</span>
@@ -343,11 +367,12 @@ const GameCard = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 role="img"
                 aria-label={formatInterfaceMessage("Release Date: {date}", { date: releaseYear })}
                 lang={languageFor("Release Date: {date}")}
                 dir={directionFor("Release Date: {date}")}
+                tabIndex={0}
               >
                 <Calendar className="w-3 h-3" aria-hidden="true" />
                 <span data-testid={`text-release-${game.id}`}>{releaseYear}</span>

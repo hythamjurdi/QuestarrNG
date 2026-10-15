@@ -1,0 +1,47 @@
+# Batch 67 validation — upstream PRs #786–795
+
+Date: October 13, 2026
+Branch: `codex/upstream-resolution`
+Upstream `main`: `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`
+Inventory: 1,163 records (232 issues, 931 pull requests), refreshed from live GitHub exports.
+
+## Review results
+
+- Verified: PRs #787, #791, #794, and #795.
+- Superseded: PRs #786, #789, #790, #792, and #793.
+- Not applicable: PR #788, because current `typescript-eslint` 8.71.1 and npm's 8.71.2 release both declare TypeScript `>=4.8.4 <6.1.0`; Dependabot also ignores TypeScript major updates pending ecosystem support.
+- Live-source recheck: issue #1169 received a reporter follow-up on October 13 confirming the category behavior works after upgrading from 1.5.0 RC1 to the latest release. Its verified disposition remains valid and the updated source digest is recorded.
+- Live-source change still pending: PR #1194's body changed after the previous snapshot. It remains unreviewed and `sourceChangedSinceReview` stays true for the next chronological review.
+
+The ledger has 587 verified, 179 superseded, 13 not applicable, 5 implemented-unverified, 0 needs-implementation, and 379 unreviewed records after this batch.
+
+## Changes and focused checks
+
+- Replaced the three release-publication uses of `softprops/action-gh-release` with StepSecurity's full-SHA-pinned v3.0.3 drop-in action. Release and release-recovery checkouts disable persisted credentials; changelog branch-push jobs retain credentials.
+- Kept the existing DAST schedule, health check, report artifact, OWASP ZAP rules file, and blocking scan behavior; clarified that unignored WARN or FAIL alerts fail the scan.
+- Changed the DAST readiness loop's unused shell variable to `_` for ShellCheck.
+- `npx prettier --check` passed for the changed YAML and documentation files.
+- YAML parsing with `js-yaml` passed for `release.yml`, `fork-image.yml`, and `dast.yml`.
+- Actionlint passed for the three workflows after excluding its outdated `vulnerability-alerts` permission diagnostic; GitHub's workflow syntax documentation currently lists that read permission for Dependabot alerts.
+- `npm run build` passed in a disposable production worktree. Vite emitted its existing large-chunk advisory.
+- `npx vitest run server/__tests__/security.test.ts --maxWorkers=1` passed 14/14 tests.
+- Production smoke requests returned HTTP 200 for `/api/health` and `/api/auth/status`. The latter returned `font-src 'self' data:`, `style-src 'self' 'unsafe-inline'`, and exactly `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()`.
+
+## Post-push DAST follow-up
+
+- Manually dispatched the DAST workflow on this batch's pushed commit. Run
+  `38469014234` (`https://github.com/snapetech/QuestarrNG/actions/runs/38469014234`)
+  completed the scan but failed on one new WARN alert: ZAP rule 10110,
+  `Dangerous JS Functions`, with evidence `eval(` in the built client bundle.
+- The alert is a text-pattern false positive on RE2JS's regex-engine instance
+  method named `eval` and internal calls to that method. Batch 68 adds a
+  syntax-aware production-bundle check and records the compensating control and
+  regression coverage in `docs/VULNERABILITY_MANAGEMENT.md`.
+- The ZAP report was downloaded for triage to
+  `/tmp/questarrng-b67-zap-report`; Batch 68 evidence records the passing
+  local production scan, the still-queued GitHub-hosted follow-up, and scratch
+  cleanup.
+
+## Scratch cleanup
+
+Validation ran on `kspld0`. The host confirmed `/tmp` had 44 GB free and the NFS mount `kspls0:/mnt/datapool_lvm_media` was available with about 32 TB free; the NFS share was not used. The disposable worktree at `/tmp/questarr-b67-dast` (including its SQLite test database, build output, and installed dependencies) was removed after the server was stopped. Port 5000 was released. Temporary actionlint caches were removed. The later ZAP report scratch is covered by Batch 68's cleanup record.

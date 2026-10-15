@@ -1,0 +1,59 @@
+Batch 13 upstream review and implementation — 2026-10-12
+
+Scope reviewed
+- PRs #112–125 (14 items). Refreshed the live upstream inventory after fetching
+  upstream/main; the snapshot remains 1,147 issues and PRs. No source digest
+  changes were detected for this slice.
+- Checked PR descriptions and the available review comments/threads, including
+  PR #118's test-determinism feedback, PR #119's shared-hash comment, and all
+  seven review threads on PR #122.
+- PR #112 is a workflow-support analysis, not a code-change request. Its author
+  asked about naming-pattern queries and multiple indexers; the current
+  Torznab query path and aggregate search support both.
+
+Disposition and implementation
+- PR #113: genre/platform recommendations, validated API inputs, pagination,
+  carousel keyboard controls, query error UI, and static-data caching are
+  present.
+- PR #114: moved the remaining direct console calls in IGDB, routes, and startup
+  logging to Pino. Unsafe bundle URLs are no longer included in logs.
+- PR #115: completed filtering and conditional metric badges are present, with
+  accessible labels and helper tests.
+- PR #116: both search routes share the bounded, validated multi-indexer
+  aggregator and partial-failure responses.
+- PR #117: typed Zod configuration covers the fork's SQLite default and
+  explicit Postgres settings.
+- PR #118: the five-attempt cap is enforced; tests count games search requests
+  separately from IGDB authentication requests.
+- PR #119: qBittorrent and rTorrent clients use the shared hash utility and are
+  covered by client-specific regression tests.
+- PR #120: downloader priority/fallback guidance is present in the UI and the
+  backend dispatches by priority with fallback.
+- PR #121: added unique Genres, Platforms, and Wishlist cards to the existing
+  Stats page; a page test checks deduplicated counts and wanted-game totals.
+- PR #122: rTorrent details now request and map matching tracker XML-RPC fields
+  for enabled/busy state, successes/failures, announce times, and scrape counts.
+  Older servers fall back to the base tracker fields. The rTorrent reference
+  documents ordered t.multicall fields and the tracker health/time methods:
+  https://kannibalox.github.io/rtorrent-docs/cmd-ref.html
+- PR #123: superseded by the complete qBittorrent implementation in PR #119.
+- PR #124: react-hook-form resolves to 7.89.0.
+- PR #125: current locked dev dependencies exceed all six requested targets.
+
+Validation
+- `npm run check` passed.
+- `npm test`: 4,022 passed, 7 skipped (248 test files passed, 1 skipped).
+- `npm run lint` passed.
+- `npm run format:check` passed.
+- `npm run build` passed. Vite reports the existing advisory for bundles over
+  500 kB after minification.
+- Launched `npm run dev:test` and captured
+  `docs/pr-evidence/upstream-global-library-stats.png` in a headless browser.
+  The library and configuration API responses were stubbed; no live IGDB or
+  indexer was contacted. The screenshot was visually inspected.
+- rTorrent tracker behavior tests cover mapped statuses, announce times,
+  failure counts, and the compatibility fallback.
+
+Ledger after this batch: 133 verified, 2 superseded, 1,007 unreviewed,
+3 not-applicable, 1 implemented-but-unverified, and 1 needs-implementation.
+Issue #37 remains the outstanding implementation item.

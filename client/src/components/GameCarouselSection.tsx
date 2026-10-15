@@ -29,9 +29,7 @@ interface GameCarouselSectionProps {
   isDiscovery?: boolean;
 }
 
-// ⚡ Bolt: Using React.memo to prevent this component from re-rendering if its props
-// have not changed. This is effective because parent components now pass memoized
-// functions (via useCallback), preventing unnecessary re-renders for the entire section.
+// React.memo skips the section when the parent passes stable query keys and callbacks.
 const GameCarouselSection = ({
   title,
   queryKey,
@@ -248,9 +246,17 @@ const GameCarouselSection = ({
           </Tooltip>
         </div>
       </div>
+      {isFetching && !isLoading && (
+        <span role="status" aria-live="polite" className="sr-only">
+          Updating {title}…
+        </span>
+      )}
       <div className="relative w-full overflow-hidden" aria-busy={isFetching && !isLoading}>
         {isFetching && !isLoading && (
-          <div className="absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center"
+            aria-hidden="true"
+          >
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         )}
@@ -264,12 +270,13 @@ const GameCarouselSection = ({
             "opacity-50": isFetching && !isLoading,
           })}
           aria-hidden={isFetching && !isLoading}
+          inert={isFetching && !isLoading}
         >
           <CarouselContent className="-ml-4 max-w-full">
             {games.map((game) => (
               <CarouselItem
                 key={game.id}
-                className="pl-4 basis-1/3 sm:basis-1/5 md:basis-1/6 lg:basis-[12.5%] xl:basis-[10%]"
+                className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
               >
                 <GameCard
                   game={game}

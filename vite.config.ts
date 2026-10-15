@@ -18,6 +18,12 @@ const base = resolveBase(configuredBase);
 export default defineConfig({
   base,
   plugins: [react(), tailwindcss()],
+  css: {
+    postcss: {
+      // Vite owns the input paths; do not let PostCSS infer a source file from them.
+      from: undefined,
+    },
+  },
   define: {
     "globalThis.__APP_VERSION__": JSON.stringify(version),
   },

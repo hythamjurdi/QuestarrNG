@@ -109,6 +109,8 @@ export const userSettings = pgTable("user_settings", {
   preferredReleaseGroups: text("preferred_release_groups"),
   filterByPreferredGroups: boolean("filter_by_preferred_groups").notNull().default(false),
   releaseNameBlacklist: text("release_name_blacklist"),
+  releaseScoringEnabled: boolean("release_scoring_enabled").notNull().default(false),
+  releaseScoringProfile: text("release_scoring_profile"),
   preferredPlatform: text("preferred_platform"),
   hideAdultContent: boolean("hide_adult_content").notNull().default(true),
   hideAgeRestrictedContent: boolean("hide_age_restricted_content").notNull().default(true),
@@ -142,6 +144,8 @@ export const games = pgTable("games", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   igdbId: integer("igdb_id"),
+  rawgId: integer("rawg_id"),
+  rawgSlug: text("rawg_slug"),
   steamAppId: integer("steam_appid"),
   title: text("title").notNull(),
   summary: text("summary"),
@@ -253,6 +257,8 @@ export const gameDownloads = pgTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
+    // Preserve ownership if the linked game temporarily cannot be found.
+    ownerUserId: text("owner_user_id").references(() => users.id, { onDelete: "cascade" }),
     downloaderId: text("downloader_id")
       .notNull()
       .references(() => downloaders.id, { onDelete: "cascade" }),
@@ -270,6 +276,7 @@ export const gameDownloads = pgTable(
   (t) => [
     uniqueIndex("game_downloads_downloader_hash_idx").on(t.downloaderId, t.downloadHash),
     index("game_downloads_seerr_request_idx").on(t.seerrExternalRequestId),
+    index("game_downloads_owner_status_idx").on(t.ownerUserId, t.status),
   ]
 );
 
@@ -361,6 +368,38 @@ export const gameScreenshots = pgTable(
     createdAt: timestampMs("created_at").default(sql`(EXTRACT(EPOCH FROM now()) * 1000)::bigint`),
   },
   (t) => [index("game_screenshots_game_user_idx").on(t.gameId, t.userId)]
+);
+
+export const gameLists = pgTable(
+  "game_lists",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestampMs("created_at").default(sql`(EXTRACT(EPOCH FROM now()) * 1000)::bigint`),
+    updatedAt: timestampMs("updated_at").default(sql`(EXTRACT(EPOCH FROM now()) * 1000)::bigint`),
+  },
+  (t) => [uniqueIndex("game_lists_user_name_idx").on(t.userId, t.name)]
+);
+
+export const gameListItems = pgTable(
+  "game_list_items",
+  {
+    id: text("id").primaryKey(),
+    listId: text("list_id")
+      .notNull()
+      .references(() => gameLists.id, { onDelete: "cascade" }),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    addedAt: timestampMs("added_at").default(sql`(EXTRACT(EPOCH FROM now()) * 1000)::bigint`),
+  },
+  (t) => [
+    uniqueIndex("game_list_items_list_game_idx").on(t.listId, t.gameId),
+    index("game_list_items_game_idx").on(t.gameId),
+  ]
 );
 
 export const notifications = pgTable("notifications", {

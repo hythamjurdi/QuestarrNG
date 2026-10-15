@@ -23,7 +23,7 @@ Dependencies are added deliberately as part of normal development, via `npm inst
   vulnerable bundled copies that normal npm overrides cannot change.
   Both CI and the validation engine audit this separate runtime at all severities.
 - `global.json` pins the .NET SDK used to build the Windows service; Dependabot tracks SDK servicing releases with the `dotnet-sdk` ecosystem.
-- Apprise runtime packages are hash-locked in `requirements/apprise.txt`, and the Semgrep scanner plus its transitive dependencies are hash-locked in `.github/requirements/semgrep.txt` from `.github/requirements/semgrep.in`. Dependabot tracks both pip lock files. The Semgrep lock keeps its bundled MCP integration on the v1 API until the pinned scanner supports v2.
+- Apprise runtime packages are hash-locked in `requirements/apprise.txt`, and Semgrep 1.180.0 plus its transitive dependencies are hash-locked in `.github/requirements/semgrep.txt` from `.github/requirements/semgrep.in`. The scanner's PyJWT dependency is pinned to 2.15.1. Dependabot tracks both pip lock files. The Semgrep lock keeps its bundled MCP integration on the v1 API until the pinned scanner supports v2.
 - The `allowScripts` field in `package.json` explicitly allowlists which packages are permitted to run install-time (postinstall) scripts. It's npm's own native field (npm ≥ 11.16.0), managed via `npm approve-scripts` / `npm deny-scripts`, not a third-party tool — today it's advisory (npm flags unreviewed scripts but still runs them), with a future npm release expected to block unapproved scripts by default. Any package added here should have a concrete reason (e.g. a native module that needs to compile a binary during install).
 - The `overrides` field forces a specific version of a transitive dependency when a direct dependency's own declared range still permits a vulnerable release:
   - `socket.io-parser: 4.2.7` patches [CVE-2026-33151](https://github.com/socketio/socket.io/security/advisories/GHSA-677m-j7p3-52f9) (resource exhaustion via unbounded binary attachments). Needed because `socket.io`/`socket.io-client` declare `socket.io-parser: ~4.2.4`, a range that still allows the unpatched 4.2.4/4.2.5.
@@ -55,7 +55,7 @@ Dependencies are added deliberately as part of normal development, via `npm inst
 
 Every published Docker image ships with a generated Software Bill of Materials listing the exact versions of every dependency included in that release. See [docs/SBOM.md](SBOM.md) for how to inspect it.
 
-## Currently blocked updates
+## Previously blocked updates
 
 Tracked here so a blocked Dependabot PR doesn't get silently re-proposed and re-investigated from scratch. Remove an entry once its update is unblocked and merged.
 

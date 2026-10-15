@@ -122,7 +122,7 @@ describe("socket user scoping (#1081)", () => {
     expect((forA.seen[0] as { title: string }).title).toBe("via-cookie");
   });
 
-  it("still broadcasts events that have no target user", async () => {
+  it("does not broadcast download events when the game owner is unknown", async () => {
     await startServer();
     const socketA = await connect({ auth: { token: "token-a" } });
     const socketB = await connect({ auth: { token: "token-b" } });
@@ -132,11 +132,12 @@ describe("socket user scoping (#1081)", () => {
 
     notifyUser("downloadUpdate", "game-123");
 
-    await forA.until(1);
-    await forB.until(1);
+    await settle();
+    expect(forA.seen).toEqual([]);
+    expect(forB.seen).toEqual([]);
   });
 
-  it("still broadcasts notifications whose owner is unknown", async () => {
+  it("does not broadcast notifications whose owner is unknown", async () => {
     await startServer();
     const socketA = await connect({ auth: { token: "token-a" } });
     const socketB = await connect({ auth: { token: "token-b" } });
@@ -146,7 +147,25 @@ describe("socket user scoping (#1081)", () => {
 
     notifyUser("notification", { title: "app-wide" }, null);
 
+    await settle();
+    expect(forA.seen).toEqual([]);
+    expect(forB.seen).toEqual([]);
+  });
+
+  it("delivers download updates only to the owning user", async () => {
+    await startServer();
+    const socketA = await connect({ auth: { token: "token-a" } });
+    const socketB = await connect({ auth: { token: "token-b" } });
+    await waitUntilRoomJoined(`user:${USER_A.id}`);
+    await waitUntilRoomJoined(`user:${USER_B.id}`);
+
+    const forA = collector(socketA, "downloadUpdate");
+    const forB = collector(socketB, "downloadUpdate");
+
+    notifyUser("downloadUpdate", "game-123", USER_A.id);
+
     await forA.until(1);
-    await forB.until(1);
+    await settle();
+    expect(forB.seen).toEqual([]);
   });
 });

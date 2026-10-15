@@ -1,0 +1,91 @@
+Batch 70 validation — October 13, 2026
+
+Scope and source snapshot
+------------------------
+Reviewed PRs #816, #819–825 and issues #817–818 against upstream main
+0b538fe4b0a2269edcc8fd3e71e2bbc240291868. The sanitized live export was
+captured at 2026-10-13T22:20:51.553Z and contains 232 issues and 931 pull
+requests. The ledger and generated inventory were regenerated from that export
+at 2026-10-13T22:34:44.183Z. All ten reviewed records were unchanged from their
+source snapshots. PR #1194 remains the only sourceChangedSinceReview flag.
+
+Disposition results
+-------------------
+- PR #816 — superseded: fast-xml-parser 5.10.1 and fast-uri 3.1.4 are now locked
+  at 5.11.2 and 3.1.8.
+- Issue #817 — verified: qBittorrent 5 asynchronous URL adds are tracked before
+  their hash appears, then resolved for completion and import. The original
+  report lacks the qBittorrent version and logs, so the current code path and
+  regression tests are the evidence rather than a reproduction of that user's
+  installation.
+- Issue #818 — verified: the follow-up supplies the concrete Prowlarr Docker
+  alias and nested-link failure. Validated-IP fetching preserves the configured
+  Host, and Torznab retains the existing proxy token without double-wrapping.
+- PR #819 — superseded: js-yaml 5.2.2 and body-parser 1.20.6 are exceeded by
+  locked versions 5.4.3 and 2.3.0.
+- PR #820 — superseded: the requested brace-expansion, js-yaml, and body-parser
+  fixes are present at 5.0.12, 5.4.3, and 2.3.0; the production audit reports
+  zero vulnerabilities.
+- PR #821 — verified: non-runtime CI/security jobs use `npm ci --ignore-scripts`
+  and locked local tools; DAST and image build retain required runtime setup.
+  Semgrep and Apprise use hash-pinned requirements, with Apprise updated to 2.0.1.
+- PR #822 — verified: safeFetch retains the request hostname while pinning the
+  validated address. An idle cache reuses undici Agents by address and family,
+  then closes pools after ten idle seconds. Tests verify reuse, address
+  separation, expiry, and the actual HTTP Host header. The PR's optional request
+  to replace Undici/DOM type casts was evaluated; the project's global
+  `Response`, `Headers`, and `FormData` types are incompatible with undici's
+  module types across existing callers, so the narrow casts remain at that
+  transport boundary.
+- PR #823 — verified: asynchronous JSON adds are polled by correlation tag;
+  transient poll errors do not resubmit accepted torrents, the polling helper
+  avoids stacked delays, and the route records a temporary tag before the hash
+  appears. The test timer mock is restored in `finally`.
+- PR #824 — verified: SABnzbd history uses the final `storage` path rather than
+  a stale incomplete path, including the custom incomplete-bigstorage case.
+- PR #825 — superseded: the requested development dependencies are already
+  present or newer: @tailwindcss/vite 4.3.3, @types/supertest 7.2.1,
+  autoprefixer 10.6.1, eslint-plugin-sonarjs 4.2.2, lint-staged 17.6.0,
+  postcss 8.5.29, typescript-eslint 8.71.1, and Vite 8.3.2.
+
+Automated validation
+--------------------
+- Focused Vitest run across 12 files: 308 passed.
+- `npm run check` — passed.
+- `npm run lint` — passed with zero warnings.
+- Prettier check for `server/ssrf.ts`, `server/__tests__/ssrf.test.ts`, and
+  `ledger.json` — passed.
+- `npm run build` — passed. Vite retained its existing large-chunk advisory.
+- `npm run check:overrides` — passed; all current overrides remain required.
+- `npm run check:licenses` — passed for 417 production package versions.
+- `npm run check:deprecated` — passed; three inherited upstream-pinned
+  deprecations remain (`@esbuild-kit/core-utils`, `@esbuild-kit/esm-loader`,
+  and `node-domexception`).
+- `npm audit --omit=dev --audit-level=high` — zero vulnerabilities.
+- `git diff --check` — passed.
+
+The focused test files were:
+`server/__tests__/ssrf.test.ts`,
+`server/__tests__/ssrf-host-header.test.ts`,
+`server/__tests__/torznab.test.ts`,
+`server/__tests__/downloaders_ssrf.test.ts`,
+`server/__tests__/rss-ssrf.test.ts`,
+`server/__tests__/ssrf_routes.test.ts`,
+`server/__tests__/downloaders_qbittorrent_regression.test.ts`,
+`server/__tests__/downloaders_comprehensive.test.ts`,
+`server/__tests__/integration_api.test.ts`,
+`server/__tests__/import_manager_archive_extraction.test.ts`,
+`server/__tests__/archive_service.test.ts`, and
+`server/__tests__/downloaders_sabnzbd_remaining.test.ts`.
+
+Cleanup and limits
+------------------
+No `client/src/**` files changed. A task-scoped temporary directory backed up
+the pre-existing `dist` output during the production build; the original `dist`
+was restored and the temporary directory removed. The sanitized source-export
+scratch directory was also removed. No NFS scratch space was used.
+
+The batch updated SSRF dispatcher code and tests; the other requested behavior
+was already present and covered by existing regression tests. The campaign
+remains incomplete: 350 items are unreviewed and five are implemented-
+unverified, so it is not ready to merge to `main`.

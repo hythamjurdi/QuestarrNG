@@ -1,0 +1,29 @@
+# Upstream resolution batch 33 validation
+
+Scope: issues #286–288 and #291, PRs #289–290. The related issue #305 has a
+separate ledger review entry.
+
+The tag helper tests cover main builds publishing `dev` plus an immutable
+commit-SHA tag, semantic-version release tags publishing `latest`, the exact
+version and commit SHA, and rejection of unsupported refs.
+
+Six focused suites passed: 96 tests passed and one was skipped. They covered
+Settings recovery, download-dialog indexer filtering, image tags, database
+migrations, xREL releases and xREL scheduled notifications.
+
+`npm run check`, `npm run lint`, `npm run format:check`, `npm run build`, and
+`docker compose config --quiet` passed. The production build still reports the
+existing advisory for a minified chunk larger than 500 kB.
+
+`docker buildx imagetools inspect ghcr.io/snapetech/questarrng:latest` found a
+published OCI image index with `linux/amd64` and `linux/arm64` manifests.
+
+The `npm run dev:test` run applied its SQLite migrations before opening the
+HTTP listener. A headless Chromium run loaded Settings, forced its first
+`/api/settings` request to return HTTP 500, verified that the recovery alert
+appeared after one request, and clicked **Try again** after allowing the
+endpoint to recover. The alert cleared on the successful retry. Screenshot:
+[settings migration guidance](../../pr-evidence/upstream-settings-db-migration-help.png).
+
+The release-note check validated both new fragments, and the preview rendered the
+container update and Settings recovery notes with their operator actions.

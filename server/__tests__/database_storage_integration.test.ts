@@ -34,6 +34,39 @@ describe("DatabaseStorage Integration", () => {
     }
   });
 
+  it("persists and clears a game's automatic-download target platform", async () => {
+    const userId = randomUUID();
+    await db
+      .insert(users)
+      .values({ id: userId, username: `platform_${userId}`, passwordHash: "hash" });
+
+    const game = await storage.addGame({
+      title: "God of War",
+      userId,
+      status: "wanted",
+      hidden: false,
+      targetPlatformId: 8,
+      targetPlatformName: "PlayStation 2",
+    });
+
+    expect(game.targetPlatformId).toBe(8);
+    expect(game.targetPlatformName).toBe("PlayStation 2");
+
+    await storage.updateGame(game.id, {
+      targetPlatformId: 48,
+      targetPlatformName: "PlayStation 4",
+    });
+    const updatedGame = await storage.getGame(game.id);
+    expect(updatedGame).toMatchObject({
+      targetPlatformId: 48,
+      targetPlatformName: "PlayStation 4",
+    });
+
+    await storage.updateGame(game.id, { targetPlatformId: null, targetPlatformName: null });
+    const clearedGame = await storage.getGame(game.id);
+    expect(clearedGame).toMatchObject({ targetPlatformId: null, targetPlatformName: null });
+  });
+
   it("getUserGames should filter by status correctly", async () => {
     // 1. Create a user
     const userId = randomUUID();
@@ -690,6 +723,42 @@ describe("DatabaseStorage Integration", () => {
       expect(await storage.removeApiKey(created.id, otherId)).toBe(false);
       expect(await storage.removeApiKey(created.id, ownerId)).toBe(true);
       expect(await storage.getApiKeys(ownerId)).toHaveLength(0);
+    });
+
+    it("keeps custom game lists owner-scoped and makes membership writes idempotent", async () => {
+      const ownerId = randomUUID();
+      const otherId = randomUUID();
+      await db.insert(users).values([
+        { id: ownerId, username: `list_owner_${ownerId}`, passwordHash: "hash" },
+        { id: otherId, username: `list_other_${otherId}`, passwordHash: "hash" },
+      ]);
+
+      const ownerGame = await storage.addGame({
+        title: "Portal 2",
+        status: "owned",
+        userId: ownerId,
+      });
+      const otherGame = await storage.addGame({
+        title: "Hades",
+        status: "owned",
+        userId: otherId,
+      });
+      const list = await storage.createGameList(ownerId, "Co-op with friends");
+
+      expect(await storage.getGameLists(ownerId)).toHaveLength(1);
+      expect(await storage.getGameList(otherId, list.id)).toBeUndefined();
+      expect(await storage.addGameToList(ownerId, list.id, otherGame.id)).toBe(false);
+      expect(await storage.addGameToList(ownerId, list.id, ownerGame.id)).toBe(true);
+      expect(await storage.addGameToList(ownerId, list.id, ownerGame.id)).toBe(true);
+      expect(await storage.getGameListGames(ownerId, list.id)).toMatchObject([
+        { id: ownerGame.id, title: "Portal 2" },
+      ]);
+
+      expect(await storage.renameGameList(ownerId, list.id, "Weekend co-op")).toMatchObject({
+        name: "Weekend co-op",
+      });
+      expect(await storage.deleteGameList(ownerId, list.id)).toBe(true);
+      expect(await storage.getGameList(ownerId, list.id)).toBeUndefined();
     });
   });
 });

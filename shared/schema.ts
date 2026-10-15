@@ -3,6 +3,7 @@ import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-or
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { resolveTargetPlatform } from "./title-utils.js";
+import { validateSavedReleaseScoringConfig } from "./release-scoring.js";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -59,6 +60,10 @@ export const userSettings = sqliteTable("user_settings", {
   // flow -- manual search, auto-search, and AI (Jev) enrichment/auto-download analysis --
   // so a matching release never reaches the user or the AI in the first place.
   releaseNameBlacklist: text("release_name_blacklist"),
+  releaseScoringEnabled: integer("release_scoring_enabled", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  releaseScoringProfile: text("release_scoring_profile"),
   preferredPlatform: text("preferred_platform"),
   hideAdultContent: integer("hide_adult_content", { mode: "boolean" }).notNull().default(true),
   hideAgeRestrictedContent: integer("hide_age_restricted_content", { mode: "boolean" })
@@ -230,6 +235,8 @@ export const games = sqliteTable("games", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   igdbId: integer("igdb_id"),
+  rawgId: integer("rawg_id"),
+  rawgSlug: text("rawg_slug"),
   steamAppId: integer("steam_appid"),
   title: text("title").notNull(),
   summary: text("summary"),
@@ -366,6 +373,8 @@ export const gameDownloads = sqliteTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
+    // Preserve ownership if the linked game temporarily cannot be found.
+    ownerUserId: text("owner_user_id").references(() => users.id, { onDelete: "cascade" }),
     downloaderId: text("downloader_id")
       .notNull()
       .references(() => downloaders.id, { onDelete: "cascade" }),
@@ -389,6 +398,7 @@ export const gameDownloads = sqliteTable(
   (t) => [
     uniqueIndex("game_downloads_downloader_hash_idx").on(t.downloaderId, t.downloadHash),
     index("game_downloads_seerr_request_idx").on(t.seerrExternalRequestId),
+    index("game_downloads_owner_status_idx").on(t.ownerUserId, t.status),
   ]
 );
 
@@ -505,6 +515,45 @@ export const gameScreenshots = sqliteTable(
   (t) => [index("game_screenshots_game_user_idx").on(t.gameId, t.userId)]
 );
 
+// User-created collections group a user's games without changing lifecycle status.
+export const gameLists = sqliteTable(
+  "game_lists",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(
+      sql`(strftime('%s', 'now') * 1000)`
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(
+      sql`(strftime('%s', 'now') * 1000)`
+    ),
+  },
+  (t) => [uniqueIndex("game_lists_user_name_idx").on(t.userId, t.name)]
+);
+
+export const gameListItems = sqliteTable(
+  "game_list_items",
+  {
+    id: text("id").primaryKey(),
+    listId: text("list_id")
+      .notNull()
+      .references(() => gameLists.id, { onDelete: "cascade" }),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    addedAt: integer("added_at", { mode: "timestamp_ms" }).default(
+      sql`(strftime('%s', 'now') * 1000)`
+    ),
+  },
+  (t) => [
+    uniqueIndex("game_list_items_list_game_idx").on(t.listId, t.gameId),
+    index("game_list_items_game_idx").on(t.gameId),
+  ]
+);
+
 export const notifications = sqliteTable("notifications", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
@@ -525,6 +574,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export const insertGameSchema = createInsertSchema(games, {
+  rawgId: (schema) => schema.int().positive().nullable().optional(),
   targetPlatformId: (schema) => schema.int().positive().nullable().optional(),
   targetPlatformName: (schema) => schema.trim().min(1).max(100).nullable().optional(),
   status: (schema) =>
@@ -670,6 +720,15 @@ export const insertGameMilestoneSchema = createInsertSchema(gameMilestones, {
   completedAt: true,
 });
 
+export const insertGameListSchema = createInsertSchema(gameLists, {
+  name: (schema) => schema.trim().min(1, "List name is required").max(80),
+}).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const updateGameMilestoneSchema = z.object({
   completed: z.boolean(),
 });
@@ -682,20 +741,30 @@ export const updateGameScreenshotSchema = z.object({
     .transform((val) => val?.trim() || null),
 });
 
-export const insertIndexerSchema = createInsertSchema(indexers, {
+const indexerInputSchema = createInsertSchema(indexers, {
   name: (schema) => schema.trim().min(1, "Name is required"),
   url: (schema) => schema.trim().min(1, "URL is required"),
-  apiKey: (schema) => schema.trim().min(1, "API key is required"),
+  apiKey: (schema) => schema.trim(),
 }).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
+export const insertIndexerSchema = indexerInputSchema.refine(
+  (value) => value.protocol === "json-catalog" || value.apiKey.length > 0,
+  {
+    path: ["apiKey"],
+    message: "API key is required",
+  }
+);
+
+export const updateIndexerSchema = indexerInputSchema.partial();
+
 // Trim helper for nullable/optional string fields in Zod schemas.
 const trimIfString = <T>(v: T): T => (typeof v === "string" ? (v.trim() as T) : v);
 
-export const insertDownloaderSchema = createInsertSchema(downloaders, {
+const downloaderInputSchema = createInsertSchema(downloaders, {
   name: (schema) => schema.trim().min(1, "Name is required"),
   type: (schema) => schema.trim().min(1, "Type is required"),
   url: (schema) => schema.trim().min(1, "Host is required"),
@@ -703,12 +772,13 @@ export const insertDownloaderSchema = createInsertSchema(downloaders, {
   password: (schema) => schema.transform(trimIfString),
   urlPath: (schema) => schema.transform(trimIfString),
   downloadPath: (schema) => schema.transform(trimIfString),
-})
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDownloaderSchema = downloaderInputSchema
   .refine((data) => !(data.type === "sabnzbd" && !data.username), {
     message: "API key is required for SABnzbd",
     path: ["username"],
@@ -724,8 +794,11 @@ export const insertDownloaderSchema = createInsertSchema(downloaders, {
     }
   );
 
+export const updateDownloaderSchema = downloaderInputSchema.partial();
+
 export const insertGameDownloadSchema = createInsertSchema(gameDownloads).omit({
   id: true,
+  ownerUserId: true,
   addedAt: true,
   completedAt: true,
 });
@@ -840,6 +913,19 @@ function validateUserSettingsEnums(
       });
     }
   }
+
+  const scoringConfig = value.releaseScoringProfile;
+  if (
+    scoringConfig !== undefined &&
+    scoringConfig !== null &&
+    !validateSavedReleaseScoringConfig(scoringConfig)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["releaseScoringProfile"],
+      message: "releaseScoringProfile must be a valid release scoring configuration",
+    });
+  }
 }
 
 /** Returns true when `raw` is a string containing a JSON array whose elements are all strings. */
@@ -883,6 +969,7 @@ export const updateUserSettingsSchema = createInsertSchema(userSettings)
   .partial()
   .extend({
     igdbRateLimitPerSecond: z.number().int().min(1).max(4).optional(),
+    steamSyncIntervalHours: z.number().int().min(1).max(168).optional(),
   })
   .superRefine(validateUserSettingsEnums);
 
@@ -940,6 +1027,9 @@ export type GameMilestone = typeof gameMilestones.$inferSelect;
 export type InsertGameMilestone = (typeof insertGameMilestoneSchema)["_output"];
 
 export type GameScreenshot = typeof gameScreenshots.$inferSelect;
+export type GameList = typeof gameLists.$inferSelect;
+export type InsertGameList = (typeof insertGameListSchema)["_output"];
+export type GameListItem = typeof gameListItems.$inferSelect;
 
 export type XrelNotifiedRelease = typeof xrelNotifiedReleases.$inferSelect;
 export type InsertXrelNotifiedRelease = (typeof insertXrelNotifiedReleaseSchema)["_output"];
@@ -1022,6 +1112,10 @@ export interface Config {
     source?: "env" | "database" | undefined;
     clientId?: string;
   };
+  rawg?: {
+    configured: boolean;
+    source?: "database" | undefined;
+  };
   xrel?: {
     apiBase: string;
   };
@@ -1050,21 +1144,25 @@ export interface DownloadTracker {
   error?: string | undefined;
 }
 
+export type DownloadStatusType =
+  | "downloading"
+  | "seeding"
+  | "completed"
+  | "paused"
+  | "error"
+  | "repairing"
+  | "unpacking"
+  | "completed_pending_import"
+  | "manual_review_required"
+  | "imported";
+
+export type DownloadType = "torrent" | "usenet";
+
 export interface DownloadStatus {
   id: string;
   name: string;
-  downloadType?: "torrent" | "usenet"; // Type of download
-  status:
-    | "downloading"
-    | "seeding"
-    | "completed"
-    | "paused"
-    | "error"
-    | "repairing"
-    | "unpacking"
-    | "completed_pending_import"
-    | "manual_review_required"
-    | "imported";
+  downloadType?: DownloadType; // Type of download
+  status: DownloadStatusType;
   progress: number; // 0-100
   downloadSpeed?: number | undefined; // bytes per second
   uploadSpeed?: number | undefined; // bytes per second (torrents only)
@@ -1085,6 +1183,10 @@ export interface DownloadStatus {
   // Questarr tracking fields
   trackedByQuestarr?: boolean; // True if the download was initiated through Questarr
   downloaderCategory?: string; // The category configured on the downloader (for display purposes)
+  downloaderId?: string;
+  downloaderName?: string;
+  gameStatus?: GameStatus;
+  grabs?: number;
 }
 
 export interface DownloadDetails extends DownloadStatus {

@@ -1,0 +1,82 @@
+# Batch 64 validation — October 13, 2026
+
+## Scope and dispositions
+
+Reviewed upstream PRs #756–765 against their current upstream state, changed
+files, patches, and the QuestarrNG manifest, lockfile, workflows, tests, and
+running UI. The refreshed generated inventory contains 1,163 records and has
+zero `sourceChangedSinceReview` flags.
+
+- #756 is superseded: `@hookform/resolvers` 5.9.1 is newer than 5.4.0.
+- #757 is verified: `archiver` and `@types/archiver` are both 8.0.0.
+- #758 is verified: Express is 5.2.1 with `@types/express` 5.0.6.
+- #759 is superseded: `js-yaml` 5.4.3 is newer than 5.2.1.
+- #760 is verified: `@eslint/js` is 10.0.1.
+- #761 is superseded: React and `@types/react` are both 19.3.0, newer than
+  19.2.7.
+- #762 is verified: `date-fns` is 4.4.0.
+- #763 is superseded: `react-day-picker` 10.0.2 is newer than 10.0.1; the
+  current v10 calendar integration is covered by the passing calendar tests.
+- #764 is verified: the merged status-picker, badge, and card fixes are
+  present. Review feedback about the compact title's minimum width is addressed
+  by `min-w-0`; the final upstream PR checks all passed. Status options now
+  expose the same accessible name as their visible label, rather than a
+  lowercase internal ID.
+- #765 is verified: the requested action functionality remains at the
+  requested or a newer release and uses full-SHA pins. The current workflow
+  retains StepSecurity secure drop-in wrappers for Docker actions at newer
+  releases, preserving the fork's existing hardening choice.
+
+For #765, the current workflow versions are StepSecurity setup-qemu 4.4.0,
+setup-buildx 4.4.1, docker-login 4.6.0, and docker-build-push 7.4.0;
+docker/metadata-action 6.2.0; actions/upload-artifact 7.0.1;
+ossf/scorecard-action 2.4.4; and github/codeql-action/upload-sarif 4.38.2.
+Each reference is pinned to a full commit SHA. The StepSecurity repositories
+describe their Docker actions as secure drop-in replacements for the upstream
+Docker actions.
+
+## Automated checks
+
+- Focused Vitest command covering status picker/badge/game cards, calendar/date
+  utilities, archive services/import, and Express route suites: **13 files,
+  599 tests passed**.
+- `rtk npm run check`: passed.
+- `rtk npm run lint`: passed with zero warnings.
+- `rtk npm run format:check`: passed.
+- `rtk npm run build`: passed. Vite emitted its existing advisory about some
+  minified chunks exceeding 500 kB.
+- `rtk npm run audit:prod`: passed; no high-or-higher production advisories
+  outside the VEX feed.
+- Isolated Playwright run with the temporary status-picker capture journey:
+  **2 passed** (initial setup plus the visual interaction). The journey checked
+  the visible/accessibility label match, active `aria-pressed` state, and all
+  four selectable statuses. The screenshot is
+  [upstream-pr-764-status-picker-2026-10-13.png](upstream-pr-764-status-picker-2026-10-13.png).
+
+## Scratch and cleanup
+
+The browser run used a task-owned worktree at
+`/tmp/questarr-b64-ui.YnqH66/repo` on desktop host `kspld0`; local `/tmp` had
+52 GB free before setup. `npm run dev:test` created its database and auth state
+only inside that worktree. The temporary Playwright spec, copied dependencies,
+database, auth state, worktree, and task directory were removed after the run.
+The task-owned server was stopped and port 5100 was confirmed free. The
+screenshot is the sole retained browser artifact. No NFS scratch was needed,
+and no pre-existing database or browser auth state was touched.
+
+## Ledger after Batch 64
+
+| Status                     |     Count |
+| -------------------------- | --------: |
+| Verified                   |       573 |
+| Superseded                 |       164 |
+| Not applicable             |        12 |
+| Implemented but unverified |         5 |
+| Needs implementation       |         0 |
+| Unreviewed                 |       409 |
+| **Total**                  | **1,163** |
+
+Four implemented integrations still need live-service verification, and the
+DCO workflow still requires maintainer rollout and a human-approved sign-off
+strategy. The full-history campaign remains incomplete and is not ready to
+merge to `main`.

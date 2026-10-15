@@ -132,7 +132,7 @@ describe("CompactGameCard", () => {
     const trigger = screen.getByLabelText(`Change status for ${mockGame.title}`);
     fireEvent.click(trigger);
 
-    // Select "Owned" from the chips
+    // Select "Owned" from the chips using its visible accessible name.
     const ownedChip = await screen.findByRole("button", { name: "Owned" });
     fireEvent.click(ownedChip);
 
@@ -160,6 +160,24 @@ describe("CompactGameCard", () => {
       renderWithProviders(<CompactGameCard game={{ ...mockGame, status }} />);
 
       expect(screen.getByLabelText(`Change status for ${mockGame.title}`)).toBeInTheDocument();
+    });
+
+    it("disables the status trigger while a game is downloading", () => {
+      const onStatusChange = vi.fn();
+      renderWithProviders(
+        <CompactGameCard
+          game={{ ...mockGame, status: "downloading" }}
+          onStatusChange={onStatusChange}
+        />
+      );
+
+      const trigger = screen.getByLabelText(`Change status for ${mockGame.title}`);
+      expect(trigger).toBeDisabled();
+
+      fireEvent.click(trigger);
+
+      expect(screen.queryByRole("button", { name: "Shelved" })).not.toBeInTheDocument();
+      expect(onStatusChange).not.toHaveBeenCalled();
     });
   });
 

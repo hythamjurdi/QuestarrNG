@@ -11,7 +11,7 @@ import { PlatformPicker } from "./PlatformPicker";
 import { InterfaceText } from "@/components/InterfaceText";
 
 /**
- * Settings → Platforms.
+ * Settings → Appearance → Platforms.
  *
  * One selection governs every platform selector in the app: the Library
  * platform filter, the download-search platform filter, the Discover and
@@ -37,6 +37,8 @@ export default function PlatformsSettings() {
 
   const { data: settings } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
+    // SettingsPage owns the visible retry action after an initial failure.
+    retryOnMount: false,
   });
   const { data: igdbPlatformsData, isLoading: platformsLoading } = useQuery<IgdbPlatform[]>({
     queryKey: ["/api/igdb/platforms"],

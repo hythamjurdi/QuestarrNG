@@ -131,6 +131,8 @@ describe("TorznabClient — download link rewriting", () => {
     expect(parsed.hostname).toBe("prowlarr");
     expect(parsed.port).toBe("9696");
     expect(parsed.pathname).toBe("/5/download");
+    // Prowlarr needs the filename query parameter to serve proxied downloads.
+    expect(parsed.searchParams.get("file")).toBe("Some Game");
 
     // Must include apikey matching the indexer config
     expect(parsed.searchParams.get("apikey")).toBe("prowlarr-api-key");
@@ -249,6 +251,23 @@ describe("TorznabClient — download link rewriting", () => {
       expectedOrigin: "https://172.19.0.8:9696",
       expectedPath: "/39/download",
     },
+    {
+      // TLS terminated by a proxy on a public hostname: Prowlarr sees plain HTTP and
+      // reflects http:// on the very hostname we configured.
+      alias: "the configured public hostname under a plain-HTTP scheme",
+      indexerUrl: "https://prowlarr.example.com/5/api",
+      enclosure: `http://prowlarr.example.com/5/download?apikey=prowlarr-api-key&link=${proxyToken}&file=Sunderfolk`,
+      expectedOrigin: "https://prowlarr.example.com",
+      expectedPath: "/5/download",
+    },
+    {
+      // Same, but the proxy also forwards Prowlarr's own port in the Host header.
+      alias: "the configured public hostname with Prowlarr's internal port",
+      indexerUrl: "https://prowlarr.example.com/5/api",
+      enclosure: `http://prowlarr.example.com:9696/5/download?apikey=prowlarr-api-key&link=${proxyToken}&file=Sunderfolk`,
+      expectedOrigin: "https://prowlarr.example.com",
+      expectedPath: "/5/download",
+    },
   ];
 
   it.each(aliasedProxyCases)(
@@ -289,6 +308,14 @@ describe("TorznabClient — download link rewriting", () => {
       indexerUrl: "http://172.19.0.8:9696/39/api",
       enclosure: "https://tracker.example/39/download?file=Some+Game&link=dG9rZW4%3D",
       expectedHost: "172.19.0.8:9696",
+    },
+    {
+      // Prowlarr on a public hostname: a proxy-shaped link on another public host is
+      // still external, even though the configured host is not private.
+      kind: "a proxy-shaped link on another public host when Prowlarr has a public hostname",
+      indexerUrl: "https://prowlarr.example.com/39/api",
+      enclosure: "https://tracker.example/39/download?file=Some+Game&link=dG9rZW4%3D",
+      expectedHost: "prowlarr.example.com",
     },
   ];
 

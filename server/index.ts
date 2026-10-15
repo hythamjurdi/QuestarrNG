@@ -200,8 +200,8 @@ void (async () => {
 
     startCronJobs();
   } catch (error) {
-    log("Fatal error during startup:");
-    console.error(error);
+    logger.fatal({ error }, "Fatal error during startup");
+    await new Promise<void>((resolve) => logger.flush(() => resolve()));
     process.exit(1);
   }
 })();

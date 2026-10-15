@@ -34,7 +34,7 @@ import {
   type DownloadStatusType,
   type DownloadType,
 } from "@/lib/downloads-utils";
-import type { GameStatus } from "@shared/schema";
+import type { DownloadStatus } from "@shared/schema";
 import {
   Play,
   Pause,
@@ -74,33 +74,8 @@ import { InterfaceText } from "@/components/InterfaceText";
 const ClaimDownloadModal = lazy(() => import("@/components/ClaimDownloadModal"));
 const ClaimBatchModal = lazy(() => import("@/components/ClaimBatchModal"));
 
-interface DownloadStatus {
-  id: string;
-  name: string;
-  status: DownloadStatusType;
-  progress: number; // 0-100
-  downloadSpeed?: number; // bytes per second
-  uploadSpeed?: number; // bytes per second
-  eta?: number; // seconds
-  size?: number; // total bytes
-  downloaded?: number; // bytes downloaded
-  seeders?: number;
-  leechers?: number;
-  ratio?: number;
-  error?: string;
-  downloaderId: string;
-  downloaderName: string;
-  // Download type and Usenet-specific fields
-  downloadType?: DownloadType;
-  repairStatus?: "good" | "repairing" | "failed";
-  unpackStatus?: "unpacking" | "completed" | "failed";
-  age?: number;
-  grabs?: number;
-  // Questarr tracking fields
-  trackedByQuestarr?: boolean;
-  gameStatus?: GameStatus;
-  downloaderCategory?: string;
-}
+type DownloadListItem = DownloadStatus &
+  Required<Pick<DownloadStatus, "downloaderId" | "downloaderName">>;
 
 interface DownloaderError {
   downloaderId: string;
@@ -109,7 +84,7 @@ interface DownloaderError {
 }
 
 interface DownloadsResponse {
-  downloads: DownloadStatus[];
+  downloads: DownloadListItem[];
   errors: DownloaderError[];
 }
 
@@ -126,6 +101,9 @@ const STATUS_ORDER: DownloadStatusType[] = [
   "unpacking",
   "seeding",
   "completed",
+  "completed_pending_import",
+  "manual_review_required",
+  "imported",
   "paused",
   "error",
 ];
@@ -138,6 +116,9 @@ const STATUS_COLORS: Record<DownloadStatusType, string> = {
   error: "text-red-400",
   repairing: "text-orange-400",
   unpacking: "text-purple-400",
+  completed_pending_import: "text-blue-400",
+  manual_review_required: "text-yellow-400",
+  imported: "text-green-600",
 };
 
 const DOWNLOAD_STATUS_LABELS: Record<DownloadStatusType, string> = {
@@ -148,6 +129,9 @@ const DOWNLOAD_STATUS_LABELS: Record<DownloadStatusType, string> = {
   error: "Error",
   repairing: "Repairing...",
   unpacking: "Unpacking...",
+  completed_pending_import: "Pending Import",
+  manual_review_required: "Manual Review Required",
+  imported: "Imported",
 };
 
 function getDownloadStatusSource(status: string): string {
@@ -172,13 +156,13 @@ export default function Downloads() {
   const { language: interfaceLanguage, t } = useInterfaceLanguage();
   const { toast } = useToast();
   const hasShownErrorsRef = useRef<Set<string>>(new Set());
-  const [selectedDownload, setSelectedDownload] = useState<DownloadStatus | null>(null);
+  const [selectedDownload, setSelectedDownload] = useState<DownloadListItem | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<DownloadStatusType | "all">("all");
   const [typeFilter, setTypeFilter] = useState<DownloadType | "all">("all");
   const [questarrFilter, setQuestarrFilter] = useState<"all" | "questarr">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [claimTarget, setClaimTarget] = useState<DownloadStatus | null>(null);
+  const [claimTarget, setClaimTarget] = useState<DownloadListItem | null>(null);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
   const {
@@ -270,7 +254,7 @@ export default function Downloads() {
     }
   }, [errors, toast]);
 
-  const handleShowDetails = (download: DownloadStatus) => {
+  const handleShowDetails = (download: DownloadListItem) => {
     setSelectedDownload(download);
     setDetailsModalOpen(true);
   };
@@ -366,21 +350,21 @@ export default function Downloads() {
     },
   });
 
-  const handlePause = (download: DownloadStatus) => {
+  const handlePause = (download: DownloadListItem) => {
     pauseMutation.mutate({
       downloaderId: download.downloaderId,
       downloadId: download.id,
     });
   };
 
-  const handleResume = (download: DownloadStatus) => {
+  const handleResume = (download: DownloadListItem) => {
     resumeMutation.mutate({
       downloaderId: download.downloaderId,
       downloadId: download.id,
     });
   };
 
-  const handleRemove = (download: DownloadStatus, deleteFiles = false) => {
+  const handleRemove = (download: DownloadListItem, deleteFiles = false) => {
     removeMutation.mutate({
       downloaderId: download.downloaderId,
       downloadId: download.id,
@@ -703,7 +687,7 @@ export default function Downloads() {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base sm:text-lg leading-tight line-clamp-2 sm:line-clamp-none break-words">
+                    <CardTitle className="text-base sm:text-lg leading-tight line-clamp-2 sm:line-clamp-none wrap-anywhere">
                       {download.name}
                     </CardTitle>
                     <CardDescription className="mt-2">

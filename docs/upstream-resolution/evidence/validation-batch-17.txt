@@ -1,0 +1,46 @@
+Batch 17 upstream review and implementation — 2026-10-12
+
+Scope reviewed
+- PRs #155–161, including descriptions, changed-file diffs, comments, and
+  submitted review records. No submitted code reviews were present. PR #158
+  also had a Dependabot comment saying its updates were available another way.
+- #155, #157, #159, and #160 are already satisfied in the fork. #156 has no
+  corresponding Dashboard component in QuestarrNG's separate-page layout.
+  Current package versions supersede #158's closed, unmerged dependency set.
+- #161's tooltips existed, but the rating and release-date triggers were not
+  keyboard-focusable. Added keyboard focus, visible focus styling, and a
+  regression test.
+
+Disposition and implementation
+- #155 verified: `/api/config` omits database connection details, and Settings
+  no longer renders the database connection card. Its configuration loading
+  and error paths are explicit.
+- #156 superseded: the target Dashboard component is absent; the applicable
+  Search and Discover pages already use the shared debounce hook.
+- #157 verified: Search uses the shared hook at 500 ms for indexer and library
+  queries. The request key and enablement follow the debounced term.
+- #158 superseded: the PR was closed unmerged, and all requested dependency
+  versions have since been exceeded in the fork's manifests and lockfiles.
+- #159 verified: `/api/health` and `/api/ready` reveal only generic status
+  values. Readiness failures return HTTP 503 without database/IGDB detail.
+- #160 verified: IGDB responses are cached by normalized endpoint/query with
+  explicit TTLs. A new test confirms repeated popular-game requests reuse the
+  response without a second IGDB call.
+- #161 verified: rating, personal rating, and release-date tooltip triggers are
+  keyboard-focusable and show a visible focus ring.
+
+Validation
+- Focused health, IGDB, and GameCard tests passed: 4 files, 52 tests.
+- Full suite passed: 249 test files passed, 1 skipped; 4,030 tests passed,
+  7 skipped.
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run build`
+  passed. Vite reports the existing advisory about chunks over 500 kB.
+- `npm run dev:test` was started with a temporary authenticated test user and
+  stubbed game data. Headless Playwright used Tab from the game title to focus
+  the rating metadata, waited for the tooltip, and captured the running UI at
+  `docs/pr-evidence/upstream-gamecard-metadata-tooltips.png`.
+- Test database and local batch scratch were removed after validation.
+
+Ledger after this batch: 164 verified, 6 superseded, 971 unreviewed, 4
+not-applicable, 1 implemented-but-unverified, and 1 needs-implementation.
+Issue #37 remains the outstanding implementation item.

@@ -90,9 +90,21 @@ vi.mock("@/components/ui/form", async () => {
   };
 });
 
-function makeSearchResult(items: object[], total = items.length, errors?: string[]) {
+function makeSearchResult(
+  items: object[],
+  total = items.length,
+  errors?: string[],
+  offset = 0,
+  nextOffset?: number | null
+) {
   return {
-    json: async () => ({ items, total, offset: 0, ...(errors ? { errors } : {}) }),
+    json: async () => ({
+      items,
+      total,
+      offset,
+      ...(nextOffset !== undefined ? { nextOffset } : {}),
+      ...(errors ? { errors } : {}),
+    }),
   };
 }
 
@@ -133,12 +145,14 @@ function setupApiRequest({
   errors,
   libraryGames = [],
   downloaders = [],
+  downloadResult = { success: true },
 }: {
   items?: object[];
   total?: number;
   errors?: string[];
   libraryGames?: object[];
   downloaders?: object[];
+  downloadResult?: object;
 } = {}) {
   mockApiRequest.mockImplementation((_method: string, url: string) => {
     if (url.startsWith("/api/search"))
@@ -146,7 +160,7 @@ function setupApiRequest({
     if (url.startsWith("/api/games/")) return Promise.resolve({ ok: true, json: async () => ({}) });
     if (url.startsWith("/api/games")) return Promise.resolve({ json: async () => libraryGames });
     if (url.startsWith("/api/downloaders/") && url.includes("/downloads"))
-      return Promise.resolve({ json: async () => ({ success: true }) });
+      return Promise.resolve({ json: async () => downloadResult });
     return Promise.resolve({ json: async () => [] });
   });
   // Downloaders uses the QueryClient default queryFn which calls fetch
@@ -367,6 +381,7 @@ describe("SearchPage", () => {
       await waitFor(() => expect(screen.getByTestId("card-torrent-0")).toBeInTheDocument());
       const btn = screen.getByTestId("button-download-0");
       expect(btn).not.toBeDisabled();
+      expect(btn).toHaveAccessibleName(`Start download for ${TORRENT_ITEM.title}`);
 
       fireEvent.click(btn);
 
@@ -395,6 +410,33 @@ describe("SearchPage", () => {
           "POST",
           "/api/downloaders/dl-sab/downloads",
           expect.objectContaining({ downloadType: "usenet", password: undefined })
+        );
+      });
+    });
+
+    it("explains when qBittorrent accepted a request but has not confirmed the download", async () => {
+      const dl = { id: "dl-qbit", name: "qBittorrent", type: "qbittorrent", enabled: true };
+      const message =
+        "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.";
+      setupApiRequest({
+        items: [TORRENT_ITEM],
+        total: 1,
+        downloaders: [dl],
+        downloadResult: { success: true, correlationTag: "questarr-add-pending", message },
+      });
+      renderSearch();
+      typeSearch("game");
+
+      await waitFor(() => expect(screen.getByTestId("card-torrent-0")).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId("button-download-0"));
+      await waitFor(() => {
+        expect(screen.getByRole("heading", { name: "Start Download" })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("button-start-download"));
+
+      await waitFor(() => {
+        expect(toastSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "Checking qBittorrent", description: message })
         );
       });
     });
@@ -569,6 +611,48 @@ describe("SearchPage", () => {
 
       // No additional fetch should happen: filterActive=true and listIsEmpty=true
       expect(mockApiRequest.mock.calls.length).toBe(callCountBefore);
+    });
+
+    it("offers manual pagination when a date filter hides the loaded page", async () => {
+      const firstPage = Array.from({ length: 50 }, (_, index) => ({
+        ...TORRENT_ITEM,
+        guid: `first-${index}`,
+        title: `Recent release ${index}`,
+        pubDate: "2026-01-15T12:00:00Z",
+      }));
+      setupApiRequest({ items: firstPage, total: 100 });
+      mockApiRequest.mockImplementation((_method: string, url: string) => {
+        if (url.startsWith("/api/search")) {
+          const offset = Number(new URL(url, "http://questarr.local").searchParams.get("offset"));
+          return Promise.resolve(
+            offset === 0
+              ? makeSearchResult(firstPage, 100, undefined, 0, 50)
+              : makeSearchResult([OLD_ITEM], 100, undefined, 50, null)
+          );
+        }
+        if (url.startsWith("/api/games")) return Promise.resolve({ json: async () => [] });
+        return Promise.resolve({ json: async () => [] });
+      });
+      renderSearch();
+      typeSearch("game");
+      await waitFor(() => expect(screen.getByTestId("card-torrent-0")).toBeInTheDocument());
+
+      fireEvent.click(screen.getByTestId("button-toggle-filters"));
+      fireEvent.change(screen.getByTestId("input-date-to"), { target: { value: "2025-01-01" } });
+      await waitFor(() => expect(screen.getByTestId("card-no-results")).toBeInTheDocument());
+      expect(screen.getByTestId("button-load-more-results")).toBeEnabled();
+
+      const callCountBefore = mockApiRequest.mock.calls.filter(([, url]) =>
+        String(url).startsWith("/api/search")
+      ).length;
+      void act(() => capturedIntersectionCallback?.([{ isIntersecting: true }], {}));
+      expect(
+        mockApiRequest.mock.calls.filter(([, url]) => String(url).startsWith("/api/search"))
+      ).toHaveLength(callCountBefore);
+
+      fireEvent.click(screen.getByTestId("button-load-more-results"));
+      expect(await screen.findByText("Old.Game.2024-GROUP")).toBeInTheDocument();
+      expect(mockApiRequest).toHaveBeenCalledWith("GET", expect.stringContaining("offset=50"));
     });
   });
 });

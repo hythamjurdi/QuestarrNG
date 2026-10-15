@@ -1,12 +1,17 @@
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
-import { body, param, query, validationResult } from "express-validator";
+import { param, query, validationResult } from "express-validator";
+import { z } from "zod";
 import type { Request, Response, NextFunction } from "express";
 import { TORRENT_DOWNLOADER_TYPES, USENET_DOWNLOADER_TYPES } from "../shared/downloader-types.js";
 import { GAME_STATUSES } from "../shared/schema.js";
 import { normalizeReleaseTitle } from "../shared/title-utils.js";
 import { storage } from "./storage.js";
-import { expressLogger } from "./logger.js";
+import { expressLogger, middlewareLogger } from "./logger.js";
 import { reportServerError } from "./error-telemetry.js";
+import {
+  isSafeConfiguredDownloadPath,
+  isSafeDownloadPathOverride,
+} from "./downloaders/path-safety.js";
 
 const DOWNLOADER_TYPES = [...TORRENT_DOWNLOADER_TYPES, ...USENET_DOWNLOADER_TYPES];
 
@@ -37,7 +42,7 @@ export const igdbRateLimiter = rateLimit({
       const settings = await storage.getUserSettings(userId);
       return settings?.igdbRateLimitPerSecond ?? 20;
     } catch (error) {
-      console.error("Error fetching user rate limit:", error);
+      middlewareLogger.error({ error }, "Error fetching user rate limit");
       return 20; // Fallback to default on error
     }
   },
@@ -127,11 +132,41 @@ export const staticAssetLimiter = rateLimit({
   skip: rateLimitsDisabled,
 });
 
-// Validation middleware to check for validation errors
+/**
+ * Validate and normalize a request body before a route handler can perform
+ * side effects. Only issue metadata is returned or logged; raw inputs are
+ * deliberately omitted so credentials and archive passwords cannot leak.
+ */
+export function validate<TSchema extends z.ZodTypeAny>(schema: TSchema) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      const details = result.error.issues.map(({ path, message, code }) => ({
+        path: path.join("."),
+        msg: message,
+        code,
+      }));
+      expressLogger.warn(
+        { path: req.path, method: req.method, validationErrors: details },
+        "Validation failed"
+      );
+      return res.status(400).json({ error: "Validation failed", details });
+    }
+    req.body = result.data;
+    return next();
+  };
+}
+
+// Validation middleware to check for express-validator query/parameter errors.
+// Request bodies use validate(schema) so error details have the same safe shape.
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    const details = errors.array();
+    const details = errors.array().map((validationError) => ({
+      location: "location" in validationError ? validationError.location : undefined,
+      path: "path" in validationError ? validationError.path : undefined,
+      msg: validationError.msg,
+    }));
     expressLogger.warn(
       { path: req.path, method: req.method, validationErrors: details },
       "Validation failed"
@@ -222,154 +257,104 @@ export const sanitizeIgdbId = [
 ];
 
 // Sanitization rules for game status updates
-export const sanitizeGameStatus = [
-  body("status").trim().isIn(GAME_STATUSES).withMessage("Invalid status value"),
-];
+const gameStatusBodySchema = z
+  .object({ status: z.string().trim().pipe(z.enum(GAME_STATUSES)) })
+  .passthrough();
+export const sanitizeGameStatus = [validate(gameStatusBodySchema)];
+
+const numberFromRequest = (value: unknown): unknown => {
+  if (typeof value !== "string" || value.trim() === "") return value;
+  return Number(value);
+};
+
+const booleanFromRequest = (value: unknown): unknown => {
+  if (typeof value === "boolean") return value;
+  if (value === 1 || value === "1") return true;
+  if (value === 0 || value === "0") return false;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "yes", "on"].includes(normalized)) return true;
+    if (["false", "no", "off"].includes(normalized)) return false;
+  }
+  return value;
+};
+
+const requestBooleanSchema = z.preprocess(booleanFromRequest, z.boolean());
+const requestNumberSchema = <TSchema extends z.ZodTypeAny>(schema: TSchema) =>
+  z.preprocess(numberFromRequest, schema);
+
+const isHttpUrl = (value: string): boolean => {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+};
 
 // Sanitization rules for adding games
-export const sanitizeGameData = [
-  body("title")
-    .trim()
-    .isLength({ min: 1, max: 500 })
-    .withMessage("Title must be between 1 and 500 characters"),
-  body("igdbId")
-    .optional({ nullable: true })
-    .isInt({ min: 1 })
-    .withMessage("Invalid IGDB ID")
-    .toInt(),
-  body("summary")
-    .optional()
-    .trim()
-    .isLength({ max: 5000 })
-    .withMessage("Summary must be at most 5000 characters"),
-  body("coverUrl").optional({ checkFalsy: true }).trim().isURL().withMessage("Invalid cover URL"),
-  body("releaseDate")
-    .optional({ nullable: true, checkFalsy: true })
-    .trim()
-    .matches(/^\d{4}-\d{2}-\d{2}$/)
-    .withMessage("Invalid date format, use YYYY-MM-DD"),
-  body("rating")
-    .optional({ nullable: true })
-    .isFloat({ min: 0, max: 10 })
-    .withMessage("Rating must be between 0 and 10")
-    .toFloat(),
-  body("platforms").optional().isArray().withMessage("Platforms must be an array"),
-  body("platforms.*")
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("Platform name must be at most 100 characters"),
-  body("genres").optional().isArray().withMessage("Genres must be an array"),
-  body("genres.*")
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("Genre name must be at most 100 characters"),
-  body("publishers").optional().isArray().withMessage("Publishers must be an array"),
-  body("publishers.*")
-    .optional()
-    .trim()
-    .isLength({ max: 200 })
-    .withMessage("Publisher name must be at most 200 characters"),
-  body("developers").optional().isArray().withMessage("Developers must be an array"),
-  body("developers.*")
-    .optional()
-    .trim()
-    .isLength({ max: 200 })
-    .withMessage("Developer name must be at most 200 characters"),
-];
+const optionalText = (max: number) => z.string().trim().max(max).optional();
+const optionalTextArray = (max: number) => z.array(z.string().trim().max(max)).optional();
+
+const gameDataBodySchema = z
+  .object({
+    title: z.string().trim().min(1).max(500),
+    igdbId: requestNumberSchema(z.number().int().min(1)).nullable().optional(),
+    summary: optionalText(5000),
+    coverUrl: z
+      .string()
+      .trim()
+      .optional()
+      .refine((value) => !value || isHttpUrl(value), "Invalid cover URL"),
+    releaseDate: z
+      .string()
+      .trim()
+      .optional()
+      .nullable()
+      .refine((value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value), {
+        message: "Invalid date format, use YYYY-MM-DD",
+      }),
+    rating: requestNumberSchema(z.number().min(0).max(10)).nullable().optional(),
+    platforms: optionalTextArray(100),
+    genres: optionalTextArray(100),
+    publishers: optionalTextArray(200),
+    developers: optionalTextArray(200),
+  })
+  .passthrough();
+export const sanitizeGameData = [validate(gameDataBodySchema)];
 
 // Sanitization rules for indexer data
-export const sanitizeIndexerData = [
-  body("name")
-    .trim()
-    .isLength({ min: 1, max: 200 })
-    .withMessage("Name must be between 1 and 200 characters"),
-  body("url")
-    .trim()
-    .custom((value) => {
-      if (!value) return false;
-      // Allow standard URLs and localhost/internal URLs
-      try {
-        const url = new URL(value);
-        return ["http:", "https:"].includes(url.protocol);
-      } catch {
-        return false;
-      }
-    })
-    .withMessage("Invalid URL"),
-  body("apiKey")
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage("API key must be at most 500 characters"),
-  body("protocol")
-    .optional()
-    .trim()
-    .isIn(["torznab", "newznab", "g4u"])
-    .withMessage("Invalid protocol"),
-  body("enabled").optional().isBoolean().withMessage("Enabled must be a boolean").toBoolean(),
-  body("allowInsecureLan")
-    .optional()
-    .isBoolean()
-    .withMessage("Allow insecure LAN must be a boolean")
-    .toBoolean(),
-];
+const indexerBaseBodySchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    url: z.string().trim().min(1).refine(isHttpUrl, "Invalid URL"),
+    apiKey: optionalText(500),
+    protocol: z.enum(["torznab", "newznab", "g4u", "json-catalog"]).optional(),
+    enabled: requestBooleanSchema.optional(),
+    allowInsecureLan: requestBooleanSchema.optional(),
+  })
+  .passthrough();
+export const sanitizeIndexerData = [validate(indexerBaseBodySchema)];
 
 // Sanitization rules for partial indexer updates (PATCH)
-export const sanitizeIndexerUpdateData = [
-  body("name")
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 200 })
-    .withMessage("Name must be between 1 and 200 characters"),
-  body("url")
-    .optional()
-    .trim()
-    .custom((value) => {
-      if (!value) return true;
-      // Allow standard URLs and localhost/internal URLs
-      try {
-        const url = new URL(value);
-        return ["http:", "https:"].includes(url.protocol);
-      } catch {
-        return false;
-      }
-    })
-    .withMessage("Invalid URL"),
-  body("apiKey")
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage("API key must be at most 500 characters"),
-  body("protocol")
-    .optional()
-    .trim()
-    .isIn(["torznab", "newznab", "g4u"])
-    .withMessage("Invalid protocol"),
-  body("enabled").optional().isBoolean().withMessage("Enabled must be a boolean").toBoolean(),
-  body("priority")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Priority must be a positive integer")
-    .toInt(),
-  body("categories").optional().isArray().withMessage("Categories must be an array"),
-  body("rssEnabled")
-    .optional()
-    .isBoolean()
-    .withMessage("RSS enabled must be a boolean")
-    .toBoolean(),
-  body("autoSearchEnabled")
-    .optional()
-    .isBoolean()
-    .withMessage("Auto search enabled must be a boolean")
-    .toBoolean(),
-  body("allowInsecureLan")
-    .optional()
-    .isBoolean()
-    .withMessage("Allow insecure LAN must be a boolean")
-    .toBoolean(),
-];
+const indexerUpdateBodySchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    url: z
+      .string()
+      .trim()
+      .optional()
+      .refine((value) => !value || isHttpUrl(value), "Invalid URL"),
+    apiKey: optionalText(500),
+    protocol: z.enum(["torznab", "newznab", "g4u", "json-catalog"]).optional(),
+    enabled: requestBooleanSchema.optional(),
+    priority: requestNumberSchema(z.number().int().min(1)).optional(),
+    categories: z.array(z.unknown()).optional(),
+    rssEnabled: requestBooleanSchema.optional(),
+    autoSearchEnabled: requestBooleanSchema.optional(),
+    allowInsecureLan: requestBooleanSchema.optional(),
+  })
+  .passthrough();
+export const sanitizeIndexerUpdateData = [validate(indexerUpdateBodySchema)];
 
 // Sanitization rules for downloader data
 // Accepts hostname, IP address, or FQDN -- shared by every downloader URL
@@ -393,204 +378,171 @@ function isValidDownloaderUrl(value: string, type: unknown): boolean {
   return false;
 }
 
-// The three downloader body validators below (create, test-connection, update)
-// share most of their field rules -- these factories keep each rule defined
-// once instead of copy-pasted per validator array.
-function optionalTrimmedString(field: string, max: number, label: string) {
-  return body(field)
-    .optional()
-    .trim()
-    .isLength({ max })
-    .withMessage(`${label} must be at most ${max} characters`);
-}
+const downloaderTypeSchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) => (DOWNLOADER_TYPES as readonly string[]).includes(value),
+    "Invalid downloader type"
+  );
+const optionalDownloaderText = (max: number, label: string) =>
+  z.string().trim().max(max, `${label} must be at most ${max} characters`).optional();
+const optionalConfiguredDownloadPath = z
+  .string()
+  .trim()
+  .max(500, "Download path must be at most 500 characters")
+  .refine(isSafeConfiguredDownloadPath, "Download path cannot contain parent-directory segments")
+  .optional();
+const strictRequestBooleanSchema = z.boolean();
+const optionalStrictBoolean = () => strictRequestBooleanSchema.optional();
+const optionalCompatibleBoolean = () => requestBooleanSchema.optional();
+const optionalDownloaderFields = {
+  username: optionalDownloaderText(200, "Username"),
+  password: optionalDownloaderText(200, "Password"),
+  category: optionalDownloaderText(100, "Category"),
+  label: optionalDownloaderText(100, "Label"),
+  urlPath: optionalDownloaderText(200, "URL path"),
+  allowSelfSignedCertificate: optionalStrictBoolean(),
+  allowInsecureLan: optionalStrictBoolean(),
+};
 
-function optionalDownloadPath(field = "downloadPath") {
-  return optionalTrimmedString(field, 500, "Download path")
-    .custom((value) => !value.includes(".."))
-    .withMessage("Download path cannot contain '..'");
-}
-
-function optionalBoolean(field: string, label: string) {
-  return body(field)
-    .optional()
-    .isBoolean({ strict: true })
-    .withMessage(`${label} must be a boolean`)
-    .toBoolean();
-}
-
-const downloaderUsername = () => optionalTrimmedString("username", 200, "Username");
-const downloaderPassword = () => optionalTrimmedString("password", 200, "Password");
-const downloaderCategory = () => optionalTrimmedString("category", 100, "Category");
-const downloaderLabel = () => optionalTrimmedString("label", 100, "Label");
-const downloaderUrlPath = () => optionalTrimmedString("urlPath", 200, "URL path");
-const downloaderAllowSelfSignedCertificate = () =>
-  optionalBoolean("allowSelfSignedCertificate", "Allow self-signed certificate");
-const downloaderAllowInsecureLan = () => optionalBoolean("allowInsecureLan", "Allow insecure LAN");
-
-export const sanitizeDownloaderData = [
-  body("name")
-    .trim()
-    .isLength({ min: 1, max: 200 })
-    .withMessage("Name must be between 1 and 200 characters"),
-  body("type").trim().isIn(DOWNLOADER_TYPES).withMessage("Invalid downloader type"),
-  body("url")
-    .trim()
-    .custom((value, { req }) => isValidDownloaderUrl(value, req.body.type))
-    .withMessage("Invalid URL or hostname"),
-  downloaderUsername(),
-  downloaderPassword(),
-  body("enabled").optional().isBoolean().withMessage("Enabled must be a boolean").toBoolean(),
-  optionalDownloadPath(),
-  downloaderLabel(),
-  downloaderUrlPath(),
-  downloaderAllowSelfSignedCertificate(),
-  downloaderAllowInsecureLan(),
-];
+const downloaderCreateBodySchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    type: downloaderTypeSchema,
+    url: z.string().trim().min(1),
+    ...optionalDownloaderFields,
+    enabled: optionalCompatibleBoolean(),
+    downloadPath: optionalConfiguredDownloadPath,
+  })
+  .superRefine((data, ctx) => {
+    if (!isValidDownloaderUrl(data.url, data.type)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["url"],
+        message: "Invalid URL or hostname",
+      });
+    }
+  })
+  .passthrough();
+export const sanitizeDownloaderData = [validate(downloaderCreateBodySchema)];
 
 // Optional settings applied to every indexer a Prowlarr sync imports. Omitted
 // fields fall back to the sync's own defaults (see ProwlarrClient.getIndexers).
-export const sanitizeProwlarrSyncData = [
-  optionalBoolean("allowInsecureLan", "Allow insecure LAN connection"),
-  body("priority")
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage("Priority must be an integer between 1 and 100")
-    .toInt(),
-  body("categories")
-    .optional()
-    .isArray({ max: 100 })
-    .withMessage("Categories must be an array of at most 100 entries"),
-  body("categories.*")
-    .isString()
-    .matches(/^\d{1,6}$/)
-    .withMessage("Each category must be a numeric Torznab/Newznab category id"),
-];
+const prowlarrSyncBodySchema = z
+  .object({
+    allowInsecureLan: optionalStrictBoolean(),
+    priority: requestNumberSchema(z.number().int().min(1).max(100)).optional(),
+    categories: z
+      .array(
+        z.string().regex(/^\d{1,6}$/, "Each category must be a numeric Torznab/Newznab category id")
+      )
+      .max(100, "Categories must be an array of at most 100 entries")
+      .optional(),
+  })
+  .passthrough();
+export const sanitizeProwlarrSyncData = [validate(prowlarrSyncBodySchema)];
 
 // Sanitization rules for POST /api/downloaders/test -- validates the full
 // request body before it's used to build a temporary Downloader and test a
 // live connection, rather than only checking allowSelfSignedCertificate's
 // type. Distinct from sanitizeDownloaderData because this route never takes
 // a `name` (the server synthesizes one) and has its own body shape.
-export const sanitizeDownloaderTestData = [
-  body("type").trim().isIn(DOWNLOADER_TYPES).withMessage("Invalid downloader type"),
-  body("url")
-    .trim()
-    .custom((value, { req }) => isValidDownloaderUrl(value, req.body.type))
-    .withMessage("Invalid URL or hostname"),
-  body("port").optional().isInt({ min: 1, max: 65535 }).withMessage("Invalid port").toInt(),
-  optionalBoolean("useSsl", "useSsl"),
-  downloaderUrlPath(),
-  downloaderUsername(),
-  downloaderPassword(),
-  optionalDownloadPath(),
-  downloaderCategory(),
-  downloaderLabel(),
-  optionalBoolean("addStopped", "addStopped"),
-  optionalBoolean("removeCompleted", "removeCompleted"),
-  optionalTrimmedString("postImportCategory", 100, "Post-import category"),
-  downloaderAllowSelfSignedCertificate(),
-  downloaderAllowInsecureLan(),
-];
+const downloaderTestBodySchema = z
+  .object({
+    type: downloaderTypeSchema,
+    url: z.string().trim().min(1),
+    port: requestNumberSchema(z.number().int().min(1).max(65535)).optional(),
+    useSsl: optionalStrictBoolean(),
+    urlPath: optionalDownloaderText(200, "URL path"),
+    username: optionalDownloaderText(200, "Username"),
+    password: optionalDownloaderText(200, "Password"),
+    downloadPath: optionalConfiguredDownloadPath,
+    category: optionalDownloaderText(100, "Category"),
+    label: optionalDownloaderText(100, "Label"),
+    addStopped: optionalStrictBoolean(),
+    removeCompleted: optionalStrictBoolean(),
+    postImportCategory: optionalDownloaderText(100, "Post-import category"),
+    settings: z.string().nullable().optional(),
+    allowSelfSignedCertificate: optionalStrictBoolean(),
+    allowInsecureLan: optionalStrictBoolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (!isValidDownloaderUrl(data.url, data.type)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["url"],
+        message: "Invalid URL or hostname",
+      });
+    }
+  })
+  .passthrough();
+export const sanitizeDownloaderTestData = [validate(downloaderTestBodySchema)];
 
 // Sanitization rules for partial downloader updates (PATCH)
-export const sanitizeDownloaderUpdateData = [
-  body("name")
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 200 })
-    .withMessage("Name must be between 1 and 200 characters"),
-  body("type").optional().trim().isIn(DOWNLOADER_TYPES).withMessage("Invalid downloader type"),
-  body("url")
-    .optional()
-    .trim()
-    .custom((value, { req }) => {
-      if (!value) return true; // Optional field
-      return isValidDownloaderUrl(value, req.body.type);
-    })
-    .withMessage("Invalid URL or hostname"),
-  downloaderUsername(),
-  downloaderPassword(),
-  body("enabled").optional().isBoolean().withMessage("Enabled must be a boolean").toBoolean(),
-  body("priority")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Priority must be a positive integer")
-    .toInt(),
-  optionalDownloadPath(),
-  downloaderCategory(),
-  downloaderLabel(),
-  downloaderUrlPath(),
-  downloaderAllowSelfSignedCertificate(),
-  downloaderAllowInsecureLan(),
-];
+const downloaderUpdateBodySchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    type: downloaderTypeSchema.optional(),
+    url: z.string().trim().optional(),
+    ...optionalDownloaderFields,
+    enabled: optionalCompatibleBoolean(),
+    priority: requestNumberSchema(z.number().int().min(1)).optional(),
+    downloadPath: optionalConfiguredDownloadPath,
+  })
+  .superRefine((data, ctx) => {
+    if (data.url && !isValidDownloaderUrl(data.url, data.type)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["url"],
+        message: "Invalid URL or hostname",
+      });
+    }
+  })
+  .passthrough();
+export const sanitizeDownloaderUpdateData = [validate(downloaderUpdateBodySchema)];
 
 // Sanitization rules for download add requests
-export const sanitizeDownloaderDownloadData = [
-  body("url")
-    .trim()
-    .custom((value) => {
-      // Allow standard URLs and localhost/internal URLs
-      try {
-        const url = new URL(value);
-        return ["http:", "https:", "magnet:"].includes(url.protocol);
-      } catch {
-        return false;
-      }
-    })
-    .withMessage("Invalid download URL"),
-  body("title")
-    // Collapse whitespace runs first: results cached from before the indexer-side
-    // normalization can still carry a multi-line scraped title.
-    .customSanitizer(normalizeReleaseTitle)
-    .isLength({ min: 1, max: 500 })
-    .withMessage("Title must be between 1 and 500 characters"),
-  body("category")
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("Category must be at most 100 characters"),
-  body("releaseCategory")
-    .optional()
-    .isIn(["main", "update", "dlc", "extra", "packs"])
-    .withMessage("Invalid release category"),
-  body("downloadType")
-    .optional()
-    .trim()
-    .isIn(["torrent", "usenet"])
-    .withMessage("Invalid download type"),
-  body("downloadPath")
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage("Download path must be at most 500 characters")
-    // 🛡️ Sentinel: Add path traversal validation.
-    // Disallow '..' in download paths to prevent writing files outside the intended directory.
-    .custom((value) => !value.includes(".."))
-    .withMessage("Download path cannot contain '..'"),
-  body("priority")
-    .optional()
-    .isInt({ min: 0, max: 10 })
-    .withMessage("Priority must be between 0 and 10")
-    .toInt(),
-  body("gameId")
-    .optional()
-    .trim()
-    .matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
-    .withMessage("Invalid game ID format"),
-  body("password")
-    // Never echo the archive password back in a 400 response or the
-    // validation-failure log line -- hide() replaces it with a marker
-    // in the error object express-validator builds on a failed check.
-    .hide("[REDACTED]")
-    .optional()
-    .isString()
-    .withMessage("Password must be a string")
-    .isLength({ max: 200 })
-    .withMessage("Password must be at most 200 characters"),
-];
+const downloaderDownloadBodySchema = z
+  .object({
+    url: z
+      .string()
+      .trim()
+      .refine((value) => {
+        try {
+          return ["http:", "https:", "magnet:"].includes(new URL(value).protocol);
+        } catch {
+          return false;
+        }
+      }, "Invalid download URL"),
+    title: z.string().transform(normalizeReleaseTitle).pipe(z.string().min(1).max(500)),
+    category: optionalDownloaderText(100, "Category"),
+    releaseCategory: z.enum(["main", "update", "dlc", "extra", "packs"]).optional(),
+    downloadType: z.enum(["torrent", "usenet"]).optional(),
+    downloadPath: z
+      .string()
+      .trim()
+      .max(500)
+      .refine(
+        isSafeDownloadPathOverride,
+        "Download path must be relative and cannot contain parent-directory segments"
+      )
+      .optional(),
+    priority: requestNumberSchema(z.number().int().min(0).max(10)).optional(),
+    gameId: z.string().trim().regex(UUID_PATTERN).optional(),
+    password: z.string().max(200, "Password must be at most 200 characters").optional(),
+  })
+  .passthrough();
+export const sanitizeDownloaderDownloadData = [validate(downloaderDownloadBodySchema)];
 
 // Sanitization rules for indexer search queries
 export const sanitizeIndexerSearchQuery = [
+  query("fileTypes")
+    .optional()
+    .isString()
+    .isLength({ max: 120 })
+    .matches(/^\.?[a-zA-Z0-9]{1,10}(,\.?[a-zA-Z0-9]{1,10}){0,9}$/)
+    .withMessage("File types must be a comma-separated list of up to ten extensions"),
   query("query")
     .trim()
     .isLength({ min: 1, max: 200 })
@@ -624,10 +576,7 @@ export const sanitizeGameStatusParam = [
 
 // Sanitization rules for the Quick Add (match-and-add) title
 export const sanitizeMatchAndAddTitle = [
-  body("title")
-    .trim()
-    .isLength({ min: 1, max: 500 })
-    .withMessage("Title must be between 1 and 500 characters"),
+  validate(z.object({ title: z.string().trim().min(1).max(500) }).passthrough()),
 ];
 
 // Sanitization rules for NexusMods game-domain lookup
@@ -653,64 +602,79 @@ export const sanitizeNexusModsTrendingModsQuery = [
 
 // Sanitization rules for root folder creation
 export const sanitizeRootFolderData = [
-  body("path")
-    .trim()
-    .isLength({ min: 1, max: 1000 })
-    .withMessage("Path must be between 1 and 1000 characters")
-    .custom((value: string) => !value.includes("\0"))
-    .withMessage("Path must not contain null bytes"),
-  body("name")
-    .optional()
-    .trim()
-    .isLength({ max: 200 })
-    .withMessage("Name must be at most 200 characters"),
-  body("enabled").optional().isBoolean().withMessage("Enabled must be a boolean").toBoolean(),
-  body("allowDelete")
-    .optional()
-    .isBoolean()
-    .withMessage("allowDelete must be a boolean")
-    .toBoolean(),
+  validate(
+    z
+      .object({
+        path: z
+          .string()
+          .trim()
+          .min(1)
+          .max(1000)
+          .refine((value) => !value.includes("\0"), "Path must not contain null bytes"),
+        name: z.string().trim().max(200).optional(),
+        enabled: requestBooleanSchema.optional(),
+        allowDelete: requestBooleanSchema.optional(),
+      })
+      .passthrough()
+  ),
 ];
 
 // Sanitization rules for partial root folder updates (PATCH)
 export const sanitizeRootFolderUpdateData = [
-  body("path")
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 1000 })
-    .withMessage("Path must be between 1 and 1000 characters")
-    .custom((value: string) => !value.includes("\0"))
-    .withMessage("Path must not contain null bytes"),
-  body("name")
-    .optional({ nullable: true })
-    .trim()
-    .isLength({ max: 200 })
-    .withMessage("Name must be at most 200 characters"),
-  body("enabled").optional().isBoolean().withMessage("Enabled must be a boolean").toBoolean(),
-  body("allowDelete")
-    .optional()
-    .isBoolean()
-    .withMessage("allowDelete must be a boolean")
-    .toBoolean(),
+  validate(
+    z
+      .object({
+        path: z
+          .string()
+          .trim()
+          .min(1)
+          .max(1000)
+          .refine((value) => !value.includes("\0"), "Path must not contain null bytes")
+          .optional(),
+        name: z.string().trim().max(200).nullable().optional(),
+        enabled: requestBooleanSchema.optional(),
+        allowDelete: requestBooleanSchema.optional(),
+      })
+      .passthrough()
+  ),
 ];
 
 // Sanitization rules for POST /api/library/scan (rootFolderId is optional — omit to scan all)
 export const sanitizeLibraryScanData = [
-  body("rootFolderId")
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 200 })
-    .withMessage("rootFolderId must be a non-empty string"),
+  validate(
+    z
+      .object({
+        rootFolderId: z.string().trim().min(1).max(200).optional(),
+      })
+      .passthrough()
+      .optional()
+      .default({})
+  ),
 ];
 
 // Sanitization rules for POST /api/library/scan/unmatched/match
 export const sanitizeUnmatchedMatchData = [
-  body("rootFolderId")
-    .trim()
-    .isLength({ min: 1, max: 200 })
-    .withMessage("rootFolderId is required"),
-  body("folderName").trim().isLength({ min: 1, max: 1000 }).withMessage("folderName is required"),
-  body("igdbId").isInt({ min: 1 }).withMessage("igdbId must be a positive integer").toInt(),
+  validate(
+    z
+      .object({
+        rootFolderId: z.string().trim().min(1).max(200),
+        folderName: z.string().trim().min(1).max(1000),
+        igdbId: requestNumberSchema(z.number().int().min(1)),
+      })
+      .passthrough()
+  ),
+];
+
+export const sanitizeUnmatchedSearchData = [
+  validate(
+    z
+      .object({
+        rootFolderId: z.string().trim().min(1).max(200),
+        folderName: z.string().trim().min(1).max(1000),
+        query: z.string().trim().min(1).max(200),
+      })
+      .passthrough()
+  ),
 ];
 
 // 🛡️ Sentinel: Global error handler middleware
@@ -735,16 +699,19 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   }
 
   // Determine the error message to show to the client
-  // Sanitize error messages in production to prevent information leakage
+  // Sanitize server-error messages and details in production to prevent information leakage.
+  // Keep the original error intact above so it remains available in server logs.
+  const isProductionServerError = req.app.get("env") === "production" && status >= 500;
   let message = err.message || "Internal Server Error";
-  if (req.app.get("env") === "production" && status >= 500) {
+  if (isProductionServerError) {
     message = "Internal Server Error";
   }
 
-  // Include details if available (e.g., validation errors)
+  // Include details for validation/client errors, but never expose server-error internals
+  // to production clients.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response: { error: string; details?: any } = { error: message };
-  if (err.details) {
+  if (err.details && !isProductionServerError) {
     response.details = err.details;
   }
 

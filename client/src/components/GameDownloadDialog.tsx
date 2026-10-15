@@ -57,6 +57,7 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { Label } from "@/components/ui/label";
 import {
   Download,
+  FileDown,
   Loader2,
   PackagePlus,
   SlidersHorizontal,
@@ -70,10 +71,11 @@ import {
   Activity,
   Ban,
   Info,
+  Plus,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { cn, copyToClipboard, safeUrl } from "@/lib/utils";
+import { cn, copyToClipboard, safeUrl, isDiscoveryId, mapGameToInsertGame } from "@/lib/utils";
 import {
   type Game,
   type Indexer,
@@ -93,10 +95,13 @@ import {
   parseJsonStringArray,
   matchesPlatformFilter,
   normalizeTitle,
+  resolveGamePlatformPreference,
+  UNSUPPORTED_TARGET_PLATFORM,
   type CanonicalPlatform,
 } from "@shared/title-utils";
 import { canonicalPlatformsForIgdbIds, matchesSelectedIgdbPlatform } from "@shared/platforms";
 import { isTorrentDownloaderType, isUsenetDownloaderType } from "@shared/downloader-types";
+import type { ReleaseEvaluation } from "@shared/release-scoring";
 
 interface DownloadItem {
   title: string;
@@ -122,6 +127,7 @@ interface DownloadItem {
   group?: string;
   aiReleaseType?: ReleaseType;
   aiReleaseTypeConfidence?: number;
+  releaseEvaluation?: ReleaseEvaluation;
 }
 
 interface SearchResult {
@@ -132,6 +138,19 @@ interface SearchResult {
   errors?: string[];
 }
 
+const SMALL_EXTRA_MAX_MAIN_SIZE_RATIO = 0.25;
+
+function getSmallExtras(main: DownloadItem, extras: DownloadItem[]): DownloadItem[] {
+  const mainSize = main.size;
+  if (!mainSize || mainSize <= 0) return [];
+  return extras.filter(
+    (extra) =>
+      extra.size != null &&
+      extra.size > 0 &&
+      extra.size <= mainSize * SMALL_EXTRA_MAX_MAIN_SIZE_RATIO
+  );
+}
+
 interface GameDownloadDialogProps {
   game: Game | null;
   open: boolean;
@@ -139,6 +158,35 @@ interface GameDownloadDialogProps {
 }
 
 type ReleaseMetadata = ReturnType<typeof parseReleaseMetadata>;
+
+function ReleaseScoreBadge({
+  evaluation,
+}: Readonly<{ evaluation?: ReleaseEvaluation | undefined }>) {
+  if (!evaluation) return null;
+  const scoreLines = evaluation.lines.map(
+    (line) => `${line.label}: ${line.points >= 0 ? "+" : ""}${line.points}`
+  );
+  const rejectionLines = evaluation.rejections.map((rejection) =>
+    rejection.detail
+      ? `${rejection.code.replaceAll("_", " ")}: ${rejection.detail}`
+      : rejection.code.replaceAll("_", " ")
+  );
+  const title = [...scoreLines, ...rejectionLines].join(" · ") || "No scoring rules matched";
+  return (
+    <Badge
+      variant={evaluation.accepted ? "secondary" : "destructive"}
+      title={title}
+      aria-label={
+        evaluation.accepted
+          ? `Release score ${evaluation.score}`
+          : `Rejected, score ${evaluation.score}`
+      }
+      className="h-5 shrink-0 px-1.5 text-[10px]"
+    >
+      {evaluation.accepted ? `Score ${evaluation.score}` : `Rejected · ${evaluation.score}`}
+    </Badge>
+  );
+}
 
 function formatDate(dateString: string): string {
   try {
@@ -148,7 +196,7 @@ function formatDate(dateString: string): string {
   }
 }
 
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, ApiError } from "@/lib/queryClient";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatBytes, formatAge, isUsenetItem } from "@/lib/downloads-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -239,6 +287,60 @@ function ReleaseMetadataBadges({
 export default function GameDownloadDialog({ game, open, onOpenChange }: GameDownloadDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Discover and search results carry a temporary "igdb-<id>" id, which the
+  // download and blacklist endpoints reject. Add such a game to the library
+  // on first use and send its real id instead.
+  // Every cached value is keyed by the dialog game's id, so a result for one
+  // game can never be used for the next one.
+  type ResolvedId = { forId: string; id: string };
+  const [resolvedGame, setResolvedGame] = useState<ResolvedId | null>(null);
+  const libraryGameId = resolvedGame && resolvedGame.forId === game?.id ? resolvedGame.id : null;
+  // Mirrors resolvedGame for mutation callbacks, which run before the re-render.
+  const resolvedGameRef = useRef<ResolvedId | null>(null);
+  const currentGameId = useCallback(() => {
+    const resolved = resolvedGameRef.current;
+    return resolved && resolved.forId === game?.id ? resolved.id : game?.id;
+  }, [game?.id]);
+
+  // Shared by actions fired before the first add returns, so they don't each
+  // POST the game and create duplicate library rows.
+  const pendingAddRef = useRef<{ forId: string; promise: Promise<string> } | null>(null);
+
+  const ensureLibraryGameId = useCallback(async (): Promise<string | undefined> => {
+    if (!game) return undefined;
+    if (!isDiscoveryId(game.id)) return game.id;
+    const forId = game.id;
+    if (resolvedGameRef.current?.forId === forId) return resolvedGameRef.current.id;
+    if (pendingAddRef.current?.forId === forId) return pendingAddRef.current.promise;
+
+    const promise = (async () => {
+      let added: Game;
+      try {
+        const response = await apiRequest("POST", "/api/games", {
+          ...mapGameToInsertGame(game),
+          status: "wanted",
+        });
+        added = (await response.json()) as Game;
+      } catch (error) {
+        const existing =
+          error instanceof ApiError && error.status === 409
+            ? (error.data as { game?: Game } | undefined)?.game
+            : undefined;
+        if (!existing) throw error;
+        added = existing;
+      }
+      const resolved = { forId, id: added.id };
+      resolvedGameRef.current = resolved;
+      setResolvedGame(resolved);
+      queryClient.invalidateQueries({ queryKey: ["/api/games"] });
+      return added.id;
+    })().finally(() => {
+      if (pendingAddRef.current?.forId === forId) pendingAddRef.current = null;
+    });
+    pendingAddRef.current = { forId, promise };
+    return promise;
+  }, [game, queryClient]);
   const isMobile = useIsMobile();
   const downloadLabelIdPrefix = useId();
   const { t, language, languageFor, directionFor } = useInterfaceLanguage();
@@ -299,6 +401,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   const [selectedMainDownload, setSelectedMainDownload] = useState<DownloadItem | null>(null);
   const [isDirectDownloadMode, setIsDirectDownloadMode] = useState(false);
   const [selectedUpdateIndices, setSelectedUpdateIndices] = useState<Set<number>>(new Set());
+  const [selectedExtraIndices, setSelectedExtraIndices] = useState<Set<number>>(new Set());
 
   // Filter states
   const [minSeeders, setMinSeeders] = useState<number>(0);
@@ -307,7 +410,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     [minSeeders]
   );
   const [selectedIndexer, setSelectedIndexer] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"seeders" | "date" | "size" | "priority">("seeders");
+  const [sortBy, setSortBy] = useState<"seeders" | "date" | "size" | "priority" | "score">(
+    "seeders"
+  );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showFilters, setShowFilters] = useState(false);
   const [visibleCategories, setVisibleCategories] = useState<Set<DownloadCategory>>(
@@ -351,6 +456,58 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     enabled: open,
   });
 
+  const savePreferredGroupsMutation = useMutation({
+    mutationFn: async (groupsToAdd: string[]) => {
+      const settingsResponse = await apiRequest("GET", "/api/settings");
+      const latestSettings = (await settingsResponse.json()) as Pick<
+        UserSettings,
+        "preferredReleaseGroups"
+      >;
+      const preferredGroups = parseJsonStringArray(latestSettings.preferredReleaseGroups);
+      const existing = new Set(preferredGroups.map((group) => group.trim().toLowerCase()));
+      const addedGroups: string[] = [];
+
+      for (const group of groupsToAdd) {
+        const trimmed = group.trim();
+        const key = trimmed.toLowerCase();
+        if (trimmed && !existing.has(key)) {
+          preferredGroups.push(trimmed);
+          addedGroups.push(trimmed);
+          existing.add(key);
+        }
+      }
+
+      if (addedGroups.length > 0) {
+        await apiRequest("PATCH", "/api/settings", {
+          preferredReleaseGroups: JSON.stringify(preferredGroups),
+        });
+      }
+
+      return addedGroups;
+    },
+    onSuccess: (addedGroups) => {
+      if (addedGroups.length > 0) {
+        toast({
+          title: "Preferred groups updated",
+          description: `Added ${addedGroups.join(", ")} to your preferred release groups.`,
+        });
+      } else {
+        toast({
+          title: "Groups already saved",
+          description: "The selected groups are already in your preferred list.",
+        });
+      }
+      void queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Could not save preferred groups",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const applyDownloadRules = useCallback(() => {
     if (userSettings?.downloadRules) {
       try {
@@ -371,16 +528,23 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         setSelectedGroups(groups);
       }
     }
-    if (userSettings?.preferredPlatform && !platformPreselectedRef.current) {
-      // The preferred platform must also be allowed by the Platforms setting;
-      // otherwise preselecting it would hide every release and show a warning
-      // that blames the wrong filter.
+    const preferredPlatform = resolveGamePlatformPreference(
+      game ?? {},
+      userSettings?.preferredPlatform ?? null
+    );
+    if (
+      preferredPlatform &&
+      preferredPlatform !== UNSUPPORTED_TARGET_PLATFORM &&
+      !platformPreselectedRef.current
+    ) {
+      // A game's explicit target wins over the account default. The chosen
+      // platform must also be allowed by the Platforms setting; otherwise the
+      // prefilter would hide every release and blame the wrong control.
       const allowed = canonicalPlatformsForIgdbIds(userSettings?.importPlatformIds);
       const preferredAllowed =
-        allowed.length === 0 ||
-        allowed.includes(userSettings.preferredPlatform as CanonicalPlatform);
+        allowed.length === 0 || allowed.includes(preferredPlatform as CanonicalPlatform);
       if (preferredAllowed) {
-        setSelectedPlatforms([userSettings.preferredPlatform]);
+        setSelectedPlatforms([preferredPlatform]);
       }
       platformPreselectedRef.current = true;
     }
@@ -390,6 +554,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     userSettings?.preferredReleaseGroups,
     userSettings?.preferredPlatform,
     userSettings?.importPlatformIds,
+    game,
   ]);
 
   // Initialize search query only when the dialog opens or game changes — not on settings refetch.
@@ -410,14 +575,31 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     }
   }, [open, game, userSettings, applyDownloadRules]);
 
-  const searchQueryKey = game?.id
-    ? `/api/search?query=${encodeURIComponent(debouncedSearchQuery)}&gameId=${game.id}`
-    : `/api/search?query=${encodeURIComponent(debouncedSearchQuery)}`;
+  const buildSearchQueryKey = (gameId: string | undefined) =>
+    gameId
+      ? `/api/search?query=${encodeURIComponent(debouncedSearchQuery)}&gameId=${gameId}`
+      : `/api/search?query=${encodeURIComponent(debouncedSearchQuery)}`;
+  // Once a Discover game is in the library, search with its real id so the
+  // server applies that game's release blacklist.
+  const searchQueryKey = buildSearchQueryKey(libraryGameId ?? game?.id);
 
   const { data: searchResults, isLoading: isSearching } = useQuery<SearchResult>({
     queryKey: [searchQueryKey],
     enabled: open && debouncedSearchQuery.trim().length > 0,
   });
+
+  const scoreSortInitializedRef = useRef(false);
+  const hasScoredResults =
+    searchResults?.items.some((item) => item.releaseEvaluation !== undefined) ?? false;
+  useEffect(() => {
+    if (hasScoredResults && !scoreSortInitializedRef.current) {
+      setSortBy("score");
+      setSortOrder("desc");
+      scoreSortInitializedRef.current = true;
+    } else if (!hasScoredResults) {
+      scoreSortInitializedRef.current = false;
+    }
+  }, [hasScoredResults]);
 
   // When a canonical search returns results, refresh the games list so the "Has results" badge
   // reflects the updated searchResultsAvailable flag. Only invalidate once per dialog session.
@@ -489,6 +671,22 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     return Array.from(groups).sort(interfaceCollator.compare);
   }, [searchResults?.items, interfaceCollator]);
 
+  const preferredGroups = useMemo(
+    () => parseJsonStringArray(userSettings?.preferredReleaseGroups),
+    [userSettings?.preferredReleaseGroups]
+  );
+  const preferredGroupKeys = useMemo(
+    () => new Set(preferredGroups.map((group) => group.trim().toLowerCase())),
+    [preferredGroups]
+  );
+  const selectedGroupsToSave = useMemo(
+    () =>
+      selectedGroups.filter(
+        (group) => group.trim() && !preferredGroupKeys.has(group.trim().toLowerCase())
+      ),
+    [selectedGroups, preferredGroupKeys]
+  );
+
   // Pre-calculate release metadata once per item to avoid repeated regex operations
   const itemsMetadata = useMemo(() => {
     if (!searchResults?.items) return new Map<string, ReturnType<typeof parseReleaseMetadata>>();
@@ -556,6 +754,10 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
             const aHealth = isUsenetItem(a) ? (a.grabs ?? 0) : (a.seeders ?? 0);
             const bHealth = isUsenetItem(b) ? (b.grabs ?? 0) : (b.seeders ?? 0);
             comparison = bHealth - aHealth;
+          } else if (sortBy === "score") {
+            comparison =
+              (b.releaseEvaluation?.score ?? -Infinity) - (a.releaseEvaluation?.score ?? -Infinity);
+            if (!Number.isFinite(comparison)) comparison = 0;
           } else if (sortBy === "date") {
             const keyA = a.guid || a.link;
             const keyB = b.guid || b.link;
@@ -595,14 +797,45 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     userSettings?.importPlatformIds,
   ]);
 
+  const recommendedExtras = useMemo(
+    () =>
+      selectedMainDownload
+        ? getSmallExtras(selectedMainDownload, filteredCategorizedDownloads.extra)
+        : [],
+    [selectedMainDownload, filteredCategorizedDownloads.extra]
+  );
+  const selectedBundleAddons = [
+    ...Array.from(selectedUpdateIndices)
+      .map((i) => filteredCategorizedDownloads.update[i])
+      .filter((download): download is DownloadItem => download !== undefined),
+    ...Array.from(selectedExtraIndices)
+      .map((i) => recommendedExtras[i])
+      .filter((download): download is DownloadItem => download !== undefined),
+  ];
+  const hasUpdates = filteredCategorizedDownloads.update.length > 0;
+  const hasRecommendedExtras = recommendedExtras.length > 0;
+  const bundleDialogTitle =
+    hasUpdates && hasRecommendedExtras
+      ? "Add updates and extras?"
+      : hasUpdates
+        ? "Download with Updates?"
+        : "Add small extras?";
+  const selectedBundleAddonLabel =
+    selectedUpdateIndices.size > 0 && selectedExtraIndices.size > 0
+      ? `${selectedBundleAddons.length} add-ons`
+      : selectedExtraIndices.size > 0
+        ? `${selectedExtraIndices.size} ${selectedExtraIndices.size === 1 ? "extra" : "extras"}`
+        : `${selectedUpdateIndices.size} ${selectedUpdateIndices.size === 1 ? "update" : "updates"}`;
+
   const downloadMutation = useMutation({
     mutationFn: async (downloads: DownloadItem[]) => {
+      const gameId = await ensureLibraryGameId();
       const results = [];
       for (const download of downloads) {
         const response = await apiRequest("POST", "/api/downloads", {
           url: download.link,
           title: download.title,
-          gameId: game?.id,
+          gameId,
           downloadType: isUsenetItem(download) ? "usenet" : "torrent",
           releaseCategory: inferReleaseCategory(
             download.title,
@@ -657,8 +890,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       }
       queryClient.invalidateQueries({ queryKey: ["/api/downloads"] });
       queryClient.invalidateQueries({ queryKey: ["/api/downloads/summary"] });
-      if (game?.id) {
-        queryClient.invalidateQueries({ queryKey: [`/api/games/${game.id}/downloads`] });
+      const gameId = currentGameId();
+      if (gameId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/games/${gameId}/downloads`] });
       }
     },
     onError: (error: Error) => {
@@ -684,25 +918,39 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
       downloaderId: string;
       downloaderName: string;
     }) => {
+      const gameId = await ensureLibraryGameId();
       const response = await apiRequest("POST", `/api/downloaders/${downloaderId}/downloads`, {
         url: download.link,
         title: download.title,
-        gameId: game?.id,
+        gameId,
         downloadType: isUsenetItem(download) ? "usenet" : "torrent",
       });
       return response.json();
     },
     onSuccess: (result, variables) => {
       if (result.success) {
+        const awaitingConfirmation = Boolean(result.correlationTag);
         toast({
-          title: formatInterfaceMessage("Download sent to {downloaderName}", {
-            downloaderName: String(variables.downloaderName ?? ""),
-          }),
+          title: awaitingConfirmation
+            ? localizedText("Checking qBittorrent")
+            : formatInterfaceMessage("Download sent to {downloaderName}", {
+                downloaderName: String(variables.downloaderName ?? ""),
+              }),
+          ...(awaitingConfirmation
+            ? {
+                description:
+                  result.message ||
+                  localizedText(
+                    "The request was accepted, but qBittorrent has not confirmed the download yet. Check qBittorrent before retrying to avoid a duplicate."
+                  ),
+              }
+            : {}),
         });
         queryClient.invalidateQueries({ queryKey: ["/api/downloads"] });
         queryClient.invalidateQueries({ queryKey: ["/api/downloads/summary"] });
-        if (game?.id) {
-          queryClient.invalidateQueries({ queryKey: [`/api/games/${game.id}/downloads`] });
+        const gameId = currentGameId();
+        if (gameId) {
+          queryClient.invalidateQueries({ queryKey: [`/api/games/${gameId}/downloads`] });
         }
       } else {
         toast({ title: result.message || "Failed to start download", variant: "destructive" });
@@ -719,19 +967,27 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
 
   const blacklistMutation = useMutation({
     mutationFn: async (item: DownloadItem) => {
-      if (!game) throw new Error("No game context");
-      await apiRequest("POST", `/api/games/${game.id}/blacklist`, {
+      const gameId = await ensureLibraryGameId();
+      if (!gameId) throw new Error("No game context");
+      await apiRequest("POST", `/api/games/${gameId}/blacklist`, {
         releaseTitle: item.title,
         indexerName: item.indexerName ?? null,
       });
     },
     onSuccess: (_data, item) => {
-      queryClient.setQueryData<SearchResult>([searchQueryKey], (old) => {
-        if (!old) return old;
-        return { ...old, items: old.items.filter((i) => i.title !== item.title) };
-      });
+      const remaining = queryClient.getQueryData<SearchResult>([searchQueryKey]);
+      const filtered = remaining && {
+        ...remaining,
+        items: remaining.items.filter((i) => i.title !== item.title),
+      };
+      // A Discover game just added to the library searches under its real id
+      // from the next render on: seed that key too so the dialog doesn't flash.
+      const resolvedKey = buildSearchQueryKey(currentGameId());
+      for (const key of new Set([searchQueryKey, resolvedKey])) {
+        queryClient.setQueryData<SearchResult>([key], filtered);
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/blacklist"] });
-      queryClient.invalidateQueries({ queryKey: [searchQueryKey] });
+      queryClient.invalidateQueries({ queryKey: [resolvedKey] });
       toast({ description: "Release blacklisted" });
     },
     onError: () => {
@@ -740,52 +996,85 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
   });
 
   const handleDownload = (download: DownloadItem) => {
-    if (categorizedDownloads.update.length > 0) {
-      const downloadCategory = groupDownloadsByCategory([download]);
-      if (downloadCategory.main.length > 0) {
-        setSelectedMainDownload(download);
-        setIsDirectDownloadMode(false);
-        setSelectedUpdateIndices(new Set(filteredCategorizedDownloads.update.map((_, i) => i)));
-        setShowBundleDialog(true);
-        return;
-      }
+    const downloadCategory = groupDownloadsByCategory([download]);
+    const smallExtras = getSmallExtras(download, filteredCategorizedDownloads.extra);
+    if (
+      downloadCategory.main.length > 0 &&
+      (filteredCategorizedDownloads.update.length > 0 || smallExtras.length > 0)
+    ) {
+      setSelectedMainDownload(download);
+      setIsDirectDownloadMode(false);
+      setSelectedUpdateIndices(new Set(filteredCategorizedDownloads.update.map((_, i) => i)));
+      setSelectedExtraIndices(new Set());
+      setShowBundleDialog(true);
+      return;
     }
     setDownloadingGuid(download.guid || download.link);
     downloadMutation.mutate([download]);
   };
 
-  const handleBundleDownload = (includeUpdates: boolean) => {
-    if (!selectedMainDownload) return;
-    const guid = selectedMainDownload.guid || selectedMainDownload.link;
-    setDownloadingGuid(guid);
-    if (includeUpdates && selectedUpdateIndices.size > 0) {
-      const selectedUpdates = Array.from(selectedUpdateIndices)
-        .map((i) => filteredCategorizedDownloads.update[i])
-        .filter((d): d is DownloadItem => d !== undefined);
-      downloadMutation.mutate([selectedMainDownload, ...selectedUpdates]);
-    } else {
-      downloadMutation.mutate([selectedMainDownload]);
+  const handleDirectDownload = (download: DownloadItem) => {
+    if (!safeUrl(download.link, "")) {
+      toast({
+        title: "Direct download unavailable",
+        description: "This release does not have a downloadable file URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const downloadCategory = groupDownloadsByCategory([download]);
+    const smallExtras = getSmallExtras(download, filteredCategorizedDownloads.extra);
+    if (
+      downloadCategory.main.length > 0 &&
+      (filteredCategorizedDownloads.update.length > 0 || smallExtras.length > 0)
+    ) {
+      setSelectedMainDownload(download);
+      setIsDirectDownloadMode(true);
+      setSelectedUpdateIndices(new Set(filteredCategorizedDownloads.update.map((_, i) => i)));
+      setSelectedExtraIndices(new Set());
+      setShowBundleDialog(true);
+      return;
+    }
+
+    if (downloadFile(download)) {
+      const fileType = isUsenetItem(download) ? "NZB" : "torrent";
+      toast({ title: "Download started", description: `${fileType} file download initiated` });
     }
   };
 
-  const downloadFile = (download: DownloadItem) => {
+  const handleBundleDownload = (includeSelectedAddons: boolean) => {
+    if (!selectedMainDownload) return;
+    const guid = selectedMainDownload.guid || selectedMainDownload.link;
+    setDownloadingGuid(guid);
+    downloadMutation.mutate([
+      selectedMainDownload,
+      ...(includeSelectedAddons ? selectedBundleAddons : []),
+    ]);
+  };
+
+  const downloadFile = (download: DownloadItem): boolean => {
+    const url = safeUrl(download.link, "");
+    if (!url) return false;
+
     const link = document.createElement("a");
-    link.href = download.link;
+    link.href = url;
     const isUsenet = isUsenetItem(download);
     link.download = `${download.title}.${isUsenet ? "nzb" : "torrent"}`;
     link.target = "_blank";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    return true;
   };
 
-  const handleBundleDirectDownload = async (includeUpdates: boolean) => {
+  const handleBundleDirectDownload = async (includeSelectedAddons: boolean) => {
     if (!selectedMainDownload) return;
-    if (includeUpdates && selectedUpdateIndices.size > 0) {
-      const selectedUpdates = Array.from(selectedUpdateIndices).map(
-        (i) => filteredCategorizedDownloads.update[i]
-      );
-      const downloads = [selectedMainDownload, ...selectedUpdates];
+    const downloads = [
+      selectedMainDownload,
+      ...(includeSelectedAddons ? selectedBundleAddons : []),
+    ];
+    if (downloads.length > 1) {
       try {
         const response = await apiRequest("POST", "/api/downloads/bundle", { downloads });
         const blob = await response.blob();
@@ -811,8 +1100,16 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         });
       }
     } else {
-      downloadFile(selectedMainDownload);
-      toast({ title: "Download started", description: "File download initiated" });
+      if (downloadFile(selectedMainDownload)) {
+        const fileType = isUsenetItem(selectedMainDownload) ? "NZB" : "torrent";
+        toast({ title: "Download started", description: `${fileType} file download initiated` });
+      } else {
+        toast({
+          title: "Direct download unavailable",
+          description: "This release does not have a downloadable file URL.",
+          variant: "destructive",
+        });
+      }
     }
     setShowBundleDialog(false);
     setSelectedMainDownload(null);
@@ -831,6 +1128,15 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     setSelectedUpdateIndices(new Set(filteredCategorizedDownloads.update.map((_, i) => i)));
   const deselectAllUpdates = () => setSelectedUpdateIndices(new Set());
 
+  const toggleExtraSelection = (index: number) => {
+    setSelectedExtraIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
   const toggleCategory = (category: DownloadCategory) => {
     setVisibleCategories((prev) => {
       const next = new Set(prev);
@@ -840,7 +1146,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     });
   };
 
-  const toggleSort = (field: "seeders" | "date" | "size" | "priority") => {
+  const toggleSort = (field: "seeders" | "date" | "size" | "priority" | "score") => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -854,7 +1160,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     label,
     className = "",
   }: {
-    field: "seeders" | "date" | "size" | "priority";
+    field: "seeders" | "date" | "size" | "priority" | "score";
     label: string;
     className?: string;
   }) => (
@@ -933,6 +1239,26 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
           onChange={setSelectedGroups}
           className="w-full"
         />
+        {selectedGroupsToSave.length > 0 && (
+          <div className="space-y-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={savePreferredGroupsMutation.isPending}
+              onClick={() => savePreferredGroupsMutation.mutate(selectedGroupsToSave)}
+            >
+              <Plus className="h-4 w-4" />
+              {savePreferredGroupsMutation.isPending
+                ? "Saving groups..."
+                : "Add to preferred groups"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Saves these groups in Settings without changing your automatic search filter.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -1014,9 +1340,15 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
         <Badge variant="outline" className="text-xs capitalize">
           {localizedText("Sorted by:")}{" "}
           {localizedText(
-            ({ seeders: "Health", date: "Date", size: "Size", priority: "Priority" } as const)[
-              sortBy
-            ]
+            (
+              {
+                seeders: "Health",
+                date: "Date",
+                size: "Size",
+                priority: "Priority",
+                score: "Score",
+              } as const
+            )[sortBy]
           )}{" "}
           ({localizedText(sortOrder === "asc" ? "Asc" : "Desc")})
         </Badge>
@@ -1029,6 +1361,11 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
 
   const resultsBody = (
     <div className="space-y-4">
+      {downloadingGuid !== null && (
+        <span className="sr-only" role="status">
+          Downloading selected release...
+        </span>
+      )}
       {isSearching && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -1142,6 +1479,13 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                             </span>
                           </div>
                           <div className="flex items-center gap-6 md:gap-10">
+                            {hasScoredResults && (
+                              <SortHeader
+                                field="score"
+                                label="Score"
+                                className="min-w-[70px] justify-end"
+                              />
+                            )}
                             {resultIndexerNames.length > 1 && (
                               <SortHeader
                                 field="priority"
@@ -1164,7 +1508,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                               label="Health"
                               className="min-w-[70px] justify-end"
                             />
-                            <div className="w-[80px] text-right text-muted-foreground/70 uppercase tracking-widest">
+                            <div className="w-[112px] text-right text-muted-foreground/70 uppercase tracking-widest">
                               {localizedText("Actions")}
                             </div>
                           </div>
@@ -1176,6 +1520,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                         const actionLabelId = `${labelIdPrefix}-action`;
                         const titleLabelId = `${labelIdPrefix}-title`;
                         const isUsenet = isUsenetItem(download);
+                        const downloadId = download.guid || download.link;
+                        const isCurrentDownload = downloadingGuid === downloadId;
                         const metadata =
                           itemsMetadata.get(download.title) ?? parseReleaseMetadata(download.title);
 
@@ -1204,9 +1550,9 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9"
-                                aria-label={translateText("More options")}
-                                lang={languageFor("More options")}
-                                dir={directionFor("More options")}
+                                aria-label={translateText("More download options")}
+                                lang={languageFor("More download options")}
+                                dir={directionFor("More download options")}
                               >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
@@ -1281,6 +1627,25 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                           </DropdownMenu>
                         );
 
+                        const directDownloadAction = safeUrl(download.link, "") ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9"
+                                aria-label={`Download ${isUsenet ? "NZB" : "torrent"} file for ${download.title.replace(/[._]/g, " ")}`}
+                                onClick={() => handleDirectDownload(download)}
+                              >
+                                <FileDown className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Download {isUsenet ? ".nzb" : ".torrent"} file
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : null;
+
                         // ── Mobile: stacked card ────────────────────────────
                         if (isMobile) {
                           return (
@@ -1308,7 +1673,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-start gap-1.5 min-w-0">
-                                        <h4 className="font-semibold text-sm leading-snug break-all line-clamp-2 min-w-0 flex-1">
+                                        <h4 className="font-semibold text-sm leading-snug break-words min-w-0 flex-1">
                                           {download.comments ? (
                                             <a
                                               href={safeUrl(download.comments)}
@@ -1335,18 +1700,26 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                             <InterfaceText source={"NEW"} />
                                           </Badge>
                                         )}
+                                        <ReleaseScoreBadge
+                                          evaluation={download.releaseEvaluation}
+                                        />
                                       </div>
                                     </div>
-                                    <div className="flex items-center flex-shrink-0 self-start">
+                                    <div className="flex items-center gap-1 flex-shrink-0 self-start">
+                                      {directDownloadAction}
                                       <Button
                                         variant="ghost"
-                                        size="icon"
+                                        size={isCurrentDownload ? "sm" : "icon"}
                                         onClick={() => handleDownload(download)}
-                                        disabled={
-                                          downloadingGuid === (download.guid || download.link)
-                                        }
-                                        className="h-9 w-9 hover:bg-primary hover:text-primary-foreground transition-all"
+                                        disabled={downloadingGuid !== null}
+                                        className={cn(
+                                          "h-9 hover:bg-primary hover:text-primary-foreground transition-all",
+                                          isCurrentDownload
+                                            ? "min-w-[120px] gap-1.5 px-2"
+                                            : "w-9 px-0"
+                                        )}
                                         aria-labelledby={`${actionLabelId} ${titleLabelId}`}
+                                        aria-busy={isCurrentDownload}
                                       >
                                         <span
                                           id={actionLabelId}
@@ -1354,10 +1727,17 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                           lang={languageFor("Download")}
                                           dir={directionFor("Download")}
                                         >
-                                          {translateText("Download")}
+                                          {isCurrentDownload
+                                            ? localizedText("Downloading...")
+                                            : translateText("Download")}
                                         </span>
-                                        {downloadingGuid === (download.guid || download.link) ? (
-                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        {isCurrentDownload ? (
+                                          <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <span>
+                                              <InterfaceText source={"Downloading..."} />
+                                            </span>
+                                          </>
                                         ) : (
                                           <Download className="h-4 w-4" />
                                         )}
@@ -1468,6 +1848,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                       <InterfaceText source={"NEW"} />
                                     </Badge>
                                   )}
+                                  <ReleaseScoreBadge evaluation={download.releaseEvaluation} />
                                 </div>
 
                                 <ReleaseMetadataBadges
@@ -1544,14 +1925,24 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                   )}
                                 </div>
 
-                                <div className="w-[80px] flex items-center justify-end gap-1">
+                                <div
+                                  className={cn(
+                                    "flex items-center justify-end gap-1",
+                                    isCurrentDownload ? "w-[200px]" : "w-[112px]"
+                                  )}
+                                >
+                                  {directDownloadAction}
                                   <Button
                                     variant="ghost"
-                                    size="icon"
+                                    size={isCurrentDownload ? "sm" : "icon"}
                                     onClick={() => handleDownload(download)}
-                                    disabled={downloadingGuid === (download.guid || download.link)}
-                                    className="h-9 w-9 hover:bg-primary hover:text-primary-foreground transition-all"
+                                    disabled={downloadingGuid !== null}
+                                    className={cn(
+                                      "h-9 hover:bg-primary hover:text-primary-foreground transition-all",
+                                      isCurrentDownload ? "min-w-[120px] gap-1.5 px-2" : "w-9 px-0"
+                                    )}
                                     aria-labelledby={`${actionLabelId} ${titleLabelId}`}
+                                    aria-busy={isCurrentDownload}
                                   >
                                     <span
                                       id={actionLabelId}
@@ -1559,10 +1950,17 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
                                       lang={languageFor("Download")}
                                       dir={directionFor("Download")}
                                     >
-                                      {translateText("Download")}
+                                      {isCurrentDownload
+                                        ? localizedText("Downloading...")
+                                        : translateText("Download")}
                                     </span>
-                                    {downloadingGuid === (download.guid || download.link) ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    {isCurrentDownload ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span>
+                                          <InterfaceText source={"Downloading..."} />
+                                        </span>
+                                      </>
                                     ) : (
                                       <Download className="h-4 w-4" />
                                     )}
@@ -1609,20 +2007,35 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     <AlertDialog open={showBundleDialog} onOpenChange={setShowBundleDialog}>
       <AlertDialogContent className="max-w-2xl" dir={directionFor("Download")}>
         <AlertDialogHeader>
-          <AlertDialogTitle>{localizedText("Download with Updates?")}</AlertDialogTitle>
+          <AlertDialogTitle>{localizedText(bundleDialogTitle)}</AlertDialogTitle>
           <AlertDialogDescription>
-            {filteredCategorizedDownloads.update.length === 1
-              ? localizedText(
-                  "One update is available for this game. Select whether to download it with the main game."
-                )
-              : filteredCategorizedDownloads.update.length === 2
-                ? localizedText(
-                    "Two updates are available for this game. Select whether to download them with the main game."
-                  )
-                : localizedText(
-                    "{count} updates are available for this game. Select which ones to download with the main game.",
-                    { count: filteredCategorizedDownloads.update.length }
-                  )}
+            {hasUpdates ? (
+              <>
+                {filteredCategorizedDownloads.update.length === 1
+                  ? localizedText(
+                      "One update is available for this game. Select whether to download it with the main game."
+                    )
+                  : filteredCategorizedDownloads.update.length === 2
+                    ? localizedText(
+                        "Two updates are available for this game. Select whether to download them with the main game."
+                      )
+                    : localizedText(
+                        "{count} updates are available for this game. Select which ones to download with the main game.",
+                        { count: filteredCategorizedDownloads.update.length }
+                      )}{" "}
+                {hasRecommendedExtras
+                  ? localizedText(
+                      "Updates are selected by default; small extras are optional and start unchecked."
+                    )
+                  : localizedText(
+                      "Updates are selected by default; uncheck any you don't want with the main game."
+                    )}
+              </>
+            ) : (
+              localizedText(
+                "Each suggested extra is no larger than 25% of the main release size. Select any you'd like to download with the main game."
+              )
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -1650,7 +2063,11 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
               </div>
             </div>
             <div className="border rounded-md">
-              <ScrollArea className="h-[300px]">
+              <ScrollArea
+                style={{
+                  height: Math.min(300, 24 + filteredCategorizedDownloads.update.length * 64),
+                }}
+              >
                 <div className="p-3 space-y-3">
                   {filteredCategorizedDownloads.update.map((update, index) => (
                     <div
@@ -1693,6 +2110,45 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
           </div>
         )}
 
+        {recommendedExtras.length > 0 && (
+          <div className="my-4">
+            <div className="text-sm font-semibold mb-2">
+              {localizedText("Small extras (optional)")}
+            </div>
+            <div className="text-xs text-muted-foreground mb-2">
+              {localizedText("Each suggested extra is 25% or less of the")}{" "}
+              {selectedMainDownload?.size && formatBytes(selectedMainDownload.size)}{" "}
+              {localizedText("main release.")}{" "}
+              {localizedText("Nothing here is selected automatically.")}
+            </div>
+            <div className="border rounded-md">
+              <ScrollArea style={{ height: Math.min(160, 24 + recommendedExtras.length * 64) }}>
+                <div className="p-3 space-y-3">
+                  {recommendedExtras.map((extra, index) => (
+                    <div
+                      key={extra.guid || extra.link}
+                      className="flex items-start gap-3 p-2 rounded hover:bg-muted/50 transition-colors"
+                    >
+                      <Checkbox
+                        id={`extra-${index}`}
+                        checked={selectedExtraIndices.has(index)}
+                        onCheckedChange={() => toggleExtraSelection(index)}
+                        className="mt-1"
+                      />
+                      <label htmlFor={`extra-${index}`} className="flex-1 cursor-pointer text-sm">
+                        <div className="font-medium">{extra.title}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {extra.size ? formatBytes(extra.size) : localizedText("Size unavailable")}
+                        </div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        )}
+
         <AlertDialogFooter>
           <AlertDialogCancel>{localizedText("Cancel")}</AlertDialogCancel>
           <AlertDialogAction
@@ -1702,23 +2158,25 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
               else handleBundleDownload(false);
             }}
           >
-            {localizedText("Only the main game")}
+            {localizedText("Download game only")}
           </AlertDialogAction>
           <AlertDialogAction
             onClick={() => {
               if (isDirectDownloadMode) void handleBundleDirectDownload(true);
               else handleBundleDownload(true);
             }}
-            disabled={selectedUpdateIndices.size === 0}
+            disabled={selectedBundleAddons.length === 0}
           >
             <PackagePlus className="w-4 h-4 mr-2" />
-            {selectedUpdateIndices.size === 1
-              ? localizedText("Download with one update")
-              : selectedUpdateIndices.size === 2
-                ? localizedText("Download with two updates")
-                : localizedText("Download with {count} updates", {
-                    count: selectedUpdateIndices.size,
-                  })}
+            {selectedExtraIndices.size > 0
+              ? formatInterfaceMessage("Download with {name}", { name: selectedBundleAddonLabel })
+              : selectedUpdateIndices.size === 1
+                ? localizedText("Download with one update")
+                : selectedUpdateIndices.size === 2
+                  ? localizedText("Download with two updates")
+                  : localizedText("Download with {count} updates", {
+                      count: selectedUpdateIndices.size,
+                    })}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -1764,7 +2222,7 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="max-w-6xl max-h-[90vh] flex flex-col"
+          className="w-[96vw] max-w-[2000px] max-h-[90vh] flex flex-col"
           dir={directionFor("Download")}
         >
           <DialogHeader className="flex-shrink-0">

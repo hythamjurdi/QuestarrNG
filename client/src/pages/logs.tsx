@@ -64,6 +64,7 @@ const LEVEL_MAP: Record<number, { label: string; className: string }> = {
 };
 
 const MAX_LINES = 5000;
+const MOBILE_LOG_CAP = 200;
 const ROW_HEIGHT = 32;
 const OVERSCAN_ROWS = 10;
 const DEFAULT_VIEWPORT_HEIGHT = 400;
@@ -719,8 +720,19 @@ export default function LogsPage() {
     () => filteredLines.slice(startIndex, endIndex),
     [filteredLines, startIndex, endIndex]
   );
-  const MOBILE_LOG_CAP = 200;
   const linesToRender = isMobile ? filteredLines.slice(-MOBILE_LOG_CAP) : visibleLines;
+  const logCountSummary =
+    isMobile && filteredLines.length > MOBILE_LOG_CAP
+      ? formatInterfaceMessage(
+          "Showing the latest {shown} of {count} matching lines. Copy includes all matches.",
+          { shown: MOBILE_LOG_CAP, count: filteredLines.length },
+          language
+        )
+      : formatInterfaceMessage(
+          "{count} lines displayed",
+          { count: filteredLines.length },
+          language
+        );
 
   const copyText = useCallback(
     (text: string, description: string, values: Record<string, string | number> = {}) => {
@@ -773,12 +785,12 @@ export default function LogsPage() {
           </h1>
           <p
             className="mt-0.5 text-sm text-muted-foreground"
-            lang={languageFor("Real-time server output — {count} lines displayed")}
-            dir={directionFor("Real-time server output — {count} lines displayed")}
+            lang={languageFor("Real-time server output — {summary}")}
+            dir={directionFor("Real-time server output — {summary}")}
           >
             {formatInterfaceMessage(
-              "Real-time server output — {count} lines displayed",
-              { count: filteredLines.length },
+              "Real-time server output — {summary}",
+              { summary: logCountSummary },
               language
             )}
           </p>
@@ -818,6 +830,7 @@ export default function LogsPage() {
             variant="outline"
             size="sm"
             onClick={handleCopy}
+            disabled={filteredLines.length === 0}
             aria-label={t("Copy log lines")}
             lang={languageFor("Copy log lines")}
             dir={directionFor("Copy log lines")}
@@ -831,6 +844,7 @@ export default function LogsPage() {
             variant="outline"
             size="sm"
             onClick={handleClear}
+            disabled={lines.length === 0}
             aria-label={t("Clear log lines")}
             lang={languageFor("Clear log lines")}
             dir={directionFor("Clear log lines")}
@@ -844,6 +858,7 @@ export default function LogsPage() {
             variant="outline"
             size="sm"
             onClick={() => setSendLogsOpen(true)}
+            disabled={filteredLines.length === 0}
             aria-label={t("Send logs to support")}
             lang={languageFor("Send logs to support")}
             dir={directionFor("Send logs to support")}

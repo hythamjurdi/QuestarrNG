@@ -1,0 +1,43 @@
+Upstream PRs #176–182 review and validation
+
+PR #176: verified that the disabled carousel controls already provide
+contextual tooltips; the batch 19 regression test covers the first and last
+page disabled states.
+
+PR #177: marked superseded. The closed upstream PR has no file diff, and its
+path-traversal request is covered by the verified middleware validation and
+Transmission/rTorrent request checks from batch 19.
+
+PR #178: verified that IGDB search results are cached by sanitized query,
+limit, and local filters. Successful results use a 15-minute TTL and empty
+results use 5 minutes; failed API calls do not create empty cache entries.
+
+PR #179: verified the existing “Toggle Sidebar” tooltip around the Header's
+sidebar trigger.
+
+PR #180: marked superseded. Dependabot closed the old grouped development
+dependency update as no longer needed. The fork's package manifests and locks
+already contain newer versions.
+
+PR #181: marked superseded. The upstream maintainer explicitly called it a
+duplicate; the path checks from batch 19 cover the requested behavior while
+preserving configured absolute download roots.
+
+PR #182: verified that the Library retains visible grid data during a
+background refresh and applies busy, reduced-opacity, and non-interactive
+styling. The existing GameGrid test covers the busy state and styling.
+
+Upstream discussion: no submitted code reviews were present. PR #177 had no
+diff, PR #180 had the Dependabot “no longer needed” notice, and PR #181 was
+explicitly identified as a duplicate. Other comments were generic Jules
+messages.
+
+Validation:
+
+- `client/__tests__/GameCarouselSection.test.tsx`: 3 passed.
+- `client/__tests__/GameGrid.test.tsx`: 5 passed.
+- No application source changed in this batch.
+
+Ledger after review: 182 verified, 9 superseded, 950 unreviewed,
+4 not-applicable, 1 implemented-but-unverified, and 1 needs-implementation
+record. Issue #37 remains outstanding.

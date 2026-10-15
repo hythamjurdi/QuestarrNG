@@ -9,6 +9,7 @@ import {
   Star,
   Gamepad2,
   Tags,
+  Heart,
   Filter,
   Calendar,
   Building2,
@@ -134,7 +135,7 @@ export default function StatsPage() {
         discordConfigured={discordConfig?.configured}
       />
 
-      <div className="grid gap-3 grid-cols-2 md:gap-4 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 md:gap-4 md:grid-cols-4">
         <StatsCard
           title="Total Games"
           data-i18n-title={"Total Games"}
@@ -142,6 +143,27 @@ export default function StatsPage() {
           subtitle="in library"
           icon={Package}
         />
+        <StatsCard
+          title="Genres"
+          value={stats.uniqueGenres}
+          subtitle="across library"
+          icon={Tags}
+        />
+        <StatsCard
+          title="Platforms"
+          value={stats.uniquePlatforms}
+          subtitle="across library"
+          icon={Gamepad2}
+        />
+        <StatsCard
+          title="Wishlist"
+          value={stats.statusBreakdown.wanted}
+          subtitle="wanted games"
+          icon={Heart}
+        />
+      </div>
+
+      <div className="grid gap-3 grid-cols-2 md:gap-4 md:grid-cols-4">
         <StatsCard
           title="Avg. Rating"
           data-i18n-title={"Avg. Rating"}

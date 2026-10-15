@@ -1,0 +1,10 @@
+Batch 50 validation — October 13, 2026
+
+- Issue #37 implementation: reusable Zod `validate(schema)` middleware now parses and normalizes request bodies before route handlers. Invalid requests use the shared HTTP 400 shape with structured path/message/code details, without returning raw submitted values. Existing express-validator query and parameter validation remains intact.
+- Route coverage: an AST regression test checks all body-consuming POST, PATCH, and PUT routes in `server/routes.ts`, `server/game-journal-routes.ts`, `server/routes/api-keys.ts`, `server/routes/import.ts`, `server/routes/integration.ts`, and `server/steam-routes.ts` for Zod validation middleware.
+- Focused API/middleware/regression group: 15 test files passed, 769 tests passed. The SeerrNG provider contract suite passed separately (14 tests).
+- Full Vitest suite: 256 files passed, 1 skipped; 4,140 tests passed, 7 skipped.
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run build`: passed. Vite emitted the existing advisory that client chunks exceed 500 kB after minification.
+- Browser E2E: all 49 Playwright tests passed against the campaign server. Port 5100 was already occupied, so the test server ran on port 5101 with a temporary Playwright config; the unrelated listener was left untouched. No live external-provider credentials were used.
+- Cleanup: stopped the campaign test server, restored the preexisting `playwright/.auth/user.json`, and removed the newly created `data/test.db`, temporary Playwright config, `test-results/`, and per-task `/var/tmp` backup directory. Port 5101 is free. No `client/src/**` files changed.
+- E2E artifact restoration: the browser suite regenerated five tracked PR-evidence PNGs that were clean before the run; all five were restored to their original committed contents. The pre-existing `data/test.db-wal` and `data/test.db-shm` files were left in place because they predated the run.

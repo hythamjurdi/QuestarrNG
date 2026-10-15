@@ -1,0 +1,47 @@
+Upstream review batch 30
+========================
+
+Items reviewed
+--------------
+
+- PR #267 verified: bundle fetching rejects arbitrary private/loopback targets;
+  exact configured indexer origins remain allowed, and safeFetch applies the
+  same policy to redirects.
+- PR #268 verified: the carousel refresh control has a role-based accessible
+  name assertion.
+- Issue #269 verified: the Discover download dialog creates or reuses a library
+  entry before sending the UUID to the download API.
+- Issue #270 verified: localhost indexer URLs are accepted, Prowlarr sync omits
+  unselected category overrides, storage preserves saved categories, and
+  Newznab uses and filters by the configured categories.
+- Issue #271 verified: the fork offers optional RAWG discovery, retro platform
+  mappings, and RomM import destinations with review and conflict controls.
+- PR #272 verified: the bundle endpoint fetches in chunks of five with
+  Promise.all and continues after an individual item fails.
+- PR #273 superseded: it repeats #267's default-private-allowed URL check; the
+  fork now uses the stricter configured-origin policy and revalidates redirects.
+
+Validation
+----------
+
+- `npm test -- --run server/__tests__/ssrf.test.ts
+  server/__tests__/ssrf_routes.test.ts server/__tests__/newznab.test.ts
+  server/__tests__/prowlarr.test.ts server/__tests__/torznab.test.ts
+  server/__tests__/import_routes_coverage.test.ts
+  server/__tests__/import_routes_security.test.ts
+  server/__tests__/import_manager.test.ts
+  client/__tests__/GameDownloadDialog.test.tsx
+  client/__tests__/GameCarouselSection.test.tsx
+  client/__tests__/ImportSettings.test.tsx
+  client/__tests__/ImportReviewModal.test.tsx`
+  — 12 files passed; 322 tests passed, 1 skipped (323 total).
+- `npm run check` — passed.
+- `npx eslint server/ssrf.ts server/routes.ts --max-warnings 0` — passed.
+- Prettier passed for the changed TypeScript files and the new release-note
+  fragment. The campaign README and generated inventory already fail a
+  whole-file Prettier check on the base branch, so they were not reformatted.
+- Bundle SSRF tests verify that arbitrary private targets are rejected, a
+  configured private indexer origin is allowed, and a redirect to another
+  private origin is blocked.
+- `git diff --check` and ledger JSON/count checks passed after documentation
+  updates.

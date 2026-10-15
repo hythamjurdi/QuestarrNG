@@ -12,9 +12,10 @@ PostgreSQL, and hardened multi-architecture releases. See
 [the changelog](docs/CHANGELOG.md) for the release-by-release history.
 
 Use `ghcr.io/snapetech-org/questarrng:latest` or the Compose file in this
-repository; the upstream Questarr image does not contain the SeerrNG provider
-routes. The fork image is published for `linux/amd64` and `linux/arm64` from
-`main`.
+repository for the latest published release. Production images are published
+only from explicit version tags; semantic-version tags pin a specific release.
+The upstream Questarr image does not contain the SeerrNG provider routes. The
+fork image is published for `linux/amd64` and `linux/arm64`.
 
 Support QuestarrNG on [Ko-fi](https://ko-fi.com/snapetech).
 
@@ -47,6 +48,7 @@ A video game management application inspired by the -Arr apps (Sonarr, Radarr, P
 - [Roadmap](#roadmap)
 - [Troubleshooting](#troubleshooting)
 - [Project Security & Documentation](#project-security--documentation)
+- [Upstream issue and PR resolution](#upstream-issue-and-pr-resolution)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
@@ -88,7 +90,7 @@ links to setup, integration, API, database, and security guides.
 | **Backlog management**      | Track your collection with status indicators (Wanted, Owned, Playing, Completed, Shelved), ratings, and notes. A dedicated **Playing** page adds journal notes, a milestones checklist, screenshots, and Steam achievements per game, plus Crack status and Time to Beat (via IGDB) on the game detail page and a DLC/expansions tab. |
 | **Game Discovery**          | Browse popular, new, and upcoming titles via IGDB, RSS feeds, and xREL.to, or sync your Steam wishlist directly into the app. A per-platform **Root folder / Scan Disk** discovers games already on disk and reconciles their files.                                                                                                  |
 | **Search & Filter**         | Find games by genre, platform, and keyword, with automatic search until a release is found, plus release blacklisting and preferred release groups/platforms. A Platforms setting scopes the whole app to your platform(s) of choice, with optional filters to hide shelved/owned games and age-restricted or erotic content.         |
-| **Download Management**     | Integrates with indexers and downloaders with optional auto-download and automatic post-processing import, password-protected archive handling, optional pre-import VirusTotal/ClamAV scanning and optional, experimental "Powered by AI" workflow to improve game matches (using Typesafe's Jev, in BYOK)                            |
+| **Download Management**     | Integrates with indexers and downloaders, optional auto-download and post-processing, and a bundle picker for updates and small optional extras. Includes password-protected archive handling, optional VirusTotal/ClamAV scanning, and an experimental BYOK workflow using Typesafe's Jev to improve game matches.                   |
 | **Real-time Notifications** | In-app alerts for releases and downloads, plus external notifications to 100+ providers via [Apprise](https://github.com/caronc/apprise).                                                                                                                                                                                             |
 | **Rich Game Metadata**      | Details enriched with IGDB, Steam, PCGamingWiki, and NexusMods, including trending mods where available.                                                                                                                                                                                                                              |
 | **Statistics**              | Review collection and download statistics, with sharing to Discord where supported.                                                                                                                                                                                                                                                   |
@@ -97,9 +99,21 @@ links to setup, integration, API, database, and security guides.
 | **Integrations**            | Connect Playnite, RomM, and SeerrNG using the documented integration paths.                                                                                                                                                                                                                                                           |
 | **Design**                  | Clean, minimalist, dark-first UI built with mobile usage in mind.                                                                                                                                                                                                                                                                     |
 
+Can't decide what to play? Click **Pick a game** in your Library for
+[Backlog roulette](docs/BACKLOG_ROULETTE.md): draw a game, roll again, or mark it as Playing.
+
+### Choosing a release and its extras
+
+When a main release has updates, Questarr opens a bundle choice with updates
+selected by default. Smaller extras are shown as optional, unchecked choices
+when their measured size is no more than 25% of the main release. Larger extras
+and extras with unknown sizes are not suggested, and **Download game only**
+remains available. See [the release-selection guide](docs/DOWNLOAD_RECOMMENDATIONS.md)
+for the full behavior and the reason for the size cutoff.
+
 ### Supported Indexers/Downloaders
 
-- Prowlarr synchronization is supported to add all your indexers at once.
+- Sync indexers from [Prowlarr](docs/INDEXERS.md).
 - G4u.to: the site offers an API to VIP members, which can be used in Questarr.
 
 | Indexers                   | Downloaders                                                                             |
@@ -134,8 +148,11 @@ acquisition remains unsupported. See the
 Post-processing can move, copy, hardlink, or symlink completed downloads into
 your PC library, unpack supported archives, or route matched ROM imports into
 RomM folders. Optional VirusTotal hash checks and ClamAV scans run before
-unpacking or import. The [import guide](docs/IMPORTS.md) explains setup,
-platform-folder mappings, scanner behavior, and Pending Imports review.
+unpacking or import. The [import guide](docs/IMPORTS.md) explains RomM routing
+and scanner setup; [Library Import](docs/LIBRARY_IMPORT.md) covers folder
+discovery, import history, and recovery. Pending-import recovery stays with the
+account that owned the original game: other accounts cannot see, skip, or relink
+that download, and a relink target must belong to the same account.
 
 ## Installation
 
@@ -147,7 +164,15 @@ The optional Windows installer runs QuestarrNG as a Windows service and bundles
 its service host as a self-contained .NET 10 LTS executable. QuestarrNG itself is
 a Node.js application; the installer does not require a separate .NET runtime.
 
-**Supported architectures:** released QuestarrNG Docker images are published for `linux/amd64` and `linux/arm64`, so the app runs on a Raspberry Pi 4/5 with a 64-bit OS, other 64-bit ARM SBCs, and ARM-based NAS boxes as well as on x86 hardware. Docker selects the right architecture automatically — the commands below are identical on every platform. (32-bit ARM, e.g. `armv7`/a 32-bit OS on Raspberry Pi 3 and earlier, is not supported. The [Home Assistant add-on](#home-assistant-add-on) is `amd64`-only.)
+**Supported architectures:** released QuestarrNG Docker images are published for
+`linux/amd64` and `linux/arm64`, so the app runs on a Raspberry Pi 4/5 with a
+64-bit OS, other 64-bit ARM SBCs, and ARM-based NAS boxes as well as on x86
+hardware. Docker selects the right architecture automatically — the commands
+below are identical on every platform. Both images build a native RARLAB UnRAR
+7.23 executable, so RAR/RAR5 and multi-volume imports work on ARM64 as well as
+amd64. (32-bit ARM, e.g. `armv7`/a 32-bit OS on Raspberry Pi 3 and earlier, is
+not supported. The [Home Assistant add-on](#home-assistant-add-on) is
+`amd64`-only.)
 
 ### Option 1: Quick start (direct Docker)
 
@@ -158,9 +183,15 @@ docker run -d -p 5000:5000 --user "$(id -u):$(id -g)" \
   -v ./data:/app/data --name questarrng ghcr.io/snapetech-org/questarrng:latest
 ```
 
+`latest` and versioned production images are updated only by publishing an
+explicit version tag. A push to `main` does not publish a release image. Release
+tags are published both as `latest` and as the exact semantic version (for
+example, `1.11.0`). To update a Compose install,
+run `docker compose pull && docker compose up -d`.
+
 ### Option 2: Docker Compose (more detailed)
 
-1. **Use the [`docker-compose.yml`](https://github.com/snapetech-org/QuestarrNG/blob/main/docker-compose.yml) file from the repo or create a minimal one:**
+1. **Use the [`docker-compose.yml`](https://github.com/snapetech-org/QuestarrNG/blob/main/docker-compose.yml) file from the repo or create a minimal one.** It pulls the published GHCR image and does not need a `.env` file for the default SQLite setup:
 
    ```yaml
    services:
@@ -185,6 +216,24 @@ docker run -d -p 5000:5000 --user "$(id -u):$(id -g)" \
 
 3. **Access the application:**
    Open your browser to `http://localhost:5000`
+
+If port `5000` is already in use, the repository Compose file lets you change
+the host-side port while keeping the app on its internal port:
+
+```bash
+HOST_SIDE_PORT=5100 docker compose up -d
+```
+
+Then open `http://localhost:5100`. If you use the minimal Compose example
+above, change its port mapping from `5000:5000` to `5100:5000`; the left side
+is the host port and the right side is the port inside the container.
+
+For compatibility, a `PORT` value in the Compose `.env` file sets both sides
+when neither split variable is set. For example, `PORT=5201` maps
+`5201:5201` and makes the app listen on `5201`. Explicit
+`HOST_SIDE_PORT` and `CONTAINER_INTERNAL_SIDE_PORT` values take precedence,
+so you can still expose a different host port without changing the port inside
+the container.
 
 The image runs as a non-root user by default. Set `PUID` and `PGID` to the
 owner of the mounted data directory; the Compose file uses those values as the
@@ -211,6 +260,26 @@ the app as the configured `PUID:PGID` directly, so prepare the bind-mounted
    Switching an existing SQLite install to Postgres does not move your data —
    run `scripts/sqlite-to-pg.ts` to bring your library across. See
    [docs/DATABASE.md](docs/DATABASE.md).
+
+   To switch a current optional-Postgres install back to SQLite, the database
+   guide also includes a safe copy command. The old pre-v1.1 PostgreSQL
+   migration procedure remains separate because it handles a different schema.
+
+### Publish a Docker image on demand
+
+Maintainers can publish a fresh image without waiting for the scheduled build:
+open **Actions → [Deploy Web App](.github/workflows/deploy.yml) → Run workflow**
+and choose `production`, `dev`, or `test`. A custom image tag is optional; the
+workflow summary lists the tags it created and prints a matching `docker pull`
+command. Production builds include ARM64; for other environments, ARM64 and the
+Windows installer are optional builds. The workflow runs its dependency and
+license checks before publishing.
+
+GitHub Actions supplies the `GITHUB_TOKEN` used to publish to GHCR. Application
+credentials belong in the runtime environment where the container is deployed,
+not in repository workflow secrets; see [Environment variables](docs/SECRETS.md).
+`HOST` defaults to `0.0.0.0` for container networking. For a bare-metal install
+with a reverse proxy on the same host, set `HOST=127.0.0.1` to restrict access.
 
 ### Windows (installer)
 
@@ -252,7 +321,7 @@ and troubleshooting.
 ### UNRAID
 
 <details>
-<summary><b>Install via Community Applications</b></summary>
+<summary><b>Install via an Unraid user template</b></summary>
 
 The upstream **Questarr** Community Apps entry uses the upstream image and
 does not include this fork's SeerrNG integration routes. Use the
@@ -261,11 +330,20 @@ for `ghcr.io/snapetech-org/questarrng:latest`. QuestarrNG works as a standalone
 game manager; SeerrNG integration is optional. For package or integration
 support, use the [SeerrNG issue tracker](https://github.com/snapetech/seerrng/issues).
 
-1. Install the **QuestarrNG** template rather than the upstream **Questarr** template.
+Unraid 6.10 and later no longer has the **Template repositories** field. Add
+the local user template from the Unraid terminal:
+
+```bash
+wget -O /boot/config/plugins/dockerMan/templates-user/questarrng.xml \
+  https://raw.githubusercontent.com/snapetech/QuestarrNG/main/unraid/questarr.xml
+```
+
+1. In Docker, choose **Add Container** and select the **QuestarrNG** user template.
 2. Set your **Data Path** (default `/mnt/user/appdata/questarrng`), **PUID**/**PGID**, and HTTP port (default `5000`).
 3. Set the **Game Library** and **Downloads** paths to the folders shared with your download client. The game
-   library is mounted at `/data` inside the container; add a matching entry under **Settings → Path Mappings**
-   when the download client reports a different path.
+   library is mounted at `/data` inside the container. Under **Settings → Path
+   Mappings**, set **Local Path** to `/data` and **Remote Path** to the exact
+   path reported by the download client.
 4. Apply, then open `http://<unraid-host>:5000` to access the UI.
 
 The image runs as a non-root user. The template maps that user to `99:100` by
@@ -356,10 +434,17 @@ You can install Questarr as a Home Assistant add-on from this repository:
 4. Install the **Questarr** add-on and start it.
 5. Open `http://<home-assistant-host>:5000` to access the UI.
 
+The add-on stores its application state in Home Assistant's persistent `/data`
+volume and runs as UID/GID `1000:1000`; it does not expose PUID/PGID settings or
+a separate media-library mount. On startup, a narrowly scoped helper corrects
+ownership inside `/data` and checks that it is writable. A wrong or read-only
+volume binding still needs to be corrected in the host configuration. See the
+[add-on operations notes](questarr/README.md).
+
 </details>
 
-All platform definitions live in the repository and share the same mounts and ports — see
-[docs/HOME_SERVER_APPS.md](docs/HOME_SERVER_APPS.md) for details.
+Platform definitions live in the repository; mount and port behavior varies by installer. See
+[docs/HOME_SERVER_APPS.md](docs/HOME_SERVER_APPS.md) for platform-specific details.
 
 ## Screenshots
 
@@ -388,13 +473,13 @@ Manage your wanted games and when they release.
 
 ### Discover Games
 
-Browse and find new games to add to your collection.
+Browse and find new games to add to your collection. Download from a game’s details to add it as Wanted and send a release to your downloader.
 
 <a href="images/Screenshots/discover.png"><img src="images/Screenshots/discover.png" /></a>
 
 #### RSS & xRel.to feeds
 
-Custom RSS feeds and xRel.to flux matched to IGDB games directly into the app. Default RSS is set to fitgirl site.
+Discover releases through [RSS feeds](docs/RSS.md) and xREL.to, with IGDB matching.
 
 <p float="left">
   <a href="images/Screenshots/rss.png"><img src="images/Screenshots/rss.png" width="49%" /></a>
@@ -540,22 +625,30 @@ container (or in `.env` for npm installs) and point your reverse proxy at it
 — no rebuild required. See [docs/REVERSE_PROXY.md](docs/REVERSE_PROXY.md) for
 full setup instructions (nginx, Traefik, Caddy).
 
+Behind any reverse proxy, also set `TRUST_PROXY=1` so rate limits see real
+client IPs (see the same doc).
+
 </details>
 
 ## Roadmap
 
 The original upstream roadmap is now partly delivered and partly superseded by
 fork work. Post-processing, indexer links, optional PostgreSQL, RomM import
-routing, and the Playnite and SeerrNG integrations are shipped. The remaining
-product proposals are version-aware game upgrades, debrid/direct-download
-providers, importing owned Steam or GOG libraries, and possible Gameyfin or
-user-defined webhook integrations. The maintained [PRD](docs/PRD.md) marks
-what is shipped, what remains, and which ideas have no delivery commitment.
-The [UI localization roadmap](docs/localization-roadmap.md) tracks current language and calendar coverage, plus the remaining screen-level translation and RTL work.
+routing, the Playnite and SeerrNG integrations, and Real-Debrid downloads are
+shipped. The remaining product proposals are version-aware game upgrades,
+additional direct-download providers, importing owned Steam or GOG libraries,
+and possible Gameyfin or user-defined webhook integrations. The maintained
+[PRD](docs/PRD.md) marks what is shipped, what remains, and which ideas have no
+delivery commitment. The [UI localization roadmap](docs/localization-roadmap.md)
+tracks current language and calendar coverage, plus the remaining screen-level
+translation and RTL work.
 
 ## Troubleshooting
 
 See the upstream [Troubleshooting Wiki](https://github.com/Doezer/Questarr/wiki/Troubleshooting)
+
+If you lose the local account password, an operator can reset it from the
+QuestarrNG host or container with the [password-recovery CLI](docs/PASSWORD_RECOVERY.md).
 
 If you run into an issue, go to the **Logs** page and click **Send Logs** before reporting it — it makes diagnosing the problem much easier.
 
@@ -571,9 +664,39 @@ If you run into an issue, go to the **Logs** page and click **Send Logs** before
 - [Import processing and security scans](docs/IMPORTS.md) explains RomM routing, archive handling, and optional malware checks.
 - Start with [docs/GITHUB_DOCUMENTATION.md](docs/GITHUB_DOCUMENTATION.md) for the full documentation map.
 
+## Upstream issue and PR resolution
+
+QuestarrNG is reviewing the complete history of [Doezer/Questarr issues and pull
+requests](docs/upstream-resolution/README.md), including closed issues, merged
+PRs, and closed unmerged PRs. The goal is to implement missing actionable
+behavior in this fork, verify behavior that already exists, and record a
+source-backed disposition for every item. Upstream maintainers decide whether
+to accept changes or close their issues and PRs.
+
+The [campaign overview](docs/upstream-resolution/README.md) links to the full
+[audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
+[per-item ledger](docs/upstream-resolution/ledger.json), the generated
+[1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
+[validation evidence](docs/upstream-resolution/evidence/). After Batch 73, the
+ledger records 634 verified, 191 superseded, 13 not applicable, five
+implemented-unverified, zero needing implementation, and 320 unreviewed
+records. Batch 73 reviewed PRs #846–848, #850–853, #855–856, and issue #849.
+It added regression coverage for idle download-status logging and clarified
+Unraid 6.10+ local user-template installation and path mapping. Existing
+archive-password, NZBGet, GHCR-pruning, and single-file import behavior was
+verified. The full suite passed 4,256 tests with 7 skipped. See [the Batch 73
+validation record](docs/upstream-resolution/evidence/validation-batch-73.txt),
+[the Batch 72 validation record](docs/upstream-resolution/evidence/validation-batch-72.txt),
+and the [Batch 71 mobile screenshot](docs/upstream-resolution/evidence/validation-batch-71-mobile-download-card.png).
+The DCO sign-off policy is implemented in the campaign branch, but its
+rollout still needs a maintainer decision because the campaign history includes
+unsigned commits. The full review and validation gate must pass before campaign
+work is merged to `main`.
+
 ## Contributing
 
 - See [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for guidelines on how to contribute to this project.
+- See [DCO.md](DCO.md) for the Developer Certificate of Origin and sign-off instructions.
 - See [MAINTAINERS.md](docs/MAINTAINERS.md) for how repository access and release permissions are managed.
 
 ### Contributors

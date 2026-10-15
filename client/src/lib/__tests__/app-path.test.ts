@@ -46,8 +46,8 @@ describe("app path helpers", () => {
     ).toBe("/questarr/");
   });
 
-  it("falls back to the parent path for unknown routes when no asset hint is available", () => {
-    expect(resolveBasePathFrom("./", "https://example.com/questarr/typo")).toBe("/questarr/");
+  it("fails closed for unknown nested routes when no asset hint is available", () => {
+    expect(resolveBasePathFrom("./", "https://example.com/questarr/typo")).toBe("/");
     expect(resolveBasePathFrom("./", "https://example.com/typo")).toBe("/");
   });
 

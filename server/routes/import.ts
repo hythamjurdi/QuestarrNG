@@ -1,9 +1,14 @@
 import { Router } from "express";
 import { storage } from "../storage.js";
-import { importManager, platformMappingService } from "../services/index.js";
-import { ARCHIVE_PASSWORD_REQUIRED_PREFIX } from "../services/ImportManager.js";
+import { importManager, pathMappingService, platformMappingService } from "../services/index.js";
+import {
+  ARCHIVE_PASSWORD_REQUIRED_PREFIX,
+  IncompleteScanError,
+} from "../services/ImportManager.js";
 import { ArchivePasswordRequiredError } from "../services/ArchiveService.js";
 import { routesLogger as logger } from "../logger.js";
+import { rescanAllEnabledRootFolders } from "../library-scanner.js";
+import { validate } from "../middleware.js";
 
 import z from "zod";
 import {
@@ -60,6 +65,36 @@ const platformMappingPatchSchema = z
   })
   .strict();
 
+// The earlier RomM client sent this fixed default even though placement for
+// multi-file games is now implicit. Accept that one legacy field so a stale
+// client can save the rest of its settings; keep rejecting other unknown keys.
+const rommConfigPatchSchema = z.preprocess((value: unknown) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const patch = value as Record<string, unknown>;
+  if (patch.multiFilePlacement !== "subfolder") return value;
+
+  const normalized = { ...patch };
+  delete normalized.multiFilePlacement;
+  return normalized;
+}, rommConfigSchema.partial().strict());
+
+const linkGameDownloadBodySchema = z.object({ gameId: z.string().min(1) }).strict();
+
+const confirmImportBodySchema = z
+  .object({
+    strategy: z.enum(["pc", "romm"] as const),
+    proposedPath: z.string(),
+    originalPath: z.string().optional(),
+    transferMode: z.enum(IMPORT_TRANSFER_MODES).optional(),
+    unpack: z.boolean().optional(),
+    password: z
+      .string()
+      .max(1024)
+      .refine((value) => !value.includes("\0"), "Password must not contain null characters")
+      .optional(),
+  })
+  .strict();
+
 function isPathInside(root: string, candidate: string): boolean {
   const resolvedRoot = path.resolve(root);
   const resolvedCandidate = path.resolve(candidate);
@@ -85,34 +120,6 @@ function resolveProposedPathWithinRoot(libraryRoot: string, rawPath: string): st
 
 function parseHostFromUrl(url?: string | null): string | null {
   return extractHostnameFromUrl(url);
-}
-
-function translatePathWithMappings(
-  remotePath: string,
-  mappings: Array<{ remotePath: string; localPath: string; remoteHost?: string | null }>,
-  remoteHost?: string | null
-): string {
-  let bestMatch: { remotePath: string; localPath: string; remoteHost?: string | null } | null =
-    null;
-
-  const candidates = mappings.filter((mapping) => {
-    if (!mapping.remoteHost) return true;
-    return !!remoteHost && mapping.remoteHost === remoteHost;
-  });
-
-  for (const mapping of candidates) {
-    const prefix = mapping.remotePath.endsWith("/") ? mapping.remotePath : mapping.remotePath + "/";
-    if (remotePath === mapping.remotePath || remotePath.startsWith(prefix)) {
-      if (!bestMatch || mapping.remotePath.length > bestMatch.remotePath.length) {
-        bestMatch = mapping;
-      }
-    }
-  }
-
-  if (!bestMatch) return remotePath;
-
-  const relative = remotePath.substring(bestMatch.remotePath.length).replace(/^[/\\]+/, "");
-  return path.join(path.resolve(bestMatch.localPath), relative);
 }
 
 async function checkHardlinkPair(
@@ -211,34 +218,45 @@ importRouter.get("/mappings/platforms", async (_req, res) => {
   }
 });
 
-importRouter.post("/mappings/platforms", async (req, res) => {
-  try {
-    const mapping = insertPlatformMappingSchema.parse(req.body);
-    const created = await storage.addPlatformMapping(mapping);
-    return res.json(created);
-  } catch (error) {
-    if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
-    return res.status(500).json({ error: "Failed to create platform mapping" });
-  }
-});
-
-importRouter.patch("/mappings/platforms/:id", async (req, res) => {
-  try {
-    const parsedUpdates = platformMappingPatchSchema.parse(req.body);
-    const updates = Object.fromEntries(
-      Object.entries(parsedUpdates).filter(([, value]) => value !== undefined)
-    ) as Partial<InsertPlatformMapping>;
-    const updated = await platformMappingService.updateMapping(req.params.id, updates);
-    if (updated) {
-      return res.json(updated);
-    } else {
-      return res.status(404).json({ error: "Mapping not found" });
+importRouter.post(
+  "/mappings/platforms",
+  validate(insertPlatformMappingSchema),
+  async (req, res) => {
+    try {
+      const mapping = insertPlatformMappingSchema.parse(req.body);
+      const created = await storage.addPlatformMapping(mapping);
+      return res.json(created);
+    } catch (error) {
+      if (error instanceof z.ZodError)
+        return res.status(400).json({ error: zodErrorMessage(error) });
+      return res.status(500).json({ error: "Failed to create platform mapping" });
     }
-  } catch (error) {
-    if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
-    return res.status(500).json({ error: "Failed to update platform mapping" });
   }
-});
+);
+
+importRouter.patch(
+  "/mappings/platforms/:id",
+  validate(platformMappingPatchSchema),
+  async (req, res) => {
+    try {
+      const id = typeof req.params.id === "string" ? req.params.id : "";
+      const parsedUpdates = platformMappingPatchSchema.parse(req.body);
+      const updates = Object.fromEntries(
+        Object.entries(parsedUpdates).filter(([, value]) => value !== undefined)
+      ) as Partial<InsertPlatformMapping>;
+      const updated = await platformMappingService.updateMapping(id, updates);
+      if (updated) {
+        return res.json(updated);
+      } else {
+        return res.status(404).json({ error: "Mapping not found" });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError)
+        return res.status(400).json({ error: zodErrorMessage(error) });
+      return res.status(500).json({ error: "Failed to update platform mapping" });
+    }
+  }
+);
 
 importRouter.delete("/mappings/platforms/:id", async (req, res) => {
   try {
@@ -273,7 +291,7 @@ importRouter.get("/mappings/paths", async (_req, res) => {
   }
 });
 
-importRouter.post("/mappings/paths", async (req, res) => {
+importRouter.post("/mappings/paths", validate(insertPathMappingSchema), async (req, res) => {
   try {
     const mapping = insertPathMappingSchema.parse(req.body);
     const created = await storage.addPathMapping(mapping);
@@ -284,10 +302,11 @@ importRouter.post("/mappings/paths", async (req, res) => {
   }
 });
 
-importRouter.patch("/mappings/paths/:id", async (req, res) => {
+importRouter.patch("/mappings/paths/:id", validate(updatePathMappingSchema), async (req, res) => {
   try {
+    const id = typeof req.params.id === "string" ? req.params.id : "";
     const updates = updatePathMappingSchema.parse(req.body);
-    const updated = await storage.updatePathMapping(req.params.id, updates);
+    const updated = await storage.updatePathMapping(id, updates);
     if (updated) {
       return res.json(updated);
     } else {
@@ -324,7 +343,7 @@ importRouter.get("/config", async (_req, res) => {
   }
 });
 
-importRouter.patch("/config", async (req, res) => {
+importRouter.patch("/config", validate(importConfigPatchSchema), async (req, res) => {
   try {
     const userId = res.locals.userId as string;
 
@@ -352,6 +371,15 @@ importRouter.patch("/config", async (req, res) => {
     } else {
       await storage.createUserSettings({ userId, ...settingsPatch });
     }
+
+    // Turning post-processing on is when people start relying on the library,
+    // so pick up games already sitting in the root folders right away.
+    // Fire-and-forget; progress is available via GET /api/library/scan/status.
+    if (newConfig.enablePostProcessing && !current.enablePostProcessing) {
+      rescanAllEnabledRootFolders(userId).catch((err) =>
+        logger.error({ err }, "rescanAllEnabledRootFolders crashed")
+      );
+    }
     return res.json(newConfig);
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
@@ -369,10 +397,10 @@ importRouter.get("/romm", async (_req, res) => {
   }
 });
 
-importRouter.patch("/romm", async (req, res) => {
+importRouter.patch("/romm", validate(rommConfigPatchSchema), async (req, res) => {
   try {
     const userId = res.locals.userId as string;
-    const patch = rommConfigSchema.partial().strict().parse(req.body);
+    const patch = rommConfigPatchSchema.parse(req.body);
     const current = await storage.getRomMConfig(userId);
     const next = rommConfigSchema.parse({ ...current, ...patch });
     if (path.resolve(next.libraryRoot) === path.parse(path.resolve(next.libraryRoot)).root) {
@@ -396,14 +424,16 @@ importRouter.get("/hardlink/check", async (_req, res) => {
       storage.getPathMappings(),
     ]);
 
+    const translatedRoots = await Promise.all(
+      downloaders.map((downloader) => {
+        if (!downloader.downloadPath) return null;
+        const remoteHost = parseHostFromUrl(downloader.url);
+        return pathMappingService.translatePath(downloader.downloadPath, remoteHost, mappings);
+      })
+    );
     const sourceRoots = Array.from(
       new Set(
-        downloaders
-          .map((downloader) => {
-            if (!downloader.downloadPath) return null;
-            const remoteHost = parseHostFromUrl(downloader.url);
-            return translatePathWithMappings(downloader.downloadPath, mappings, remoteHost);
-          })
+        translatedRoots
           .filter((value): value is string => !!value)
           .map((value) => path.resolve(value))
       )
@@ -462,10 +492,7 @@ importRouter.get("/pending", async (_req, res) => {
     const userId = res.locals.userId as string;
     const [pathReviews, gameLinkReviews, quarantinedReviews] = await Promise.all([
       storage.getPendingImportReviews(userId),
-      // Not scoped by userId — a download whose game record is missing has no
-      // game row left to determine ownership from. Fine for Questarr's
-      // single-user model.
-      storage.getUnlinkedImportReviews(),
+      storage.getUnlinkedImportReviews(userId),
       storage.getQuarantinedDownloads(userId),
     ]);
 
@@ -525,33 +552,23 @@ importRouter.delete("/:id", async (req, res) => {
   try {
     const userId = res.locals.userId as string;
     const download = await storage.getGameDownload(id, userId);
-    if (download) {
-      await storage.updateGameDownloadStatus(id, "completed");
-      return res.json({ success: true });
-    }
-
-    // getGameDownload(id, userId) scopes ownership by joining through the
-    // download's game — but a game_link_required download has no game row
-    // to join against (that's the whole point of the status), so it can
-    // never be found that way. Fall back to an unscoped lookup, but only
-    // accept it if the record is actually game_link_required, so this can't
-    // be used to bypass ownership scoping for any other download.
-    const unscoped = await storage.getGameDownload(id);
-    if (unscoped?.status !== GAME_LINK_REQUIRED_STATUS) {
+    if (!download) {
       return res.status(404).json({ error: "Download not found" });
     }
 
-    // Transition atomically (conditional on still being game_link_required)
-    // rather than check-then-set: a concurrent POST /:id/link could relink
-    // this same download in the gap between the check above and a plain
-    // update, and an unconditional "completed" write here would silently
-    // clobber that relink instead of just dismissing an unlinked download.
-    const skipped = await storage.completeUnlinkedGameDownload(id);
-    if (!skipped) {
-      return res
-        .status(409)
-        .json({ error: "Download was linked to a game before it could be skipped" });
+    if (download.status === GAME_LINK_REQUIRED_STATUS) {
+      // Conditional on both owner and status so another user's recovery item
+      // cannot be dismissed and a concurrent relink cannot be overwritten.
+      const skipped = await storage.completeUnlinkedGameDownload(id, userId);
+      if (!skipped) {
+        return res
+          .status(409)
+          .json({ error: "Download was linked to a game before it could be skipped" });
+      }
+      return res.json({ success: true });
     }
+
+    await storage.updateGameDownloadStatus(id, "completed");
     return res.json({ success: true });
   } catch (error) {
     logger.error({ error }, "Error skipping import");
@@ -562,13 +579,13 @@ importRouter.delete("/:id", async (req, res) => {
 // Links a "game_link_required" download to the given game, then drops it back
 // into the normal manual_review_required path-review flow (GET /:id/plan,
 // POST /:id/confirm) so the rest of the import pipeline is reused unchanged.
-importRouter.post("/:id/link", async (req, res) => {
-  const { id } = req.params;
+importRouter.post("/:id/link", validate(linkGameDownloadBodySchema), async (req, res) => {
+  const id = typeof req.params.id === "string" ? req.params.id : "";
   try {
-    const schema = z.object({ gameId: z.string().min(1) });
-    const { gameId } = schema.parse(req.body);
+    const userId = res.locals.userId as string;
+    const { gameId } = linkGameDownloadBodySchema.parse(req.body);
 
-    const download = await storage.getGameDownload(id);
+    const download = await storage.getGameDownload(id, userId);
     if (!download) {
       return res.status(404).json({ error: "Download not found" });
     }
@@ -580,8 +597,11 @@ importRouter.post("/:id/link", async (req, res) => {
     if (!game) {
       return res.status(404).json({ error: "Game not found" });
     }
+    if (game.userId !== userId) {
+      return res.status(404).json({ error: "Game not found" });
+    }
 
-    const updated = await storage.relinkGameDownload(id, gameId);
+    const updated = await storage.relinkGameDownload(id, gameId, userId);
     if (!updated) {
       // Passed the game_link_required check above but the conditional update
       // still matched nothing — another request already relinked (or otherwise
@@ -590,7 +610,10 @@ importRouter.post("/:id/link", async (req, res) => {
         .status(409)
         .json({ error: "This download was already linked to a game by another request" });
     }
-    return res.json({ success: true, download: updated });
+    return res.json({
+      success: true,
+      download: { id: updated.id, gameId: updated.gameId, status: updated.status },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: zodErrorMessage(error) });
@@ -622,29 +645,12 @@ importRouter.get("/:id/plan", async (req, res) => {
   }
 });
 
-importRouter.post("/:id/confirm", async (req, res) => {
-  const { id } = req.params;
+importRouter.post("/:id/confirm", validate(confirmImportBodySchema), async (req, res) => {
+  const id = typeof req.params.id === "string" ? req.params.id : "";
   try {
     const userId = res.locals.userId as string;
 
-    const schema = z.object({
-      strategy: z.enum(["pc", "romm"] as const),
-      proposedPath: z.string(),
-      originalPath: z.string().optional(),
-      transferMode: z.enum(IMPORT_TRANSFER_MODES).optional(),
-      unpack: z.boolean().optional(),
-      // Only meaningful when unpack is true and the archive is encrypted. Never persisted —
-      // consumed once by confirmImport() to try extraction, then dropped. A NUL byte would
-      // reach execFile's args array unchanged and throw ERR_INVALID_ARG_VALUE deep inside
-      // ArchiveService rather than failing here with a clean validation error.
-      password: z
-        .string()
-        .max(1024)
-        .refine((value) => !value.includes("\0"), "Password must not contain null characters")
-        .optional(),
-    });
-
-    const body = schema.parse(req.body);
+    const body = confirmImportBodySchema.parse(req.body);
     const config = await storage.getImportConfig(userId);
     const rommConfig = await storage.getRomMConfig(userId);
     if (body.strategy === "romm" && !rommConfig.enabled) {
@@ -676,6 +682,9 @@ importRouter.post("/:id/confirm", async (req, res) => {
     }
     if (error instanceof ArchivePasswordRequiredError) {
       return res.status(400).json({ error: error.message, passwordRequired: true });
+    }
+    if (error instanceof IncompleteScanError) {
+      return res.status(409).json({ error: error.message });
     }
     if (error instanceof Error) {
       if (

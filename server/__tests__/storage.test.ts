@@ -867,7 +867,7 @@ describe("MemStorage", () => {
           fileSize: null,
         } as InsertGameDownload);
 
-        const results = await storage.getUnlinkedImportReviews();
+        const results = await storage.getUnlinkedImportReviews(userId);
         expect(results).toHaveLength(1);
         expect(results[0].id).toBe(unlinked.id);
       });
@@ -896,21 +896,21 @@ describe("MemStorage", () => {
           "This download's linked game could not be found"
         );
 
-        const updated = await storage.relinkGameDownload(download.id, otherGame.id);
+        const updated = await storage.relinkGameDownload(download.id, otherGame.id, userId);
 
         expect(updated?.gameId).toBe(otherGame.id);
         expect(updated?.status).toBe("manual_review_required");
         expect(updated?.errorMessage).toBeNull();
 
         // No longer surfaced as needing a game link…
-        expect(await storage.getUnlinkedImportReviews()).toHaveLength(0);
+        expect(await storage.getUnlinkedImportReviews(userId)).toHaveLength(0);
         // …and now surfaces in the normal path-review list instead.
         const pending = await storage.getPendingImportReviews(userId);
         expect(pending.some((d) => d.id === download.id)).toBe(true);
       });
 
       it("relinkGameDownload returns undefined for a nonexistent download", async () => {
-        const result = await storage.relinkGameDownload("nonexistent-id", gameId);
+        const result = await storage.relinkGameDownload("nonexistent-id", gameId, userId);
         expect(result).toBeUndefined();
       });
 
@@ -934,9 +934,9 @@ describe("MemStorage", () => {
         } as InsertGameDownload);
 
         // Simulates a concurrent request winning the race first.
-        await storage.relinkGameDownload(download.id, otherGame.id);
+        await storage.relinkGameDownload(download.id, otherGame.id, userId);
 
-        const secondAttempt = await storage.relinkGameDownload(download.id, gameId);
+        const secondAttempt = await storage.relinkGameDownload(download.id, gameId, userId);
         expect(secondAttempt).toBeUndefined();
 
         // The first relink's choice of game must survive untouched.
@@ -955,15 +955,15 @@ describe("MemStorage", () => {
           fileSize: null,
         } as InsertGameDownload);
 
-        const updated = await storage.completeUnlinkedGameDownload(download.id);
+        const updated = await storage.completeUnlinkedGameDownload(download.id, userId);
 
         expect(updated?.status).toBe("completed");
         expect(updated?.completedAt).not.toBeNull();
-        expect(await storage.getUnlinkedImportReviews()).toHaveLength(0);
+        expect(await storage.getUnlinkedImportReviews(userId)).toHaveLength(0);
       });
 
       it("completeUnlinkedGameDownload returns undefined for a nonexistent download", async () => {
-        const result = await storage.completeUnlinkedGameDownload("nonexistent-id");
+        const result = await storage.completeUnlinkedGameDownload("nonexistent-id", userId);
         expect(result).toBeUndefined();
       });
 
@@ -979,9 +979,9 @@ describe("MemStorage", () => {
         } as InsertGameDownload);
 
         // Simulates a concurrent POST /:id/link winning the race first.
-        await storage.relinkGameDownload(download.id, gameId);
+        await storage.relinkGameDownload(download.id, gameId, userId);
 
-        const result = await storage.completeUnlinkedGameDownload(download.id);
+        const result = await storage.completeUnlinkedGameDownload(download.id, userId);
         expect(result).toBeUndefined();
 
         // The relink must survive untouched — not clobbered back to "completed".

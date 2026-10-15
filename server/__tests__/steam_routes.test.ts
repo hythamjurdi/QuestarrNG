@@ -57,7 +57,9 @@ describe("steamRoutes", () => {
       const response = await request(app).patch("/api/user/steam-id").send({});
 
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ error: "Steam ID is required" });
+      expect(response.body).toEqual(
+        expect.objectContaining({ error: "Validation failed", details: expect.any(Array) })
+      );
     });
 
     it("returns 400 when steamId format is invalid", async () => {

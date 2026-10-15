@@ -15,9 +15,11 @@ vi.mock("lucide-react", () => {
     Compass: Icon,
     Database: Icon,
     Download: Icon,
+    FolderInput: Icon,
     Gamepad2: Icon,
     HardDrive: Icon,
     Home: Icon,
+    List: Icon,
     Newspaper: Icon,
     PieChart: Icon,
     Rss: Icon,
@@ -88,6 +90,7 @@ describe("MobileBottomNav", () => {
 
     expect(screen.getByText("Pages")).toBeInTheDocument();
     expect(screen.getByText("Management")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Custom Lists" })).toBeInTheDocument();
   });
 
   it("does not treat setup as a More page", () => {

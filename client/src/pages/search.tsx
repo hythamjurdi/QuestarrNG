@@ -83,6 +83,7 @@ interface DownloadItem {
 }
 
 interface SearchResult {
+  nextOffset?: number | null;
   items: DownloadItem[];
   total: number;
   offset: number;
@@ -133,6 +134,8 @@ export default function SearchPage() {
   const [selectedDownload, setSelectedDownload] = useState<DownloadItem | null>(null);
   const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [fileTypes, setFileTypes] = useState("");
+  const debouncedFileTypes = useDebounce(fileTypes.trim().replaceAll(" ", ""), 500);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const lastSearchQueryRef = useRef("");
@@ -146,16 +149,17 @@ export default function SearchPage() {
     isFetchingNextPage,
     fetchNextPage,
   } = useInfiniteQuery<SearchResult, Error, InfiniteData<SearchResult>, string[], number>({
-    queryKey: ["/api/search", debouncedSearchQuery],
+    queryKey: ["/api/search", debouncedSearchQuery, debouncedFileTypes],
     queryFn: async ({ pageParam }): Promise<SearchResult> => {
       const r = await apiRequest(
         "GET",
-        `/api/search?query=${encodeURIComponent(debouncedSearchQuery)}&limit=${PAGE_SIZE}&offset=${pageParam}`
+        `/api/search?query=${encodeURIComponent(debouncedSearchQuery)}&limit=${PAGE_SIZE}&offset=${pageParam}${debouncedFileTypes ? `&fileTypes=${encodeURIComponent(debouncedFileTypes)}` : ""}`
       );
       return r.json();
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if (lastPage.nextOffset !== undefined) return lastPage.nextOffset ?? undefined;
       // Use "received a full page" as the continuation signal rather than comparing
       // against lastPage.total, which equals the current batch size for Torznab
       // indexers and would always terminate pagination after the first page.
@@ -293,7 +297,7 @@ export default function SearchPage() {
     }: {
       download: DownloadItem;
       formData: DownloadForm;
-    }): Promise<{ success: boolean; message?: string }> => {
+    }): Promise<{ success: boolean; message?: string; correlationTag?: string }> => {
       const r = await apiRequest("POST", `/api/downloaders/${formData.downloaderId}/downloads`, {
         url: download.link,
         title: download.title,
@@ -307,7 +311,17 @@ export default function SearchPage() {
     },
     onSuccess: (result) => {
       if (result.success) {
-        toast({ title: "Download started successfully" });
+        const awaitingConfirmation = Boolean(result.correlationTag);
+        toast({
+          title: awaitingConfirmation ? "Checking qBittorrent" : "Download started successfully",
+          ...(awaitingConfirmation
+            ? {
+                description:
+                  result.message ||
+                  "The request was accepted, but qBittorrent has not confirmed the download yet. Check qBittorrent before retrying to avoid a duplicate.",
+              }
+            : {}),
+        });
         setIsDownloadDialogOpen(false);
         setSelectedDownload(null);
         void queryClient.invalidateQueries({ queryKey: ["/api/downloads"] });
@@ -434,6 +448,25 @@ export default function SearchPage() {
         </Button>
       </form>
 
+      {showFilters && (
+        <div className="mb-3 space-y-1">
+          <label htmlFor="verified-file-types" className="text-sm font-medium">
+            Verified file types
+          </label>
+          <Input
+            id="verified-file-types"
+            value={fileTypes}
+            onChange={(event) => setFileTypes(event.target.value)}
+            placeholder="Any type, or e.g. nsp,xci"
+            maxLength={120}
+          />
+          <p className="text-xs text-muted-foreground">
+            Only releases whose torrent file list contains these extensions pass. Magnets, Usenet,
+            archives, and unavailable file lists are excluded. Checks inspect up to 20 releases per
+            page.
+          </p>
+        </div>
+      )}
       {/* Collapsible date filter row */}
       {showFilters && (
         <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-md border bg-muted/30">
@@ -745,6 +778,19 @@ export default function SearchPage() {
                     ? "No releases match the selected date range. Try adjusting the filter."
                     : "Try adjusting your search terms or check if your indexers are properly configured."}
                 </p>
+                {!!(dateFrom || dateTo) && hasNextPage && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => void fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    data-testid="button-load-more-results"
+                  >
+                    {isFetchingNextPage ? "Loading more results…" : "Load more results"}
+                  </Button>
+                )}
               </div>
             )}
             {/* Infinite scroll sentinel — always rendered so observer reattaches after filter changes */}

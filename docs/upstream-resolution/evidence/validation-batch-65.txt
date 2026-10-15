@@ -1,0 +1,99 @@
+# Batch 65 validation — October 13, 2026
+
+## Scope and dispositions
+
+Reviewed upstream PRs #766–768, issue #769, and PRs #770–775 against the
+captured upstream source context and current QuestarrNG behavior. The batch
+assigned evidence-backed dispositions to all ten records: four verified and
+six superseded. No product code change was required. The requests are covered
+by current dependency versions, existing Apprise CLI support, optional
+PostgreSQL support, immutable action pins, and the TypeScript 6 upgrade.
+
+- #766 is superseded: all seven requested development dependencies resolve to
+  versions newer than their targets.
+- #767 is superseded: all six requested development dependency versions have
+  been replaced by newer versions. Its Semgrep suppressions describe an
+  upstream root-first runtime that QuestarrNG does not use; the fork runs as
+  `questarr:questarr` with a narrowly scoped Home Assistant `CAP_CHOWN` helper.
+- #768 is verified: Apprise API and CLI modes are present, documented, and
+  covered by settings and server tests. CLI URLs are passed through a private
+  temporary config file, not process arguments.
+- #769 is verified: PostgreSQL is an explicit opt-in backend with a separate
+  migration history, documented operator and data-migration paths, and
+  SQLite/PostgreSQL behavior-parity coverage. The issue discussion narrowed
+  the practical database target to PostgreSQL.
+- #770 is verified: both current `actions/github-script` references use v9 and
+  a full commit SHA.
+- #771 is superseded: the three requested Vitest 4.1.10 packages are now 5.0.3.
+- #772 is superseded: axios 1.20.0 and react-hook-form 7.89.0 exceed the
+  requested versions.
+- #773 is superseded: bcryptjs 3.0.3 includes its own TypeScript declaration
+  files, so a separate `@types/bcryptjs` dependency is unnecessary.
+- #774 is superseded: tailwind-merge 3.7.0 exceeds the requested 3.6.0.
+- #775 is verified: TypeScript 6.0.3 matches the requested version.
+
+The detailed source findings, acceptance checks, and implementation references
+are recorded in the corresponding entries in [the ledger](../ledger.json).
+Existing user documentation covers [Apprise](../../NOTIFICATIONS.md) and
+[SQLite/PostgreSQL](../../DATABASE.md).
+
+## Automated validation
+
+- Focused Vitest command covering Apprise, settings, API routes, database
+  configuration, SQLite/PostgreSQL parity, transactional operations, and both
+  migration directions: **8 files, 468 tests passed**.
+- Full Vitest suite: **269 test files passed, 1 skipped; 4,229 tests passed,
+  7 skipped** (270 files total; single-worker run, 251.34 seconds).
+- `npm run check`: passed.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite emitted its existing advisory for minified
+  chunks larger than 500 kB.
+- `npm run audit:prod`: passed; no high-or-higher production advisories outside
+  the VEX feed.
+- `npm run secretlint`: passed.
+- Prettier checks for the campaign README, audit process, and ledger: passed.
+- `npm run check:overrides`: passed; the checker found the recorded dependency
+  overrides still necessary.
+- `npm run check:licenses`: passed for all 417 production package versions.
+- `npm run check:deprecated`: passed with three upstream-pinned deprecated
+  packages still blocked from replacement (`@esbuild-kit/core-utils`,
+  `@esbuild-kit/esm-loader`, and `node-domexception`).
+- `npm run release-notes:check` was not applicable to this docs-and-audit batch;
+  the batch made no product-code or release-note changes.
+- `npm run db:check:pg`: passed; Drizzle reported that the PostgreSQL migration
+  files are in sync.
+
+## Real PostgreSQL smoke check
+
+A disposable PostgreSQL **18.6** cluster was initialized under a unique local
+`/tmp` directory on host `kspld0` and bound to `127.0.0.1:55432`. The production
+`node-postgres` driver connected, applied fresh migrations, reapplied migrations
+idempotently, and passed its database ping. A storage-level setup-user insert
+then succeeded. Two concurrent API-key creation requests against a one-key cap
+produced exactly one success and one rejection, with one key persisted. This
+exercises the real connection pool and transaction locks that in-process PGlite
+cannot model. No service on the host's PostgreSQL port was contacted.
+
+## Scratch and cleanup
+
+Local `/tmp` on `kspld0` had 52 GB available before the smoke check; no NFS
+scratch was needed. The disposable cluster was stopped, port 55432 was verified
+free, and its database files and one-off smoke script were removed. Docker and
+the running host PostgreSQL services were left untouched.
+
+## Ledger after Batch 65
+
+| Status                     |     Count |
+| -------------------------- | --------: |
+| Verified                   |       577 |
+| Superseded                 |       170 |
+| Not applicable             |        12 |
+| Implemented but unverified |         5 |
+| Needs implementation      |         0 |
+| Unreviewed                 |       399 |
+| **Total**                  | **1,163** |
+
+The five unverified records remain four live-service integrations and PR #729's
+DCO rollout. The campaign has not passed its merge gate and remains unmerged to
+`main`.

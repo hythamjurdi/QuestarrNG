@@ -34,6 +34,9 @@ vi.mock("../downloaders/utils.js", async (importOriginal) => {
 
 global.fetch = fetchMock as unknown as typeof fetch;
 
+/** The tag a `/torrents/info?tag=` lookup asks for, as qBittorrent reports it on the torrent. */
+const tagFromInfoPath = (path: string): string => decodeURIComponent(path.split("tag=")[1] ?? "");
+
 const { isSafeUrl, safeFetch } = await import("../ssrf.js");
 const { QBittorrentClient } = await import("../downloaders/qbittorrent.js");
 
@@ -78,6 +81,53 @@ describe("qbittorrent remaining regression coverage", () => {
     parseTorrentMock.mockReset();
     fetchWithMagnetDetectionMock.mockReset();
     vi.mocked(isSafeUrl).mockResolvedValue(true);
+  });
+
+  it.each([
+    [
+      "surfaces the error text returned by qBittorrent",
+      { error_string: "Cannot save to the configured download directory" },
+      "Cannot save to the configured download directory",
+    ],
+    ["falls back when qBittorrent omits error_string", {}, "Torrent error"],
+  ])("%s", async (_description, errorFields, expectedError) => {
+    const client = new QBittorrentClient(createDownloader());
+    const privateClient = client as unknown as {
+      authenticate(force?: boolean): Promise<void>;
+      makeRequest(method: string, path: string): Promise<Response>;
+    };
+    vi.spyOn(privateClient, "authenticate").mockResolvedValue(undefined);
+    vi.spyOn(privateClient, "makeRequest").mockResolvedValueOnce({
+      ok: true,
+      json: async () => [
+        {
+          hash: "error-hash",
+          name: "Broken torrent",
+          state: "error",
+          progress: 0,
+          dlspeed: 0,
+          upspeed: 0,
+          eta: 0,
+          size: 100,
+          downloaded: 0,
+          uploaded: 0,
+          ratio: 0,
+          num_seeds: 0,
+          num_leechs: 0,
+          num_complete: 0,
+          num_incomplete: 0,
+          ...errorFields,
+        },
+      ],
+    } as Response);
+
+    await expect(client.getAllDownloads()).resolves.toEqual([
+      expect.objectContaining({
+        id: "error-hash",
+        status: "error",
+        error: expectedError,
+      }),
+    ]);
   });
 
   it("covers auth, base URL, free space, status, and detail edge branches", async () => {
@@ -569,10 +619,19 @@ describe("qbittorrent remaining regression coverage", () => {
         text: async () => "Fails.",
         headers: emptyHeaders,
       } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [{ hash: "recent-hash", added_on: Math.floor(Date.now() / 1000) - 1 }],
-      } as Response);
+      .mockImplementationOnce(
+        async (_method, path) =>
+          ({
+            ok: true,
+            json: async () => [
+              {
+                hash: "recent-hash",
+                added_on: Math.floor(Date.now() / 1000) - 1,
+                tags: tagFromInfoPath(path),
+              },
+            ],
+          }) as Response
+      );
 
     await expect(
       client.addDownload({
@@ -836,16 +895,17 @@ describe("qbittorrent remaining regression coverage", () => {
       } as Response,
     });
 
-    await expect(
-      client.addDownload({
-        url: "http://indexer.local/upload-unknown.torrent",
-        title: "Unknown Upload",
-      })
-    ).resolves.toEqual({
-      success: true,
-      id: "Unknown Upload",
-      message: "Download added but hash could not be verified",
+    const result = await client.addDownload({
+      url: "http://indexer.local/upload-unknown.torrent",
+      title: "Unknown Upload",
     });
+    expect(result).toMatchObject({
+      success: true,
+      correlationTag: expect.stringMatching(/^questarr-(add|fallback)-/),
+      message:
+        "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.",
+    });
+    expect(result.id).toBeUndefined();
 
     makeRequestSpy.mockReset();
     makeRequestSpy

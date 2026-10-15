@@ -4,6 +4,8 @@ import { type Game } from "@shared/schema";
 
 export interface LibraryStats {
   totalGames: number;
+  uniqueGenres: number;
+  uniquePlatforms: number;
   avgRating: string;
   avgUserRating: string;
   topGenre: { name: string; count: number } | null;
@@ -33,6 +35,8 @@ export function calculateLibraryStats(
   if (totalGames === 0) {
     return {
       totalGames: 0,
+      uniqueGenres: 0,
+      uniquePlatforms: 0,
       avgRating: "N/A",
       avgUserRating: "N/A",
       topGenre: null,
@@ -63,6 +67,8 @@ export function calculateLibraryStats(
   const genreCounts: Record<string, number> = {};
   const platformCounts: Record<string, number> = {};
   const publisherCounts: Record<string, number> = {};
+  const uniqueGenres = new Set<string>();
+  const uniquePlatforms = new Set<string>();
   const uniqueDevelopers = new Set<string>();
 
   let yearSum = 0;
@@ -91,11 +97,13 @@ export function calculateLibraryStats(
     if (g.genres) {
       for (const genre of g.genres) {
         genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+        uniqueGenres.add(genre);
       }
     }
     if (g.platforms) {
       for (const platform of g.platforms) {
         platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+        uniquePlatforms.add(platform);
       }
     }
     if (g.publishers) {
@@ -187,6 +195,8 @@ export function calculateLibraryStats(
 
   return {
     totalGames,
+    uniqueGenres: uniqueGenres.size,
+    uniquePlatforms: uniquePlatforms.size,
     avgRating,
     avgUserRating,
     topGenre,

@@ -1,0 +1,23 @@
+Upstream PR #1186 dependency security review — 2026-10-12
+
+Source review
+- Doezer/Questarr PR #1186 remains open at head 4636e4192143410da9770d77d1e4e1a9b2f9fda1. No changes were made to the upstream repository.
+- QuestarrNG already pins PyJWT 2.15.1 in the Semgrep input and lock, forces fast-copy to ^4.1.0 (lock resolves 4.1.2), and has only one engine.io override.
+- The fork has no @tailwindcss/typography, @npmcli/query, or postcss-selector-parser in its package graph. No selector-parser override was added because the affected dependency path does not exist here.
+- The current upstream PR head already updates the Socket.IO version in its dependency rationale and adds a provenance note for the historical CVE report.
+
+Implementation
+- Updated .github/requirements/semgrep.in from semgrep==1.179.0 to semgrep==1.180.0.
+- Regenerated .github/requirements/semgrep.txt with the documented universal, wheel-only, hash-generating uv pip compile command. Resolution completed for 68 packages; the resulting lock contains Semgrep 1.180.0 and PyJWT 2.15.1.
+- Updated docs/DEPENDENCIES.md and added the scanner update to the fork's v1.10.0 section in docs/CVE_FIXES_BY_RELEASE.md.
+
+Validation
+- Created a clean Python 3.12.13 virtual environment and installed the lock with `uv pip install --only-binary=:all: --require-hashes -r .github/requirements/semgrep.txt`: 66 packages installed successfully.
+- `semgrep --version`: 1.180.0. `uv pip check`: all 66 installed packages are compatible.
+- Ran the SAST workflow's six rule configurations on all 928 Git-tracked files. The default local runtime could not allocate its io_uring queue; the compatibility-mode retry (`--x-parmap --jobs 1`) completed successfully, with 229 rules run and 99.9% of parsed lines covered. The workflow's `.extra.severity == "ERROR"` gate counted zero findings. One WARNING points to `path.resolve` in `server/routes.ts`; the handler checks lexical containment and then validates the real path before filesystem access. Semgrep emitted 37 parser warnings for existing Helm templates/test syntax; they do not count as ERROR findings.
+- `npm audit --json`: zero vulnerabilities (including zero production vulnerabilities).
+- `npm run check:overrides`: passed. `npm run format:check` passed after formatting the branch's outstanding flagged source and generated migration JSON files; the targeted documentation Prettier check, release-note check (11 fragments), and `git diff --check` passed.
+- `npm run check`, `npm run lint`, and `npm run db:check:pg` passed. The first full unit-suite attempt hit `ENOSPC` because `/tmp` had only 17 MB free; rerunning with a task-specific `TMPDIR` passed: 247 files passed, 1 skipped; 4,009 tests passed, 7 skipped.
+- `npm run build` passed (3,388 client modules transformed and server TypeScript build completed). Vite reported its existing large-chunk advisory for the 861 KB main bundle.
+
+The temporary virtual environment and Semgrep JSON/SARIF outputs are task-scoped and will be removed after this record is committed.

@@ -2,6 +2,7 @@ import { type Indexer } from "../shared/schema.js";
 import { XMLParser } from "fast-xml-parser";
 import { torznabLogger } from "./logger.js";
 import { safeFetch } from "./ssrf.js";
+import { normalizeProwlarrUrl } from "./url-utils.js";
 
 function stripTrailingSlashes(value: string): string {
   let end = value.length;
@@ -82,10 +83,7 @@ export class ProwlarrClient {
     overrides: ProwlarrSyncOverrides = {}
   ): Promise<Partial<Indexer>[]> {
     // Normalize URL
-    let baseUrl = stripTrailingSlashes(prowlarrUrl);
-    if (!baseUrl.startsWith("http")) {
-      baseUrl = `http://${baseUrl}`;
-    }
+    const baseUrl = normalizeProwlarrUrl(prowlarrUrl);
 
     const apiUrl = `${baseUrl}/api/v1/indexer`;
 
@@ -103,9 +101,8 @@ export class ProwlarrClient {
         },
         signal: AbortSignal.timeout(30000),
         requireHttps: protocol === "https:",
-        // An explicitly allowed HTTP request must not forward the key to a
-        // redirect target. HTTPS redirects are pinned by safeFetch.
-        redirect: allowPlainHttp ? "manual" : "follow",
+        // Credentials are scoped to the configured endpoint, never redirect targets.
+        redirect: "manual",
       });
 
       if (!response.ok) {

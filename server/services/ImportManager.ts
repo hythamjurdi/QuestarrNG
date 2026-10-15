@@ -39,6 +39,7 @@ const RELEASE_PLATFORM_TO_IGDB_ID: Record<string, number> = {
   n64: 4,
   gamecube: 21,
   wii: 5,
+  "wii u": 41,
   gb: 33,
   gbc: 22,
   gba: 24,
@@ -64,6 +65,7 @@ const PLATFORM_FOLDER_NAMES: Record<string, string> = {
   n64: "N64",
   gamecube: "GameCube",
   wii: "Wii",
+  "wii u": "Wii U",
   gb: "Game Boy",
   gbc: "Game Boy Color",
   gba: "Game Boy Advance",
@@ -90,11 +92,24 @@ const IGDB_ID_TO_PLATFORM_KEY: Record<number, string> = Object.fromEntries(
 const MAX_PATH_RETRY = 5;
 const MAX_LISTED_FILES = 100;
 
+function isStrictPathAncestor(parentPath: string, childPath: string): boolean {
+  const relative = path.relative(path.resolve(parentPath), path.resolve(childPath));
+  return (
+    relative !== "" &&
+    relative !== ".." &&
+    !relative.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relative)
+  );
+}
+
 // Prefixes a game_downloads.error_message value to mark it as an ArchivePasswordRequiredError
 // rather than a generic failure, without a dedicated schema column. GET /api/imports/pending
 // strips this prefix and turns its presence into a `passwordRequired` flag so the manual-review
 // UI can show a password field instead of the normal path-review form.
 export const ARCHIVE_PASSWORD_REQUIRED_PREFIX = "ARCHIVE_PASSWORD_REQUIRED:";
+
+/** Thrown when a confirmation is the first to learn the security scan was incomplete. */
+export class IncompleteScanError extends Error {}
 
 interface ArchiveResolution {
   archivePath: string;
@@ -106,6 +121,11 @@ interface ArchiveResolution {
 
 export class ImportManager {
   private readonly pathRetryCount = new Map<string, number>();
+  // Downloads whose processImport() is running in this process. The
+  // "unpacking"/"completed_pending_import" statuses outlive a restart, so this
+  // is the only way to tell an import that is still running from one that a
+  // restart cut short.
+  private readonly importsInFlight = new Set<string>();
 
   // Optional and defaulted (rather than required) so existing call sites — and
   // the many unit tests that construct an ImportManager directly — don't all
@@ -236,7 +256,10 @@ export class ImportManager {
    * are only meaningful for directory sources, since a lone file has no
    * reliable sibling scope to check against.
    */
-  private async resolveArchive(sourcePath: string): Promise<ArchiveResolution | null> {
+  private async resolveArchive(
+    sourcePath: string,
+    options?: { includeDiscImages?: boolean }
+  ): Promise<ArchiveResolution | null> {
     if (isSensitivePath(sourcePath)) {
       throw new Error("Refusing to process a sensitive system path");
     }
@@ -250,7 +273,7 @@ export class ImportManager {
     const stats = await fs.stat(safeSourcePath);
 
     if (!stats.isDirectory()) {
-      if (!this.archiveService.isArchive(safeSourcePath)) return null;
+      if (!this.archiveService.isArchive(safeSourcePath, options)) return null;
       return {
         archivePath: safeSourcePath,
         isDirectorySource: false,
@@ -261,7 +284,9 @@ export class ImportManager {
     }
 
     const entries = await fs.readdir(safeSourcePath);
-    const archiveEntries = entries.filter((name) => this.archiveService.isArchive(name)).sort();
+    const archiveEntries = entries
+      .filter((name) => this.archiveService.isArchive(name, options))
+      .sort();
     if (archiveEntries.length === 0) return null;
 
     // Lexicographic sort puts "Game.r00" before "Game.rar" (since '0' < 'a'), but
@@ -373,7 +398,7 @@ export class ImportManager {
 
     return {
       destDir,
-      filesPlaced: await gatherFiles(destDir),
+      filesPlaced: await gatherFiles(destDir, { skipExtractStaging: true }),
       modeUsed,
       conflictsResolved: [],
     };
@@ -426,7 +451,7 @@ export class ImportManager {
 
     return {
       destDir,
-      filesPlaced: await gatherFiles(destDir),
+      filesPlaced: await gatherFiles(destDir, { skipExtractStaging: true }),
       modeUsed,
       conflictsResolved: [],
     };
@@ -434,10 +459,9 @@ export class ImportManager {
 
   // Relocates only the archive's own volume family into destDir — never the whole
   // source directory. A directory source can hold other legitimate files alongside
-  // the archive (a readme, bonus content); extract()'s own in-place cleanup treats
-  // anything in destDir it doesn't recognize as an archive volume as a stale leftover
-  // and deletes it, so those files must stay put in the source until after extraction
-  // runs, then get transferred separately (see unpackViaRelocatedExtraction above).
+  // the archive (a readme, bonus content); those stay put in the source until after
+  // extraction runs, then get transferred separately (see unpackViaRelocatedExtraction
+  // above), so the archive family is the only thing deleted from destDir afterward.
   private async relocateArchiveToDest(
     transferMode: TransferMode,
     resolution: ArchiveResolution,
@@ -847,7 +871,31 @@ export class ImportManager {
     }
   }
 
+  isImportInFlight(downloadId: string): boolean {
+    return this.importsInFlight.has(downloadId);
+  }
+
   async processImport(
+    downloadId: string,
+    remoteDownloadPath: string,
+    password?: string
+  ): Promise<void> {
+    if (this.importsInFlight.has(downloadId)) {
+      logger.warn(
+        { downloadId },
+        "[ImportManager] Import already running, ignoring a second start"
+      );
+      return;
+    }
+    this.importsInFlight.add(downloadId);
+    try {
+      await this.runImport(downloadId, remoteDownloadPath, password);
+    } finally {
+      this.importsInFlight.delete(downloadId);
+    }
+  }
+
+  private async runImport(
     downloadId: string,
     remoteDownloadPath: string,
     password?: string
@@ -925,6 +973,20 @@ export class ImportManager {
       const scanResult = await this.securityScanService.scan(localPath);
       if (scanResult.blocked) {
         await this.quarantineDownload(downloadId, game, localPath, scanResult, targetRoot);
+        return;
+      }
+      if (scanResult.incomplete) {
+        // Not a detection, so the files stay where the client put them (seeding
+        // keeps working); the user decides from Pending Manual Imports.
+        logger.warn(
+          { downloadId, gameTitle: game.title, reason: scanResult.reason },
+          "[ImportManager] Security scan incomplete, holding the import for manual review"
+        );
+        await this.storage.updateGameDownloadStatus(
+          downloadId,
+          "manual_review_required",
+          scanResult.reason ?? "Security scan could not examine every file"
+        );
         return;
       }
 
@@ -1041,25 +1103,72 @@ export class ImportManager {
 
   private async resolveConfirmOriginalPath(
     overridePath: string | undefined,
-    download: NonNullable<Awaited<ReturnType<IStorage["getGameDownload"]>>>
+    download: NonNullable<Awaited<ReturnType<IStorage["getGameDownload"]>>>,
+    rejectParentOverride = false
   ): Promise<string | undefined> {
     const configuredRoots = await this.pathService.getConfiguredRoots();
     // Explicit path mappings are the administrator's allow-list for alternate
-    // local download roots. Without mappings, an override must remain inside the
-    // exact download directory reported for this tracked download.
-    if (overridePath && configuredRoots.length > 0) return overridePath;
+    // local download roots. Source-path previews can use that allow-list directly,
+    // but confirmation also checks that a manually entered path is not a parent of
+    // the tracked download directory (which could move unrelated downloads).
+    if (overridePath && configuredRoots.length > 0 && !rejectParentOverride) return overridePath;
 
     const downloader = await this.storage.getDownloader(download.downloaderId);
-    if (!downloader) return undefined;
+    if (!downloader) return overridePath && configuredRoots.length > 0 ? overridePath : undefined;
 
-    const details = await DownloaderManager.getDownloadDetails(downloader, download.downloadHash);
-    if (!details?.downloadDir) return undefined;
+    let details: Awaited<ReturnType<typeof DownloaderManager.getDownloadDetails>>;
+    try {
+      details = await DownloaderManager.getDownloadDetails(downloader, download.downloadHash);
+    } catch (error) {
+      // Keep the mapped-root recovery path available when the client is offline.
+      if (overridePath && configuredRoots.length > 0) return overridePath;
+      throw error;
+    }
+    if (!details?.downloadDir) {
+      return overridePath && configuredRoots.length > 0 ? overridePath : undefined;
+    }
 
     const remotePath = resolveRemoteImportPath({ ...details, downloadDir: details.downloadDir });
     const remoteHost = this.extractRemoteHost(downloader.url);
-    const expectedPath = await this.pathService.translatePath(remotePath, remoteHost);
+    let expectedPath: string;
+    try {
+      expectedPath = await this.pathService.translatePath(remotePath, remoteHost);
+    } catch (error) {
+      if (overridePath && configuredRoots.length > 0) return overridePath;
+      throw error;
+    }
 
     if (overridePath) {
+      if (rejectParentOverride && configuredRoots.length > 0) {
+        let safeOverridePath = path.resolve(overridePath);
+        let safeExpectedPath = path.resolve(expectedPath);
+        try {
+          safeOverridePath = await assertWithinRoots(
+            overridePath,
+            configuredRoots,
+            "Manual source path must remain inside a configured download root"
+          );
+        } catch {
+          // The caller applies the same configured-root check before using this path.
+        }
+        try {
+          safeExpectedPath = await assertWithinRoots(
+            expectedPath,
+            configuredRoots,
+            "Tracked download path is outside the configured download roots"
+          );
+        } catch {
+          // A remote path without a matching mapping is still compared lexically.
+        }
+        if (isStrictPathAncestor(safeOverridePath, safeExpectedPath)) {
+          throw new Error(
+            "Source path cannot be a parent of this download's folder. Select only this download's file or folder."
+          );
+        }
+      }
+
+      if (configuredRoots.length > 0) return overridePath;
+
       return assertWithinRoots(
         overridePath,
         [expectedPath],
@@ -1223,7 +1332,8 @@ export class ImportManager {
 
     const resolvedOriginalPath = await this.resolveConfirmOriginalPath(
       overridePlan.originalPath,
-      download
+      download,
+      true
     );
 
     if (!resolvedOriginalPath) {
@@ -1271,13 +1381,29 @@ export class ImportManager {
       );
       throw new Error(scanResult.reason ?? "Flagged by security scan");
     }
+    if (scanResult.incomplete) {
+      const reason = scanResult.reason ?? "Security scan could not examine every file";
+      // Importing an incompletely scanned download needs the user to have seen why.
+      // processImport records the reason on the pending import; when this
+      // confirmation is the first scan (e.g. right after linking a game), record it
+      // now and stop, so the next confirmation is an informed one.
+      if (download.status !== "manual_review_required" || download.errorMessage !== reason) {
+        await this.storage.updateGameDownloadStatus(downloadId, "manual_review_required", reason);
+        throw new IncompleteScanError(`${reason} Confirm again to import it anyway.`);
+      }
+      logger.warn(
+        { downloadId, reason: scanResult.reason },
+        "[ImportManager] Importing a download the security scan could not fully examine, as confirmed by the user"
+      );
+    }
 
     if (!overridePlan.proposedPath) {
       throw new Error("Proposed path is required for import validation");
     }
 
     const archiveResolution = overridePlan.unpack
-      ? await this.resolveArchive(safeOriginalPath)
+      ? // An explicit unpack request may extract a disc image; auto-unpack never does.
+        await this.resolveArchive(safeOriginalPath, { includeDiscImages: true })
       : null;
     const needsExtraction = !!archiveResolution && !archiveResolution.alreadyExtracted;
 

@@ -1,0 +1,48 @@
+# Batch 55 validation — October 13, 2026
+
+Snapshot: upstream `main` `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`, 1,163
+records (232 issues, 931 PRs). The refreshed export added open PR #1203; it
+remains unreviewed for the next batch.
+
+## Focused regression checks
+
+- `npm run test -- server/__tests__/cron_autosearch.test.ts server/__tests__/downloaders_clients_regression.test.ts server/__tests__/downloaders_qbittorrent_remaining.test.ts server/__tests__/integration_api.test.ts server/__tests__/api_routes_extended.test.ts server/__tests__/api_routes.test.ts server/__tests__/migrate.test.ts` — 7 files passed, 656 tests passed. This includes the new regression proving identical normalized torrent and Usenet titles remain two choices and do not trigger the one-result auto-download path.
+- `npm run test -- server/__tests__/database_storage_integration.test.ts server/__tests__/database_storage_extended.test.ts server/__tests__/download_owner_migration.test.ts server/__tests__/pg_to_sqlite.test.ts server/__tests__/sqlite-to-pg.test.ts` — 5 files passed, 74 tests passed.
+- `npm run test -- server/__tests__/downloaders_qbittorrent_regression.test.ts server/__tests__/downloaders_sabnzbd_tls.test.ts server/__tests__/downloaders_sabnzbd_remaining.test.ts` — 3 files passed, 45 tests passed. The qBittorrent regression covers asynchronous HTTP 202 acceptance, eventual hash resolution, and accepted-but-unconfirmed requests without a duplicate upload fallback.
+
+## Fresh-database and HTTP smoke
+
+- Ran `SQLITE_DB_PATH=/tmp/questarr-upstream-batch55-work/fresh.sqlite npm run db:migrate` against a new database. All migrations completed; a direct SQLite query found both `users` and `user_settings`, with 39 current settings columns.
+- Started the app on confirmed-free port 51987 with a second new database at `/tmp/questarr-upstream-batch55-work/http-smoke.sqlite`. Startup completed migrations before binding. With IGDB unconfigured, first-account setup returned 200, authenticated `GET /api/settings` returned 200, `PATCH /api/settings` returned 200, and a second GET returned 200 with the changed setting persisted. The task-owned server was stopped after the check.
+
+## Full validation
+
+- `npm run test` — 261 files passed, 1 skipped; 4,165 tests passed, 7 skipped.
+- `npm run check` — passed.
+- `npm run lint` — passed with zero warnings.
+- `npm run format:check` — passed.
+- `npm run build` — passed. Vite emitted the existing large-chunk advisory for the main and three.js bundles.
+- `npm run secretlint` — passed.
+- `npm run check:overrides` — passed; every listed override remains required.
+- `npm run check:licenses` — passed for 418 production package versions.
+- `npm run check:deprecated` — passed; it reports three deprecated packages still pinned by upstream and no safe local action.
+- `npm run db:check:pg` — passed (`Everything's fine`).
+- `node scripts/audit-prod.mjs` — passed; no high-or-higher production advisories outside the VEX feed. npm printed its existing warning about `allow-scripts` metadata.
+- Parsed `.github/workflows/slash-command-listener.yml` using `js-yaml` and asserted its github-script SHA. The workflow parses, and both current `actions/github-script` uses are pinned to v9 SHA `8ade135a41bc03ea155e62e844d188df1ea18608`. The script uses the injected `github` context; it does not require the v7-only CommonJS import pattern.
+- `git diff --check` — passed.
+
+No production files under `client/src/**` changed, so this batch does not require
+new running-UI evidence. The RSS accessibility behavior was already covered by
+`client/__tests__/RssSettings.test.tsx` and batch 53 evidence. qBittorrent and
+SABnzbd protocol behavior in this batch was exercised with controlled HTTP
+responses; no live downloader or Prowlarr service was available. The original
+qBittorrent 5.2 reporter confirmed the cookie fix in upstream issue #608.
+
+## Scratch and cleanup
+
+Temporary files were scoped to `/tmp/questarr-upstream-batch55-work` on local
+storage; no NFS share was used. The directory held two disposable SQLite
+databases, the sanitized source export used to regenerate the inventory, and a
+downloaded screenshot attached to upstream issue #610. All of those files were
+removed after validation. The task-owned HTTP server was stopped, and port 51987
+was released. No unrelated process or user data was modified.

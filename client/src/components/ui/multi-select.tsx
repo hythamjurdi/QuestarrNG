@@ -117,70 +117,11 @@ export function MultiSelect({
         >
           <div className="flex gap-1 flex-wrap">
             {selectedOptions.length > 0 ? (
-              selectedOptions.map((option, index) => {
-                const optionNameMarker = "__questarr_option_name__";
-                const removeAccessibleNameTemplate = resolvedRemoveLabel(optionNameMarker);
-                const optionNamePosition = removeAccessibleNameTemplate.indexOf(optionNameMarker);
-                const actionBefore =
-                  optionNamePosition < 0
-                    ? removeAccessibleNameTemplate
-                    : removeAccessibleNameTemplate.slice(0, optionNamePosition);
-                const actionAfter =
-                  optionNamePosition < 0
-                    ? ""
-                    : removeAccessibleNameTemplate.slice(
-                        optionNamePosition + optionNameMarker.length
-                      );
-                const optionLabelId = `${removeLabelId}-option-${index}`;
-                const actionBeforeId = `${removeLabelId}-before-${index}`;
-                const actionAfterId = `${removeLabelId}-after-${index}`;
-                const removeLabelledBy = [
-                  actionBefore ? actionBeforeId : null,
-                  optionLabelId,
-                  actionAfter ? actionAfterId : null,
-                ]
-                  .filter((id): id is string => id !== null)
-                  .join(" ");
-
-                return (
-                  <Badge variant="secondary" key={option.value} className="flex items-center">
-                    <span id={optionLabelId} lang="und" dir="auto">
-                      {option.label}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemove(option.value);
-                      }}
-                      aria-labelledby={removeLabelledBy}
-                      className="ml-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      {actionBefore ? (
-                        <span
-                          id={actionBeforeId}
-                          className="sr-only"
-                          lang={resolvedRemoveLang}
-                          dir={resolvedRemoveDir}
-                        >
-                          {actionBefore}
-                        </span>
-                      ) : null}
-                      {actionAfter ? (
-                        <span
-                          id={actionAfterId}
-                          className="sr-only"
-                          lang={resolvedRemoveLang}
-                          dir={resolvedRemoveDir}
-                        >
-                          {actionAfter}
-                        </span>
-                      ) : null}
-                      <X className="h-3 w-3 cursor-pointer" />
-                    </button>
-                  </Badge>
-                );
-              })
+              formatInterfaceMessage(
+                "{count} selected",
+                { count: selectedOptions.length },
+                language
+              )
             ) : (
               <span className="text-muted-foreground" lang={placeholderLang} dir={placeholderDir}>
                 {placeholderText}
@@ -190,6 +131,75 @@ export function MultiSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
+      {selectedOptions.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1" role="list" aria-label={placeholderText}>
+          {selectedOptions.map((option, index) => {
+            const optionNameMarker = "__questarr_option_name__";
+            const removeAccessibleNameTemplate = resolvedRemoveLabel(optionNameMarker);
+            const optionNamePosition = removeAccessibleNameTemplate.indexOf(optionNameMarker);
+            const actionBefore =
+              optionNamePosition < 0
+                ? removeAccessibleNameTemplate
+                : removeAccessibleNameTemplate.slice(0, optionNamePosition);
+            const actionAfter =
+              optionNamePosition < 0
+                ? ""
+                : removeAccessibleNameTemplate.slice(optionNamePosition + optionNameMarker.length);
+            const optionLabelId = `${removeLabelId}-option-${index}`;
+            const actionBeforeId = `${removeLabelId}-before-${index}`;
+            const actionAfterId = `${removeLabelId}-after-${index}`;
+            const removeLabelledBy = [
+              actionBefore ? actionBeforeId : null,
+              optionLabelId,
+              actionAfter ? actionAfterId : null,
+            ]
+              .filter((id): id is string => id !== null)
+              .join(" ");
+
+            return (
+              <Badge
+                variant="secondary"
+                key={option.value}
+                className="flex items-center gap-1"
+                role="listitem"
+              >
+                <span id={optionLabelId} lang="und" dir="auto">
+                  {option.label}
+                </span>
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => handleRemove(option.value)}
+                  aria-labelledby={removeLabelledBy}
+                  className="rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {actionBefore ? (
+                    <span
+                      id={actionBeforeId}
+                      className="sr-only"
+                      lang={resolvedRemoveLang}
+                      dir={resolvedRemoveDir}
+                    >
+                      {actionBefore}
+                    </span>
+                  ) : null}
+                  {actionAfter ? (
+                    <span
+                      id={actionAfterId}
+                      className="sr-only"
+                      lang={resolvedRemoveLang}
+                      dir={resolvedRemoveDir}
+                    >
+                      {actionAfter}
+                    </span>
+                  ) : null}
+                  <X className="h-3 w-3 cursor-pointer" aria-hidden="true" />
+                </button>
+              </Badge>
+            );
+          })}
+        </div>
+      )}
       <PopoverContent
         className="w-[var(--radix-popover-trigger-width)] p-0"
         align="start"

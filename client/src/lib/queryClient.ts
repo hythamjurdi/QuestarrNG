@@ -164,6 +164,10 @@ export const queryClient = new QueryClient({
   },
 });
 
+// Repeated settings observers must not retry an initial failure as each panel
+// mounts. SettingsPage exposes an explicit retry action for this shared query.
+queryClient.setQueryDefaults(["/api/settings"], { retryOnMount: false });
+
 /**
  * Removes all cached torrent/NZB search results from the query cache.
  * Should be called whenever the set of configured indexers changes so that

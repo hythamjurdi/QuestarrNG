@@ -1,0 +1,59 @@
+Batch 34 validation — upstream items #292–305
+================================================
+
+Disposition
+-----------
+Reviewed upstream issues and pull requests #292 through #305. Thirteen items
+are verified against the current fork; PR #300 is superseded. Counts recorded
+in the ledger after this batch: 266 verified, 30 superseded, 842 unreviewed,
+7 not-applicable, 1 implemented-unverified, and 1 needs-implementation.
+
+Upstream evidence and current behavior
+--------------------------------------
+- PR #292 has a failed upstream Node 20 build check. The fork's supported Node
+  versions pass the local lint/type checks; its contributor, operations, and
+  PR-template artifacts are present.
+- Issue #293: G4U VIP API support and dot-separated multiword title queries are
+  implemented and covered by search/API tests.
+- Issue #294: full release titles wrap on desktop and mobile. The mobile dialog
+  was captured at 390x844; the title had no line clamp, the source link target
+  was verified, and the browser reported no page errors. Screenshot:
+  ../../pr-evidence/upstream-release-name-mobile-full.png
+- PR #295: the PostgreSQL pool is bounded and configurable (default max 10,
+  minimum 2), uses five-second connection and statement timeouts, handles idle
+  client errors, and closes on shutdown. This preserves operator control in
+  place of hardcoding the proposed max 20.
+- PRs #296, #297, #298, #299, and #302 request dependency versions already
+  present in the current lockfile or superseded by newer compatible versions.
+  Current versions include react-hook-form 7.89.0, @types/node 26.6.4,
+  typescript-eslint 8.71.0, lucide-react 1.48.0, @types/pg 8.23.1,
+  drizzle-zod 0.8.3, and @vitest/ui 5.0.2.
+- PR #300 is superseded: its upstream build check failed, maintainers called
+  the update breaking, and the bot reported the dependency already up to date.
+  The current fork uses 0.8.3 and passes current checks.
+- PR #301: download rules are implemented in settings, manual search, and
+  scheduled search. A regression test confirms scheduled results respect the
+  selected visible categories. Settings error recovery and migration
+  registration are present; current type checking passes.
+- PR #303's contributor list and collapsible IGDB setup guide are present in
+  the README.
+- Issue #304's current Discord invite is linked from README and docs and was
+  confirmed active; the old invite returned 404.
+- Issue #305's container workflow publishes dev on main and latest, exact
+  semantic version, and immutable commit tags for releases (implemented in
+  batch 33).
+
+Validation
+----------
+- Focused Vitest run: 6 files passed, 1 skipped; 579 tests passed, 7 skipped.
+  Suites: GameDownloadDialog, search, API routes, scheduled auto-search,
+  database, database error handling, and configuration.
+- Previously completed for this batch: npm run check, npm run lint,
+  npm run format:check, npm run build, and docker compose config --quiet all
+  passed. Vite reported its existing large-chunk advisory.
+- UI evidence was captured with npm run dev:test. The temporary test database
+  and its sidecar files were removed and the dev:test server was stopped.
+- The task scratch stayed under /dev/shm/questarr-upstream-batch34 because /tmp
+  was full. The NFS mount was confirmed as kspls0:/mnt/datapool_lvm_media at
+  /mnt/datapool_lvm_media, but read-only capacity/listing checks did not
+  respond; no files were written to the NFS share.

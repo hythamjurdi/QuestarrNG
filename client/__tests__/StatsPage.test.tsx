@@ -8,13 +8,41 @@ import StatsPage from "../src/pages/stats";
 import { formatRegionalPercent, setRegionalPreference } from "../src/lib/regional-format";
 import { createTestQueryClient } from "./test-utils";
 
+const { apiRequestMock, games } = vi.hoisted(() => ({
+  apiRequestMock: vi.fn(),
+  games: [
+    {
+      id: "game-1",
+      title: "Game One",
+      status: "wanted",
+      genres: ["RPG", "Adventure"],
+      platforms: ["PC"],
+      publishers: [],
+      developers: [],
+      rating: null,
+      userRating: null,
+    },
+    {
+      id: "game-2",
+      title: "Game Two",
+      status: "owned",
+      genres: ["RPG"],
+      platforms: ["PC", "Switch"],
+      publishers: [],
+      developers: [],
+      rating: null,
+      userRating: null,
+    },
+  ],
+}));
+
 vi.mock("@/hooks/use-mobile", () => ({
   useIsMobile: () => false,
 }));
 
 // Stub apiRequest so game and discord-config queries resolve without network
 vi.mock("@/lib/queryClient", () => ({
-  apiRequest: vi.fn().mockResolvedValue({ json: async () => [] }),
+  apiRequest: apiRequestMock,
 }));
 
 vi.mock("@/components/StatsCard", () => ({
@@ -44,6 +72,9 @@ describe("StatsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setRegionalPreference("system");
+    apiRequestMock.mockImplementation(async (_method: string, path: string) => ({
+      json: async () => (path.startsWith("/api/games") ? games : { configured: false }),
+    }));
   });
 
   it("renders the Statistics heading", async () => {
@@ -64,7 +95,19 @@ describe("StatsPage", () => {
     );
 
     const cards = await screen.findAllByTestId("stats-card");
-    expect(cards.length).toBeGreaterThan(0);
+    expect(cards).toHaveLength(8);
+  });
+
+  it("shows unique genre, platform, and wishlist counts", async () => {
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <StatsPage />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText("Genres: 2")).toBeInTheDocument();
+    expect(screen.getByText("Platforms: 2")).toBeInTheDocument();
+    expect(screen.getByText("Wishlist: 1")).toBeInTheDocument();
   });
 
   it("formats percentage cards with the selected regional locale", async () => {

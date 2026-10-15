@@ -370,9 +370,10 @@ describe("Downloads page", () => {
     // Flex items default to min-width: auto, which prevents shrinking below an
     // unbreakable string's intrinsic width and pushes the card (and page) wider
     // than the viewport on mobile. The title's flex wrapper must opt out via
-    // min-w-0, and the title itself must allow mid-word breaks.
+    // min-w-0, and unbroken names must contribute a small min-content width to
+    // the grid track so the card stays within the viewport.
     expect(title.parentElement).toHaveClass("min-w-0");
-    expect(title).toHaveClass("break-words");
+    expect(title).toHaveClass("wrap-anywhere");
   });
 
   it("opens details and claim modals, performs download actions, and reports downloader errors", async () => {
@@ -436,8 +437,10 @@ describe("Downloads page", () => {
 
     renderPage();
 
-    expect(await screen.findByTestId("button-pause-dl-active")).toBeInTheDocument();
-    expect(screen.getByTestId("button-resume-dl-paused")).toBeInTheDocument();
+    const pauseButton = await screen.findByTestId("button-pause-dl-active");
+    const resumeButton = screen.getByTestId("button-resume-dl-paused");
+    expect(pauseButton).toHaveAccessibleName("Pause Active Download");
+    expect(resumeButton).toHaveAccessibleName("Resume Paused Download");
 
     fireEvent.click(screen.getByTestId("button-pause-dl-active"));
     fireEvent.click(screen.getByTestId("button-resume-dl-paused"));

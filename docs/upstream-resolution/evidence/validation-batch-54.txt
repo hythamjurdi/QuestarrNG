@@ -1,0 +1,41 @@
+Batch 54 validation — October 13, 2026
+
+Scope: upstream issues #586, #595, #597, and #599 and PRs #587–594, #596,
+#598, and #600. The refreshed source inventory remains 1,162 records at
+upstream main 2715243f6c229dd48a58ba588c169d0fd6779d1c.
+
+- Focused regression suite: 11 files passed, 230 tests passed. The tests cover
+  Prowlarr proxy URL construction and `file` preservation, plus-encoding only
+  within `link`, qBittorrent direct and fallback requests, SABnzbd upload and
+  TLS behavior, torrent error recovery, Steam ID persistence, and YearView
+  rendering.
+- The Torznab Prowlarr proxy test now explicitly asserts that the generated
+  URL retains `file=Some Game`, covering the exact regression described in
+  issue #586.
+- `npm run check`, `npm run lint`, and `npm run format:check` passed.
+- `sh -n entrypoint.sh` and `git diff --check` passed.
+- NFS root-squash behavior was smoke-tested in Docker using the current
+  worktree's `entrypoint.sh` mounted into the test container. `/app/data` was
+  a task-owned local directory with matching `1001:1001` ownership. A `chown`
+  stub was placed first in `PATH`; it would fail and create a marker if called.
+  The entrypoint completed, dropped privileges to `questarr` (`1001:1001`),
+  and the marker was absent. This exercises the matching-ownership/root-squash
+  case without claiming to mount an actual NFS export.
+- The SABnzbd TLS review comment was checked against current code: upload bodies
+  are explicit multipart bytes with a boundary, and HTTPS certificate
+  validation is not disabled. `NODE_EXTRA_CA_CERTS` is the documented route
+  for trusting a private CA. The old `fetchInsecure` fallback mentioned by the
+  comment is not present in the current SABnzbd path.
+- The upstream PR reported one SonarCloud security hotspot. Its details page
+  returned HTTP 403, so that external finding could not be inspected; the
+  changed paths were reviewed locally and the focused tests passed.
+- No production source under `client/src/**` changed. Playwright was not rerun
+  for this batch; the prior isolated full browser run passed all 50 journeys
+  in batch 53. The current calendar and settings component tests passed here.
+- All task-owned local scratch, including the temporary data mount and command
+  stub, was removed. No NFS scratch space was used.
+
+Disposition: PRs #587–594 are superseded by the current workflow or newer
+dependency state. Issues #586, #595, #597, #599 and PRs #596, #598, #600 are
+verified against current implementation and regression evidence. The full
+upstream-resolution campaign remains in progress.

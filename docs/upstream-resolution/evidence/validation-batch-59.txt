@@ -1,0 +1,74 @@
+# Batch 59 validation
+
+This batch reviewed PRs #662–681 and #696 and issues #667, #668, and #674.
+The live issue/PR audit on October 13, 2026 at 16:38 UTC confirmed 1,163
+records (232 issues and 931 PRs). The ledger now records 518 verified, 142
+superseded, 10 not applicable, 3 implemented but unverified, 0 needing
+implementation, and 490 unreviewed. Eight previously reviewed PR source
+records remain flagged for renewed triage: #1192, #1195, #1196, #1198, #1199,
+#1201, #1202, and #1203.
+
+## Application and browser tests
+
+- `npm run test:run -- --maxWorkers=8`: **263 files passed, 1 skipped; 4,186
+  tests passed, 7 skipped**.
+- The initial default-parallel Vitest run had one timeout in the unrelated
+  Header accessibility test. That test passed by itself, and the bounded-worker
+  full run above passed.
+- Full Playwright E2E suite in the disposable `npm run dev:test` worktree:
+  **50 passed** before the final Clear-scope refinement; that refinement passed
+  the focused browser run below.
+- Final Batch 59 visual Playwright run: **4 browser cases passed** plus its
+  setup project, covering date-filtered search continuation, filtered log
+  actions and full-buffer clear scope, indexer priority editing, and downloader
+  priority editing.
+- Screenshots captured from the running UI: `batch59-search-load-more.png`,
+  `batch59-search-loaded-match.png`, `batch59-logs-empty-filter.png`, and
+  `batch59-indexer-priority-editing.png`.
+
+## Build and project gates
+
+- `npm run check`: passed.
+- `npm run lint`: passed.
+- `npm run format:check`: passed.
+- `npm run secretlint`: passed.
+- `npm run build`: passed. Vite reports the existing large-chunk advisory for
+  the approximately 869 KB entry chunk.
+- `node scripts/audit-prod.mjs`: passed; no high-or-higher production
+  advisories outside the VEX feed. npm printed its existing `allow-scripts`
+  configuration warning.
+- `npm run check:overrides`: passed; all listed dependency overrides remain
+  required.
+- `npm run check:licenses`: passed for 418 production package versions.
+- `npm run check:deprecated`: passed; three dependencies remain deprecated at
+  their latest available versions and are pinned upstream.
+- `git diff --check`: passed.
+- `git submodule status` returned no entries and `.gitmodules` is not tracked,
+  confirming the wiki-submodule relocation in PR #663 does not apply.
+- The documentation navigation JSON, ledger totals, linked screenshots, and
+  new download guide were checked for presence and consistency.
+
+## Home Assistant add-on smoke
+
+Built `questarr/Dockerfile` from the pinned QuestarrNG 1.10.0 image using an
+isolated temporary Buildx builder. The image ran as `questarr:questarr`; the
+entrypoint corrected a root-owned `/data` file to `1000:1000`, the app user
+could write to the data volume, and a symlink target on a separate volume kept
+its original `0:0` ownership. The build output digest was
+`sha256:582818e8b402cffa561b68654615ebbf27bd6de364177937d0227a1e619eefcb`.
+The disposable builder, image, and both volumes were removed; existing Docker
+containers and builders were left running.
+
+## Cleanup and remaining work
+
+Browser tests used the task-scoped scratch directory
+`/home/keith/Documents/code/questarr-batch59-scratch` and a disposable app on
+port `51959`; the test server was stopped and the scratch worktree, database,
+auth file, and generated test artifacts were removed before push. Local scratch
+had sufficient space, so the LVM-backed NFS share was not used. The user's
+port `5100` and live checkout were left untouched.
+
+The campaign remains in progress: 490 records are unreviewed, three live
+integrations remain unverified, and eight changed-source flags await renewed
+triage. This batch is committed and pushed only to `codex/upstream-resolution`;
+the campaign merge gate is not yet met.

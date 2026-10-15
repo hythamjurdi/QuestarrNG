@@ -170,6 +170,82 @@ describe.each(activeTestDialects())("storage behaviour on %s", (dialect) => {
       expect(entry.hasUpdateDownload).toBe(true);
     });
 
+    it("scopes import recovery ownership, relinking, and skipping on both dialects", async () => {
+      const owner = await storage().createUser({ username: "recovery-owner", passwordHash: "h" });
+      const otherUser = await storage().createUser({ username: "bob", passwordHash: "h" });
+      const [ownerGame, ownerTarget] = await Promise.all([
+        storage().addGame({
+          userId: owner.id,
+          title: "Owner's Original Game",
+          status: "wanted",
+        } as never),
+        storage().addGame({
+          userId: owner.id,
+          title: "Owner's Replacement Game",
+          status: "wanted",
+        } as never),
+      ]);
+      const foreignGame = await storage().addGame({
+        userId: otherUser.id,
+        title: "Another User's Game",
+        status: "wanted",
+      } as never);
+      const downloader = await storage().addDownloader({
+        name: "recovery-qb",
+        type: "qbittorrent",
+        url: "http://recovery",
+      } as never);
+      const recoveryDownload = await storage().addGameDownload({
+        gameId: ownerGame.id,
+        downloaderId: downloader!.id,
+        downloadHash: "recovery-link",
+        downloadTitle: "Recovery Link",
+        status: "game_link_required",
+      } as never);
+      const skipDownload = await storage().addGameDownload({
+        gameId: ownerGame.id,
+        downloaderId: downloader!.id,
+        downloadHash: "recovery-skip",
+        downloadTitle: "Recovery Skip",
+        status: "game_link_required",
+      } as never);
+      const foreignDownload = await storage().addGameDownload({
+        gameId: foreignGame.id,
+        downloaderId: downloader!.id,
+        downloadHash: "foreign-recovery",
+        downloadTitle: "Foreign Recovery",
+        status: "game_link_required",
+      } as never);
+
+      expect(recoveryDownload?.ownerUserId).toBe(owner.id);
+      expect(
+        (await storage().getUnlinkedImportReviews(owner.id)).map((download) => download.id).sort()
+      ).toEqual([recoveryDownload!.id, skipDownload!.id].sort());
+      expect(await storage().getUnlinkedImportReviews(otherUser.id)).toEqual([foreignDownload]);
+      expect(await storage().getGameDownload(recoveryDownload!.id, otherUser.id)).toBeUndefined();
+
+      expect(
+        await storage().relinkGameDownload(recoveryDownload!.id, foreignGame.id, owner.id)
+      ).toBeUndefined();
+      const relinked = await storage().relinkGameDownload(
+        recoveryDownload!.id,
+        ownerTarget.id,
+        owner.id
+      );
+      expect(relinked).toMatchObject({
+        gameId: ownerTarget.id,
+        ownerUserId: owner.id,
+        status: "manual_review_required",
+      });
+
+      expect(
+        await storage().completeUnlinkedGameDownload(skipDownload!.id, otherUser.id)
+      ).toBeUndefined();
+      expect(
+        await storage().completeUnlinkedGameDownload(skipDownload!.id, owner.id)
+      ).toMatchObject({ ownerUserId: owner.id, status: "completed" });
+    });
+
     it("round-trips a file size larger than a 32-bit integer", async () => {
       const [user] = await storage().getAllUsers();
       const [game] = await storage().getUserGames(user.id);

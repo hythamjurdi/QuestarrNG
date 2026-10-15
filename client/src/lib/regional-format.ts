@@ -206,14 +206,20 @@ const rightToLeftScripts = new Set([
 
 const rightToLeftLanguages = new Set(["ar", "ckb", "fa", "he", "ks", "ps", "sd", "ug", "ur", "yi"]);
 
-export function getRegionalDirection(locale: string): "ltr" | "rtl" {
+export function getRegionalDirection(locale?: string): "ltr" | "rtl" {
+  const normalizedLocale =
+    locale ?? getRegionalLocale() ?? Intl.DateTimeFormat().resolvedOptions().locale;
   try {
-    if (rightToLeftScripts.has(new Intl.Locale(locale).maximize().script ?? "")) return "rtl";
+    if (rightToLeftScripts.has(new Intl.Locale(normalizedLocale).maximize().script ?? "")) {
+      return "rtl";
+    }
   } catch {
     // Fall back to the language subtag for older runtimes or malformed locales.
   }
 
-  return rightToLeftLanguages.has(locale.replaceAll("_", "-").split("-")[0]?.toLowerCase() ?? "")
+  return rightToLeftLanguages.has(
+    normalizedLocale.replaceAll("_", "-").split("-")[0]?.toLowerCase() ?? ""
+  )
     ? "rtl"
     : "ltr";
 }

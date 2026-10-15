@@ -70,7 +70,13 @@ export function TagList({
           <PopoverContent className="w-auto max-w-64 p-3">
             <div className="flex flex-wrap gap-1.5">
               {items.slice(visibleCount).map((item) => (
-                <Badge key={item} variant={variant} className="text-xs">
+                <Badge
+                  key={item}
+                  variant={variant}
+                  className="text-xs"
+                  data-testid={getTestId?.(item)}
+                  title={item}
+                >
                   <span lang="und" dir="auto">
                     {item}
                   </span>

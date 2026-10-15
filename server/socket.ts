@@ -24,11 +24,10 @@ export function setupSocketIO(httpServer: HttpServer) {
       },
     });
 
-    // Every event on this server (live logs, notifications, download and
-    // import progress) belongs to a signed-in user, so the handshake has to
-    // carry the same credential the REST API accepts: the httpOnly auth
-    // cookie a browser sends automatically, or a bearer token for a session
-    // still on the legacy localStorage flow.
+    // Every socket is available only to a signed-in user. User-owned events
+    // use that user's room; the app-wide log stream uses the same authenticated
+    // boundary as GET /api/logs. Accept the httpOnly auth cookie a browser
+    // sends automatically, or a bearer token for a legacy localStorage session.
     io.use(async (socket, next) => {
       const credential = getHandshakeCredential(socket.handshake);
       // The cookie is ambient: a page on another origin that shares this site
@@ -147,16 +146,9 @@ export function getIO() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function notifyUser(type: string, payload: any, userId?: string | null) {
-  if (!io) {
+  if (!io || !userId) {
     return;
   }
-
-  if (userId) {
-    // Owner known: reach only that user's sockets.
-    io.to(`${USER_ROOM_PREFIX}${userId}`).emit(type, payload);
-    return;
-  }
-
-  // No owner (app-wide event): broadcast, as before.
-  io.emit(type, payload);
+  // Never broadcast owner-scoped application data when its owner is unknown.
+  io.to(`${USER_ROOM_PREFIX}${userId}`).emit(type, payload);
 }

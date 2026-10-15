@@ -4,6 +4,14 @@
 
 Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
 
+## Verification
+
+List the automated checks you ran and their results. Describe any manual checks and attach screenshots or recordings for UI changes. If a relevant check was not run, say why.
+
+## Risk Analysis
+
+Describe the main user, data, or compatibility risks and how to roll the change back if needed.
+
 ## Screenshots
 
 For any UI change (`client/src/**`), include a screenshot or short recording of it running. Not required for backend-only changes.
@@ -37,3 +45,4 @@ changes, include `release-note: none` in this description.
 - [ ] If the database schema changed, SQLite and Postgres are both updated: `shared/schema.ts` and `shared/schema.pg.ts` (+ `shared/schema-parity.ts`), migrations generated with `npm run db:generate` and `npm run db:generate:pg` (`migrations-pg/`), and any new table added to `TABLE_ORDER` in `scripts/sqlite-to-pg.ts`
 - [ ] For UI changes, I have included a screenshot or recording of it running
 - [ ] If AI is used to write the code (partially or entirely), provide the full model name (including version) and thinking level.
+- [ ] Every non-merge commit includes my DCO sign-off trailer, or this is a GitHub-verified automation pull request. See [DCO.md](../DCO.md).

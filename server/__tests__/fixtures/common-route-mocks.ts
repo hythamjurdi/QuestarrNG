@@ -2,6 +2,13 @@ import { vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 import { DEFAULT_ROMM_CONFIG, type User } from "../../../shared/schema.js";
 import type { TimeToBeat } from "../../igdb.js";
+import {
+  evaluateReleases,
+  type CustomFormat,
+  type ReleaseContext,
+  type ReleaseInput,
+  type ReleaseProfile,
+} from "../../../shared/release-scoring.js";
 
 /**
  * Shared mock factories for tests that boot the full app via `registerRoutes()`
@@ -75,6 +82,14 @@ export function createStorageMock() {
     getGameJournalEntries: vi.fn().mockResolvedValue([]),
     addGameJournalEntry: vi.fn(),
     deleteGameJournalEntry: vi.fn(),
+    getGameLists: vi.fn().mockResolvedValue([]),
+    getGameList: vi.fn(),
+    getGameListGames: vi.fn().mockResolvedValue([]),
+    createGameList: vi.fn(),
+    renameGameList: vi.fn(),
+    deleteGameList: vi.fn(),
+    addGameToList: vi.fn(),
+    removeGameFromList: vi.fn(),
     getGameMilestones: vi.fn().mockResolvedValue([]),
     addGameMilestone: vi.fn(),
     updateGameMilestone: vi.fn(),
@@ -180,6 +195,9 @@ export function createIgdbMock() {
     getPlatforms: vi.fn().mockResolvedValue([]),
     getGameById: vi.fn(),
     getGamesByIds: vi.fn().mockResolvedValue([]),
+    getGamesByIdsBatches: vi.fn(async function* (ids: number[]) {
+      if (ids.length > 0) yield { requestedIds: ids, games: [] };
+    }),
     getTimeToBeats: vi.fn().mockResolvedValue(new Map<number, TimeToBeat>()),
     batchSearchGames: vi.fn().mockResolvedValue(new Map()),
     testCredentials: vi.fn().mockResolvedValue({ success: true }),
@@ -360,6 +378,18 @@ export function createSearchMock() {
     },
     // No-op by default: TypeSafe AI enrichment is unconfigured/off in tests.
     enrichWithAiAnalysis: vi.fn().mockImplementation((items: unknown[]) => Promise.resolve(items)),
+    scoreSearchItems: vi.fn(
+      (
+        items: ReleaseInput[],
+        context: ReleaseContext,
+        profile: ReleaseProfile,
+        formats: CustomFormat[] = [],
+        acceptedOnly = false
+      ) =>
+        evaluateReleases(items, context, profile, formats)
+          .filter(({ evaluation }) => !acceptedOnly || evaluation.accepted)
+          .map(({ item, evaluation }) => ({ ...item, releaseEvaluation: evaluation }))
+    ),
   };
 }
 

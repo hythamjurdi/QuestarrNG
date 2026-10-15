@@ -1,4 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Writable } from "node:stream";
+
+function createTransportStub(): Writable {
+  return new Writable({
+    write(_chunk, _encoding, callback) {
+      callback();
+    },
+  });
+}
 
 describe("Logger Module", () => {
   const originalEnv = process.env.NODE_ENV;
@@ -10,6 +19,7 @@ describe("Logger Module", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     process.env.NODE_ENV = originalEnv;
     if (originalLogLevel !== undefined) {
       process.env.LOG_LEVEL = originalLogLevel;
@@ -32,6 +42,7 @@ describe("Logger Module", () => {
     expect(loggerModule.expressLogger).toBeDefined();
     expect(loggerModule.downloadersLogger).toBeDefined();
     expect(loggerModule.torznabLogger).toBeDefined();
+    expect(loggerModule.middlewareLogger).toBeDefined();
   });
 
   it("should create child loggers with module property", async () => {
@@ -43,6 +54,7 @@ describe("Logger Module", () => {
     expect(loggerModule.expressLogger.bindings()).toHaveProperty("module", "express");
     expect(loggerModule.downloadersLogger.bindings()).toHaveProperty("module", "downloaders");
     expect(loggerModule.torznabLogger.bindings()).toHaveProperty("module", "torznab");
+    expect(loggerModule.middlewareLogger.bindings()).toHaveProperty("module", "middleware");
   });
 
   it("should respect LOG_LEVEL environment variable", async () => {
@@ -108,11 +120,36 @@ describe("Logger Module", () => {
     });
   });
 
+  it("redacts message text and child bindings before they hit the sink", async () => {
+    const loggerModule = await import("../logger.js");
+    const { logEmitter } = await import("../log-events.js");
+    const lines: string[] = [];
+    const onLine = (line: string) => lines.push(line);
+    logEmitter.on("line", onLine);
+
+    loggerModule.logger.info("apiKey=message-secret");
+    loggerModule.logger.info("password=%s", "formatted-secret");
+    loggerModule.logger.child({ token: "child-secret" }).info("safe child message");
+
+    await new Promise((resolve) => setImmediate(resolve));
+    logEmitter.off("line", onLine);
+
+    expect(lines).toHaveLength(3);
+    expect(lines.join("\n")).not.toContain("message-secret");
+    expect(lines.join("\n")).not.toContain("formatted-secret");
+    expect(lines.join("\n")).not.toContain("child-secret");
+    expect(JSON.parse(lines[0])).toMatchObject({ msg: "apiKey=[redacted]" });
+    expect(JSON.parse(lines[1])).toMatchObject({ msg: "password=[redacted]" });
+    expect(JSON.parse(lines[2])).toMatchObject({ token: "[redacted]" });
+  });
+
   it("configures the pino-pretty stdout target outside of production", async () => {
     process.env.NODE_ENV = "development";
 
     const pinoModule = await import("pino");
-    const transportSpy = vi.spyOn(pinoModule.default, "transport");
+    const transportSpy = vi
+      .spyOn(pinoModule.default, "transport")
+      .mockReturnValue(createTransportStub() as never);
 
     await import("../logger.js");
 
@@ -127,7 +164,9 @@ describe("Logger Module", () => {
     process.env.NODE_ENV = "production";
 
     const pinoModule = await import("pino");
-    const transportSpy = vi.spyOn(pinoModule.default, "transport");
+    const transportSpy = vi
+      .spyOn(pinoModule.default, "transport")
+      .mockReturnValue(createTransportStub() as never);
 
     await import("../logger.js");
 
@@ -148,7 +187,9 @@ describe("Logger Module", () => {
     process.env.QUESTARR_LOG_FILE = "/tmp/questarr-logs/server.log";
 
     const pinoModule = await import("pino");
-    const transportSpy = vi.spyOn(pinoModule.default, "transport");
+    const transportSpy = vi
+      .spyOn(pinoModule.default, "transport")
+      .mockReturnValue(createTransportStub() as never);
 
     await import("../logger.js");
 

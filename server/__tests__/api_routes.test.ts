@@ -23,7 +23,11 @@ import {
   createSocketMock,
 } from "./fixtures/common-route-mocks.js";
 import { registerRoutes, parseCategories } from "../routes.js";
-import { matchUnmatchedFolder } from "../library-scanner.js";
+import {
+  matchUnmatchedFolder,
+  rescanRootFolderById,
+  searchUnmatchedFolder,
+} from "../library-scanner.js";
 import { storage } from "../storage.js";
 import { searchAllIndexers } from "../search.js";
 import { igdbClient, type IGDBGame } from "../igdb.js";
@@ -48,11 +52,18 @@ import { decryptCredential } from "../credential-crypto.js";
 import * as ssrfModule from "../ssrf.js";
 import fsExtra from "fs-extra";
 import { normalizeTitle } from "../../shared/title-utils.js";
+import { DEFAULT_RELEASE_PROFILE } from "../../shared/release-scoring.js";
 
 const safeFetchMock = vi.hoisted(() => vi.fn());
 vi.mock("../ssrf.js", async () => {
   const actual = await vi.importActual<typeof import("../ssrf.js")>("../ssrf.js");
   return { ...actual, safeFetch: safeFetchMock };
+});
+
+const checkDownloadStatusMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock("../cron.js", async () => {
+  const actual = await vi.importActual<typeof import("../cron.js")>("../cron.js");
+  return { ...actual, checkDownloadStatus: checkDownloadStatusMock };
 });
 
 // Mock dependencies (factory bodies live in ./fixtures/common-route-mocks.ts so they can be
@@ -69,15 +80,24 @@ vi.mock("../prowlarr.js", () => ({ prowlarrClient: createProwlarrMock() }));
 vi.mock("../prowlarr-settings.js", () => ({
   loadProwlarrSyncSettings: vi.fn().mockResolvedValue(null),
   saveProwlarrSyncSettings: vi.fn().mockResolvedValue(undefined),
+  revokeProwlarrHttpOptIn: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("../xrel.js", () => createXrelMock());
 vi.mock("../apprise.js", async () => createAppriseMock());
 vi.mock("../downloaders.js", () => ({ DownloaderManager: createDownloaderManagerMock() }));
 vi.mock("../steam-routes.js", () => ({ steamRoutes: createSteamRoutesMock() }));
 vi.mock("../search.js", () => createSearchMock());
-vi.mock("fs-extra", () => ({
-  default: { remove: vi.fn(), pathExists: vi.fn(), readdir: vi.fn() },
-}));
+vi.mock("fs-extra", async () => {
+  const actual = await vi.importActual<typeof import("fs-extra")>("fs-extra");
+  return {
+    default: {
+      remove: vi.fn(),
+      pathExists: vi.fn(),
+      readdir: vi.fn(),
+      realpath: actual.realpath,
+    },
+  };
+});
 // Only the new /api/settings/security-scan/test ClamAV-ping route touches
 // node:net anywhere in routes.ts, so mocking it file-wide here is safe.
 const netTestState = vi.hoisted(() => ({ nextReply: "PONG\0" as string | null }));
@@ -133,10 +153,12 @@ vi.mock("../root-folders.js", async () => {
 });
 vi.mock("../library-scanner.js", () => ({
   scanRootFolderById: vi.fn().mockResolvedValue(undefined),
+  rescanRootFolderById: vi.fn().mockResolvedValue(undefined),
   scanAllEnabledRootFolders: vi.fn().mockResolvedValue(undefined),
   getAllScanProgress: vi.fn().mockReturnValue([]),
   getAllUnmatched: vi.fn().mockReturnValue([]),
   matchUnmatchedFolder: vi.fn(),
+  searchUnmatchedFolder: vi.fn(),
 }));
 
 // Neutralize the IP-keyed rate limiters so cumulative requests across this large
@@ -216,6 +238,7 @@ describe("API Routes - Extended Coverage", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.mocked(storage.getImportConfig).mockResolvedValue({ enablePostProcessing: false } as any);
     app = express();
     app.set("trust proxy", 1);
     app.use(express.json());
@@ -510,13 +533,13 @@ describe("API Routes - Extended Coverage", () => {
       it("should return 400 when username is missing", async () => {
         const res = await request(app).post("/api/auth/login").send({ password: "password123" });
         expect(res.status).toBe(400);
-        expect(res.body.error).toBe("Username and password are required and must be strings");
+        expect(res.body.error).toBe("Validation failed");
       });
 
       it("should return 400 when password is missing", async () => {
         const res = await request(app).post("/api/auth/login").send({ username: "testuser" });
         expect(res.status).toBe(400);
-        expect(res.body.error).toBe("Username and password are required and must be strings");
+        expect(res.body.error).toBe("Validation failed");
       });
 
       it("should return 400 for non-string username", async () => {
@@ -524,7 +547,7 @@ describe("API Routes - Extended Coverage", () => {
           .post("/api/auth/login")
           .send({ username: 123, password: "password123" });
         expect(res.status).toBe(400);
-        expect(res.body.error).toBe("Username and password are required and must be strings");
+        expect(res.body.error).toBe("Validation failed");
       });
 
       it("should trim username and password before authentication", async () => {
@@ -542,6 +565,19 @@ describe("API Routes - Extended Coverage", () => {
         expect(storage.getUserByUsername).toHaveBeenCalledWith("testuser");
         expect(comparePassword).toHaveBeenCalledWith("  password123  ", "hashed");
         expect(comparePassword).toHaveBeenCalledWith("password123", "hashed");
+      });
+
+      it("should still accept a legacy password whose stored value includes surrounding spaces", async () => {
+        vi.mocked(storage.getUserByUsername).mockResolvedValue(mockUserHashed);
+        vi.mocked(storage.assignOrphanGamesToUser).mockResolvedValue(undefined);
+        vi.mocked(comparePassword).mockResolvedValueOnce(true);
+
+        const res = await request(app)
+          .post("/api/auth/login")
+          .send({ username: "testuser", password: " password123 " });
+
+        expect(res.status).toBe(200);
+        expect(comparePassword).toHaveBeenCalledExactlyOnceWith(" password123 ", "hashed");
       });
     });
 
@@ -790,6 +826,23 @@ describe("API Routes - Extended Coverage", () => {
       expect(response.body).toEqual(savedGame);
     });
 
+    it("defaults a null discovery status before storing the game", async () => {
+      const newGame = { title: "Untracked Game", igdbId: 12350, status: null };
+
+      vi.mocked(storage.getUserGames).mockResolvedValue([]);
+      vi.mocked(storage.addGame).mockResolvedValue({
+        ...newGame,
+        id: "game-default-status",
+        userId: "user-1",
+        status: "wanted",
+      } as unknown as Game);
+
+      const response = await request(app).post("/api/games").send(newGame);
+
+      expect(response.status).toBe(201);
+      expect(storage.addGame).toHaveBeenCalledWith(expect.objectContaining({ status: "wanted" }));
+    });
+
     it("marks an already-released game as released when adding it", async () => {
       const newGame = {
         title: "Previously Released Game",
@@ -913,7 +966,7 @@ describe("API Routes - Extended Coverage", () => {
         .post("/api/games")
         .send({ title: "New Game", steamAppId: "not-a-number" });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid game data");
+      expect(response.body.error).toBe("Validation failed");
     });
   });
 
@@ -966,6 +1019,21 @@ describe("API Routes - Extended Coverage", () => {
         .send({ status: "completed" });
       expect(response.status).toBe(404);
     });
+
+    it("should not update a game owned by another user", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "other-user",
+      } as unknown as Game);
+
+      const response = await request(app)
+        .patch(`/api/games/${gameId}/status`)
+        .send({ status: "completed" });
+
+      expect(response.status).toBe(403);
+      expect(storage.updateGameStatus).not.toHaveBeenCalled();
+    });
   });
 
   describe("PATCH /api/games/:id/hidden", () => {
@@ -991,7 +1059,22 @@ describe("API Routes - Extended Coverage", () => {
         .patch(`/api/games/${gameId}/hidden`)
         .send({ hidden: "yes" });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid hidden data");
+      expect(response.body.error).toBe("Validation failed");
+    });
+
+    it("should not change visibility for a game owned by another user", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "other-user",
+      } as unknown as Game);
+
+      const response = await request(app)
+        .patch(`/api/games/${gameId}/hidden`)
+        .send({ hidden: true });
+
+      expect(response.status).toBe(403);
+      expect(storage.updateGameHidden).not.toHaveBeenCalled();
     });
   });
 
@@ -1014,7 +1097,7 @@ describe("API Routes - Extended Coverage", () => {
         "v1.2.3"
       );
       const { notifyUser } = await import("../socket.js");
-      expect(vi.mocked(notifyUser)).toHaveBeenCalledWith("gameUpdated", gameId);
+      expect(vi.mocked(notifyUser)).toHaveBeenCalledWith("gameUpdated", gameId, "user-1");
     });
 
     it("should clear the version with a blank value", async () => {
@@ -1039,7 +1122,7 @@ describe("API Routes - Extended Coverage", () => {
         .patch(`/api/games/${gameId}/installed-version`)
         .send({ installedVersion: "v".repeat(65) });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid installed version data");
+      expect(response.body.error).toBe("Validation failed");
     });
 
     it("should return 404 when the game is not the user's", async () => {
@@ -1157,7 +1240,7 @@ describe("API Routes - Extended Coverage", () => {
         .send({ targetPlatformId: 8, targetPlatformName: null });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid target platform data");
+      expect(response.body.error).toBe("Validation failed");
     });
 
     it("rejects a mismatched complete target pair before storage", async () => {
@@ -1166,7 +1249,7 @@ describe("API Routes - Extended Coverage", () => {
         .send({ targetPlatformId: 8, targetPlatformName: "PlayStation 5" });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Invalid target platform data");
+      expect(response.body.error).toBe("Validation failed");
       expect(vi.mocked(storage.updateGame)).not.toHaveBeenCalled();
     });
   });
@@ -1193,6 +1276,21 @@ describe("API Routes - Extended Coverage", () => {
       expect(response.status).toBe(404);
     });
 
+    it("should not delete a game or its files when another user owns it", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "other-user",
+        libraryPath: "/data/library/OtherUserGame",
+      } as unknown as Game);
+
+      const response = await request(app).delete(`/api/games/${gameId}?deleteFiles=true`);
+
+      expect(response.status).toBe(403);
+      expect(storage.removeGame).not.toHaveBeenCalled();
+      expect(fsExtra.remove).not.toHaveBeenCalled();
+    });
+
     it("should delete library files when deleteFiles=true and path is inside library root", async () => {
       const gameId = "123e4567-e89b-12d3-a456-426614174000";
       vi.mocked(storage.getGame).mockResolvedValue({
@@ -1214,6 +1312,60 @@ describe("API Routes - Extended Coverage", () => {
         fileDeletion: { deleted: true, path: "/data/library/MyGame" },
       });
       expect(fsExtra.remove).toHaveBeenCalledWith(path.resolve("/data/library/MyGame"));
+    });
+
+    it("should delete RomM files inside the enabled RomM library root", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      const gamePath = "/data/romm/library/roms/ps2/Burnout 3";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "user-1",
+        libraryPath: gamePath,
+      } as unknown as Game);
+      vi.mocked(storage.getImportConfig).mockResolvedValue({
+        libraryRoot: "/data/library",
+      } as any);
+      vi.mocked(storage.getRomMConfig).mockResolvedValue({
+        enabled: true,
+        libraryRoot: "/data/romm/library/roms",
+      } as any);
+      vi.mocked(storage.removeGame).mockResolvedValue(true);
+      vi.mocked(fsExtra.remove).mockResolvedValue(undefined as never);
+
+      const response = await request(app).delete(`/api/games/${gameId}?deleteFiles=true`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.fileDeletion).toEqual({ deleted: true, path: gamePath });
+      expect(fsExtra.remove).toHaveBeenCalledWith(path.resolve(gamePath));
+    });
+
+    it("should not treat a disabled RomM library as an authorized delete root", async () => {
+      const gameId = "123e4567-e89b-12d3-a456-426614174000";
+      const gamePath = "/data/romm/library/roms/ps2/Burnout 3";
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: gameId,
+        userId: "user-1",
+        libraryPath: gamePath,
+      } as unknown as Game);
+      vi.mocked(storage.getImportConfig).mockResolvedValue({
+        libraryRoot: "/data/library",
+      } as any);
+      vi.mocked(storage.getRomMConfig).mockResolvedValue({
+        enabled: false,
+        libraryRoot: "/data/romm/library/roms",
+      } as any);
+      vi.mocked(storage.getAllRootFolders).mockResolvedValue([]);
+      vi.mocked(storage.removeGame).mockResolvedValue(true);
+
+      const response = await request(app).delete(`/api/games/${gameId}?deleteFiles=true`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.fileDeletion).toEqual({
+        deleted: false,
+        reason: "outside-library-root",
+        path: gamePath,
+      });
+      expect(fsExtra.remove).not.toHaveBeenCalled();
     });
 
     it("should skip deleting library files when path is outside the library root", async () => {
@@ -1461,6 +1613,31 @@ describe("API Routes - Extended Coverage", () => {
           releaseYear: 2005,
         });
       });
+
+      it.each([1950, 2100])("accepts the %s release-year boundary", async (year) => {
+        vi.mocked(igdbClient.searchGames).mockResolvedValue([]);
+
+        const response = await request(app).get(`/api/igdb/search?q=Zelda&year=${year}`);
+
+        expect(response.status).toBe(200);
+        expect(igdbClient.searchGames).toHaveBeenCalledWith("Zelda", 40, { releaseYear: year });
+      });
+
+      it.each([
+        ["platform=0", "non-positive platform ID"],
+        ["platform=1.5", "non-integer platform ID"],
+        ["year=1949", "year below the supported range"],
+        ["year=2101", "year above the supported range"],
+        ["year=20oops", "malformed year"],
+      ])("rejects %s (%s) before calling IGDB", async (filter) => {
+        vi.mocked(igdbClient.searchGames).mockClear();
+
+        const response = await request(app).get(`/api/igdb/search?q=Zelda&${filter}`);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe("Validation failed");
+        expect(igdbClient.searchGames).not.toHaveBeenCalled();
+      });
     });
 
     describe("GET /api/igdb/popular", () => {
@@ -1559,7 +1736,7 @@ describe("API Routes - Extended Coverage", () => {
           url: "https://example.com",
         });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid indexer data");
+        expect(response.body.error).toBe("Validation failed");
       });
     });
 
@@ -1781,7 +1958,7 @@ describe("API Routes - Extended Coverage", () => {
         });
 
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid downloader data");
+        expect(response.body.error).toBe("Validation failed");
       });
     });
 
@@ -2266,7 +2443,37 @@ describe("API Routes - Extended Coverage", () => {
       it("should return 400 when required fields are missing", async () => {
         const response = await request(app).post("/api/notifications").send({});
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid notification data");
+        expect(response.body.error).toBe("Validation failed");
+        expect(response.body.details).toEqual(
+          expect.arrayContaining([expect.objectContaining({ path: "type" })])
+        );
+        expect(storage.addNotification).not.toHaveBeenCalled();
+      });
+
+      it("should create a notification from a valid body", async () => {
+        const notification = {
+          id: "notification-1",
+          userId: "user-1",
+          type: "info",
+          title: "Download started",
+          message: "A game download has started.",
+          link: "/downloads",
+          read: false,
+          createdAt: new Date(),
+        };
+        vi.mocked(storage.addNotification).mockResolvedValue(notification as any);
+
+        const response = await request(app).post("/api/notifications").send({
+          type: "info",
+          title: "Download started",
+          message: "A game download has started.",
+          link: "/downloads",
+        });
+
+        expect(response.status).toBe(201);
+        expect(storage.addNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ userId: "user-1", title: "Download started" })
+        );
       });
     });
 
@@ -2527,7 +2734,7 @@ describe("API Routes - Extended Coverage", () => {
           .patch("/api/settings")
           .send({ transferMode: "not-a-real-mode" });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid settings data");
+        expect(response.body.error).toBe("Validation failed");
       });
 
       it("should accept igdbRateLimitPerSecond at boundary value 1", async () => {
@@ -2555,7 +2762,7 @@ describe("API Routes - Extended Coverage", () => {
           .patch("/api/settings")
           .send({ igdbRateLimitPerSecond: 0 });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid settings data");
+        expect(response.body.error).toBe("Validation failed");
       });
 
       it("should reject igdbRateLimitPerSecond above 4", async () => {
@@ -2563,7 +2770,34 @@ describe("API Routes - Extended Coverage", () => {
           .patch("/api/settings")
           .send({ igdbRateLimitPerSecond: 5 });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Invalid settings data");
+        expect(response.body.error).toBe("Validation failed");
+      });
+
+      it.each([1, 168])(
+        "should accept steamSyncIntervalHours at boundary value %s",
+        async (value) => {
+          vi.mocked(storage.getUserSettings).mockResolvedValue({ id: "s-1" } as any);
+          vi.mocked(storage.updateUserSettings).mockResolvedValue({ id: "s-1" } as any);
+
+          const response = await request(app)
+            .patch("/api/settings")
+            .send({ steamSyncIntervalHours: value });
+
+          expect(response.status).toBe(200);
+          expect(storage.updateUserSettings).toHaveBeenCalledWith("user-1", {
+            steamSyncIntervalHours: value,
+          });
+        }
+      );
+
+      it.each([0, 169, 1.5])("should reject steamSyncIntervalHours value %s", async (value) => {
+        const response = await request(app)
+          .patch("/api/settings")
+          .send({ steamSyncIntervalHours: value });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe("Validation failed");
+        expect(storage.updateUserSettings).not.toHaveBeenCalled();
       });
     });
   });
@@ -3136,6 +3370,40 @@ describe("API Routes - Extended Coverage", () => {
 
   // ─── Search with blacklist filtering ───
   describe("GET /api/search - blacklist filtering", () => {
+    it("filters by real torrent metadata and advances source pagination even with no matching files", async () => {
+      vi.mocked(storage.getEnabledIndexers).mockResolvedValue([
+        { id: "source", url: "https://example.com" },
+        { id: "other", url: "https://other.example" },
+      ] as any);
+      const items = Array.from({ length: 10 }, (_, index) => ({
+        title: `Game ${index}`,
+        link: `https://example.com/${index}.torrent`,
+        indexerId: "source",
+        downloadType: "torrent" as const,
+      }));
+      vi.mocked(searchAllIndexers).mockResolvedValue({
+        items,
+        total: 10,
+        offset: 0,
+        errors: [],
+      } as any);
+      vi.spyOn(ssrfModule, "safeFetch").mockImplementation(
+        async () =>
+          new Response(
+            Buffer.from(
+              `d4:infod6:lengthi1e4:name8:game.exe12:piece lengthi16384e6:pieces20:${"a".repeat(20)}ee`
+            )
+          )
+      );
+      const response = await request(app).get("/api/search?query=Game&fileTypes=nsp");
+      expect(response.status).toBe(200);
+      expect(response.body.items).toEqual([]);
+      expect(response.body.nextOffset).toBe(10);
+      expect(searchAllIndexers).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 10, offset: 0 })
+      );
+    });
+
     it("should filter blacklisted releases when gameId belongs to user", async () => {
       const mockGame = { id: "game-1", userId: "user-1", title: "Test Game" };
       vi.mocked(storage.getGame).mockResolvedValue(mockGame as any);
@@ -3163,6 +3431,58 @@ describe("API Routes - Extended Coverage", () => {
       expect(response.body.items).toHaveLength(1);
       expect(response.body.items[0].title).toBe("Test Game-CODEX");
       expect(storage.getReleaseBlacklistSet).toHaveBeenCalledWith("game-1");
+    });
+
+    it("scores owned-game search results and keeps rejected releases explainable", async () => {
+      vi.mocked(storage.getUserSettings).mockResolvedValue({
+        releaseScoringEnabled: true,
+        releaseScoringProfile: JSON.stringify({ profile: DEFAULT_RELEASE_PROFILE, formats: [] }),
+      } as any);
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: "game-1",
+        userId: "user-1",
+        title: "Test Game",
+      } as any);
+      vi.mocked(storage.getReleaseBlacklistSet).mockResolvedValue(new Set());
+      vi.mocked(searchAllIndexers).mockResolvedValue({
+        items: [
+          {
+            title: "Other Game-CODEX",
+            link: "https://example.com/other",
+            pubDate: "2026-01-01T00:00:00.000Z",
+            indexerId: "idx",
+            indexerName: "Indexer",
+            category: ["4050"],
+            guid: "other",
+            downloadType: "torrent" as const,
+          },
+          {
+            title: "Test Game-CODEX",
+            link: "https://example.com/test",
+            pubDate: "2026-01-01T00:00:00.000Z",
+            indexerId: "idx",
+            indexerName: "Indexer",
+            category: ["4050"],
+            guid: "test",
+            downloadType: "torrent" as const,
+          },
+        ],
+        total: 2,
+        offset: 0,
+        errors: [],
+      });
+
+      const response = await request(app).get("/api/search?query=Test+Game&gameId=game-1");
+
+      expect(response.status).toBe(200);
+      expect(response.body.items.map((item: { title: string }) => item.title)).toEqual([
+        "Test Game-CODEX",
+        "Other Game-CODEX",
+      ]);
+      expect(response.body.items[0].releaseEvaluation.accepted).toBe(true);
+      expect(response.body.items[1].releaseEvaluation.rejections).toContainEqual(
+        expect.objectContaining({ code: "title_mismatch" })
+      );
     });
 
     it("should include blacklistedCount in response when items are blacklisted", async () => {
@@ -3297,6 +3617,38 @@ describe("API Routes - Extended Coverage", () => {
     });
   });
 
+  describe("GET /api/search - pagination", () => {
+    it.each([
+      { itemCount: 50, nextOffset: 50 },
+      { itemCount: 2, nextOffset: null },
+    ])(
+      "returns a per-source continuation cursor for $itemCount results",
+      async ({ itemCount, nextOffset }) => {
+        const items = Array.from({ length: itemCount }, (_, index) => ({
+          title: `Game release ${index}`,
+          link: `https://example.com/${index}`,
+          pubDate: "2026-01-01T00:00:00.000Z",
+          indexerId: "source",
+          downloadType: "torrent" as const,
+        }));
+        vi.mocked(searchAllIndexers).mockResolvedValue({
+          items,
+          total: itemCount,
+          offset: 0,
+          errors: [],
+        });
+
+        const response = await request(app).get("/api/search?query=Game&limit=50&offset=0");
+
+        expect(response.status).toBe(200);
+        expect(response.body.nextOffset).toBe(nextOffset);
+        expect(searchAllIndexers).toHaveBeenCalledWith(
+          expect.objectContaining({ query: "Game", limit: 50, offset: 0 })
+        );
+      }
+    );
+  });
+
   // ─── POST /api/downloads/claim-batch ───
   describe("POST /api/downloads/claim", () => {
     it("returns 400 when the request body fails schema validation", async () => {
@@ -3308,7 +3660,7 @@ describe("API Routes - Extended Coverage", () => {
         category: "main",
       });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe("Invalid request");
+      expect(res.body.error).toBe("Validation failed");
     });
 
     it("persists a mixed-case Usenet id verbatim instead of lowercasing it", async () => {
@@ -3349,6 +3701,28 @@ describe("API Routes - Extended Coverage", () => {
       expect(storage.addGameDownload).toHaveBeenCalledWith(
         expect.objectContaining({ category: "dlc" })
       );
+    });
+
+    it("queues an already-completed claim for post-processing when enabled", async () => {
+      vi.mocked(storage.getTrackedDownloadKeys).mockResolvedValue(new Set());
+      vi.mocked(storage.getImportConfig).mockResolvedValue({ enablePostProcessing: true } as any);
+      mockSabnzbdClaimTarget();
+      vi.mocked(storage.addGameDownload).mockResolvedValue(undefined as any);
+
+      const res = await request(app).post("/api/downloads/claim").send({
+        downloaderId: "dl-1",
+        downloadHash: USENET_MIXED_CASE_ID,
+        downloadTitle: "Finished Game",
+        currentStatus: "completed",
+        category: "main",
+        gameId: "game-1",
+      });
+
+      expect(res.status).toBe(200);
+      expect(storage.addGameDownload).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "downloading" })
+      );
+      expect(checkDownloadStatusMock).toHaveBeenCalledOnce();
     });
 
     it("rejects a claim as a duplicate when the mixed-case Usenet id is already tracked", async () => {
@@ -3414,13 +3788,13 @@ describe("API Routes - Extended Coverage", () => {
     it("returns 400 when items is missing", async () => {
       const res = await request(app).post("/api/downloads/claim-batch").send({});
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe("items must be a non-empty array");
+      expect(res.body.error).toBe("Validation failed");
     });
 
     it("returns 400 when items is an empty array", async () => {
       const res = await request(app).post("/api/downloads/claim-batch").send({ items: [] });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe("items must be a non-empty array");
+      expect(res.body.error).toBe("Validation failed");
     });
 
     it("returns 400 when an item fails schema validation", async () => {
@@ -3438,7 +3812,7 @@ describe("API Routes - Extended Coverage", () => {
           ],
         });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe("Invalid item in batch");
+      expect(res.body.error).toBe("Validation failed");
     });
 
     it("returns success when gameId resolves and download is added", async () => {
@@ -3457,6 +3831,25 @@ describe("API Routes - Extended Coverage", () => {
       expect(res.body.addedCount).toBe(1);
       expect(res.body.failedCount).toBe(0);
       expect(storage.addGameDownload).toHaveBeenCalled();
+    });
+
+    it("queues completed batch claims for post-processing when enabled", async () => {
+      vi.mocked(storage.getImportConfig).mockResolvedValue({ enablePostProcessing: true } as any);
+      vi.mocked(storage.getGame).mockResolvedValue({
+        id: "game-1",
+        userId: "user-1",
+        status: "wanted",
+      } as any);
+
+      const res = await request(app)
+        .post("/api/downloads/claim-batch")
+        .send({ items: [validItem] });
+
+      expect(res.status).toBe(200);
+      expect(storage.addGameDownload).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "downloading" })
+      );
+      expect(checkDownloadStatusMock).toHaveBeenCalledOnce();
     });
 
     it("marks item skipped when download hash is already tracked", async () => {
@@ -3887,7 +4280,7 @@ describe("API Routes - Extended Coverage", () => {
       expect(response.body).toEqual({ success: true });
       expect(safeFetchMock).toHaveBeenCalledWith(
         "https://discord.com/api/webhooks/123/abc",
-        expect.objectContaining({ method: "POST" })
+        expect.objectContaining({ method: "POST", allowPrivate: false })
       );
     });
 
@@ -4246,7 +4639,7 @@ describe("API Routes - Extended Coverage", () => {
         .send({ mode: "api", apiUrl: { malicious: true }, key: "config-key" });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/invalid request payload/i);
+      expect(response.body.error).toBe("Validation failed");
     });
 
     it("should test the configured transport", async () => {
@@ -4492,6 +4885,7 @@ describe("API Routes - Extended Coverage", () => {
 
     it("canonicalizes the path before checking uniqueness on update", async () => {
       const folderId = "123e4567-e89b-12d3-a456-426614174000";
+      vi.mocked(storage.getRootFolder).mockResolvedValue(makeRootFolder({ id: folderId }));
       vi.mocked(storage.getRootFolderByPath).mockResolvedValue(undefined);
       vi.mocked(storage.updateRootFolder).mockResolvedValue(makeRootFolder({ id: folderId }));
       vi.mocked(storage.updateRootFolderHealth).mockResolvedValue(makeRootFolder({ id: folderId }));
@@ -4505,6 +4899,146 @@ describe("API Routes - Extended Coverage", () => {
         folderId,
         expect.objectContaining({ path: path.resolve("/mnt/games") })
       );
+    });
+
+    describe("automatic scan", () => {
+      const folderId = "123e4567-e89b-12d3-a456-426614174000";
+
+      it("scans a newly added enabled folder", async () => {
+        vi.mocked(storage.getRootFolderByPath).mockResolvedValue(undefined);
+        vi.mocked(storage.addRootFolder).mockResolvedValue(makeRootFolder({ id: folderId }));
+        vi.mocked(storage.updateRootFolderHealth).mockResolvedValue(
+          makeRootFolder({ id: folderId })
+        );
+
+        const res = await request(app).post("/api/root-folders").send({ path: "/mnt/games" });
+
+        expect(res.status).toBe(201);
+        expect(rescanRootFolderById).toHaveBeenCalledWith(folderId, expect.any(String));
+      });
+
+      it("does not scan a folder added disabled", async () => {
+        vi.mocked(storage.getRootFolderByPath).mockResolvedValue(undefined);
+        vi.mocked(storage.addRootFolder).mockResolvedValue(
+          makeRootFolder({ id: folderId, enabled: false })
+        );
+        vi.mocked(storage.updateRootFolderHealth).mockResolvedValue(
+          makeRootFolder({ id: folderId, enabled: false })
+        );
+
+        await request(app).post("/api/root-folders").send({ path: "/mnt/games", enabled: false });
+
+        expect(rescanRootFolderById).not.toHaveBeenCalled();
+      });
+
+      it("scans a folder when it is switched on", async () => {
+        vi.mocked(storage.getRootFolder).mockResolvedValue(
+          makeRootFolder({ id: folderId, enabled: false })
+        );
+        vi.mocked(storage.updateRootFolder).mockResolvedValue(makeRootFolder({ id: folderId }));
+
+        const res = await request(app)
+          .patch(`/api/root-folders/${folderId}`)
+          .send({ enabled: true });
+
+        expect(res.status).toBe(200);
+        expect(rescanRootFolderById).toHaveBeenCalledWith(folderId, expect.any(String));
+      });
+
+      it("does not rescan when an unrelated setting changes", async () => {
+        vi.mocked(storage.getRootFolder).mockResolvedValue(makeRootFolder({ id: folderId }));
+        vi.mocked(storage.updateRootFolder).mockResolvedValue(
+          makeRootFolder({ id: folderId, allowDelete: true })
+        );
+
+        await request(app).patch(`/api/root-folders/${folderId}`).send({ allowDelete: true });
+
+        expect(rescanRootFolderById).not.toHaveBeenCalled();
+      });
+
+      it("rescans an enabled folder whose path changed", async () => {
+        vi.mocked(storage.getRootFolder).mockResolvedValue(makeRootFolder({ id: folderId }));
+        vi.mocked(storage.getRootFolderByPath).mockResolvedValue(undefined);
+        vi.mocked(storage.updateRootFolder).mockResolvedValue(
+          makeRootFolder({ id: folderId, path: "/mnt/games" })
+        );
+        vi.mocked(storage.updateRootFolderHealth).mockResolvedValue(
+          makeRootFolder({ id: folderId, path: "/mnt/games" })
+        );
+
+        await request(app).patch(`/api/root-folders/${folderId}`).send({ path: "/mnt/games" });
+
+        expect(rescanRootFolderById).toHaveBeenCalledWith(folderId, expect.any(String));
+      });
+
+      it("returns 404 without scanning when the folder does not exist", async () => {
+        vi.mocked(storage.getRootFolder).mockResolvedValue(undefined);
+
+        const res = await request(app)
+          .patch(`/api/root-folders/${folderId}`)
+          .send({ enabled: true });
+
+        expect(res.status).toBe(404);
+        expect(storage.updateRootFolder).not.toHaveBeenCalled();
+        expect(rescanRootFolderById).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("POST /api/library/scan/unmatched/search", () => {
+    const validBody = { rootFolderId: "rf-1", folderName: "Some Game", query: "Real Name" };
+
+    it("returns the new candidates for the typed name", async () => {
+      const candidates = [{ igdbId: 7, name: "Real Name", releaseYear: 2020 }];
+      vi.mocked(searchUnmatchedFolder).mockResolvedValue(candidates);
+
+      const response = await request(app)
+        .post("/api/library/scan/unmatched/search")
+        .send(validBody);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(candidates);
+      expect(searchUnmatchedFolder).toHaveBeenCalledWith("rf-1", "Some Game", "Real Name");
+    });
+
+    it("rejects an empty search", async () => {
+      const response = await request(app)
+        .post("/api/library/scan/unmatched/search")
+        .send({ ...validBody, query: "   " });
+
+      expect(response.status).toBe(400);
+    });
+
+    it("rejects a search query that is not a string", async () => {
+      const response = await request(app)
+        .post("/api/library/scan/unmatched/search")
+        .send({ ...validBody, query: { $gt: "" } });
+
+      expect(response.status).toBe(400);
+      expect(searchUnmatchedFolder).not.toHaveBeenCalled();
+    });
+
+    it("returns 404 when the folder is no longer awaiting review", async () => {
+      vi.mocked(searchUnmatchedFolder).mockRejectedValue(
+        new Error("No matching unmatched entry for this root folder")
+      );
+
+      const response = await request(app)
+        .post("/api/library/scan/unmatched/search")
+        .send(validBody);
+
+      expect(response.status).toBe(404);
+    });
+
+    it("returns 500 without internals when IGDB fails", async () => {
+      vi.mocked(searchUnmatchedFolder).mockRejectedValue(new Error("socket hang up"));
+
+      const response = await request(app)
+        .post("/api/library/scan/unmatched/search")
+        .send(validBody);
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({ error: "IGDB search failed" });
     });
   });
 

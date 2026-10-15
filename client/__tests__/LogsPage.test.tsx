@@ -129,4 +129,53 @@ describe("LogsPage", () => {
     expect(screen.getByText(/"userId":42/)).toBeInTheDocument();
     expect(screen.getByText(/"path":"\/api\/logs"/)).toBeInTheDocument();
   });
+
+  it("disables filtered actions with no matches but keeps Clear available for buffered lines", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <LogsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Server Logs");
+    const search = screen.getByPlaceholderText("Search message or any JSON field");
+    fireEvent.change(search, { target: { value: "no matching log line" } });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Copy log lines" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Clear log lines" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Send logs to support" })).toBeDisabled();
+    });
+
+    fireEvent.change(search, { target: { value: "Log message 1" } });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Copy log lines" })).toBeEnabled()
+    );
+  });
+
+  it("disables all log actions when the buffer is empty", async () => {
+    apiRequestMock.mockResolvedValue({
+      json: async () => ({ lines: [] }),
+    } as Response);
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <LogsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Server Logs");
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Copy log lines" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Clear log lines" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Send logs to support" })).toBeDisabled();
+    });
+  });
 });

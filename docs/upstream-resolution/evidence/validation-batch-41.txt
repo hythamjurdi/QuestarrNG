@@ -1,0 +1,24 @@
+Batch 41 validation — 2026-10-13
+================================
+
+Target branch: codex/upstream-resolution
+
+Focused claim-route regression suite:
+- `npm run test -- --run server/__tests__/api_routes.test.ts`
+- PASS: 1 file, 374 tests.
+
+Combined Vitest suite:
+- `npm run test`
+- PASS: 253 files, 4,113 tests; 1 file and 7 tests skipped.
+
+Repository checks:
+- `npm run check` — PASS.
+- `npm run lint` — PASS.
+- `npm run format:check` — PASS.
+- `npm run secretlint` — PASS.
+- `npm run db:check:pg` — PASS.
+- `npm run build` — PASS; Vite emitted the existing advisory for chunks over 500 kB.
+- `git diff --check` — PASS.
+- `npm run release-notes:check` — PASS against the staged batch tree and a PR body referencing the new fragment.
+
+No `client/src/**` files changed, so the running-UI screenshot requirement was not triggered.

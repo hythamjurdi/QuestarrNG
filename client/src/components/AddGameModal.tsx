@@ -57,6 +57,8 @@ interface IGDBPlatform {
   name: string;
 }
 
+const EMPTY_GAMES: Game[] = [];
+
 export default function AddGameModal({ children, initialQuery }: AddGameModalProps) {
   const { t, languageFor, directionFor } = useInterfaceLanguage();
   const [open, setOpen] = useState(false);
@@ -164,7 +166,7 @@ export default function AddGameModal({ children, initialQuery }: AddGameModalPro
   });
 
   // Get user's collection to check if games are already added
-  const { data: userGames = [] } = useQuery<Game[]>({
+  const { data: userGames = EMPTY_GAMES } = useQuery<Game[]>({
     queryKey: ["/api/games"],
   });
 
@@ -569,7 +571,7 @@ export default function AddGameModal({ children, initialQuery }: AddGameModalPro
                                 })}
                           </span>
                         )}
-                        {game.rating && (
+                        {game.rating !== null && game.rating !== undefined && (
                           <span className="flex items-center gap-1">
                             <Star className="w-3 h-3 text-accent" />
                             {game.rating}/10
@@ -756,7 +758,7 @@ export default function AddGameModal({ children, initialQuery }: AddGameModalPro
                                     )}
                               </div>
                             )}
-                            {game.rating && (
+                            {game.rating !== null && game.rating !== undefined && (
                               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                 <Star className="w-3 h-3 text-accent" />
                                 {game.rating}/10

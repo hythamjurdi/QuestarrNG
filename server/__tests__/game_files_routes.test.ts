@@ -145,12 +145,12 @@ describe("Game file routes", () => {
       mockScanLibrary(gameDir, libraryRoot);
 
       const eacces = Object.assign(new Error("permission denied"), { code: "EACCES" });
-      const readdirSpy = vi.spyOn(fs, "readdir").mockRejectedValue(eacces);
+      const opendirSpy = vi.spyOn(fs, "opendir").mockRejectedValue(eacces);
 
       const response = await request(app).get(`/api/games/${gameId}/files`);
 
       expect(response.status).toBe(500);
-      readdirSpy.mockRestore();
+      opendirSpy.mockRestore();
     });
 
     it("recursively lists files, inheriting category from dlc/extra/packs parent folders", async () => {
@@ -240,6 +240,39 @@ describe("Game file routes", () => {
       // A zero (actually already-expired) budget trips the deadline
       // before the first entry is visited:
       setScanBudgets({ timeBudgetMs: -1 });
+
+      const response = await request(app).get(`/api/games/${gameId}/files`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.files).toEqual([]);
+      expect(response.body.truncated).toBe(true);
+    });
+
+    it("stops traversing when the maximum directory depth is reached", async () => {
+      const { libraryRoot, gameDir } = scanFixturePaths(tempRoot);
+      await fs.mkdir(path.join(gameDir, "one", "two"), { recursive: true });
+      await fs.writeFile(path.join(gameDir, "root.bin"), "root");
+      await fs.writeFile(path.join(gameDir, "one", "one.bin"), "one");
+      await fs.writeFile(path.join(gameDir, "one", "two", "two.bin"), "two");
+      mockScanLibrary(gameDir, libraryRoot);
+      setScanBudgets({ maxDepth: 1 });
+
+      const response = await request(app).get(`/api/games/${gameId}/files`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.files.map((file: { name: string }) => file.name).sort()).toEqual([
+        "one.bin",
+        "root.bin",
+      ]);
+      expect(response.body.truncated).toBe(true);
+    });
+
+    it("keeps the serialized response within its byte budget and reports truncation", async () => {
+      const { libraryRoot, gameDir } = scanFixturePaths(tempRoot);
+      await fs.mkdir(gameDir, { recursive: true });
+      await fs.writeFile(path.join(gameDir, "large-path-record.bin"), "x");
+      mockScanLibrary(gameDir, libraryRoot);
+      setScanBudgets({ maxResponseBytes: 100 });
 
       const response = await request(app).get(`/api/games/${gameId}/files`);
 

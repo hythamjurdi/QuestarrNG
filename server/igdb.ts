@@ -55,6 +55,10 @@ export interface IGDBGame {
     url: string;
   };
   first_release_date?: number;
+  release_dates?: Array<{
+    date?: number;
+    status?: { name?: string };
+  }>;
   rating?: number;
   aggregated_rating?: number;
   aggregated_rating_count?: number;
@@ -246,9 +250,27 @@ function sanitizeIgdbInput(input: string): string {
     .slice(0, 100); // Limit length to prevent abuse
 }
 
-// Retry configuration for rate-limited requests
-const MAX_RETRY_ATTEMPTS = 3;
+// Retry transient IGDB responses at most twice (three requests total).
+const MAX_REQUEST_ATTEMPTS = 3;
 const BASE_RETRY_DELAY_MS = 1000;
+const MAX_RETRY_DELAY_MS = 30_000;
+
+function getRetryDelayMs(retryAfter: string | null, retryIndex: number): number {
+  const value = retryAfter?.trim();
+  if (value) {
+    const retryAfterSeconds = Number(value);
+    if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+      return Math.min(MAX_RETRY_DELAY_MS, retryAfterSeconds * 1000);
+    }
+
+    const retryAt = Date.parse(value);
+    if (Number.isFinite(retryAt)) {
+      return Math.min(MAX_RETRY_DELAY_MS, Math.max(0, retryAt - Date.now()));
+    }
+  }
+
+  return Math.min(MAX_RETRY_DELAY_MS, BASE_RETRY_DELAY_MS * 2 ** retryIndex);
+}
 
 // Constants for query thresholds
 const MIN_RATING_THRESHOLD = 60;
@@ -258,6 +280,8 @@ const HIGH_RATING_COUNT = 5;
 const MAX_LIMIT = 100;
 const MAX_OFFSET = 10000;
 const HOUR_IN_SECONDS = 3600;
+const SEARCH_RESULTS_TTL_MS = 15 * 60 * 1000;
+const EMPTY_SEARCH_RESULTS_TTL_MS = 5 * 60 * 1000;
 
 const FALLBACK_PLATFORMS: Array<{ id: number; name: string }> = [
   { id: 6, name: "PC (Microsoft Windows)" },
@@ -652,7 +676,7 @@ class IGDBClient {
 
     this.lastRequestTime = Date.now();
 
-    let attempt = 0;
+    let retryIndex = 0;
     while (true) {
       const response = await safeFetch(`https://api.igdb.com/v4/${endpoint}`, {
         method: "POST",
@@ -664,17 +688,22 @@ class IGDBClient {
         body: query,
       });
 
-      if (response.status === 429 && attempt < MAX_RETRY_ATTEMPTS) {
-        const retryAfterHeader = response.headers.get("Retry-After");
-        const delay = retryAfterHeader
-          ? parseInt(retryAfterHeader, 10) * 1000
-          : BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
+      const isTransientResponse =
+        response.status === 429 || (response.status >= 500 && response.status <= 599);
+      if (isTransientResponse && retryIndex + 1 < MAX_REQUEST_ATTEMPTS) {
+        const delay = getRetryDelayMs(response.headers.get("Retry-After"), retryIndex);
         igdbLogger.warn(
-          { endpoint, attempt: attempt + 1, delayMs: delay },
-          "IGDB rate limited (429), retrying after delay"
+          {
+            endpoint,
+            status: response.status,
+            attempt: retryIndex + 1,
+            maxAttempts: MAX_REQUEST_ATTEMPTS,
+            delayMs: delay,
+          },
+          "IGDB returned a transient response; retrying after delay"
         );
         await new Promise((r) => setTimeout(r, delay));
-        attempt++;
+        retryIndex++;
         continue;
       }
 
@@ -743,6 +772,32 @@ class IGDBClient {
     const sanitizedQuery = sanitizeIgdbInput(query);
     if (!sanitizedQuery) return [];
 
+    const searchCacheKey = `searchGames:${JSON.stringify([
+      sanitizedQuery,
+      limit,
+      options.includeUndated ?? null,
+      options.undatedFirst ?? false,
+      options.platformId ?? null,
+      options.releaseYear ?? null,
+    ])}`;
+    const cachedSearch = this.cache.get(searchCacheKey) as CacheEntry<IGDBGame[]> | undefined;
+    if (cachedSearch && Date.now() < cachedSearch.expiry) {
+      igdbLogger.debug({ cacheKey: searchCacheKey }, "search cache hit");
+      return cachedSearch.data;
+    }
+    if (cachedSearch) this.cache.delete(searchCacheKey);
+    igdbLogger.debug({ cacheKey: searchCacheKey }, "search cache miss");
+
+    let successfulResponse = false;
+    const cacheSearchResults = (results: IGDBGame[]) => {
+      this.cache.set(searchCacheKey, {
+        data: results,
+        expiry:
+          Date.now() + (results.length > 0 ? SEARCH_RESULTS_TTL_MS : EMPTY_SEARCH_RESULTS_TTL_MS),
+      });
+      return results;
+    };
+
     let attemptCount = 0;
 
     // NOTE: platformId/releaseYear are intentionally NOT turned into `where`
@@ -805,8 +860,9 @@ class IGDBClient {
         );
         // Cache search results for 15 minutes to reduce redundant API calls
         const results = await this.makeRequest<IGDBGame[]>("games", approach, 15 * 60 * 1000);
+        successfulResponse = true;
         if (results.length > 0) {
-          igdbLogger.info(
+          igdbLogger.debug(
             { approach: i + 1, query: sanitizedQuery, resultCount: results.length },
             `search approach ${i + 1} found ${results.length} results`
           );
@@ -820,24 +876,24 @@ class IGDBClient {
           // that a later, less-targeted approach might still satisfy.
           const processedResults = await this.postProcessSearchResults(results, limit, options);
           if (processedResults.length > 0) {
-            return processedResults;
+            return cacheSearchResults(processedResults);
           }
         }
       } catch {
-        igdbLogger.warn(
+        igdbLogger.debug(
           { approach: i + 1, query: sanitizedQuery },
-          `search approach ${i + 1} failed`
+          `search approach ${i + 1} failed; trying the next approach`
         );
       }
     }
 
     // Check if we've reached the max attempts before trying word search
     if (attemptCount >= MAX_SEARCH_ATTEMPTS) {
-      igdbLogger.info(
+      igdbLogger.debug(
         { query: sanitizedQuery, maxAttempts: MAX_SEARCH_ATTEMPTS },
         `search reached max attempts`
       );
-      return [];
+      return successfulResponse ? cacheSearchResults([]) : [];
     }
 
     // If no full-phrase results, try individual words without category filter
@@ -862,9 +918,11 @@ class IGDBClient {
           const wordCondition = `name ~ *"${sanitizedWord}"*`;
           const wordQuery = `fields ${IGDB_GAME_FIELDS}; ${withFilters([wordCondition])}sort rating desc; limit ${requestLimit};`;
           // Cache word search results for 15 minutes
-          return await this.makeRequest<IGDBGame[]>("games", wordQuery, 15 * 60 * 1000);
+          const results = await this.makeRequest<IGDBGame[]>("games", wordQuery, 15 * 60 * 1000);
+          successfulResponse = true;
+          return results;
         } catch (error) {
-          igdbLogger.warn({ word, error }, `word search failed`);
+          igdbLogger.debug({ word, error }, `word search failed`);
           return [];
         }
       });
@@ -875,7 +933,7 @@ class IGDBClient {
       const wordResults = allWordResults.flat();
 
       if (wordResults.length > 0) {
-        igdbLogger.info(
+        igdbLogger.debug(
           { wordCount: wordsToSearch.length, resultCount: wordResults.length },
           `parallel word search found results`
         );
@@ -899,19 +957,24 @@ class IGDBClient {
         // unhandled crash; fall back to the uncanonicalized/unfiltered
         // word-search results instead.
         try {
-          return await this.postProcessSearchResults(uniqueResults, limit, options);
+          const processedResults = await this.postProcessSearchResults(
+            uniqueResults,
+            limit,
+            options
+          );
+          return cacheSearchResults(processedResults);
         } catch (error) {
           igdbLogger.warn(
             { error, query: sanitizedQuery },
             "post-processing failed for word search fallback results; returning uncanonicalized results"
           );
-          return uniqueResults.slice(0, limit);
+          return cacheSearchResults(uniqueResults.slice(0, limit));
         }
       }
     }
 
-    igdbLogger.info({ query: sanitizedQuery }, `search found no results`);
-    return [];
+    igdbLogger.debug({ query: sanitizedQuery }, `search found no results`);
+    return successfulResponse ? cacheSearchResults([]) : [];
   }
 
   /**
@@ -1145,9 +1208,26 @@ class IGDBClient {
     return result;
   }
 
-  async getGamesByIds(ids: number[]): Promise<IGDBGame[]> {
-    if (!(await this.ensureConfigured())) return [];
-    if (ids.length === 0) return [];
+  async getGamesByIds(
+    ids: number[],
+    options: { includeReleaseDateStatuses?: boolean } = {}
+  ): Promise<IGDBGame[]> {
+    const allResults: IGDBGame[] = [];
+    for await (const batch of this.getGamesByIdsBatches(ids, options)) {
+      allResults.push(...batch.games);
+    }
+    return allResults;
+  }
+
+  /**
+   * Fetches IGDB games in rate-limited batches so large-library refreshes can
+   * persist each batch before the next one is loaded into memory.
+   */
+  async *getGamesByIdsBatches(
+    ids: number[],
+    options: { includeReleaseDateStatuses?: boolean } = {}
+  ): AsyncGenerator<{ requestedIds: number[]; games: IGDBGame[] }, void, unknown> {
+    if (ids.length === 0 || !(await this.ensureConfigured())) return;
 
     // Get rate limit from settings
     let rateLimit = 3;
@@ -1166,7 +1246,9 @@ class IGDBClient {
       chunks.push(ids.slice(i, i + 100));
     }
 
-    const allResults: IGDBGame[] = [];
+    const fields = options.includeReleaseDateStatuses
+      ? `${IGDB_GAME_FIELDS}, release_dates.date, release_dates.status.name`
+      : IGDB_GAME_FIELDS;
 
     // Process chunks in batches respecting rate limit
     for (let i = 0; i < chunks.length; i += rateLimit) {
@@ -1176,7 +1258,7 @@ class IGDBClient {
       const batch = chunks.slice(i, i + rateLimit);
       const promises = batch.map((chunk) => {
         const igdbQuery = `
-        fields ${IGDB_GAME_FIELDS};
+        fields ${fields};
         where id = (${chunk.join(",")});
         limit 100;
       `;
@@ -1184,8 +1266,21 @@ class IGDBClient {
         return this.makeRequest<IGDBGame[]>("games", igdbQuery, HOUR_IN_SECONDS * 1000, true);
       });
 
-      const results = await Promise.all(promises);
-      results.forEach((r) => allResults.push(...r));
+      const results = await Promise.allSettled(promises);
+      const games: IGDBGame[] = [];
+      results.forEach((result, batchIndex) => {
+        if (result.status === "fulfilled") {
+          games.push(...result.value);
+          return;
+        }
+
+        igdbLogger.warn(
+          { igdbIds: batch[batchIndex], error: result.reason },
+          "Failed to fetch a chunk of IGDB game metadata"
+        );
+      });
+
+      yield { requestedIds: batch.flat(), games };
 
       // If we made actual requests (cache miss), enforce rate limit
       if (this.lastRequestTime > startLastRequestTime && i + rateLimit < chunks.length) {
@@ -1197,8 +1292,6 @@ class IGDBClient {
         }
       }
     }
-
-    return allResults;
   }
 
   /** Returns the current Unix timestamp (seconds) floored to the nearest hour. */
@@ -1458,7 +1551,7 @@ class IGDBClient {
       // ⚡ Bolt: Cache genre search results for 1 hour.
       return await this.makeRequest<IGDBGame[]>("games", igdbQuery, HOUR_IN_SECONDS * 1000);
     } catch (error) {
-      console.warn(`IGDB genre search failed for genre: ${genre}`, error);
+      igdbLogger.warn({ error, genre }, "IGDB genre search failed");
       return [];
     }
   }
@@ -1490,7 +1583,7 @@ class IGDBClient {
       // ⚡ Bolt: Cache platform search results for 1 hour.
       return await this.makeRequest<IGDBGame[]>("games", igdbQuery, HOUR_IN_SECONDS * 1000);
     } catch (error) {
-      console.warn(`IGDB platform search failed for platform: ${platform}`, error);
+      igdbLogger.warn({ error, platform }, "IGDB platform search failed");
       return [];
     }
   }
@@ -1512,7 +1605,7 @@ class IGDBClient {
         24 * 60 * 60 * 1000
       );
     } catch (error) {
-      console.warn("IGDB genres fetch failed:", error);
+      igdbLogger.warn({ error }, "IGDB genres fetch failed");
       return [];
     }
   }
@@ -1572,7 +1665,7 @@ class IGDBClient {
 
       return FALLBACK_PLATFORMS;
     } catch (error) {
-      console.warn("IGDB platforms fetch failed, using fallback list:", error);
+      igdbLogger.warn({ error }, "IGDB platforms fetch failed; using fallback list");
       return FALLBACK_PLATFORMS;
     }
   }

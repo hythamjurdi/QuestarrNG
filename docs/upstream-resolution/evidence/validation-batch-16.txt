@@ -1,0 +1,42 @@
+Batch 16 upstream review and implementation — 2026-10-12
+
+Scope reviewed
+- PRs #148–154, including current PR descriptions, file diffs, comments, and
+  submitted review records. No submitted code reviews were present; each PR
+  had only the generic Jules automation greeting.
+- Reconciled each request against current QuestarrNG code. The outstanding
+  behavior gap was PR #151's Discover heading updating ahead of the debounced
+  query.
+
+Disposition and implementation
+- #148 is verified: background carousel refetches have a transition to the
+  dimmed opacity state.
+- #149 and #152 are verified: GET `/api/config` exposes no database connection
+  details, partial API credentials, server host, port, or runtime environment.
+- #150 is verified: GameCard lazy-loads and conditionally mounts its details
+  and download modals only while open.
+- #151 is verified. Genre and platform titles now use the same debounced values
+  as their query keys and fetch functions. This keeps stale results under their
+  original title until the next query begins. The loading skeleton appears with
+  the new title when there is no cached result.
+- #153 is verified: PageToolbar replaces SearchBar with a descriptive labeled
+  search field and a conditional Clear search button on the Library, Playing,
+  Calendar, and Wishlist pages.
+- #154 is verified: Discover's genre, platform, and RAWG search fields use the
+  generic shared `useDebounce` hook.
+
+Validation
+- Discover regression tests confirm the old heading remains during debounce,
+  then the new heading and matching query key appear together. The running UI
+  was driven with headless Playwright and stubbed IGDB responses; the Action
+  request was delayed to capture the loading state. The screenshot is at
+  `docs/pr-evidence/upstream-discover-filter-title-sync.png`.
+- Full suite passed: 249 test files passed, 1 skipped; 4,027 tests passed,
+  7 skipped. `TMPDIR` was redirected to local task scratch because `/tmp` was
+  full.
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run build`
+  passed. The build reports the existing advisory about chunks over 500 kB.
+
+Ledger after this batch: 159 verified, 4 superseded, 978 unreviewed, 4
+not-applicable, 1 implemented-but-unverified, and 1 needs-implementation.
+Issue #37 remains the outstanding implementation item.

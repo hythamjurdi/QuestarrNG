@@ -86,11 +86,29 @@ describe("default-deny API auth boundary", () => {
     it("GET /api/health", async () => {
       const res = await request(app).get("/api/health");
       expect(res.status).toBe(200);
+      expect(res.body).toEqual({ status: "ok" });
     });
 
     it("GET /api/ready", async () => {
       const res = await request(app).get("/api/ready");
       expect(res.status).toBe(200);
+      expect(res.body).toEqual({ status: "ok" });
+    });
+
+    it("GET /api/ready hides dependency details when a check fails", async () => {
+      const { db } = await import("../db.js");
+      (db.get as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+        new Error("private database connection detail")
+      );
+      const { igdbClient } = await import("../igdb.js");
+      (igdbClient.getPopularGames as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+        new Error("private IGDB connection detail")
+      );
+
+      const res = await request(app).get("/api/ready");
+
+      expect(res.status).toBe(503);
+      expect(res.body).toEqual({ status: "error" });
     });
 
     it("POST /api/auth/login (fails on bad creds, but isn't blocked by auth)", async () => {

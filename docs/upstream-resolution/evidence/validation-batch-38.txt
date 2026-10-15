@@ -1,0 +1,25 @@
+Batch 38 validation — upstream items #348–361
+Date: October 12, 2026
+
+Focused regressions:
+- server/__tests__/xrel.test.ts — 19 tests passed, including the two pagination regressions.
+- server/__tests__/api_routes_extended.test.ts — 80 tests passed.
+
+Full Vitest suite:
+- npm test
+- 252 files passed, 1 skipped; 4,091 tests passed, 7 skipped.
+
+Visual verification:
+- Ran npm run dev:test and drove the xREL page with headless Chromium at 1440x1000.
+- Confirmed Next is enabled when the first page reports another game result, then clicked through and confirmed Next is disabled on the final page. No browser page errors occurred.
+- Screenshot: docs/pr-evidence/upstream-xrel-pagination-batch-38.png.
+
+Repository gates:
+- npm run check — passed.
+- npm run lint — passed with zero warnings.
+- npm run format:check — passed.
+- npm run build — passed; Vite reported the existing large-chunk advisory.
+- npm run secretlint — passed.
+- Release-note validation is run against the committed branch head and the PR description before push.
+
+The NFS mount was visible from kspld0 but the free-space query stalled, so this batch wrote no files to the share. The dedicated local scratch directory was used because /tmp was full. The dev:test server was stopped; data/test.db and its WAL/SHM files, test-generated postgresql:/ SQLite artifacts, and per-task scratch files were removed. playwright/.auth/user.json was not touched.

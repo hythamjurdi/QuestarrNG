@@ -52,6 +52,7 @@ import { setAddGamePendingQuery, clearAddGamePendingQuery } from "@/lib/add-game
 import { useDownloadSummary } from "@/hooks/use-download-summary";
 import GameFilterPills from "./GameFilterPills";
 import PendingImportsCard from "./PendingImportsCard";
+import BacklogRoulette from "./BacklogRoulette";
 import { LIBRARY_SORT_OPTIONS, sortLibraryGames, type LibrarySortOption } from "@/lib/game-sort";
 import { InterfaceText } from "@/components/InterfaceText";
 
@@ -76,6 +77,7 @@ function LabeledSwitch({
   );
 }
 
+/** Display the user's collection with search, filters and status actions. */
 export default function Library() {
   const regionalPreference = useRegionalPreference();
   const { language: interfaceLanguage } = useInterfaceLanguage();
@@ -162,7 +164,7 @@ export default function Library() {
     errorMessage: "Failed to update game visibility",
   });
 
-  // The platforms the user selected in Settings → Platforms. Only these appear
+  // The platforms the user selected in Settings → Appearance → Platforms. Only these appear
   // in the filter dropdown; games on other platforms stay in the library.
   const { data: igdbPlatforms = [] } = useQuery<{ id: number; name: string }[]>({
     queryKey: ["/api/igdb/platforms"],
@@ -371,6 +373,11 @@ export default function Library() {
     [setSortBy]
   );
 
+  /** Persist the roulette choice using the Library's existing status feedback. */
+  async function markRouletteGameAsPlaying(gameId: string) {
+    await statusMutation.mutateAsync({ gameId, status: "playing" });
+  }
+
   return (
     <div className="h-full overflow-auto px-3 py-4 sm:p-6" data-testid="layout-dashboard">
       <div className="space-y-3">
@@ -481,6 +488,11 @@ export default function Library() {
           }}
           actions={
             <>
+              <BacklogRoulette
+                games={filteredGames}
+                loading={isFetching || searchQuery !== debouncedSearchQuery}
+                onStartPlaying={markRouletteGameAsPlaying}
+              />
               <div className="flex sm:hidden items-center gap-2">
                 <GameFilterPills
                   showSearchResultsOnly={showSearchResultsOnly}
@@ -787,6 +799,8 @@ export default function Library() {
               platformFilter !== "all" ||
               minRating !== null ||
               showUnratedOnly ||
+              showSearchResultsOnly ||
+              showDownloadsOnly ||
               (hideShelvedByDefault && games.some((g) => g.status === "shelved")) ||
               (showSearchResultsOnly &&
                 hideOwnedInHasResults &&
@@ -795,7 +809,10 @@ export default function Library() {
 
             if (hasActiveFilters) {
               return hasSearchQuery ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                <div
+                  data-testid="empty-state"
+                  className="flex flex-col items-center justify-center py-16 px-4 text-center"
+                >
                   <p className="text-lg font-medium mb-1">
                     <InterfaceText source={"No results for “"} />
                     {debouncedSearchQuery}&rdquo;
@@ -813,19 +830,28 @@ export default function Library() {
                   </AddGameModal>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                <div
+                  data-testid="empty-state"
+                  className="flex flex-col items-center justify-center py-16 px-4 text-center"
+                >
                   <p className="text-lg font-medium mb-1">
                     <InterfaceText source={"No games match your current filters"} />
                   </p>
                   <p className="text-sm text-muted-foreground">
                     <InterfaceText source={"Try adjusting or clearing your filters."} />
                   </p>
+                  <Button variant="outline" className="mt-4" onClick={clearAllFilters}>
+                    <InterfaceText source={"Clear filters"} />
+                  </Button>
                 </div>
               );
             }
 
             return (
-              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div
+                data-testid="empty-state"
+                className="flex flex-col items-center justify-center py-16 px-4 text-center"
+              >
                 <p className="text-lg font-medium mb-1">
                   <InterfaceText source={"No games yet"} />
                 </p>
@@ -833,7 +859,7 @@ export default function Library() {
                   <InterfaceText source={"Start building your library by adding a game."} />
                 </p>
                 <AddGameModal initialQuery="">
-                  <Button size="lg" className="gap-2">
+                  <Button size="lg" className="gap-2" data-testid="button-add-first-game">
                     <Plus className="w-4 h-4" />
                     <InterfaceText source={"Add your first game"} />
                   </Button>

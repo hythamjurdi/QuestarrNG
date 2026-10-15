@@ -230,7 +230,17 @@ applies. A compromised SeerrNG credential can retrieve files available to its
 QuestarrNG account, so operators should keep that scoped key private and
 dedicated to SeerrNG.
 
-### 4.7 GitHub Actions candidate validation
+### 4.7 User-selected download bundle URLs
+
+The authenticated `/api/downloads/bundle` endpoint packages selected indexer
+results into a ZIP. It allows public HTTP(S) download targets and blocks private
+network targets unless the exact origin is present in the configured indexer
+list. `safeFetch` applies the same allowlist to each redirect, so a public URL
+cannot redirect the server to an unrelated internal service. Configured private
+indexer origins remain trusted integration endpoints, which preserves LAN
+Prowlarr links.
+
+### 4.8 GitHub Actions candidate validation
 
 Pull-request source, dependency lockfiles, and generated coverage/JUnit files are untrusted
 inputs. The `trusted-pr-validation` workflow is loaded from the pull-request base, checks out
@@ -294,6 +304,12 @@ linked file as the source of truth.
 - **Rate limiting:** `server/middleware.ts` (`igdbRateLimiter`, `authRateLimiter`,
   `sensitiveEndpointLimiter`, `generalApiLimiter`, `scanRateLimiter`,
   `integrationRateLimiter`); `server/index.ts:34` (global mount)
+- **Game-file scan resource bounds:** `GET /api/games/:gameId/files` in
+  `server/routes.ts` streams directory entries and caps each scan at 5,000 files,
+  8 MiB of encoded response data, depth 128, and five seconds. The authenticated
+  user rate limit is 10 requests per minute; bounded results set `truncated: true`.
+  See `server/scan-limits.ts`, `server/__tests__/game_files_routes.test.ts`, and
+  `server/__tests__/scan-ratelimit.test.ts`.
 - **Authentication/session:** `server/auth.ts` (JWT issuance/verification); global gate at
   `server/routes.ts:845`
 - **SeerrNG provider authorization:** `server/auth.ts` (key scope and expiry),

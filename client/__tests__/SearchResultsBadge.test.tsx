@@ -12,6 +12,17 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 describe("SearchResultsBadge", () => {
+  it.each(["overlay", "inline"] as const)(
+    "identifies available updates in the %s layout",
+    (variant) => {
+      render(<SearchResultsBadge visible={false} updatesAvailable variant={variant} />);
+      expect(
+        screen.getByRole("status", { name: "Game updates available on indexers" })
+      ).toBeTruthy();
+      expect(screen.queryByRole("status", { name: "Downloads available on indexers" })).toBeNull();
+    }
+  );
+
   it("renders nothing when visible=false", () => {
     const { container } = render(<SearchResultsBadge visible={false} />);
     expect(container.firstChild).toBeNull();

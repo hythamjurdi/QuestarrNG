@@ -1,0 +1,51 @@
+Upstream PRs #183–187 and issues #188–189 review and validation
+
+PR #183: verified. GameCarouselSection receives its title as a prop and is
+memoized; it has no extra title state/effect that adds the render described in
+the PR.
+
+PR #184: verified. The test route validates the URL, and downloader clients
+send their connection-test requests through the shared safeFetch implementation.
+It rejects metadata/link-local and unspecified/broadcast addresses, validates
+all DNS answers, pins the connection to the validated address, and revalidates
+redirect targets. Private LAN hosts remain supported for self-hosted downloader
+installations. Upstream discussion: Doezer asked Jules to rebase and resolve
+conflicts in the downloader implementation/tests; Jules reported the rebase and
+DNS mock were complete. No submitted code reviews were present.
+
+PR #185: verified. The Download icon already has a tooltip. View Details is a
+visible, labeled text button, so the fork has no ambiguous icon-only details
+action. The upstream PR is merged.
+
+PR #186: verified. SearchPage records the last notified query in a ref, not
+state. Notification bookkeeping therefore does not trigger the extra render
+reported by the PR.
+
+PR #187: superseded by the verified absolute/traversal checks from batch 19.
+
+Issue #188: verified. `/` is routed to the Library page. Sidebar counts come
+from the current game/download data, including all games, wanted games, and
+active downloads.
+
+Issue #189: implemented and verified. Calendar and Wishlist links now live in
+a collapsed “More” sidebar group. The group opens automatically when either
+route is active, and direct routes remain available. This fork has no standalone
+Trending page or navigation item; trending mods appear in game details.
+
+Visual evidence captured from the running `npm run dev:test` app:
+
+- `docs/pr-evidence/upstream-low-priority-pages-collapsed.png`
+- `docs/pr-evidence/upstream-low-priority-pages-expanded.png`
+
+Validation:
+
+- 15 focused test files passed; 244 tests passed.
+- `npm run check`: passed.
+- `npm run lint`: passed.
+- `npm run format:check`: passed.
+- `npm run build`: passed. Vite reported its existing advisory for chunks over
+  500 kB.
+
+Ledger after review: 188 verified, 10 superseded, 943 unreviewed,
+4 not-applicable, 1 implemented-but-unverified, and 1 needs-implementation
+record. Issue #37 remains outstanding.

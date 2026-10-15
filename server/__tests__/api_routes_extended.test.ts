@@ -640,9 +640,9 @@ describe("API Routes - Additional Coverage", () => {
       vi.mocked(storage.getUserGames).mockResolvedValue([
         { id: "g1", igdbId: 42, title: "Old Title" },
       ] as unknown as Game[]);
-      vi.mocked(igdbClient.getGamesByIds).mockResolvedValue([
-        { id: 42, name: "New Title" },
-      ] as never);
+      vi.mocked(igdbClient.getGamesByIdsBatches).mockImplementation(async function* (ids) {
+        yield { requestedIds: ids, games: [{ id: 42, name: "New Title" }] };
+      });
       vi.mocked(igdbClient.formatGameData).mockReturnValue({
         publishers: [],
         developers: [],
@@ -667,9 +667,9 @@ describe("API Routes - Additional Coverage", () => {
       vi.mocked(storage.getUserGames).mockResolvedValue([
         { id: "g1", igdbId: 42, title: "Old Title" },
       ] as unknown as Game[]);
-      vi.mocked(igdbClient.getGamesByIds).mockResolvedValue([
-        { id: 42, name: "New Title" },
-      ] as never);
+      vi.mocked(igdbClient.getGamesByIdsBatches).mockImplementation(async function* (ids) {
+        yield { requestedIds: ids, games: [{ id: 42, name: "New Title" }] };
+      });
       vi.mocked(igdbClient.formatGameData).mockReturnValue({
         publishers: [],
         developers: [],
@@ -707,6 +707,51 @@ describe("API Routes - Additional Coverage", () => {
             ],
           }),
         }),
+      ]);
+    });
+
+    it("reports missing IGDB results while refreshing games returned in other chunks", async () => {
+      vi.mocked(storage.getUserGames).mockResolvedValue([
+        { id: "g1", igdbId: 42, title: "Refreshable Game" },
+        { id: "g2", igdbId: 84, title: "Unavailable Game" },
+      ] as unknown as Game[]);
+      vi.mocked(igdbClient.getGamesByIdsBatches).mockImplementation(async function* (ids) {
+        yield { requestedIds: ids, games: [{ id: 42, name: "Refreshable Game" }] };
+      });
+
+      const res = await request(app).post("/api/games/refresh-metadata");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        success: true,
+        updatedCount: 1,
+        errorCount: 1,
+        message: expect.stringContaining("Failed for 1 games."),
+      });
+      expect(storage.updateGamesBatch).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "g1" }),
+      ]);
+    });
+
+    it("continues refreshing later IGDB batches after an earlier batch fails", async () => {
+      vi.mocked(storage.getUserGames).mockResolvedValue(
+        Array.from({ length: 101 }, (_, index) => ({
+          id: `g${index + 1}`,
+          igdbId: index + 1,
+          title: `Game ${index + 1}`,
+        })) as unknown as Game[]
+      );
+      vi.mocked(igdbClient.getGamesByIdsBatches).mockImplementation(async function* (ids) {
+        yield { requestedIds: ids.slice(0, 100), games: [] };
+        yield { requestedIds: ids.slice(100), games: [{ id: 101, name: "Game 101" }] };
+      });
+
+      const res = await request(app).post("/api/games/refresh-metadata");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ success: true, updatedCount: 1, errorCount: 100 });
+      expect(storage.updateGamesBatch).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "g101" }),
       ]);
     });
 
@@ -880,6 +925,110 @@ describe("API Routes - Additional Coverage", () => {
       const res = await request(app).post("/api/indexers").send({ name: "" });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe("Validation failed");
+    });
+
+    it("PATCH /api/indexers validates and strips fields outside the shared schema", async () => {
+      vi.mocked(storage.updateIndexer).mockResolvedValue(testIndexer);
+
+      const res = await request(app)
+        .patch("/api/indexers/idx-1")
+        .send({ priority: 2, unexpected: "ignored" });
+
+      expect(res.status).toBe(200);
+      expect(storage.updateIndexer).toHaveBeenCalledWith("idx-1", { priority: 2 });
+    });
+
+    it("PATCH /api/downloaders validates and strips fields outside the shared schema", async () => {
+      vi.mocked(storage.getDownloader).mockResolvedValue(testDownloader);
+      vi.mocked(storage.updateDownloader).mockResolvedValue(testDownloader);
+
+      const res = await request(app)
+        .patch("/api/downloaders/dl-1")
+        .send({ priority: 2, unexpected: "ignored" });
+
+      expect(res.status).toBe(200);
+      expect(storage.updateDownloader).toHaveBeenCalledWith("dl-1", { priority: 2 });
+    });
+  });
+
+  describe("Custom game lists", () => {
+    const listId = "11111111-1111-4111-8111-111111111111";
+    const gameId = "22222222-2222-4222-8222-222222222222";
+
+    it("lists only the current user's lists", async () => {
+      const lists = [
+        {
+          id: listId,
+          userId: "user-1",
+          name: "Co-op",
+          createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        },
+      ];
+      vi.mocked(storage.getGameLists).mockResolvedValue(lists as never);
+
+      const res = await request(app).get("/api/game-lists");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([
+        {
+          ...lists[0],
+          createdAt: lists[0]!.createdAt!.toISOString(),
+        },
+      ]);
+      expect(storage.getGameLists).toHaveBeenCalledWith("user-1");
+    });
+
+    it("trims and creates a named list", async () => {
+      vi.mocked(storage.getGameLists).mockResolvedValue([]);
+      vi.mocked(storage.createGameList).mockResolvedValue({
+        id: listId,
+        userId: "user-1",
+        name: "Co-op",
+      } as never);
+
+      const res = await request(app).post("/api/game-lists").send({ name: "  Co-op  " });
+
+      expect(res.status).toBe(201);
+      expect(storage.createGameList).toHaveBeenCalledWith("user-1", "Co-op");
+    });
+
+    it("rejects blank and duplicate list names", async () => {
+      const blank = await request(app).post("/api/game-lists").send({ name: "  " });
+      expect(blank.status).toBe(400);
+
+      vi.mocked(storage.getGameLists).mockResolvedValue([
+        { id: listId, userId: "user-1", name: "Co-op" },
+      ] as never);
+      const duplicate = await request(app).post("/api/game-lists").send({ name: "co-op" });
+      expect(duplicate.status).toBe(409);
+      expect(storage.createGameList).not.toHaveBeenCalled();
+    });
+
+    it("does not expose a list owned by another user", async () => {
+      vi.mocked(storage.getGameListGames).mockResolvedValue(undefined);
+
+      const res = await request(app).get(`/api/game-lists/${listId}/games`);
+
+      expect(res.status).toBe(404);
+      expect(storage.getGameListGames).toHaveBeenCalledWith("user-1", listId);
+    });
+
+    it("only adds a game when storage confirms both list and game belong to the user", async () => {
+      vi.mocked(storage.addGameToList).mockResolvedValue(false);
+
+      const res = await request(app).post(`/api/game-lists/${listId}/games`).send({ gameId });
+
+      expect(res.status).toBe(404);
+      expect(storage.addGameToList).toHaveBeenCalledWith("user-1", listId, gameId);
+    });
+
+    it("returns 404 when a list cannot be deleted by the current user", async () => {
+      vi.mocked(storage.deleteGameList).mockResolvedValue(false);
+
+      const res = await request(app).delete(`/api/game-lists/${listId}`);
+
+      expect(res.status).toBe(404);
+      expect(storage.deleteGameList).toHaveBeenCalledWith("user-1", listId);
     });
   });
 });

@@ -34,29 +34,23 @@ async function performReadinessCheck() {
   const { pool } = await import("../db.js");
   const { igdbClient } = await import("../igdb.js");
 
-  const health = {
-    ok: true,
-    db: false,
-    igdb: false,
-  };
+  let isHealthy = true;
 
   // Check database connectivity
   try {
     await pool.query("SELECT 1");
-    health.db = true;
   } catch {
-    health.ok = false;
+    isHealthy = false;
   }
 
   // Check IGDB API connectivity
   try {
     await igdbClient.getPopularGames(1);
-    health.igdb = true;
   } catch {
-    health.ok = false;
+    isHealthy = false;
   }
 
-  return health;
+  return { status: isHealthy ? "ok" : "error" };
 }
 
 describe("Health and Readiness Endpoints", () => {
@@ -72,7 +66,7 @@ describe("Health and Readiness Endpoints", () => {
   });
 
   describe("Readiness Probe (/api/ready)", () => {
-    it("should return ok: true when both db and igdb are healthy", async () => {
+    it("should return a generic ok status when both db and igdb are healthy", async () => {
       poolQueryMock.mockResolvedValueOnce({ rows: [{ "?column?": 1 }] });
       igdbGetPopularGamesMock.mockResolvedValueOnce([
         {
@@ -83,14 +77,10 @@ describe("Health and Readiness Endpoints", () => {
 
       const health = await performReadinessCheck();
 
-      expect(health).toEqual({
-        ok: true,
-        db: true,
-        igdb: true,
-      });
+      expect(health).toEqual({ status: "ok" });
     });
 
-    it("should return ok: false when database is down", async () => {
+    it("should return a generic error status when the database is down", async () => {
       poolQueryMock.mockRejectedValueOnce(new Error("Database connection failed"));
       igdbGetPopularGamesMock.mockResolvedValueOnce([
         {
@@ -101,37 +91,25 @@ describe("Health and Readiness Endpoints", () => {
 
       const health = await performReadinessCheck();
 
-      expect(health).toEqual({
-        ok: false,
-        db: false,
-        igdb: true,
-      });
+      expect(health).toEqual({ status: "error" });
     });
 
-    it("should return ok: false when IGDB API is down", async () => {
+    it("should return a generic error status when IGDB is down", async () => {
       poolQueryMock.mockResolvedValueOnce({ rows: [{ "?column?": 1 }] });
       igdbGetPopularGamesMock.mockRejectedValueOnce(new Error("IGDB API error"));
 
       const health = await performReadinessCheck();
 
-      expect(health).toEqual({
-        ok: false,
-        db: true,
-        igdb: false,
-      });
+      expect(health).toEqual({ status: "error" });
     });
 
-    it("should return ok: false when both services are down", async () => {
+    it("should return a generic error status when both services are down", async () => {
       poolQueryMock.mockRejectedValueOnce(new Error("Database connection failed"));
       igdbGetPopularGamesMock.mockRejectedValueOnce(new Error("IGDB API error"));
 
       const health = await performReadinessCheck();
 
-      expect(health).toEqual({
-        ok: false,
-        db: false,
-        igdb: false,
-      });
+      expect(health).toEqual({ status: "error" });
     });
   });
 });

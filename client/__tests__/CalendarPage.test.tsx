@@ -63,11 +63,11 @@ const baseGame = {
   summary: "A space adventure",
 };
 
-function renderPage() {
+function renderPage(today?: Date) {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <TooltipProvider>
-        <CalendarPage />
+        <CalendarPage today={today} />
       </TooltipProvider>
     </QueryClientProvider>
   );
@@ -125,6 +125,8 @@ describe("CalendarPage", () => {
   it("shows the empty state when there are no wanted games", async () => {
     renderPage();
 
+    expect(screen.getByRole("button", { name: "Previous period" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next period" })).toBeInTheDocument();
     expect(
       await screen.findByText("No games in your wishlist. Add games to track their release dates.")
     ).toBeInTheDocument();
@@ -154,16 +156,44 @@ describe("CalendarPage", () => {
     });
   });
 
+  it("greys out past months and past releases in the year view", async () => {
+    mockGamesFetch([
+      { ...baseGame, id: "game-5", title: "April Game", releaseDate: "2026-04-10" },
+      { ...baseGame, id: "game-6", title: "Early May Game", releaseDate: "2026-05-03" },
+      { ...baseGame, id: "game-7", title: "June Game", releaseDate: "2026-06-02" },
+      { ...baseGame, id: "game-8", title: "Datetime Game", releaseDate: "2026-05-10T12:00:00Z" },
+    ]);
+    renderPage();
+    const aprilGame = await screen.findByText("April Game");
+    const aprilCard = screen.getByRole("heading", { name: "April" }).closest(".bg-card");
+    const juneCard = screen.getByRole("heading", { name: "June" }).closest(".bg-card");
+    expect(aprilCard).toHaveClass("opacity-50");
+    expect(juneCard).not.toHaveClass("opacity-50");
+    expect(aprilGame.closest("button")).not.toHaveClass("opacity-50");
+    expect(screen.getByText("Early May Game").closest("button")).toHaveClass("opacity-50");
+    expect(screen.getByText("June Game").closest("button")).not.toHaveClass("opacity-50");
+    expect(screen.getByText("Datetime Game").closest("button")).toHaveClass("opacity-50");
+  });
+
+  it("uses an injected date as the calendar clock for deterministic rendering", async () => {
+    mockGamesFetch([
+      { ...baseGame, id: "before", title: "Before injected day", releaseDate: "2024-02-01" },
+      { ...baseGame, id: "after", title: "After injected day", releaseDate: "2024-02-20" },
+    ]);
+    renderPage(new Date(2024, 1, 15));
+    const before = await screen.findByText("Before injected day");
+    const after = screen.getByText("After injected day");
+    expect(before.closest("button")).toHaveClass("opacity-50");
+    expect(after.closest("button")).not.toHaveClass("opacity-50");
+  });
+
   it("formats the undated year with regional digits and no grouping", async () => {
     act(() => setRegionalPreference("ar"));
     mockGamesFetch([{ ...baseGame, id: "undated-game", releaseDate: "2026-12-31" }]);
-
     renderPage();
-
     const expectedYear = new Intl.NumberFormat("ar", { useGrouping: false }).format(2026);
     const groupedYear = new Intl.NumberFormat("ar").format(2026);
     const title = await screen.findByRole("heading", { name: /No Release Date/u });
-
     expect(title).toHaveTextContent(`No Release Date — ${expectedYear}`);
     expect(title).not.toHaveTextContent(groupedYear);
   });

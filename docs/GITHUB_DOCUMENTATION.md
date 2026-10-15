@@ -1,4 +1,4 @@
-# GitHub Documentation Map (Canonical)
+# Documentation Map
 
 This file is the entry point for user, operator, contributor, and security
 documentation in this repository.
@@ -6,6 +6,9 @@ documentation in this repository.
 ## Product and releases
 
 - Product overview and installation: [`README.md`](../README.md)
+- First install and initial setup: [`docs/QUICKSTART.md`](./QUICKSTART.md)
+- Selecting a main release, updates, and optional extras:
+  [`docs/DOWNLOAD_RECOMMENDATIONS.md`](./DOWNLOAD_RECOMMENDATIONS.md)
 - Why QuestarrNG is maintained, how it differs from upstream, and replacement
   criteria:
   [`docs/FORK_CHANGES.md`](./FORK_CHANGES.md)
@@ -21,6 +24,8 @@ documentation in this repository.
 
 - Database backends and SQLite-to-PostgreSQL migration:
   [`docs/DATABASE.md`](./DATABASE.md)
+- Operator-only account password recovery:
+  [`docs/PASSWORD_RECOVERY.md`](./PASSWORD_RECOVERY.md)
 - Legacy PostgreSQL-to-SQLite migration:
   [`docs/MIGRATION.md`](./MIGRATION.md)
 - Reverse proxy and subdirectory deployment:
@@ -29,8 +34,14 @@ documentation in this repository.
   [`docs/PROXMOX.md`](./PROXMOX.md)
 - Unraid, CasaOS, Umbrel, Cosmos Cloud, and Home Assistant definitions:
   [`docs/HOME_SERVER_APPS.md`](./HOME_SERVER_APPS.md)
+- Home Assistant add-on storage and permissions:
+  [`questarr/README.md`](../questarr/README.md)
 - Supported indexers and downloader behavior:
   [`docs/DOWNLOADERS_COMPATIBILITY.md`](./DOWNLOADERS_COMPATIBILITY.md)
+- Indexer setup, Prowlarr sync, and release blacklists:
+  [`docs/INDEXERS.md`](./INDEXERS.md)
+- RSS release discovery: [`docs/RSS.md`](./RSS.md)
+- In-app and Apprise notifications: [`docs/NOTIFICATIONS.md`](./NOTIFICATIONS.md)
 
 ## Integrate and develop
 
@@ -44,6 +55,11 @@ documentation in this repository.
   [`extensions/playnite-questarr/README.md`](../extensions/playnite-questarr/README.md)
 - System architecture and background actors:
   [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
+- Full-history upstream issue and PR resolution campaign, including its
+  [progress ledger](./upstream-resolution/ledger.json), generated
+  [inventory](./upstream-resolution/inventory.md),
+  [audit and evidence process](./upstream-resolution/AUDIT-PROCESS.md), and
+  [batch history](./upstream-resolution/README.md).
 - Contribution guide: [`.github/CONTRIBUTING.md`](../.github/CONTRIBUTING.md)
 - Code of conduct: [`docs/CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
 

@@ -289,6 +289,7 @@ Hotfix release addressing dependency vulnerabilities flagged by `npm audit`.
 Migration note:
 
 - The `PORT` variable in `docker-compose.yml` has been split into two: `HOST_SIDE_PORT` (host-side binding, default `5000`) and `CONTAINER_INTERNAL_SIDE_PORT` (internal container port, default `5000`). If you had `PORT` set in your `.env` to customize the host port, rename it to `HOST_SIDE_PORT`.
+- Current Compose files also accept `PORT` as a backward-compatible fallback for both host and internal ports. Explicit `HOST_SIDE_PORT` and `CONTAINER_INTERNAL_SIDE_PORT` values override that fallback.
 - With Post-processing, don't forget to add your volume mapping to the docker compose file.
 
 An easter egg has been added to the app; shouldn't be too hard to find if you think about the very famous easter eggs in gaming! Let me know what you think.

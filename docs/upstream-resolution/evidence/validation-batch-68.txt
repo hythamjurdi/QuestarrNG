@@ -1,0 +1,119 @@
+# Batch 68 validation — upstream PRs #796–805
+
+Date: October 13, 2026
+Branch: `codex/upstream-resolution`
+Implementation commit under live DAST: `8e393aa3b37229dd820e36f88273c8c12807d601`
+Upstream `main`: `0b538fe4b0a2269edcc8fd3e71e2bbc240291868`
+Inventory: 1,163 records (232 issues, 931 pull requests), refreshed from live
+GitHub exports at `2026-10-13T21:43:11.083Z`.
+
+## Review results
+
+- Verified: PRs [#796](https://github.com/Doezer/Questarr/pull/796),
+  [#798](https://github.com/Doezer/Questarr/pull/798),
+  [#799](https://github.com/Doezer/Questarr/pull/799),
+  [#800](https://github.com/Doezer/Questarr/pull/800),
+  [#804](https://github.com/Doezer/Questarr/pull/804), and
+  [#805](https://github.com/Doezer/Questarr/pull/805); issues
+  [#797](https://github.com/Doezer/Questarr/issues/797) and
+  [#802](https://github.com/Doezer/Questarr/issues/802).
+- Superseded: PR [#803](https://github.com/Doezer/Questarr/pull/803), by the
+  Alpine-native 7-Zip and pinned RARLAB unrar implementation that resolves
+  issue #802 without relying on the npm binary's permissions or libc support.
+- Source recheck: the nine reviewed records were unchanged from their source
+  snapshots. Open PR #1194 remains the only record flagged
+  `sourceChangedSinceReview` and is still unreviewed.
+
+## Changes and test results
+
+- PR #796: parameterized single-header security assertions remain covered by
+  `server/__tests__/security.test.ts`.
+- Issue #797: qBittorrent 5.2 JSON success responses are parsed as successful
+  torrent submissions; regression coverage is in
+  `server/__tests__/downloaders_qbittorrent_regression.test.ts`.
+- PR #798: Discover uses a stable empty-games value and one memoized local
+  games derivation including hidden games; covered by
+  `client/__tests__/DiscoverPage.test.tsx`.
+- PR #799: NotificationCenter uses accessible UI tooltips, including wrappers
+  that let disabled controls expose their explanation; covered by
+  `client/__tests__/NotificationItem.accessibility.test.tsx`.
+- PR #800: the DAST workflow now runs `scripts/check-built-js-security.mjs`
+  against production bundles before serving them. It rejects global `eval`
+  calls/references and ZAP-listed Angular bypass/evaluation calls, while
+  allowing the RE2JS instance method that caused ZAP rule 10110's text-match
+  false positive. The rule disposition and rationale are documented in
+  `.zap/rules.tsv` and `docs/VULNERABILITY_MANAGEMENT.md`.
+- Issue #802: Docker pins RARLAB unrar 7.12 and retains Alpine-native 7-Zip for
+  other formats. Successful move-mode imports remove archive volumes and the
+  emptied source directory; copy/hardlink modes preserve source files. PR #803
+  is superseded by this supported-format implementation.
+- PR #804: screenshot lightbox wraparound, keyboard/touch navigation, list
+  changes, and empty states remain covered in
+  `client/__tests__/GameDetailsModal.test.tsx`.
+- PR #805: Steam sync settings enforce integer intervals of 1–168 hours at the
+  API boundary. Tests cover invalid inputs, scheduler single-flight behavior,
+  success-only timestamps, and preserving unsaved settings during refresh.
+
+The focused validation run passed **624 tests across 12 files**:
+
+```text
+npx vitest run server/__tests__/security.test.ts server/__tests__/downloaders_qbittorrent_regression.test.ts client/__tests__/DiscoverPage.test.tsx client/__tests__/NotificationItem.accessibility.test.tsx server/__tests__/archive_service.test.ts server/__tests__/archive_service_extract_merge.test.ts server/__tests__/import_manager_archive_extraction.test.ts client/__tests__/GameDetailsModal.test.tsx client/__tests__/SettingsPage.test.tsx server/__tests__/steam_wishlist.test.ts server/__tests__/api_routes.test.ts scripts/__tests__/check-built-js-security.test.mjs --maxWorkers=1
+```
+
+Additional checks:
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run secretlint` passed.
+- Prettier passed for changed supported source and documentation files.
+- `git diff --check` passed; the DAST YAML and ZAP TSV parsed with five unique
+  rule IDs.
+- `npm run build` passed in a disposable production worktree; Vite emitted its
+  existing large-chunk advisory.
+- The bundle guard checked all **74** generated JavaScript bundles and found no
+  dangerous calls. Its regression tests prove global eval aliases and the
+  configured Angular-dangerous calls fail, while RE2JS-style instance methods
+  pass.
+- Downloaded RARLAB's pinned archive over HTTPS and independently recomputed
+  SHA-256:
+  `630d9a9dd131367273667bee079ad103f469f1b7cdbc9b42a4f283cc2993bab2`.
+  ArchiveService listed `game.bin`, extracted its exact fixture bytes, and
+  left no staging files. ImportManager's move-mode regression tests also verify
+  removal of source archive volumes and the emptied source directory.
+- No `client/src/**` files changed in this batch, so the repository's UI
+  screenshot requirement was not triggered.
+
+## Production DAST scan
+
+The exact production build from commit `8e393aa3b37229dd820e36f88273c8c12807d601`
+was started with an isolated SQLite database on `kspld0`. Its health endpoint
+returned HTTP 200. The production-bundle AST guard passed before startup, then
+the official `ghcr.io/zaproxy/zaproxy:stable` baseline image ran ZAP 2.17.0
+against `http://localhost:5000` with the checked-in `.zap/rules.tsv`:
+
+```text
+Total of 15 URLs
+FAIL-NEW: 0  FAIL-INPROG: 0  WARN-NEW: 0  WARN-INPROG: 0
+IGNORE: 5  PASS: 62
+```
+
+Rule 10110 appeared as an ignored alert in the report, while the syntax-aware
+bundle check passed. The HTML and JSON reports were kept in task scratch for
+triage and removed during cleanup.
+
+The corresponding GitHub-hosted workflow was also dispatched against the same
+commit: [run 38472863000](https://github.com/snapetech-org/QuestarrNG/actions/runs/38472863000).
+As of `2026-10-13T21:55:01Z`, GitHub reported it as `queued` with no job yet
+assigned. This is recorded as pending remote confirmation, not as a successful
+hosted workflow run. The local production scan above completed successfully.
+
+## Scratch and cleanup
+
+Validation ran on `kspld0`. Local `/tmp` had 44 GB free and was sufficient, so
+the LVM-backed NFS share was not used. Removed the disposable build worktree,
+prior ZAP report, and RARLAB archive/fixture from
+`/tmp/questarrng-b68-build`, `/tmp/questarrng-b67-zap-report`, and
+`/tmp/questarrng-b68-rar-20261013`; also removed the ZAP image downloaded for
+the local scan. Unrelated worktrees and temporary data were preserved. The
+test server was stopped, no ZAP container remains, and port 5000 was confirmed
+free.

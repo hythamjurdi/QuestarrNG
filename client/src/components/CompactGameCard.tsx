@@ -216,6 +216,7 @@ const CompactGameCard = ({
                 <DownloadIndicator summary={downloadSummary} variant="inline" />
                 <SearchResultsBadge
                   visible={game.searchResultsAvailable ?? false}
+                  updatesAvailable={!isDiscovery && game.updateSearchResultsAvailable}
                   variant="inline"
                 />
                 {!isDiscovery && game.status === "wanted" && (
@@ -475,7 +476,11 @@ const CompactGameCard = ({
             {game.title}
           </h3>
           <DownloadIndicator summary={downloadSummary} variant="inline" />
-          <SearchResultsBadge visible={game.searchResultsAvailable ?? false} variant="inline" />
+          <SearchResultsBadge
+            visible={game.searchResultsAvailable ?? false}
+            updatesAvailable={!isDiscovery && game.updateSearchResultsAvailable}
+            variant="inline"
+          />
         </div>
 
         {/* Genres */}

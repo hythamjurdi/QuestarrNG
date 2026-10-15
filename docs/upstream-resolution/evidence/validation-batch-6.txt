@@ -1,0 +1,20 @@
+SABnzbd configured category integration — 2026-10-12
+
+Focused tests
+- `vitest run server/__tests__/downloaders_sabnzbd_remaining.test.ts server/__tests__/downloaders_comprehensive.test.ts server/__tests__/downloaders_clients_regression.test.ts`
+- 3 files passed; 67 tests passed.
+- The full unit suite passed at the same source baseline: 247 files passed, 1 skipped; 4,009 tests passed, 7 skipped.
+
+Live integration
+- Started Questarr with `npm run dev:test` and a disposable SABnzbd 5.1.3 instance on the verified `kspls0` LVM scratch path.
+- Through Questarr's authenticated HTTP API, saved a downloader with category `questarr-configured`, reloaded its configuration, and passed Test Connection against SABnzbd 5.1.3.
+- Submitted a tiny local NZB with no per-request category; Questarr's download status reported `questarr-configured`.
+- Submitted another with the one-off category `questarr-one-off`; its download status reported `questarr-one-off`.
+- Direct adapter verification confirmed that an empty saved category and no request override falls back to `games`.
+- SABnzbd assigned an unregistered custom category to `*` (Default); the compatibility guide now says to register the category in SABnzbd.
+- Removed both queue entries after checking them. No Usenet server was configured and no content was downloaded.
+
+Cleanup
+- Stopped the local dev server and SSH tunnel.
+- Removed the disposable SABnzbd container, its task-scoped LVM files, and the image downloaded for this check.
+- Removed the generated local `data/test.db` and its SQLite sidecars.

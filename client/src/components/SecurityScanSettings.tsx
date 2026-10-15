@@ -248,6 +248,12 @@ export default function SecurityScanSettings() {
                     }
                   />
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  A download ClamAV can't fully scan (clamd down, or a file over its size limits)
+                  waits in Pending Manual Imports. Raise <code>StreamMaxLength</code>,{" "}
+                  <code>MaxFileSize</code> and <code>MaxScanSize</code> in clamd.conf so large game
+                  files get scanned.
+                </p>
               </div>
               <Switch
                 checked={local.clamav.enabled}

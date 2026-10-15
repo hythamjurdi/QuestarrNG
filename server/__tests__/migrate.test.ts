@@ -220,4 +220,41 @@ describe("repairSchemaForV1_3_0 (via ensureDatabase)", () => {
     // Second run: columns and index already exist; must not throw.
     await expect(ensureDatabase()).resolves.toBeUndefined();
   });
+
+  it("skips duplicate-column migration errors thrown as strings", async () => {
+    vi.resetModules();
+    const fs = await import("fs");
+    const readFileSyncMock = vi.mocked(fs.default.readFileSync);
+    const previousReadFileSync = readFileSyncMock.getMockImplementation();
+    readFileSyncMock.mockImplementation(((filePath: unknown) =>
+      String(filePath).includes("_journal.json")
+        ? JSON.stringify({ entries: [{ tag: "0000_duplicate_column" }] })
+        : "SELECT 1;") as typeof fs.default.readFileSync);
+
+    const transactionSpy = vi.spyOn(db, "transaction");
+    transactionSpy.mockImplementation(((callback: unknown) =>
+      (callback as (tx: unknown) => unknown)({
+        run: () => {
+          throw "duplicate column name: title";
+        },
+      })) as typeof db.transaction);
+
+    try {
+      const { runSqliteMigrations } = await import("../db/migrate-sqlite.js");
+      await expect(runSqliteMigrations()).resolves.toBeUndefined();
+      expect(
+        sqlite
+          .prepare('SELECT hash FROM "__drizzle_migrations" WHERE hash = ?')
+          .get("0000_duplicate_column")
+      ).toBeDefined();
+
+      const { logger } = await import("../logger.js");
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("duplicate column name"));
+    } finally {
+      transactionSpy.mockRestore();
+      if (previousReadFileSync) {
+        readFileSyncMock.mockImplementation(previousReadFileSync);
+      }
+    }
+  });
 });

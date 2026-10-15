@@ -1,0 +1,59 @@
+Batch 63 validation — October 13, 2026
+
+Scope
+
+- Reviewed upstream PRs #746–748 and #750–755. The refreshed 1,163-item
+  inventory has no PR or issue #749 record.
+- Recorded five verified and four superseded dispositions in ledger.json.
+- Updated the campaign README and audit-process snapshot counts. Regenerated
+  inventory.md from the saved, sanitized source export; no live source refresh
+  was performed.
+- No application or client UI source changed in this batch. No screenshot was
+  required. The existing full integration validation remains applicable to the
+  unchanged application tree; see
+  validation-main-integration-2026-10-13.txt.
+
+Source and implementation checks
+
+- PRs #746, #747, and #755 request dependency targets below the current locked
+  versions: jsdom 30.1.2; @tailwindcss/vite 4.3.3; Prettier 3.9.9; tsx
+  4.23.15; typescript-eslint 8.71.1; Vite 8.3.2; and lucide-react 1.52.0.
+- PR #748's least-privilege permissions and immutable action references are
+  present. All 133 external action/workflow references in the 20 workflow
+  YAML files are pinned to full 40-character SHAs.
+- PR #750's SCA/SAST policy is present in docs/VULNERABILITY_MANAGEMENT.md,
+  linked from docs/SECURITY.md, with CI and release gates in place.
+- PR #751's OpenVEX feed parses as JSON and contains a justified not_affected
+  statement for GHSA-86w9-cpqp-85rv / CVE-2026-85393. Vulnerability and image
+  workflows apply the feed. The client and storage changes in the upstream PR
+  are formatting-only type declarations; no behavior change was needed.
+- PR #752's Semgrep workflow uploads the full scan and fails on ERROR findings.
+  Credential encryption and decryption set the AES-GCM authentication-tag
+  length explicitly.
+- PR #753 is closed unmerged; the maintainer's comment says the Node 26 change
+  was completed in release v1.4.0. Both application stages in the current
+  Dockerfile use the digest-pinned node:26-alpine base.
+- PR #754's six action updates are present at current or newer versions with
+  full SHA pins.
+- Confirmed the relative link in docs/SECURITY.md resolves to the existing
+  docs/VULNERABILITY_MANAGEMENT.md file.
+
+Validation performed for this batch
+
+- `npm test -- server/__tests__/credential-crypto.test.ts scripts/__tests__/check-release-security.test.mjs` — 2 files passed, 27 tests passed.
+- `node --test scripts/validation-engine/workflow-security.contract.mjs scripts/validation-engine/engine.contract.mjs scripts/validation-engine/trusted-test-source-policy.contract.mjs scripts/validation-engine/trusted-test-launcher.contract.mjs scripts/validation-engine/reconcile-ci.contract.mjs` — 55 passed, 1 skipped. The skip requires mandatory Bubblewrap sandbox mode, which was not enabled for this local run.
+- `npm run audit:prod` — passed; no high-or-higher production advisories remain outside the VEX feed.
+- YAML parse and action-pin scan — 20 workflow files parsed; 133 external action/workflow references checked; zero unpinned.
+- `npm run format:check`, `npm run secretlint`, and Prettier checks for the campaign README and audit-process guide — passed.
+- The prior integrated checkpoint on this unchanged application tree passed the full Vitest suite (4,229 passed, 7 skipped), all 50 Playwright journeys, typecheck, lint, format, secret scan, build, dependency/security checks, release checks, and production smoke tests. See validation-main-integration-2026-10-13.txt for complete results and limitations.
+
+Cleanup
+
+- No NFS scratch was used. The task-scoped local temporary source directory was
+  removed after inventory generation. No task-created database, browser report,
+  server, build output, or other scratch artifact remains.
+- Existing user data and unrelated ignored files were preserved.
+
+The campaign remains incomplete and is not ready to merge into main. The ledger
+now records 567 verified, 160 superseded, 12 not-applicable, 5
+implemented-unverified, 0 needs-implementation, and 419 unreviewed items.

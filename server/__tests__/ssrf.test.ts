@@ -4,6 +4,9 @@ import dns from "dns/promises";
 import { Agent, fetch as undiciFetch } from "undici";
 import type { LookupFunction } from "net";
 
+type AgentOptions = { connect?: { lookup?: LookupFunction } };
+type MockAgentInstance = { options: AgentOptions; close: ReturnType<typeof vi.fn> };
+
 // Mock dns module
 vi.mock("dns/promises", () => ({
   default: {
@@ -19,17 +22,21 @@ vi.mock("undici", async () => {
   return {
     ...actual,
     fetch: vi.fn(),
-    Agent: vi.fn(),
+    Agent: vi.fn(function (this: MockAgentInstance, options: AgentOptions) {
+      this.options = options;
+      this.close = vi.fn().mockResolvedValue(undefined);
+      return this;
+    }),
   };
 });
 
-type AgentOptions = { connect?: { lookup?: LookupFunction } };
-
 function capturedLookup(): LookupFunction {
-  const options = vi.mocked(Agent).mock.calls[0][0] as AgentOptions;
+  const requestOptions = vi.mocked(undiciFetch).mock.calls.at(-1)?.[1] as
+    { dispatcher?: { options?: AgentOptions } } | undefined;
+  const options = requestOptions?.dispatcher?.options;
   const lookup = options.connect?.lookup;
   expect(lookup).toBeDefined();
-  return lookup as LookupFunction;
+  return lookup!;
 }
 
 // Queues a single resolved DNS lookup for the next safeFetch hop.
@@ -73,6 +80,41 @@ describe("isSafeUrl Security Check", () => {
     expect(await isSafeUrl("http://192.168.1.1", { allowPrivate: true })).toBe(true);
     expect(await isSafeUrl("http://10.0.0.1", { allowPrivate: true })).toBe(true);
     expect(await isSafeUrl("http://[::1]", { allowPrivate: true })).toBe(true);
+  });
+
+  it("allows private addresses only for explicitly listed origins in public-only mode", async () => {
+    expect(await isSafeUrl("http://127.0.0.1:9696", { allowPrivate: false })).toBe(false);
+    expect(
+      await isSafeUrl("http://127.0.0.1:9696/5/download", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://127.0.0.1:9696"],
+      })
+    ).toBe(true);
+    expect(
+      await isSafeUrl("http://127.0.0.1:8080/metadata", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://127.0.0.1:9696"],
+      })
+    ).toBe(false);
+  });
+
+  it("allows a configured hostname only when its resolved private address is explicitly trusted", async () => {
+    vi.mocked(dns.lookup as unknown as import("node:dns").LookupAddress[])
+      .mockResolvedValueOnce([{ address: "10.0.0.8", family: 4 }])
+      .mockResolvedValueOnce([{ address: "10.0.0.8", family: 4 }]);
+
+    expect(
+      await isSafeUrl("http://prowlarr:9696/5/download", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://prowlarr:9696"],
+      })
+    ).toBe(true);
+    expect(
+      await isSafeUrl("http://prowlarr:9696/5/download", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://other:9696"],
+      })
+    ).toBe(false);
   });
 
   it("should block IPv4 metadata service", async () => {
@@ -185,6 +227,38 @@ describe("safeFetch", () => {
     expect(callback).toHaveBeenCalledWith(null, [{ address: "142.250.185.46", family: 4 }]);
   });
 
+  it("reuses pinned agents by address and closes them after the idle window", async () => {
+    vi.useFakeTimers();
+
+    try {
+      vi.mocked(dns.lookup as unknown as import("node:dns").LookupAddress[])
+        .mockResolvedValueOnce([{ address: "198.51.100.250", family: 4 }])
+        .mockResolvedValueOnce([{ address: "198.51.100.250", family: 4 }])
+        .mockResolvedValueOnce([{ address: "203.0.113.250", family: 4 }]);
+      vi.mocked(undiciFetch).mockImplementation(async () => new Response("ok") as never);
+
+      await safeFetch("http://agent-cache.example/first", { timeoutMs: 0 });
+      await vi.advanceTimersByTimeAsync(5000);
+      await safeFetch("http://agent-cache.example/second", { timeoutMs: 0 });
+      await safeFetch("http://agent-cache.example/changed-address", { timeoutMs: 0 });
+
+      expect(Agent).toHaveBeenCalledTimes(2);
+      const dispatchers = vi.mocked(undiciFetch).mock.calls.map((call) => call[1]?.dispatcher);
+      expect(dispatchers[1]).toBe(dispatchers[0]);
+      expect(dispatchers[2]).not.toBe(dispatchers[0]);
+
+      const createdAgents = vi.mocked(Agent).mock.results.map((result) => result.value);
+      await vi.advanceTimersByTimeAsync(9999);
+      expect(createdAgents[0]?.close).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(createdAgents[0]?.close).toHaveBeenCalledTimes(1);
+      expect(createdAgents[1]?.close).toHaveBeenCalledTimes(1);
+    } finally {
+      await vi.runOnlyPendingTimersAsync();
+      vi.useRealTimers();
+    }
+  });
+
   it("should reject URLs that resolve to metadata service IPs", async () => {
     // Mock DNS lookup to return a metadata service IP
     vi.mocked(dns.lookup as unknown as import("node:dns").LookupAddress[]).mockResolvedValueOnce([
@@ -211,6 +285,24 @@ describe("safeFetch", () => {
     await expect(safeFetch("https://example.com/download")).rejects.toThrow(
       "Invalid or unsafe URL"
     );
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not follow a private redirect outside the configured origin allowlist", async () => {
+    mockDnsResolvesOnce("10.0.0.8");
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { location: "http://10.0.0.9:9696/latest/meta-data" },
+      })
+    );
+
+    await expect(
+      safeFetch("http://prowlarr:9696/5/download", {
+        allowPrivate: false,
+        allowedPrivateOrigins: ["http://prowlarr:9696"],
+      })
+    ).rejects.toThrow("Invalid or unsafe URL");
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../config.js", () => ({
   config: {
-    database: { url: "postgresql://test:password@localhost/test" },
+    database: { url: ":memory:" },
     igdb: {
       clientId: "test-client-id",
       clientSecret: "test-client-secret",
@@ -52,6 +52,105 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
     fetchMock = vi.mocked(safeFetch);
   });
 
+  it("reuses cached popular-game responses for identical requests", async () => {
+    const games = [{ id: 42, name: "Cached Game" }];
+    fetchMock.mockResolvedValueOnce(authResponse).mockResolvedValueOnce(gamesResponse(games));
+
+    const { igdbClient } = await import("../igdb.js");
+    const first = await igdbClient.getPopularGames(1);
+    const second = await igdbClient.getPopularGames(1);
+
+    expect(first).toEqual(games);
+    expect(second).toEqual(games);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("normalizes query whitespace before looking up cached IGDB responses", async () => {
+    fetchMock
+      .mockResolvedValueOnce(authResponse)
+      .mockResolvedValueOnce(gamesResponse([{ id: 7, name: "Whitespace Game" }]));
+
+    const { igdbClient } = await import("../igdb.js");
+    const clientWithRequest = igdbClient as unknown as {
+      makeRequest: (endpoint: string, query: string, ttl: number) => Promise<unknown>;
+    };
+    const makeRequest = clientWithRequest.makeRequest.bind(igdbClient);
+    const compact = await makeRequest("games", "fields id; where id = 7;", 60_000);
+    const padded = await makeRequest("games", "  fields id;\n  where id = 7;  ", 60_000);
+
+    expect(padded).toEqual(compact);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("caches processed game search results before making more IGDB requests", async () => {
+    fetchMock
+      .mockResolvedValueOnce(authResponse)
+      .mockResolvedValue(gamesResponse([{ id: 77, name: "Cached Search Game" }]));
+
+    const { igdbClient } = await import("../igdb.js");
+    const internalClient = igdbClient as unknown as {
+      makeRequest: (endpoint: string, query: string, ttl: number) => Promise<unknown>;
+    };
+    const makeRequest = vi.spyOn(internalClient, "makeRequest");
+
+    const first = await igdbClient.searchGames("cached search", 5);
+    const second = await igdbClient.searchGames("cached search", 5);
+
+    expect(first).toEqual([{ id: 77, name: "Cached Search Game" }]);
+    expect(second).toEqual(first);
+    expect(makeRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it("caches successful empty game searches for a shorter interval", async () => {
+    fetchMock.mockResolvedValueOnce(authResponse).mockResolvedValue(gamesResponse([]));
+
+    const { igdbClient } = await import("../igdb.js");
+    const internalClient = igdbClient as unknown as {
+      makeRequest: (endpoint: string, query: string, ttl: number) => Promise<unknown>;
+    };
+    const makeRequest = vi.spyOn(internalClient, "makeRequest");
+
+    const first = await igdbClient.searchGames("no matching game", 5);
+    const callsAfterFirstSearch = makeRequest.mock.calls.length;
+    const second = await igdbClient.searchGames("no matching game", 5);
+
+    expect(first).toEqual([]);
+    expect(second).toEqual([]);
+    expect(callsAfterFirstSearch).toBeGreaterThan(1);
+    expect(makeRequest).toHaveBeenCalledTimes(callsAfterFirstSearch);
+  });
+
+  it("keeps locally filtered game searches in separate cache entries", async () => {
+    fetchMock
+      .mockResolvedValueOnce(authResponse)
+      .mockResolvedValue(
+        gamesResponse([{ id: 78, name: "Year Filter Game", first_release_date: 1577836800 }])
+      );
+
+    const { igdbClient } = await import("../igdb.js");
+    const internalClient = igdbClient as unknown as {
+      makeRequest: (endpoint: string, query: string, ttl: number) => Promise<unknown>;
+    };
+    const makeRequest = vi.spyOn(internalClient, "makeRequest");
+
+    const matchingYear = await igdbClient.searchGames("year filter game", 5, {
+      releaseYear: 2020,
+    });
+    const differentYear = await igdbClient.searchGames("year filter game", 5, {
+      releaseYear: 2021,
+    });
+    const callsAfterDifferentYear = makeRequest.mock.calls.length;
+    const repeatedDifferentYear = await igdbClient.searchGames("year filter game", 5, {
+      releaseYear: 2021,
+    });
+
+    expect(matchingYear).toHaveLength(1);
+    expect(differentYear).toEqual([]);
+    expect(repeatedDifferentYear).toEqual([]);
+    expect(callsAfterDifferentYear).toBeGreaterThan(1);
+    expect(makeRequest).toHaveBeenCalledTimes(callsAfterDifferentYear);
+  });
+
   it("getGamesByGenres returns [] for an empty genre list without hitting the network", async () => {
     const { igdbClient } = await import("../igdb.js");
     const results = await igdbClient.getGamesByGenres([]);
@@ -69,6 +168,19 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
 
     expect(results).toHaveLength(1);
     expect(results[0].name).toBe("Action Game");
+  });
+
+  it("reuses genre query cache entries when filters are supplied in a different order", async () => {
+    fetchMock
+      .mockResolvedValueOnce(authResponse)
+      .mockResolvedValue(gamesResponse([{ id: 3, name: "Genre Order Game" }]));
+
+    const { igdbClient } = await import("../igdb.js");
+    const first = await igdbClient.getGamesByGenres(["Action", "RPG"]);
+    const second = await igdbClient.getGamesByGenres(["RPG", "Action"]);
+
+    expect(second).toEqual(first);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("getGamesByGenres returns [] and logs a warning when the request fails", async () => {
@@ -100,6 +212,22 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
 
     expect(results).toHaveLength(1);
     expect(results[0].name).toBe("PC Game");
+  });
+
+  it("reuses platform query cache entries when filters are supplied in a different order", async () => {
+    fetchMock
+      .mockResolvedValueOnce(authResponse)
+      .mockResolvedValue(gamesResponse([{ id: 4, name: "Platform Order Game" }]));
+
+    const { igdbClient } = await import("../igdb.js");
+    const first = await igdbClient.getGamesByPlatforms(["PC (Microsoft Windows)", "PlayStation 5"]);
+    const second = await igdbClient.getGamesByPlatforms([
+      "PlayStation 5",
+      "PC (Microsoft Windows)",
+    ]);
+
+    expect(second).toEqual(first);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("getGamesByPlatforms returns [] and logs a warning on failure", async () => {
@@ -329,6 +457,48 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
     expect(formatted.releaseYear).toBe(2021);
   });
 
+  it.each([
+    {
+      description: "the IGDB Erotic theme",
+      fields: { themes: [{ id: 1, name: "Erotic" }] },
+      isAdultContent: true,
+      isAgeRestricted: false,
+    },
+    {
+      description: "the ESRB Adults Only rating",
+      fields: { age_ratings: [{ category: 1, rating: 12 }] },
+      isAdultContent: false,
+      isAgeRestricted: true,
+    },
+    {
+      description: "the PEGI 18 rating",
+      fields: { age_ratings: [{ category: 2, rating: 5 }] },
+      isAdultContent: false,
+      isAgeRestricted: true,
+    },
+    {
+      description: "unrelated themes and ratings",
+      fields: {
+        themes: [{ id: 2, name: "Action" }],
+        age_ratings: [
+          { category: 1, rating: 10 },
+          { category: 2, rating: 4 },
+        ],
+      },
+      isAdultContent: false,
+      isAgeRestricted: false,
+    },
+  ])(
+    "formatGameData classifies $description independently",
+    async ({ fields, isAdultContent, isAgeRestricted }) => {
+      const { igdbClient } = await import("../igdb.js");
+      const formatted = igdbClient.formatGameData({ id: 3, name: "Classified Game", ...fields });
+
+      expect(formatted.isAdultContent).toBe(isAdultContent);
+      expect(formatted.isAgeRestricted).toBe(isAgeRestricted);
+    }
+  );
+
   it("formatGameData handles a minimal game with no optional fields", async () => {
     const { igdbClient } = await import("../igdb.js");
     const formatted = igdbClient.formatGameData({
@@ -348,6 +518,8 @@ describe("IGDBClient - extended coverage", { timeout: 20000 }, () => {
     expect(formatted.isReleased).toBe(false);
     expect(formatted.releaseYear).toBeNull();
     expect(formatted.earlyAccess).toBe(false);
+    expect(formatted.isAdultContent).toBe(false);
+    expect(formatted.isAgeRestricted).toBe(false);
   });
 
   it("formatGameData treats an unreleased future date as not released", async () => {

@@ -43,7 +43,7 @@ describe("StatusPicker", () => {
     fireEvent.click(screen.getByRole("button", { name: /Change status for Portal 2/i }));
     await screen.findByRole("button", { name: "Wanted" }); // wait for popover
 
-    expect(screen.queryByRole("button", { name: "downloading" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Downloading" })).not.toBeInTheDocument();
   });
 
   it("marks the active status chip with aria-pressed=true", async () => {

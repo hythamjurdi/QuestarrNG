@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Game, type Config } from "@shared/schema";
 import { cn } from "@/lib/utils";
-import { Link } from "wouter";
+import { Link, type RouteComponentProps } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import GameDownloadDialog from "@/components/GameDownloadDialog";
 import { useInterfaceLanguage } from "@/lib/interface-locale";
@@ -45,6 +45,12 @@ export function formatDate(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+// Release dates are usually date-only ("YYYY-MM-DD"), but a claimed download can carry a full
+// ISO datetime. Map those to the viewer's local calendar day before comparing with today.
+function toLocalDateKey(releaseDate: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(releaseDate) ? releaseDate : formatDate(new Date(releaseDate));
 }
 
 export function formatCalendarDate(
@@ -166,32 +172,39 @@ export function getDaysInMonth(
   return days;
 }
 
-export default function CalendarPage() {
+type CalendarPageProps = { today?: Date } & Partial<RouteComponentProps>;
+
+export default function CalendarPage({ today: injectedToday }: CalendarPageProps = {}) {
   const { language, t, languageFor, directionFor } = useInterfaceLanguage();
   useRegionalPreference();
   const regionalLocale = getRegionalLanguage();
   const regionalDirection = getRegionalDirection(regionalLocale);
   const [viewMode, setViewMode] = useState<ViewMode>("year");
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() =>
+    injectedToday ? new Date(injectedToday.getTime()) : new Date()
+  );
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [today, setToday] = useState(() => new Date());
+  const [liveToday, setLiveToday] = useState(() => new Date());
+  const today = injectedToday ?? liveToday;
 
   useEffect(() => {
+    if (injectedToday) return;
+
     let timeoutId: number;
     const scheduleRefresh = () => {
       const now = new Date();
       const nextMidnight = new Date(now);
       nextMidnight.setHours(24, 0, 0, 0);
       timeoutId = window.setTimeout(() => {
-        setToday(new Date());
+        setLiveToday(new Date());
         scheduleRefresh();
       }, nextMidnight.getTime() - now.getTime());
     };
     scheduleRefresh();
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [injectedToday]);
 
   const handleGameClick = (game: Game) => {
     setSelectedGame(game);
@@ -397,6 +410,7 @@ export default function CalendarPage() {
                   currentDate={currentDate}
                   gamesByDate={gamesByDate}
                   onGameClick={handleGameClick}
+                  today={today}
                 />
               )}
               {viewMode === "month" && (
@@ -440,13 +454,17 @@ function YearView({
   currentDate,
   gamesByDate,
   onGameClick,
+  today,
 }: {
   currentDate: Date;
   gamesByDate: GamesByDate;
   onGameClick: (game: Game) => void;
+  today: Date;
 }) {
   const year = currentDate.getFullYear();
   const months = Array.from({ length: 12 }, (_, i) => i);
+  const todayKey = formatDate(today);
+  const currentMonthPrefix = todayKey.slice(0, 8);
 
   // Pre-calculate entries once outside the render loop
   const allGamesEntries = useMemo(() => Object.entries(gamesByDate), [gamesByDate]);
@@ -467,8 +485,16 @@ function YearView({
           }
         }
 
+        const isPastMonth = monthPrefix < currentMonthPrefix;
+
         return (
-          <div key={month} className="bg-card border rounded-lg p-4">
+          <div
+            key={month}
+            className={cn(
+              "bg-card border rounded-lg p-4",
+              isPastMonth && "opacity-50 grayscale-[0.3]"
+            )}
+          >
             <div className="flex items-center justify-between mb-3">
               <h3
                 className="font-semibold"
@@ -498,7 +524,12 @@ function YearView({
                       })}
                     </div>
                     {games.map((game) => (
-                      <GameBadge key={game.id} game={game} onClick={() => onGameClick(game)} />
+                      <GameBadge
+                        key={game.id}
+                        game={game}
+                        muted={!isPastMonth && toLocalDateKey(date) < todayKey}
+                        onClick={() => onGameClick(game)}
+                      />
                     ))}
                   </div>
                 ))

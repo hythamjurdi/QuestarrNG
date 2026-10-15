@@ -1,0 +1,31 @@
+QuestarrNG upstream-resolution checkpoint — 2026-10-12
+
+Socket owner-scoping, additive RAWG discovery, and shared carousel sizing were
+validated in the isolated codex/upstream-resolution worktree.
+
+Focused socket/scanner regression tests:
+  TMPDIR=/home/keith/questarr-upstream-temp npx vitest run \
+    server/__tests__/socket.test.ts \
+    server/__tests__/socket-user-scoping.test.ts \
+    server/__tests__/library-scanner.test.ts
+  3 files passed; 49 tests passed.
+
+Full unit suite:
+  TMPDIR=/home/keith/questarr-upstream-temp npm run test:run -- --maxWorkers=4
+  246 files passed, 1 skipped; 4,001 tests passed, 7 skipped.
+
+Coverage:
+  TMPDIR=/home/keith/questarr-upstream-temp npm run test:coverage -- --maxWorkers=4
+  Statements 84.13%; branches 76.89%; functions 81.50%; lines 85.54%.
+
+Browser suite (run after the shared carousel width fix):
+  TMPDIR=/home/keith/questarr-upstream-temp npx playwright test --workers=2
+  47 tests passed, including RAWG settings/discovery, mobile layout, and socket
+  authentication flows. The test refreshed docs/pr-evidence/upstream-rawg-discovery.png,
+  which was visually inspected at 1280x720.
+
+Additional checks:
+  npm run check       passed
+  npm run lint        passed
+  npm run build       passed (Vite reports the existing large-chunk advisory)
+  git diff --check    passed

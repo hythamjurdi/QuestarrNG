@@ -2,7 +2,7 @@ import pino from "pino";
 import { Writable } from "node:stream";
 import { consumeLogChunk, flushLogRemainder } from "./log-stream.js";
 import { logEmitter } from "./log-events.js";
-import { redactSecrets } from "./security.js";
+import { redactSecretText, redactSecrets } from "./security.js";
 import { getLogFilePath } from "./log-file.js";
 
 class LogBroadcaster extends Writable {
@@ -39,6 +39,21 @@ const isTest = process.env.NODE_ENV === "test";
 // (development and test), matching how the rest of the repo's env-based
 // config (see config.ts) treats NODE_ENV.
 const DEFAULT_LOG_LEVEL = isProduction ? "info" : "debug";
+
+/**
+ * Pino's log formatter sees structured fields, but not the final message or
+ * child bindings. Scrub the serialized record so every output field passes
+ * through the same secret policy after Pino has applied its normal formatting.
+ */
+function redactSerializedLogLine(line: string): string {
+  const newline = line.endsWith("\n") ? "\n" : "";
+  const json = newline ? line.slice(0, -1) : line;
+  try {
+    return `${JSON.stringify(redactSecrets(JSON.parse(json)))}${newline}`;
+  } catch {
+    return redactSecretText(line);
+  }
+}
 
 // Tests import this module in every server test file. The full transport pipeline below
 // spawns worker threads per target (file + pino-pretty) and writes to a shared server.log,
@@ -84,6 +99,11 @@ export const logger = pino(
       // leak credentials to the log sink.
       log: (object) => redactSecrets(object) as Record<string, unknown>,
     },
+    hooks: {
+      // This runs after Pino formats the message and combines child bindings,
+      // so secrets in either are removed without changing log-call semantics.
+      streamWrite: redactSerializedLogLine,
+    },
   },
   destination
 );
@@ -95,4 +115,5 @@ export const expressLogger = logger.child({ module: "express" });
 export const downloadersLogger = logger.child({ module: "downloaders" });
 export const torznabLogger = logger.child({ module: "torznab" });
 export const searchLogger = logger.child({ module: "search" });
+export const middlewareLogger = logger.child({ module: "middleware" });
 export const telemetryLogger = logger.child({ module: "telemetry" });

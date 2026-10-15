@@ -1,0 +1,44 @@
+Batch 26 review and validation
+==============================
+
+Items reviewed
+--------------
+
+- PR #239 is superseded by the current migration architecture. The application
+  runs its own versioned SQLite/PostgreSQL migrations on startup and uses the
+  existing structured logger; production does not invoke drizzle-kit.
+- Issues #240 and #241 are verified. The container starts the compiled server,
+  startup migrations no longer depend on `drizzle-kit push`, the migration
+  module imports the exported logger, and the reported cron type errors are
+  absent from the production TypeScript build.
+- Issue #242 is verified against upstream PR #276. qBittorrent can receive a
+  torrent file fetched by Questarr when the downloader cannot reach the
+  indexer URL. If the request is accepted but the torrent is not confirmed,
+  Questarr returns the correlation tag and the UI shows “Checking qBittorrent”
+  with a warning to check the client before retrying. Free-space lookup falls
+  back to qBittorrent server-state data.
+- PR #243 is verified: IGDB fallback word queries run concurrently, the
+  sanitizing regexes are compiled once, and the five-request cap is respected.
+- PR #244 is verified: NotificationItem is a full-width semantic button with
+  `type="button"`, providing native keyboard activation.
+
+Validation
+----------
+
+- Focused tests:
+  `npm test -- server/__tests__/logger.test.ts server/__tests__/migrate.test.ts server/__tests__/igdb.test.ts server/__tests__/igdb_extended.test.ts server/__tests__/qbittorrent_features.test.ts server/__tests__/downloaders_qbittorrent_regression.test.ts server/__tests__/downloaders_qbittorrent_remaining.test.ts client/__tests__/Accessibility.test.tsx client/__tests__/GameDownloadDialog.test.tsx client/__tests__/SearchPage.test.tsx`
+  — 10 files passed; 211 tests passed, one skipped.
+- `npm run check` — passed.
+- Targeted ESLint and Prettier checks — passed.
+- Production client build and server TypeScript build passed with outputs
+  directed to `/dev/shm/questarr-upstream-batch26` so the existing `dist/`
+  directory was not overwritten. Vite emitted a large-chunk advisory, but the
+  build completed successfully.
+- The qBittorrent VPN path was checked through code and mocked regression
+  tests; no live Gluetun/qBittorrent deployment was available in this run.
+- `npm run dev:test` was driven with headless Playwright using a mocked pending
+  qBittorrent response; the running Search page showed the “Checking
+  qBittorrent” toast and the warning not to retry before checking qBittorrent.
+  Screenshot: `docs/pr-evidence/upstream-qbittorrent-pending.png`.
+- GitHub issue/PR histories checked: #239, #240, #241, #242, #243, #244, and
+  the follow-up qBittorrent fix #276.

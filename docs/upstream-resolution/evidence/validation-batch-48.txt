@@ -1,0 +1,9 @@
+Batch 48 validation — October 13, 2026
+
+- Upstream audit suite: 11 client test files and 14 server/shared test files passed, 1,047 tests passed, 1 skipped.
+- After the #514 manual-platform fix, `npm run test -- --run client/__tests__/GameDownloadDialog.test.tsx client/__tests__/AddGameModal.test.tsx client/__tests__/GameDetailsModal.test.tsx server/__tests__/cron_autosearch.test.ts`: passed, 4 files, 220 tests, 1 skipped.
+- `npm run check`, `npm run lint`, `npm run format:check`, and `npm run secretlint`: passed.
+- `npm run build`: passed. Vite emitted its advisory that a client chunk exceeds 500 kB after minification.
+- Running UI evidence: launched `npm run dev:test` with a task-specific database and port 5102. A headless Playwright browser opened a PS5-targeted game whose account-wide default was PC, and the dialog showed PS5 selected with only its matching result. Indexer and search responses were local fixtures. Screenshot: [upstream-game-platform-preselection-batch-48.png](../../pr-evidence/upstream-game-platform-preselection-batch-48.png).
+- Release-note validation: one user-facing fragment passed against the batch 47 base and staged batch 48 tree. `git diff --check`: passed.
+- Cleanup: stopped the port-5102 test server, removed its temporary SQLite database and WAL/SHM files, restored `package.json`, removed the generated `dist/` build output, and removed temporary database artifacts created by the server tests. The standard `data/test.db` cleanup found no database; existing `data/test.db-wal` and `data/test.db-shm` files were left untouched. No NFS scratch files were created.

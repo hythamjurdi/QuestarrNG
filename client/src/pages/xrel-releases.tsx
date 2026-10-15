@@ -28,8 +28,12 @@ interface XrelRelease extends XrelReleaseListItem {
 
 interface XrelLatestResponse {
   list: XrelRelease[];
-  pagination: { current_page: number; per_page: number; total_pages: number };
-  total_count: number;
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_pages?: number;
+    has_next_page: boolean;
+  };
 }
 
 function formatDate(ts: number): string {
@@ -105,7 +109,8 @@ export default function XrelReleasesPage() {
 
   const list = data?.list ?? [];
   const pagination = data?.pagination;
-  const totalPages = pagination?.total_pages ?? 1;
+  const hasNextPage = pagination?.has_next_page ?? false;
+  const totalPages = pagination?.total_pages;
 
   return (
     <div className="h-full overflow-auto p-4 md:p-6">
@@ -165,7 +170,7 @@ export default function XrelReleasesPage() {
               <p className="text-muted-foreground">
                 <InterfaceText source={"No game releases found on this page."} />
               </p>
-              {page < totalPages && (
+              {hasNextPage && (
                 <p className="text-xs text-muted-foreground mt-2">
                   <InterfaceText
                     source={
@@ -286,7 +291,7 @@ export default function XrelReleasesPage() {
                   </li>
                 ))}
               </ul>
-              {(page > 1 || totalPages > 1) && (
+              {(page > 1 || hasNextPage) && (
                 <div className="flex items-center justify-between pt-4 mt-4 border-t">
                   <Button
                     variant="outline"
@@ -297,16 +302,23 @@ export default function XrelReleasesPage() {
                     <InterfaceText source={"Previous"} />
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    <InterfaceText
-                      source={"Page {page} of {total}"}
-                      values={{ page: pagination?.current_page ?? page, total: totalPages }}
-                    />
+                    {totalPages === undefined ? (
+                      <InterfaceText
+                        source={"Page {page}"}
+                        values={{ page: pagination?.current_page ?? page }}
+                      />
+                    ) : (
+                      <InterfaceText
+                        source={"Page {page} of {total}"}
+                        values={{ page: pagination?.current_page ?? page, total: totalPages }}
+                      />
+                    )}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={!hasNextPage}
+                    onClick={() => setPage((p) => p + 1)}
                   >
                     <InterfaceText source={"Next"} />
                   </Button>

@@ -22,7 +22,6 @@ import { selectedPlatformNames as resolveSelectedPlatformNames } from "@shared/p
 import type { IgdbPlatform } from "@shared/platforms";
 import { PathMappingSettings } from "./PathMappingSettings";
 import { FileBrowser } from "./FileBrowser";
-import { RootFolderDiscovery } from "./RootFolderDiscovery";
 import SecurityScanSettings from "./SecurityScanSettings";
 import { InterfaceText } from "@/components/InterfaceText";
 import { formatInterfaceMessage } from "@/lib/interface-locale";
@@ -64,9 +63,11 @@ export default function ImportSettings() {
   const { data: hardlinkCapability } = useQuery<HardlinkCapabilityResponse>({
     queryKey: ["/api/imports/hardlink/check"],
   });
-  // Read-only mirror of the Platforms tab, which owns this setting.
+  // Read-only mirror of the Platforms card (Appearance tab), which owns this setting.
   const { data: userSettings } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
+    // SettingsPage owns the visible retry action after an initial failure.
+    retryOnMount: false,
   });
   const selectedPlatformNames = resolveSelectedPlatformNames(
     igdbPlatforms,
@@ -111,16 +112,27 @@ export default function ImportSettings() {
   // Mutations
   const updateConfigMutation = useMutation({
     mutationFn: async (data: ImportConfig) => {
-      // `importPlatformIds` is owned by the Platforms tab. Sending it from here
+      // `importPlatformIds` is owned by the Platforms card. Sending it from here
       // would let a stale copy revert a change saved on that tab, so omit it and
       // let the route keep the stored value.
       const { importPlatformIds: _unused, ...rest } = data;
       await apiRequest("PATCH", "/api/imports/config", rest);
     },
-    onSuccess: () => {
-      toast({ title: "Settings Saved", description: "Import configuration updated." });
+    onSuccess: (_data, saved) => {
+      // Switching post-processing on starts a scan of every enabled root folder.
+      const scanStarted = saved.enablePostProcessing && !config?.enablePostProcessing;
+      toast({
+        title: "Settings Saved",
+        description: scanStarted
+          ? "Import configuration updated. Scanning your root folders for games now."
+          : "Import configuration updated.",
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/imports/config"] });
       queryClient.invalidateQueries({ queryKey: ["/api/imports/hardlink/check"] });
+      if (scanStarted) {
+        queryClient.invalidateQueries({ queryKey: ["/api/library/scan/status"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/library/scan/unmatched"] });
+      }
     },
     onError: () => {
       if (config) setLocalConfig(config);
@@ -185,7 +197,8 @@ export default function ImportSettings() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="config" className="w-full">
-        <TabsList>
+        {/* Six tabs wrap into two columns on phones and sit in one row from sm up. */}
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:h-10 sm:w-auto sm:gap-0">
           <TabsTrigger value="config">
             <InterfaceText source={"General Config"} />
           </TabsTrigger>
@@ -824,10 +837,6 @@ export default function ImportSettings() {
           <SecurityScanSettings />
         </TabsContent>
 
-        <TabsContent value="discover" className="space-y-4">
-          <RootFolderDiscovery />
-        </TabsContent>
-
         <TabsContent value="help" className="space-y-4">
           <Card>
             <CardContent className="pt-6 space-y-6 text-sm">
@@ -957,7 +966,7 @@ export default function ImportSettings() {
                     },
                     {
                       name: "Platform Filter",
-                      desc: "Limits imports to the platforms chosen in the Platforms settings tab. If no platforms are checked, all platforms are eligible.",
+                      desc: "Limits imports to the platforms chosen under Settings → Appearance → Platforms. If no platforms are checked, all platforms are eligible.",
                     },
                     {
                       name: "Rename Pattern",

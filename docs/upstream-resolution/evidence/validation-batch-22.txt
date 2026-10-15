@@ -1,0 +1,42 @@
+Upstream PRs #190–194 and issues #191, #195–196 review and validation
+
+PR #190: superseded. Its nine proposed development dependency versions are all
+older than the versions declared and locked in the current fork. Retain the
+current package set rather than replaying the closed grouped bump.
+
+Issue #191: verified. Prowlarr sync maps supported torrent/Usenet indexers to
+Torznab/Newznab, provides separate management and feed diagnostics, remembers
+sync settings, and routes synced feeds through search. Insecure LAN HTTP needs
+an explicit opt-in. The issue was closed as completed upstream.
+
+PR #192: not applicable as written. The fork uses TanStack Query v5, which
+removed per-query onError callbacks. Keep the supported Discover error handling
+instead of adding an option that no longer exists.
+
+PR #193: verified as a duplicate of PR #185. GameCard’s Download icon has a
+tooltip; View Details is a labeled text action. Both are covered by the existing
+GameCard tests.
+
+PR #194: superseded by the verified download-path traversal protections tracked
+in PRs #171, #174, #177, #181, and #187.
+
+Issue #195: verified. DownloaderManager filters getAllDownloads results to the
+configured downloader category case-insensitively, excluding uncategorized
+items when a filter is active. The aggregated Downloads route calls this method.
+The manager tests cover matching, nonmatching, uncategorized, and no-filter
+behavior.
+
+Issue #196: verified. Each result’s row menu exposes Copy Torrent Link (or Copy
+NZB Link for Usenet). The dialog test verifies that the torrent result URL is
+copied and that copy failures are surfaced.
+
+Validation:
+
+- `npm test -- --run server/__tests__/downloaders_utils_manager.test.ts server/__tests__/prowlarr.test.ts server/__tests__/prowlarr-settings.test.ts server/__tests__/prowlarr-credentials.test.ts client/__tests__/GameDownloadDialog.test.tsx` — 5 files passed; 122 tests passed, 1 skipped.
+- Existing batch 19 and 21 security validation covers the path-traversal protections referenced for PR #194.
+- No source changes were required for this batch; all actionable behavior was already present or the proposed API was removed in the fork’s dependency major version.
+
+Ledger after review: 192 verified, 12 superseded, 936 unreviewed, 5 not-applicable,
+1 implemented-but-unverified, and 1 needs-implementation record. Issue #37 remains
+outstanding.
+- `npm run format:check`, ledger JSON parsing, and `git diff --check` — passed.

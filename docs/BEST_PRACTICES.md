@@ -122,6 +122,15 @@ latter has a compensating regression assertion in
 The latest successful fork-hosted DAST run is linked under
 [`dynamic_analysis`](#dynamic_analysis).
 
+For Batch 68, a local ZAP 2.17.0 baseline scan of the production build on
+campaign commit `8e393aa3` used the checked-in rules and returned zero new
+WARN/FAIL alerts (62 PASS, 5 IGNORE). The production-bundle syntax check also
+passed. The matching GitHub-hosted follow-up run
+[38472863000](https://github.com/snapetech-org/QuestarrNG/actions/runs/38472863000)
+was queued at the time of recording; the prior linked workflow remains the
+latest successful hosted scan. Full details are in the
+[Batch 68 validation record](upstream-resolution/evidence/validation-batch-68.txt).
+
 This evidence describes the configured gate and recorded dispositions; it does
 not claim that dynamic analysis can discover every exploitable vulnerability.
 The rule-level suppression and its compensating test should be reviewed if ZAP
@@ -209,6 +218,12 @@ for the release commit. Historical Scorecard maturity and review indicators stay
 visible; the maintainer has accepted the CodeReview metric under a
 single-maintainer merge policy. All required status checks remain in force.
 See [VULNERABILITY_MANAGEMENT.md](VULNERABILITY_MANAGEMENT.md#13-pre-release-gate).
+
+Release workflows use the full-SHA-pinned StepSecurity GitHub Release action, a
+secure drop-in replacement for `softprops/action-gh-release`. Checkouts in the
+release and release-recovery jobs disable credential persistence; changelog
+pull-request jobs retain checkout credentials because they push the generated
+branch.
 
 ## Repository evidence index
 

@@ -24,6 +24,7 @@ import { GAME_STATUSES, type Game } from "../../shared/schema.js";
 import { getContentFilterFlags, excludeFilteredContent } from "../content-filter.js";
 import { config } from "../config.js";
 import { steamService } from "../steam.js";
+import { validate } from "../middleware.js";
 
 const { version: APP_VERSION } = JSON.parse(
   readFileSync(path.resolve(process.cwd(), "package.json"), "utf-8")
@@ -613,100 +614,105 @@ const seerrCreateRequestSchema = z.object({
   variant: seerrVariantSchema,
 });
 
-integrationRouter.post("/seerrng/v1/requests", async (req: Request, res: Response) => {
-  const parsed = seerrCreateRequestSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid software request payload." });
-  const { externalRequestId, title, igdbId, variant } = parsed.data;
-  return withSeerrDispatchQueue(`${req.user!.id}:${normalizeTitle(title)}`, async () => {
-    try {
-      let ledger = await storage.getIntegrationRequest(req.user!.id, externalRequestId);
-      if (ledger) {
-        const sameRequest =
-          ledger.title === title &&
-          ledger.operatingSystem === variant.operatingSystem &&
-          ledger.architecture === variant.architecture &&
-          (ledger.igdbId ?? null) === (igdbId ?? null);
-        if (!sameRequest) {
-          return res
-            .status(409)
-            .json({ error: "externalRequestId is already bound to a different request identity." });
+integrationRouter.post(
+  "/seerrng/v1/requests",
+  validate(seerrCreateRequestSchema),
+  async (req: Request, res: Response) => {
+    const parsed = seerrCreateRequestSchema.safeParse(req.body);
+    if (!parsed.success)
+      return res.status(400).json({ error: "Invalid software request payload." });
+    const { externalRequestId, title, igdbId, variant } = parsed.data;
+    return withSeerrDispatchQueue(`${req.user!.id}:${normalizeTitle(title)}`, async () => {
+      try {
+        let ledger = await storage.getIntegrationRequest(req.user!.id, externalRequestId);
+        if (ledger) {
+          const sameRequest =
+            ledger.title === title &&
+            ledger.operatingSystem === variant.operatingSystem &&
+            ledger.architecture === variant.architecture &&
+            (ledger.igdbId ?? null) === (igdbId ?? null);
+          if (!sameRequest) {
+            return res.status(409).json({
+              error: "externalRequestId is already bound to a different request identity.",
+            });
+          }
+          const existingGame = await findSeerrGame(req.user!.id, externalRequestId);
+          if (
+            igdbId &&
+            existingGame &&
+            typeof existingGame.igdbId === "number" &&
+            Number.isSafeInteger(existingGame.igdbId) &&
+            existingGame.igdbId !== igdbId
+          ) {
+            return res
+              .status(409)
+              .json({ error: "externalRequestId is already bound to a different IGDB title." });
+          }
+          return res.status(200).json(await getSeerrRequest(req.user!.id, externalRequestId));
+        } else {
+          ledger = await storage.addIntegrationRequest({
+            userId: req.user!.id,
+            externalRequestId,
+            title,
+            igdbId: igdbId ?? null,
+            operatingSystem: variant.operatingSystem,
+            architecture: variant.architecture,
+          });
         }
-        const existingGame = await findSeerrGame(req.user!.id, externalRequestId);
-        if (
-          igdbId &&
-          existingGame &&
-          typeof existingGame.igdbId === "number" &&
-          Number.isSafeInteger(existingGame.igdbId) &&
-          existingGame.igdbId !== igdbId
-        ) {
-          return res
-            .status(409)
-            .json({ error: "externalRequestId is already bound to a different IGDB title." });
+        const existing = await findSeerrGame(req.user!.id, externalRequestId);
+        if (existing) {
+          if (igdbId && existing.igdbId !== igdbId) {
+            return res
+              .status(409)
+              .json({ error: "The request is already linked to a different IGDB title." });
+          }
+          await storage.updateIntegrationRequest(req.user!.id, externalRequestId, {
+            gameId: existing.id,
+          });
+          const current = await getSeerrRequest(req.user!.id, externalRequestId);
+          return res.status(200).json(current);
         }
-        return res.status(200).json(await getSeerrRequest(req.user!.id, externalRequestId));
-      } else {
-        ledger = await storage.addIntegrationRequest({
-          userId: req.user!.id,
-          externalRequestId,
-          title,
-          igdbId: igdbId ?? null,
-          operatingSystem: variant.operatingSystem,
-          architecture: variant.architecture,
-        });
-      }
-      const existing = await findSeerrGame(req.user!.id, externalRequestId);
-      if (existing) {
-        if (igdbId && existing.igdbId !== igdbId) {
-          return res
-            .status(409)
-            .json({ error: "The request is already linked to a different IGDB title." });
-        }
-        await storage.updateIntegrationRequest(req.user!.id, externalRequestId, {
-          gameId: existing.id,
-        });
-        const current = await getSeerrRequest(req.user!.id, externalRequestId);
-        return res.status(200).json(current);
-      }
 
-      const result = await quickAddGameByTitle(req.user!.id, title, {
-        status: "wanted",
-        source: "api",
-        ...(igdbId ? { igdbId } : {}),
-        seerrExternalRequestId: externalRequestId,
-        seerrVariant: variant,
-        targetOperatingSystem: variant.operatingSystem,
-        targetArchitecture: variant.architecture,
-      });
-      if (result.outcome === "not_found") {
-        await storage.updateIntegrationRequest(req.user!.id, externalRequestId, {
-          status: "failed",
-          errorMessage: "No matching PC game was found.",
+        const result = await quickAddGameByTitle(req.user!.id, title, {
+          status: "wanted",
+          source: "api",
+          ...(igdbId ? { igdbId } : {}),
+          seerrExternalRequestId: externalRequestId,
+          seerrVariant: variant,
+          targetOperatingSystem: variant.operatingSystem,
+          targetArchitecture: variant.architecture,
         });
-        return res.status(404).json({ error: "No matching PC game was found." });
-      }
-      if (result.outcome === "duplicate") {
+        if (result.outcome === "not_found") {
+          await storage.updateIntegrationRequest(req.user!.id, externalRequestId, {
+            status: "failed",
+            errorMessage: "No matching PC game was found.",
+          });
+          return res.status(404).json({ error: "No matching PC game was found." });
+        }
+        if (result.outcome === "duplicate") {
+          await storage.updateIntegrationRequest(req.user!.id, externalRequestId, {
+            status: "failed",
+            errorMessage: "Game is already linked to another request.",
+          });
+          return res.status(409).json({ error: "Game is already linked to another request." });
+        }
         await storage.updateIntegrationRequest(req.user!.id, externalRequestId, {
-          status: "failed",
-          errorMessage: "Game is already linked to another request.",
+          gameId: result.game.id,
+          status: "searching",
+          errorMessage: null,
+          attemptedAt: new Date(),
         });
-        return res.status(409).json({ error: "Game is already linked to another request." });
+        if (!result.game.seerrCancelled && result.game.status === "wanted") {
+          await checkAutoSearch({ userId: req.user!.id, gameId: result.game.id, force: true });
+        }
+        return res.status(201).json(await getSeerrRequest(req.user!.id, externalRequestId));
+      } catch (error) {
+        logger.error({ error, externalRequestId }, "SeerrNG software request failed");
+        return res.status(500).json({ error: "Software request could not be started." });
       }
-      await storage.updateIntegrationRequest(req.user!.id, externalRequestId, {
-        gameId: result.game.id,
-        status: "searching",
-        errorMessage: null,
-        attemptedAt: new Date(),
-      });
-      if (!result.game.seerrCancelled && result.game.status === "wanted") {
-        await checkAutoSearch({ userId: req.user!.id, gameId: result.game.id, force: true });
-      }
-      return res.status(201).json(await getSeerrRequest(req.user!.id, externalRequestId));
-    } catch (error) {
-      logger.error({ error, externalRequestId }, "SeerrNG software request failed");
-      return res.status(500).json({ error: "Software request could not be started." });
-    }
-  });
-});
+    });
+  }
+);
 
 integrationRouter.get(
   "/seerrng/v1/requests/:externalRequestId",
@@ -725,6 +731,13 @@ integrationRouter.get(
 
 integrationRouter.post(
   "/seerrng/v1/requests/:externalRequestId/retry",
+  validate(
+    z
+      .object({ confirmNoExistingDownload: z.boolean().optional() })
+      .passthrough()
+      .optional()
+      .default({})
+  ),
   async (req: Request, res: Response) => {
     const externalRequestId = seerrRequestIdSchema.safeParse(req.params.externalRequestId);
     if (!externalRequestId.success) return res.status(400).json({ error: "Invalid request ID." });
@@ -827,6 +840,13 @@ integrationRouter.post(
 
 integrationRouter.post(
   "/seerrng/v1/requests/:externalRequestId/cancel",
+  validate(
+    z
+      .object({ confirmNoExistingDownload: z.boolean().optional() })
+      .passthrough()
+      .optional()
+      .default({})
+  ),
   async (req: Request, res: Response) => {
     const externalRequestId = seerrRequestIdSchema.safeParse(req.params.externalRequestId);
     if (!externalRequestId.success) return res.status(400).json({ error: "Invalid request ID." });
@@ -1217,83 +1237,87 @@ const syncSchema = z.object({
   markInstalledAsOwned: z.boolean().optional().default(false),
 });
 
-integrationRouter.post("/library/sync", async (req: Request, res: Response) => {
-  try {
-    const parsed = syncSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid sync payload", issues: parsed.error.issues });
-    }
-    const { games: incoming, markInstalledAsOwned } = parsed.data;
-    const userId = req.user!.id;
+integrationRouter.post(
+  "/library/sync",
+  validate(syncSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const parsed = syncSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid sync payload", issues: parsed.error.issues });
+      }
+      const { games: incoming, markInstalledAsOwned } = parsed.data;
+      const userId = req.user!.id;
 
-    const library = await storage.getUserGames(userId, true);
+      const library = await storage.getUserGames(userId, true);
 
-    // Index the library once; a sync can carry thousands of titles and a linear
-    // scan per entry would make this quadratic.
-    const byNormalizedTitle = new Map<string, Game>();
-    const bySteamAppId = new Map<number, Game>();
-    for (const game of library) {
-      const key = normalizeTitle(game.title);
-      if (!byNormalizedTitle.has(key)) byNormalizedTitle.set(key, game);
-      if (game.steamAppId) bySteamAppId.set(game.steamAppId, game);
-    }
-
-    const matched: Array<{
-      externalId?: string | undefined;
-      title: string;
-      gameId: string;
-      status: string;
-    }> = [];
-    const unmatched: Array<{ externalId?: string | undefined; title: string }> = [];
-    const promoted: string[] = [];
-
-    for (const entry of incoming) {
-      const match =
-        (entry.steamAppId ? bySteamAppId.get(entry.steamAppId) : undefined) ??
-        byNormalizedTitle.get(normalizeTitle(entry.title));
-
-      if (!match) {
-        unmatched.push({ externalId: entry.externalId, title: entry.title });
-        continue;
+      // Index the library once; a sync can carry thousands of titles and a linear
+      // scan per entry would make this quadratic.
+      const byNormalizedTitle = new Map<string, Game>();
+      const bySteamAppId = new Map<number, Game>();
+      for (const game of library) {
+        const key = normalizeTitle(game.title);
+        if (!byNormalizedTitle.has(key)) byNormalizedTitle.set(key, game);
+        if (game.steamAppId) bySteamAppId.set(game.steamAppId, game);
       }
 
-      let status = match.status;
-      if (markInstalledAsOwned && entry.installed && match.status === "wanted") {
-        await storage.updateGameStatus(match.id, { status: "owned" });
-        status = "owned";
-        promoted.push(match.id);
+      const matched: Array<{
+        externalId?: string | undefined;
+        title: string;
+        gameId: string;
+        status: string;
+      }> = [];
+      const unmatched: Array<{ externalId?: string | undefined; title: string }> = [];
+      const promoted: string[] = [];
+
+      for (const entry of incoming) {
+        const match =
+          (entry.steamAppId ? bySteamAppId.get(entry.steamAppId) : undefined) ??
+          byNormalizedTitle.get(normalizeTitle(entry.title));
+
+        if (!match) {
+          unmatched.push({ externalId: entry.externalId, title: entry.title });
+          continue;
+        }
+
+        let status = match.status;
+        if (markInstalledAsOwned && entry.installed && match.status === "wanted") {
+          await storage.updateGameStatus(match.id, { status: "owned" });
+          status = "owned";
+          promoted.push(match.id);
+        }
+
+        matched.push({
+          externalId: entry.externalId,
+          title: entry.title,
+          gameId: match.id,
+          status,
+        });
       }
 
-      matched.push({
-        externalId: entry.externalId,
-        title: entry.title,
-        gameId: match.id,
-        status,
-      });
-    }
+      logger.info(
+        {
+          userId,
+          received: incoming.length,
+          matched: matched.length,
+          unmatched: unmatched.length,
+          promoted: promoted.length,
+        },
+        "Integration library sync"
+      );
 
-    logger.info(
-      {
-        userId,
+      return res.json({
         received: incoming.length,
-        matched: matched.length,
-        unmatched: unmatched.length,
-        promoted: promoted.length,
-      },
-      "Integration library sync"
-    );
-
-    return res.json({
-      received: incoming.length,
-      matched,
-      unmatched,
-      promotedToOwned: promoted.length,
-    });
-  } catch (error) {
-    logger.error({ error }, "Integration library sync failed");
-    return res.status(500).json({ error: "Library sync failed" });
+        matched,
+        unmatched,
+        promotedToOwned: promoted.length,
+      });
+    } catch (error) {
+      logger.error({ error }, "Integration library sync failed");
+      return res.status(500).json({ error: "Library sync failed" });
+    }
   }
-});
+);
 
 // ── Request a game from the couch ────────────────────────────────────────────
 // Matches a free-text title against IGDB and adds it to the library. Adding it
@@ -1305,50 +1329,54 @@ const requestSchema = z.object({
   status: z.enum(["wanted", "owned"]).optional().default("wanted"),
 });
 
-integrationRouter.post("/games/request", async (req: Request, res: Response) => {
-  try {
-    const parsed = requestSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request payload", issues: parsed.error.issues });
-    }
-    const { title, status } = parsed.data;
-    const userId = req.user!.id;
-
-    // Shared with POST /api/games/match-and-add (the browser's own "quick
-    // add" flow) so the two entry points can't drift on matching, content
-    // filtering, or dedupe behavior.
-    const result = await quickAddGameByTitle(userId, title, { status, source: "api" });
-
-    switch (result.outcome) {
-      case "not_found":
-        // Deliberately indistinguishable from "no match": a filtered title
-        // must not be discoverable through this endpoint either.
-        return res.status(404).json({ error: "No game found on IGDB for this title" });
-      case "duplicate":
+integrationRouter.post(
+  "/games/request",
+  validate(requestSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const parsed = requestSchema.safeParse(req.body);
+      if (!parsed.success) {
         return res
-          .status(409)
-          .json({ error: "Game already in collection", game: toIntegrationGame(result.game) });
-      case "added":
-        logger.info(
-          {
-            userId,
-            title: result.game.title,
-            igdbId: result.game.igdbId,
-            viaApiKey: Boolean(req.apiKeyId),
-          },
-          "Game requested through the integration API"
-        );
-        return res.status(201).json({ game: toIntegrationGame(result.game) });
-    }
+          .status(400)
+          .json({ error: "Invalid request payload", issues: parsed.error.issues });
+      }
+      const { title, status } = parsed.data;
+      const userId = req.user!.id;
 
-    return;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.issues });
+      // Shared with POST /api/games/match-and-add (the browser's own "quick
+      // add" flow) so the two entry points can't drift on matching, content
+      // filtering, or dedupe behavior.
+      const result = await quickAddGameByTitle(userId, title, { status, source: "api" });
+
+      switch (result.outcome) {
+        case "not_found":
+          // Deliberately indistinguishable from "no match": a filtered title
+          // must not be discoverable through this endpoint either.
+          return res.status(404).json({ error: "No game found on IGDB for this title" });
+        case "duplicate":
+          return res
+            .status(409)
+            .json({ error: "Game already in collection", game: toIntegrationGame(result.game) });
+        case "added":
+          logger.info(
+            {
+              userId,
+              title: result.game.title,
+              igdbId: result.game.igdbId,
+              viaApiKey: Boolean(req.apiKeyId),
+            },
+            "Game requested through the integration API"
+          );
+          return res.status(201).json({ game: toIntegrationGame(result.game) });
+      }
+
+      return;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.issues });
+      }
+      logger.error({ error }, "Integration game request failed");
+      return res.status(500).json({ error: "Failed to request game" });
     }
-    logger.error({ error }, "Integration game request failed");
-    return res.status(500).json({ error: "Failed to request game" });
   }
-});
+);

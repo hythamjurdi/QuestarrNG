@@ -1,0 +1,37 @@
+QuestarrNG upstream-resolution checkpoint — 2026-10-12
+
+Issue #406's verified torrent extension filter now follows bounded redirects
+through the shared SSRF-checked fetcher. Unknown and unsupported payloads still
+fail closed.
+
+Focused server tests:
+  TMPDIR=/home/keith/questarr-upstream-temp npx vitest run \
+    server/__tests__/release-file-types.test.ts \
+    server/__tests__/release-file-types-redirect.integration.test.ts \
+    server/__tests__/api_routes.test.ts
+  3 files passed; 375 tests passed.
+
+Full unit suite:
+  TMPDIR=/home/keith/questarr-upstream-temp npm run test:run -- --maxWorkers=4
+  247 files passed, 1 skipped; 4,009 tests passed, 7 skipped.
+
+Redirect safety tests:
+  TMPDIR=/home/keith/questarr-upstream-temp npx vitest run server/__tests__/ssrf.test.ts
+  42 tests passed.
+
+Browser filter journey:
+  TMPDIR=/home/keith/questarr-upstream-temp npm run test:e2e -- \
+    tests/e2e/file-type-search.spec.ts
+  2 tests passed, including setup and the verified-file-type UI flow.
+
+Additional checks:
+  npm run check       passed
+  npm run lint        passed
+  npm run build       passed (Vite reports the existing large-chunk advisory)
+  git diff --check    passed
+
+The running-UI screenshot was captured and visually inspected:
+  docs/pr-evidence/upstream-file-type-search.png
+
+A live third-party indexer was not configured; redirect behavior is exercised
+against a local HTTP indexer with the production safe-fetch implementation.

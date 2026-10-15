@@ -1,0 +1,59 @@
+# Batch 74: upstream PRs #857–866
+
+Reviewed all ten upstream pull requests against their complete descriptions,
+commit histories, review threads, changed files, and checks. The source digests
+matched the October 13 inventory snapshot at upstream `main`
+`0b538fe4b0a2269edcc8fd3e71e2bbc240291868`; none of these ten records changed
+after capture. The generated ledger now records four `verified` items and six
+`superseded` dependency updates. The full inventory remains open; see the
+current counts in [the campaign overview](../README.md).
+
+## Upstream review and disposition
+
+- [PR #857 — Harden input validation on indexer search, qBittorrent, and misc endpoints](https://github.com/Doezer/Questarr/pull/857): verified. The fork bounds and validates single-indexer search values, rejects unsafe offsets above `Number.MAX_SAFE_INTEGER`, URL-encodes qBittorrent IDs, bounds quick-add and NexusMods inputs, and validates game-status paths. The upstream review follow-ups for reserved-character IDs, middleware validation, and corrected logger mocks are represented in code and tests.
+- [PR #858 — Log failed login attempts (OWASP A09)](https://github.com/Doezer/Questarr/pull/858): verified. Failed logins keep a generic 401 response and record only the trimmed username and client IP. The password is not logged. Coverage checks the trusted-proxy IP behavior.
+- [PR #859 — Fix IDOR on game endpoints and strengthen password policy](https://github.com/Doezer/Questarr/pull/859): verified. Status changes, visibility changes, and deletion resolve ownership before changing database state or deleting files. Shared password validation trims new passwords and requires at least eight characters, a letter, and a number. Added regression tests prove a different user receives 403 and causes no write or file deletion on all three routes.
+- [PR #860 — Add CLI script to reset a forgotten user password](https://github.com/Doezer/Questarr/pull/860): verified. The existing CLI already avoided password arguments, hid TTY input, supported piped input and chunked terminal input, handled closed input, and allowed logger output to flush. Its stale six-character check now uses the shared password schema. Added isolated tests for argument validation, account lookup, policy failures, confirmation, trimming, hashing, storage, and safe error logging; the operator guide documents host and container use.
+- [PR #861 — Development dependency group](https://github.com/Doezer/Questarr/pull/861): superseded by current lockfile versions meeting or exceeding the requested Playwright, Secretlint, eslint-plugin-react, lint-staged, postcss, and Prettier versions.
+- [PR #862 — GitHub Actions group](https://github.com/Doezer/Questarr/pull/862): superseded by current workflow pins at or above all four requested action versions: setup-buildx `v4.4.1`, build-push `v7.4.0`, CodeQL upload-sarif `v4.38.2`, and Scorecard `v2.4.4`.
+- [PR #863 — Production dependency group](https://github.com/Doezer/Questarr/pull/863): superseded; each of the 32 dependency targets parsed from the PR description is met or exceeded by the current lockfile.
+- [PR #864 — Update jest-dom to 7.0.0](https://github.com/Doezer/Questarr/pull/864): superseded by the current locked 7.0.1, exercised by the complete test suite.
+- [PR #865 — Update undici to 8.9.0](https://github.com/Doezer/Questarr/pull/865): superseded by locked undici 8.11.2. The upstream advisories mark 8.9.0 as fixed for the cache-control disclosure/crash and blob-like-body CRLF issues ([cache advisory](https://github.com/nodejs/undici/security/advisories/GHSA-4cwx-7wf7-3272), [CRLF advisory](https://github.com/nodejs/undici/security/advisories/GHSA-m8rv-5g2x-5cg5)); the current version is later on the same major line.
+- [PR #866 — Update better-sqlite3 to 13.0.1](https://github.com/Doezer/Questarr/pull/866): superseded by locked better-sqlite3 13.0.3. Upstream's Docker build failure was caused by a missing Python/node-gyp toolchain in that run; QuestarrNG's builder installs Python, `g++`, and `make`, and the current dependency passes the fork's test and build checks. The fork's operator command runs the compiled CLI because the runtime image copies `dist`, not TypeScript source files.
+
+## Changes
+
+The recovery CLI now uses the exact `passwordPolicySchema` shared by account
+setup and password changes. It trims before validation and hashing, never
+accepts a password as a command-line argument, rejects a failed storage update,
+and keeps raw password or storage/hash errors out of logs. Its orchestration is
+dependency-injected so the policy and persistence outcomes can be tested
+without touching a real account database.
+
+The API, security assessment, README, deployment documentation, and navigation
+now explain the account-recovery workflow and its operator-only host/container
+boundary. The API reference also documents the 403 ownership responses for
+game status and visibility changes. No files under `client/src/**` changed, so
+the visual-evidence requirement did not apply.
+
+## Validation
+
+- `npm test -- scripts/__tests__/reset-password.test.ts server/__tests__/api_routes.test.ts` — 396 tests passed in 2 files.
+- `npm test` — 4,269 passed, 7 skipped; 272 test files passed and 1 was skipped.
+- `npm run check` — passed.
+- `npm run lint` — passed with zero warnings.
+- `npm run format:check` — passed; the edited Markdown and JSON files were also formatted with Prettier.
+- `npm run secretlint` — passed.
+- `npx tsc -p tsconfig.build.json --outDir /tmp/questarrng-batch74-<task>/dist` — passed without writing to the checkout's existing ignored `dist` directory.
+- `npx vite build --outDir /tmp/questarrng-batch74-<task>/client` — passed. Vite emitted its large-chunk advisory; there were no build errors.
+- Ran the emitted `dist/scripts/reset-password.js` with no username in production mode and an isolated SQLite path. It printed the expected usage message and exited with code 1.
+- `npm run release-notes:check -- --base origin/main --head HEAD --pr-body /dev/null` — exited successfully and validated 47 user-facing fragments. Its shipped-note scan printed four Git diagnostics for older files absent from or untracked in tag `v1.5.0`; none were errors for this batch's new fragment.
+- `npm run release-notes:preview -- --base 71980090^ --head 71980090` — rendered the new authentication release note.
+
+The desktop is `kspld0`; `kspls0` has the LVM-backed filesystem at
+`/mnt/datapool_lvm_media` with ample free space. Reads from the desktop's NFS
+mount hung in the kernel during scratch setup, so no scratch directory was
+created there; the server-local filesystem confirmed that none existed. This
+batch used a unique local `/tmp` directory instead and removed it after the
+build and CLI checks. No temporary database, generated build output, or browser
+artifacts remain.

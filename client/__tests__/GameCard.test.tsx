@@ -109,15 +109,22 @@ describe("GameCard", () => {
     expect(screen.getByTestId("text-release-1")).toHaveTextContent("2024");
   });
 
+  it("makes rating and release-date tooltip triggers keyboard-focusable", () => {
+    renderComponent();
+    expect(screen.getByRole("img", { name: "IGDB rating: 8.5 out of 10" })).toHaveAttribute(
+      "tabindex",
+      "0"
+    );
+    expect(screen.getByRole("img", { name: "Release Date: 2024" })).toHaveAttribute(
+      "tabindex",
+      "0"
+    );
+  });
+
   it("shows full release dates in the selected regional format", async () => {
     setRegionalPreference("ja");
-    renderComponent({
-      game: { ...mockGame, releaseDate: "2024-02-03T00:00:00.000Z" },
-    });
-
-    fireEvent.pointerMove(screen.getByTestId("text-release-1"), {
-      pointerType: "mouse",
-    });
+    renderComponent({ game: { ...mockGame, releaseDate: "2024-02-03T00:00:00.000Z" } });
+    fireEvent.pointerMove(screen.getByTestId("text-release-1"), { pointerType: "mouse" });
     const fullDate = await screen.findByText("2024/02/03");
     expect(fullDate).toHaveAttribute("lang", "ja");
     expect(fullDate).toHaveAttribute("dir", "ltr");

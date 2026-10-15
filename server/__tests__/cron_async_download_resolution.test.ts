@@ -14,6 +14,7 @@ const createMockLogger = () => ({
 
 const mockNotifyUser = vi.fn();
 const mockProcessImport = vi.fn();
+const mockIsImportInFlight = vi.fn().mockReturnValue(false);
 const mockFindDownloadByTag = vi.fn();
 const mockGetDownloadDetails = vi.fn();
 const mockGetDownloadStatus = vi.fn();
@@ -50,6 +51,7 @@ vi.mock("../socket.js", () => ({
 vi.mock("../services/index.js", () => ({
   importManager: {
     processImport: mockProcessImport,
+    isImportInFlight: mockIsImportInFlight,
   },
 }));
 vi.mock("../downloaders.js", () => ({
@@ -324,7 +326,7 @@ describe("Cron — async qBittorrent correlation tag resolution", () => {
       { status: "wanted" },
       { preserveCurated: true }
     );
-    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", "game-1");
+    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", "game-1", "user-1");
   });
 
   it("preserves game status when a sibling remains downloading on tag failure", async () => {
@@ -412,6 +414,6 @@ describe("Cron — async qBittorrent correlation tag resolution", () => {
       { status: "owned" },
       { preserveCurated: true }
     );
-    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", "game-1");
+    expect(mockNotifyUser).toHaveBeenCalledWith("downloadUpdate", "game-1", "user-1");
   });
 });

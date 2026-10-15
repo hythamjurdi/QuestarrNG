@@ -1,0 +1,23 @@
+QuestarrNG upstream-resolution checkpoint — 2026-10-12
+
+Issue #336's optional Hydra-format JSON catalog is configured as a source and
+flows into aggregated torrent search with its source attribution intact.
+
+Focused catalog and search tests:
+  TMPDIR=/home/keith/questarr-upstream-temp npx vitest run \
+    server/__tests__/json-catalog.test.ts server/__tests__/search.test.ts
+  2 files passed; 55 tests passed.
+
+Browser configuration journey:
+  TMPDIR=/home/keith/questarr-upstream-temp npm run test:e2e -- \
+    tests/e2e/json-catalog.spec.ts
+  2 tests passed, including setup and saving/reloading a catalog without an API key.
+
+The screenshot was captured from the running `npm run dev:test` application and
+visually inspected:
+  docs/pr-evidence/upstream-json-catalog.png
+
+`docs/JSON_CATALOGS.md` describes public-HTTPS-only sources, accepted torrent
+links, bounded fetching, source attribution, and the fact that a curated source
+does not certify a release as safe. No third-party torrent was submitted to a
+downloader during verification.

@@ -103,6 +103,7 @@ import { type XrelGameStatus } from "@shared/xrel-types";
 import StatusBadge, { getStatusLabel } from "./StatusBadge";
 import { apiRequest } from "@/lib/queryClient";
 import { cn, safeUrl, formatBytes, isDiscoveryId } from "@/lib/utils";
+import { addDiscoveryGameToLibrary, hideDiscoveryGame } from "@/lib/discover-hidden-mutation";
 import { carriesBaseGameVersion } from "@shared/version-utils";
 import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
 import { InterfaceText } from "@/components/InterfaceText";
@@ -131,7 +132,23 @@ interface GameDetailsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface ScannedGameFilesResponse {
+  files: ScannedGameFile[];
+  truncated: boolean;
+}
+
+const EMPTY_SCANNED_GAME_FILES: ScannedGameFile[] = [];
+
 type GameDownloadWithDownloader = GameDownload & { downloaderName: string | null };
+
+interface HLTBEntry {
+  id: number;
+  name: string;
+  gameplayMain: number;
+  gameplayMainExtra: number;
+  gameplayCompletionist: number;
+  url: string;
+}
 
 type FileDeletionResult =
   | { deleted: true; path: string | null }
@@ -262,11 +279,18 @@ function resolveWebsiteConfig(w: { category?: number; url: string }): SiteLinkCo
 
 function getDerivedLinks(
   game: Game,
-  pcgwUrl?: string | null
+  pcgwUrl?: string | null,
+  hltbUrl?: string | null
 ): Array<SiteLinkConfig & { href: string }> {
   const t = encodeURIComponent(game.title);
 
   return [
+    {
+      label: "HowLongToBeat",
+      Icon: Clock as IconComponent,
+      colorClass: "text-yellow-400",
+      href: hltbUrl ?? `https://howlongtobeat.com/?q=${t}`,
+    },
     {
       label: "PCGamingWiki",
       Icon: SiPcgamingwiki as IconComponent,
@@ -760,6 +784,25 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
     staleTime: 60 * 60 * 1000,
   });
 
+  // Discover and search results carry a temporary "igdb-<id>" id that the
+  // game endpoints reject. Look up the library row for the same IGDB game so
+  // Hide, Remove and the rating act on it instead.
+  const isDiscoveryGame = isDiscoveryId(game?.id);
+  const { data: libraryGames } = useQuery<Game[]>({
+    queryKey: ["/api/games", "", true],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/games?includeHidden=true");
+      return res.json();
+    },
+    enabled: open && isDiscoveryGame,
+  });
+  const libraryGame = useMemo(() => {
+    if (!isDiscoveryGame) return game ?? undefined;
+    if (game?.igdbId) return libraryGames?.find((g) => g.igdbId === game.igdbId);
+    if (game?.rawgId) return libraryGames?.find((g) => g.rawgId === game.rawgId);
+    return undefined;
+  }, [isDiscoveryGame, game, libraryGames]);
+
   const removeGameMutation = useMutation({
     mutationFn: async ({
       gameId,
@@ -816,7 +859,11 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
     { gameId: string; userRating: number | null }
   >({
     mutationFn: async ({ gameId, userRating }) => {
-      await apiRequest("PATCH", `/api/games/${gameId}/user-rating`, { userRating });
+      // Rating a Discover game that isn't in the library yet adds it as wanted,
+      // like downloading it does.
+      const targetId =
+        isDiscoveryId(gameId) && game ? (await addDiscoveryGameToLibrary(game)).id : gameId;
+      await apiRequest("PATCH", `/api/games/${targetId}/user-rating`, { userRating });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/games"] });
@@ -862,6 +909,15 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
     errorMessage: "Failed to update game visibility",
   });
 
+  const discoveryHiddenMutation = useHiddenMutation<Game>({
+    mutationFn: (discoveryGame) => hideDiscoveryGame(discoveryGame, libraryGame?.id),
+    hiddenSuccessMessage: "Game hidden from discovery",
+    errorMessage: "Failed to hide game",
+  });
+  const isHidden = !!libraryGame?.hidden;
+  const hideLabel = isHidden ? "Unhide" : "Hide";
+  const isHiddenPending = hiddenMutation.isPending || discoveryHiddenMutation.isPending;
+
   const removeDownloadMutation = useMutation({
     mutationFn: async (downloadId: string) => {
       await apiRequest("DELETE", `/api/games/${game!.id}/downloads/${downloadId}`);
@@ -888,21 +944,35 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
     staleTime: 24 * 60 * 60 * 1000,
   });
 
+  const { data: hltbData } = useQuery<{ data: HLTBEntry | null }>({
+    queryKey: ["/api/hltb/lookup", game?.title],
+    queryFn: async () => {
+      const res = await apiRequest(
+        "GET",
+        `/api/hltb/lookup?title=${encodeURIComponent(game!.title)}`
+      );
+      return res.json();
+    },
+    enabled: open && !!game?.title,
+    retry: false,
+  });
+
   const {
-    data: gameFiles = [],
+    data: gameFilesResponse,
     isLoading: filesLoading,
     isError: filesError,
-  } = useQuery<ScannedGameFile[]>({
+  } = useQuery<ScannedGameFilesResponse>({
     queryKey: [`/api/games/${game?.id}/files`],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/games/${game!.id}/files`);
-      const data = await res.json();
-      return data.files;
+      return res.json();
     },
     // The endpoint recursively scans the game's library folder, so only fetch it once the
     // Files tab is actually opened rather than on every modal open.
     enabled: open && activeTab === "files" && !!game?.id && !isDiscoveryId(game.id),
   });
+  const gameFiles = gameFilesResponse?.files ?? EMPTY_SCANNED_GAME_FILES;
+  const filesTruncated = gameFilesResponse?.truncated ?? false;
 
   const groupedGameFiles = useMemo(() => {
     const groups = new Map<string, typeof gameFiles>();
@@ -930,7 +1000,16 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
   }
 
   const handleUserRatingChange = (rating: number | null) => {
-    userRatingMutation.mutate({ gameId: game.id, userRating: rating });
+    userRatingMutation.mutate({ gameId: libraryGame?.id ?? game.id, userRating: rating });
+  };
+
+  const handleToggleHidden = () => {
+    if (isDiscoveryGame && !isHidden) {
+      // Hiding drops the game from Discover, so close the card it was opened from.
+      discoveryHiddenMutation.mutate(game, { onSuccess: () => onOpenChange(false) });
+    } else if (libraryGame) {
+      hiddenMutation.mutate({ gameId: libraryGame.id, hidden: !isHidden });
+    }
   };
 
   const SUMMARY_LIMIT = 280;
@@ -946,11 +1025,17 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
         ]
       : rawWebsites;
 
-  const derivedLinks = getDerivedLinks(game, pcgwData?.url);
+  const hltbEntry = hltbData?.data;
+  const hltbTimes = [
+    { label: "Main Story", hours: hltbEntry?.gameplayMain ?? 0 },
+    { label: "Main + Extras", hours: hltbEntry?.gameplayMainExtra ?? 0 },
+    { label: "Completionist", hours: hltbEntry?.gameplayCompletionist ?? 0 },
+  ].filter((entry) => entry.hours > 0);
+  const derivedLinks = getDerivedLinks(game, pcgwData?.url, hltbEntry?.url);
   // Optimistic display: show pending value immediately while the mutation is in flight.
   const currentUserRating = userRatingMutation.isPending
     ? (userRatingMutation.variables?.userRating ?? null)
-    : (game.userRating ?? null);
+    : (libraryGame?.userRating ?? null);
 
   const detailsBody = (
     <>
@@ -1017,7 +1102,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                   </TooltipContent>
                 </Tooltip>
               )}
-              {game.rating ? (
+              {game.rating !== null && game.rating !== undefined ? (
                 <div className="flex items-center gap-1 text-sm">
                   <Star className="w-4 h-4 text-accent" />
                   <span data-testid={`text-rating-${game.id}`}>{game.rating}/10</span>
@@ -1133,13 +1218,13 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => hiddenMutation.mutate({ gameId: game.id, hidden: !game.hidden })}
-                disabled={hiddenMutation.isPending}
+                onClick={handleToggleHidden}
+                disabled={isHiddenPending}
                 className="h-10 w-10 sm:h-9 sm:w-auto sm:px-3 sm:gap-2"
-                aria-label={game.hidden ? "Unhide" : "Hide"}
+                aria-label={hideLabel}
                 data-testid={`button-toggle-hidden-quick-${game.id}`}
               >
-                {game.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                {isHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 <span className="hidden sm:inline">
                   {hiddenMutation.isPending ? (
                     <InterfaceText source={"Updating..."} />
@@ -1159,36 +1244,38 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
               )}
             </TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowRemoveConfirm(true)}
-                disabled={removeGameMutation.isPending}
-                className="h-10 w-10 sm:h-9 sm:w-auto sm:px-3 sm:gap-2"
-                aria-label="Remove"
-                data-i18n-aria-label={"Remove"}
-                data-testid={`button-remove-game-quick-${game.id}`}
+          {libraryGame && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowRemoveConfirm(true)}
+                  disabled={removeGameMutation.isPending}
+                  className="h-10 w-10 sm:h-9 sm:w-auto sm:px-3 sm:gap-2"
+                  aria-label="Remove"
+                  data-i18n-aria-label={"Remove"}
+                  data-testid={`button-remove-game-quick-${game.id}`}
+                >
+                  <X className="w-4 h-4" />
+                  <span className="hidden sm:inline">
+                    {removeGameMutation.isPending ? (
+                      <InterfaceText source={"Removing..."} />
+                    ) : (
+                      "Remove"
+                    )}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                className="sm:hidden"
+                lang={languageFor("Remove")}
+                dir={directionFor("Remove")}
               >
-                <X className="w-4 h-4" />
-                <span className="hidden sm:inline">
-                  {removeGameMutation.isPending ? (
-                    <InterfaceText source={"Removing..."} />
-                  ) : (
-                    "Remove"
-                  )}
-                </span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent
-              className="sm:hidden"
-              lang={languageFor("Remove")}
-              dir={directionFor("Remove")}
-            >
-              {t("Remove")}
-            </TooltipContent>
-          </Tooltip>
+                {t("Remove")}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </DialogHeader>
 
@@ -1294,6 +1381,42 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                 </div>
               )}
 
+              {hltbEntry && hltbTimes.length > 0 && (
+                <section data-testid="section-hltb" aria-label="HowLongToBeat estimates">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="flex items-center gap-2 font-semibold">
+                      <Clock className="h-4 w-4 text-yellow-400" aria-hidden="true" />
+                      HowLongToBeat
+                    </h3>
+                    <a
+                      href={safeUrl(hltbEntry.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      View {hltbEntry.name} on HLTB
+                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    </a>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {hltbTimes.map(({ label, hours }) => (
+                      <div key={label} className="rounded-md border bg-muted/30 px-3 py-2">
+                        <div className="text-xs text-muted-foreground">{label}</div>
+                        <div
+                          className="text-lg font-semibold"
+                          aria-label={`${label}: ${hours} hours`}
+                        >
+                          {hours}h
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Estimated play times from HowLongToBeat.
+                  </p>
+                </section>
+              )}
+
               {/* Crack status (sourced from xREL) */}
               {!isDiscoveryId(game.id) && (
                 <div>
@@ -1314,7 +1437,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
 
               {/* Metadata grid */}
               <div className="grid grid-cols-2 gap-4">
-                {game.rating && (
+                {game.rating !== null && game.rating !== undefined && (
                   <div>
                     <h4
                       className="font-medium text-sm text-muted-foreground mb-1"
@@ -1745,6 +1868,15 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
         >
           <ScrollArea className="h-full">
             <div className="pr-4 pb-2">
+              {filesTruncated && (
+                <div
+                  role="status"
+                  className="mb-3 flex items-start gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+                >
+                  <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>Showing a partial file list because the scan reached a safety limit.</span>
+                </div>
+              )}
               {filesLoading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -1840,7 +1972,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                   <InterfaceText source={"Ratings"} />
                 </h3>
                 <div className="flex flex-wrap gap-4 mb-4">
-                  {game.rating ? (
+                  {game.rating !== null && game.rating !== undefined ? (
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${scoreColor(game.rating)}`}
@@ -1861,7 +1993,7 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                       </div>
                     </div>
                   ) : null}
-                  {game.aggregatedRating ? (
+                  {game.aggregatedRating !== null && game.aggregatedRating !== undefined ? (
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${scoreColor(game.aggregatedRating)}`}
@@ -2375,9 +2507,16 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
               {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() =>
-                removeGameMutation.mutate({ gameId: game!.id, removeFromClient, deleteFiles })
-              }
+              onClick={() => {
+                if (!libraryGame) return;
+                // The file and download-client options above are only offered for
+                // library games; from a Discover card, remove the library row alone.
+                removeGameMutation.mutate(
+                  isDiscoveryGame
+                    ? { gameId: libraryGame.id, removeFromClient: false, deleteFiles: false }
+                    : { gameId: libraryGame.id, removeFromClient, deleteFiles }
+                );
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               <span lang={languageFor("Remove")} dir={directionFor("Remove")}>

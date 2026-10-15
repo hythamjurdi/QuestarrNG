@@ -13,6 +13,15 @@ import { setInterfaceLanguage } from "@/lib/interface-locale";
 
 // Route apiRequest through globalThis.fetch so test mocks capture mutation calls
 vi.mock("@/lib/queryClient", () => ({
+  ApiError: class ApiError extends Error {
+    constructor(
+      public status: number,
+      message: string,
+      public data?: unknown
+    ) {
+      super(message);
+    }
+  },
   apiRequest: async (method: string, url: string, data?: unknown) => {
     const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
     const res = await globalThis.fetch(url, {
@@ -204,12 +213,12 @@ globalThis.fetch = vi.fn();
 let queryClient: QueryClient;
 const mockOnOpenChange = vi.fn();
 
-const renderComponent = (onOpenChange = mockOnOpenChange) => {
+const renderComponent = (onOpenChange = mockOnOpenChange, game = mockGame) => {
   queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <GameDownloadDialog game={mockGame} open={true} onOpenChange={onOpenChange} />
+        <GameDownloadDialog game={game} open={true} onOpenChange={onOpenChange} />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
@@ -221,11 +230,12 @@ type FetchOverrides = {
   settings?: object;
   downloads?: object;
   blacklist?: object;
+  downloadResult?: object;
 };
 
 /** Creates a fetch mock with sensible defaults, overridable per-endpoint. */
 const createFetchMock = (overrides: FetchOverrides = {}) =>
-  vi.fn(async (url: RequestInfo | URL) => {
+  vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
     const urlString = getRequestUrl(url);
     if (urlString.includes("/api/search")) {
       return { ok: true, json: async () => overrides.search ?? mockTorrents };
@@ -235,6 +245,13 @@ const createFetchMock = (overrides: FetchOverrides = {}) =>
     }
     if (urlString.includes("/api/downloaders/enabled")) {
       return { ok: true, json: async () => mockDownloaders };
+    }
+    if (
+      urlString.includes("/api/downloaders/") &&
+      urlString.endsWith("/downloads") &&
+      init?.method === "POST"
+    ) {
+      return { ok: true, json: async () => overrides.downloadResult ?? { success: true } };
     }
     if (urlString.includes("/api/settings")) {
       return { ok: true, json: async () => overrides.settings ?? {} };
@@ -290,6 +307,11 @@ describe("GameDownloadDialog", () => {
       },
       { timeout: 3000 }
     );
+
+    const optionsButtons = await screen.findAllByRole("button", {
+      name: "More download options",
+    });
+    expect(optionsButtons).toHaveLength(3);
   });
 
   it("uses automatic direction for the typed download search", async () => {
@@ -320,6 +342,21 @@ describe("GameDownloadDialog", () => {
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
     }
   );
+
+  it("keeps the full release name visible on narrow screens", async () => {
+    mockIsMobile = true;
+    const longTitle =
+      "A.Very.Long.Game.Release.Name.With.Version.Platform.Edition.And.Release.Group.Information";
+    globalThis.fetch = createFetchMock({
+      search: makeSearchResult([makeTorrentItem({ title: longTitle })]),
+    });
+
+    renderComponent();
+
+    const heading = await screen.findByRole("heading", { name: longTitle });
+    expect(heading).toBeVisible();
+    expect(heading).not.toHaveClass("line-clamp-2");
+  });
 
   it.each([false, true])(
     "sanitizes an unsafe indexer comments URL when mobile is %s",
@@ -355,6 +392,19 @@ describe("GameDownloadDialog", () => {
     );
   });
 
+  it("shows the source indexer for torrent and Usenet releases", async () => {
+    renderComponent();
+
+    await waitFor(
+      () => {
+        expect(screen.getAllByText("Indexer A").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Indexer B").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Indexer C").length).toBeGreaterThan(0);
+      },
+      { timeout: 3000 }
+    );
+  });
+
   it("filters search results by indexer", async () => {
     renderComponent();
 
@@ -375,14 +425,34 @@ describe("GameDownloadDialog", () => {
       expect(screen.getByText("Min Seeders")).toBeInTheDocument();
       expect(screen.getByText("Categories")).toBeInTheDocument();
     });
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Indexer" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Indexer B" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Test Torrent 2").length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText("Test Torrent 1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Test Usenet NZB")).not.toBeInTheDocument();
   });
 
   it("sorts results", async () => {
+    globalThis.fetch = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({ guid: "low-health", title: "Low health release", seeders: 1 }),
+        makeTorrentItem({ guid: "high-health", title: "High health release", seeders: 90 }),
+      ]),
+    });
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText("Test Torrent 1")).toBeInTheDocument();
+      expect(screen.getByText("Health")).toBeInTheDocument();
+      expect(screen.getByText("Low health release")).toBeInTheDocument();
+      expect(screen.getByText("High health release")).toBeInTheDocument();
     });
+
+    const firstPosition = (title: string) => (document.body.textContent ?? "").indexOf(title);
+    expect(firstPosition("High health release")).toBeLessThan(firstPosition("Low health release"));
 
     // Click on Health sort header
     // Initial state is Seeders Desc (ArrowDown). Clicking it should toggle to Asc (ArrowUp).
@@ -391,6 +461,11 @@ describe("GameDownloadDialog", () => {
 
     // Should trigger a re-sort -> Ascending -> ArrowUp
     expect(screen.getAllByTestId("icon-sort-up").length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(firstPosition("Low health release")).toBeLessThan(
+        firstPosition("High health release")
+      );
+    });
   });
 
   it("sorts results by indexer priority", async () => {
@@ -549,6 +624,115 @@ describe("GameDownloadDialog", () => {
     expect(mockOnOpenChange).not.toHaveBeenCalledWith(false);
   });
 
+  it.each([
+    { mode: "desktop", isMobile: false },
+    { mode: "mobile", isMobile: true },
+  ])(
+    "shows the active download and disables other buttons in $mode results",
+    async ({ isMobile }) => {
+      mockIsMobile = isMobile;
+      const baseFetch = createFetchMock();
+      let resolveDownload: ((response: Response) => void) | undefined;
+      globalThis.fetch = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+        if (getRequestUrl(url).includes("/api/downloads") && init?.method === "POST") {
+          return await new Promise<Response>((resolve) => {
+            resolveDownload = resolve;
+          });
+        }
+        return baseFetch(url, init);
+      }) as typeof fetch;
+
+      renderComponent();
+
+      const firstDownload = await screen.findByRole("button", { name: "Download Test Torrent 1" });
+      const secondDownload = screen.getByRole("button", { name: "Download Test Torrent 2" });
+      fireEvent.click(firstDownload);
+
+      await waitFor(() => {
+        expect(firstDownload).toBeDisabled();
+        expect(firstDownload).toHaveAccessibleName("Downloading... Test Torrent 1");
+        expect(firstDownload).toHaveTextContent("Downloading...");
+        expect(firstDownload).toHaveAttribute("aria-busy", "true");
+        expect(secondDownload).toBeDisabled();
+        expect(screen.getByRole("status")).toHaveTextContent("Downloading selected release...");
+      });
+
+      if (!resolveDownload) throw new Error("Download request did not start");
+      resolveDownload({
+        ok: true,
+        json: async () => ({ success: true, downloaderName: "TestDownloader" }),
+      } as Response);
+
+      await waitFor(() => {
+        expect(firstDownload).toBeEnabled();
+        expect(secondDownload).toBeEnabled();
+      });
+    }
+  );
+
+  it("adds a Discover game to the library before downloading it", async () => {
+    const libraryId = "0f8fad5b-d9cb-469f-a165-70867728950e";
+    const baseFetch = createFetchMock();
+    globalThis.fetch = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (getRequestUrl(url) === "/api/games" && init?.method === "POST") {
+        return { ok: true, json: async () => ({ ...mockGame, id: libraryId }) };
+      }
+      return baseFetch(url, init);
+    }) as typeof fetch;
+    const discoveryGame = { ...mockGame, id: "igdb-123" } as unknown as typeof mockGame;
+    renderComponent(mockOnOpenChange, discoveryGame);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("icon-download").length).toBeGreaterThan(0);
+    });
+    const downloadButton = screen.getAllByTestId("icon-download")[0].closest("button");
+    if (!downloadButton) throw new Error("Download button not found");
+    fireEvent.click(downloadButton);
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/downloads",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining(`"gameId":"${libraryId}"`),
+        })
+      );
+    });
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "/api/games",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
+  it("blacklists from a Discover game under its library id and searches with it", async () => {
+    const libraryId = "0f8fad5b-d9cb-469f-a165-70867728950e";
+    const baseFetch = createFetchMock();
+    globalThis.fetch = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (getRequestUrl(url) === "/api/games" && init?.method === "POST") {
+        return { ok: true, json: async () => ({ ...mockGame, id: libraryId }) };
+      }
+      return baseFetch(url, init);
+    }) as typeof fetch;
+    const discoveryGame = { ...mockGame, id: "igdb-123" } as unknown as typeof mockGame;
+    renderComponent(mockOnOpenChange, discoveryGame);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Blacklist release").length).toBeGreaterThan(0);
+    });
+    fireEvent.click(screen.getAllByText("Blacklist release")[0]);
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `/api/games/${libraryId}/blacklist`,
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+    await waitFor(() => {
+      const urls = vi.mocked(globalThis.fetch).mock.calls.map(([url]) => getRequestUrl(url));
+      expect(urls).toContainEqual(expect.stringContaining(`gameId=${libraryId}`));
+    });
+  });
+
   it("shows destructive toast when download API returns success:false", async () => {
     globalThis.fetch = createFetchMock({
       downloads: { success: false, message: "Downloader offline" },
@@ -625,6 +809,232 @@ describe("GameDownloadDialog", () => {
     expect(updateTitle).toHaveAttribute("dir", "auto");
   });
 
+  it.each([false, true])(
+    "offers a direct torrent file download from the result actions when mobile is %s",
+    async (isMobile) => {
+      mockIsMobile = isMobile;
+      const fetchMock = createFetchMock({
+        search: makeSearchResult([
+          makeTorrentItem({
+            title: "Direct Torrent Release",
+            link: "https://indexer.example/download/123.torrent",
+          }),
+        ]),
+      });
+      globalThis.fetch = fetchMock;
+      const anchorClick = vi
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(() => {});
+
+      renderComponent();
+
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: "Download torrent file for Direct Torrent Release",
+        })
+      );
+
+      await waitFor(() => expect(anchorClick).toHaveBeenCalledOnce());
+      expect(fetchMock).not.toHaveBeenCalledWith(
+        "/api/downloads",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(mockToast).toHaveBeenCalledWith({
+        title: "Download started",
+        description: "torrent file download initiated",
+      });
+    }
+  );
+
+  it("keeps the bundle choice when directly downloading a main release with updates", async () => {
+    const fetchMock = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({
+          title: "Test Game SKIDROW",
+          link: "https://indexer.example/download/main.torrent",
+        }),
+        makeTorrentItem({
+          title: "Test Game Update v1.1",
+          link: "https://indexer.example/download/update.torrent",
+        }),
+      ]),
+    });
+    globalThis.fetch = fetchMock;
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    renderComponent();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Download torrent file for Test Game SKIDROW" })
+    );
+    expect(await screen.findByText("Download with Updates?")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /Test Game Update v1\.1/ })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    fireEvent.click(screen.getByText("Download game only"));
+
+    await waitFor(() => expect(anchorClick).toHaveBeenCalledOnce());
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/downloads",
+      expect.objectContaining({ method: "POST" })
+    );
+    expect(mockToast).toHaveBeenCalledWith({
+      title: "Download started",
+      description: "torrent file download initiated",
+    });
+  });
+
+  it("keeps direct-file download out of the menu for magnet links", async () => {
+    globalThis.fetch = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({
+          title: "Magnet Only Release",
+          link: "magnet:?xt=urn:btih:0123456789abcdef",
+        }),
+      ]),
+    });
+
+    renderComponent();
+
+    expect(screen.queryByRole("button", { name: "Download torrent file" })).toBeNull();
+  });
+
+  it("suggests optional extras at or below a quarter of the main release size", async () => {
+    const fetchMock = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({
+          guid: "main-large",
+          title: "Test Game Full Release",
+          link: "http://test.com/main-large",
+          size: 400 * 1024 * 1024,
+        }),
+        makeTorrentItem({
+          guid: "small-update",
+          title: "Test Game Update 1.1",
+          link: "http://test.com/small-update",
+          size: 10 * 1024 * 1024,
+        }),
+        makeTorrentItem({
+          guid: "extra-small",
+          title: "Test Game Bonus Soundtrack",
+          link: "http://test.com/extra-small",
+          size: 100 * 1024 * 1024,
+        }),
+        makeTorrentItem({
+          guid: "extra-large",
+          title: "Test Game Extra Soundtrack",
+          link: "http://test.com/extra-large",
+          size: 101 * 1024 * 1024,
+        }),
+        {
+          ...makeTorrentItem({
+            guid: "extra-unknown",
+            title: "Test Game Bonus Artbook",
+            link: "http://test.com/extra-unknown",
+          }),
+          size: undefined,
+        },
+      ]),
+    });
+    globalThis.fetch = fetchMock;
+
+    renderComponent();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Download Test Game Full Release" }));
+
+    expect(await screen.findByText("Add updates and extras?")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Updates are selected by default; small extras are optional and start unchecked/
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Each suggested extra is 25% or less of the 400 MB main release/)
+    ).toBeInTheDocument();
+    const smallExtra = screen.getByRole("checkbox", { name: /Test Game Bonus Soundtrack/ });
+    expect(smallExtra).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("checkbox", { name: /Test Game Update 1\.1/ })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(
+      screen.queryByRole("checkbox", { name: /Test Game Extra Soundtrack/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /Test Game Bonus Artbook/ })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(smallExtra);
+    fireEvent.click(screen.getByRole("button", { name: "Download with 2 add-ons" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/downloads",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("http://test.com/extra-small"),
+        })
+      );
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/downloads",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("http://test.com/main-large"),
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/downloads",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("http://test.com/small-update"),
+      })
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/downloads",
+      expect.objectContaining({ body: expect.stringContaining("http://test.com/extra-large") })
+    );
+  });
+
+  it("opens the optional-extra choice when no updates are available", async () => {
+    const fetchMock = createFetchMock({
+      search: makeSearchResult([
+        makeTorrentItem({
+          guid: "main-only",
+          title: "Test Game Full Release",
+          link: "http://test.com/main-only",
+          size: 400 * 1024 * 1024,
+        }),
+        makeTorrentItem({
+          guid: "extra-only",
+          title: "Test Game Bonus Soundtrack",
+          link: "http://test.com/extra-only",
+          size: 80 * 1024 * 1024,
+        }),
+      ]),
+    });
+    globalThis.fetch = fetchMock;
+
+    renderComponent();
+    fireEvent.click(await screen.findByRole("button", { name: "Download Test Game Full Release" }));
+
+    expect(await screen.findByText("Add small extras?")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download with 0 updates" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Test Game Bonus Soundtrack/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Download with 1 extra" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/downloads",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("http://test.com/extra-only"),
+        })
+      );
+    });
+  });
+
   const skidrowItem = makeTorrentItem({
     guid: "skidrow-1",
     title: "Test Game SKIDROW",
@@ -676,6 +1086,79 @@ describe("GameDownloadDialog", () => {
       },
       { timeout: 3000 }
     );
+  });
+
+  it("offers detected release groups in the filter and narrows results to the selection", async () => {
+    globalThis.fetch = createFetchMock({ search: groupSearchResults });
+
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Test Game SKIDROW").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Test Game CODEX").length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByText("Show Filters"));
+    expect(screen.getByText("Release Groups")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Select groups..."));
+    fireEvent.click(await screen.findByRole("option", { name: /SKIDROW/ }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Test Game SKIDROW").length).toBeGreaterThan(0);
+      expect(screen.queryByText("Test Game CODEX")).not.toBeInTheDocument();
+    });
+  });
+
+  it("adds selected release groups to preferences without changing automatic filtering", async () => {
+    const fetchMock = createFetchMock({
+      search: groupSearchResults,
+      settings: { filterByPreferredGroups: false, preferredReleaseGroups: '["SKIDROW"]' },
+    });
+    globalThis.fetch = fetchMock;
+
+    renderComponent();
+
+    await screen.findByText("Test Game CODEX");
+    fireEvent.click(screen.getByText("Show Filters"));
+    fireEvent.click(screen.getByText("Select groups..."));
+    fireEvent.click(await screen.findByRole("option", { name: /CODEX/ }));
+    await waitFor(() => expect(screen.getByText("1 selected")).toBeInTheDocument());
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add to preferred groups" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/settings",
+        expect.objectContaining({ method: "GET" })
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/settings",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ preferredReleaseGroups: '["SKIDROW","CODEX"]' }),
+        })
+      );
+    });
+  });
+
+  it("does not offer to save a selected group that is already preferred, regardless of case", async () => {
+    globalThis.fetch = createFetchMock({
+      search: groupSearchResults,
+      settings: { filterByPreferredGroups: false, preferredReleaseGroups: '["skidrow"]' },
+    });
+
+    renderComponent();
+
+    await screen.findByText("Test Game SKIDROW");
+    fireEvent.click(screen.getByText("Show Filters"));
+    fireEvent.click(screen.getByText("Select groups..."));
+    fireEvent.click(await screen.findByRole("option", { name: /SKIDROW/ }));
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(
+      screen.queryByRole("button", { name: "Add to preferred groups" })
+    ).not.toBeInTheDocument();
   });
 
   const pcItem = makeTorrentItem({
@@ -958,6 +1441,51 @@ describe("GameDownloadDialog", () => {
       expect(screen.queryByText("Test Game PC-SKIDROW")).toBeNull();
     });
 
+    it("uses the game's target platform before the account-wide preference", async () => {
+      globalThis.fetch = createFetchMock({
+        settings: { preferredPlatform: "PC" },
+        search: makeSearchResult([
+          makeTorrentItem({ guid: "ps5-1", title: "Test Game PS5-GROUP", seeders: 50 }),
+          makeTorrentItem({ guid: "pc-1", title: "Test Game PC-SKIDROW", seeders: 40 }),
+        ]),
+      });
+      const gameWithTarget = {
+        ...mockGame,
+        targetPlatformId: 167,
+        targetPlatformName: "PlayStation 5",
+      } as import("@shared/schema").Game;
+
+      renderComponent(mockOnOpenChange, gameWithTarget);
+
+      await waitFor(() => {
+        expect(screen.getAllByText("Test Game PS5-GROUP").length).toBeGreaterThan(0);
+      });
+      expect(screen.queryByText("Test Game PC-SKIDROW")).toBeNull();
+    });
+
+    it("does not preselect a target platform excluded by the Platforms setting", async () => {
+      globalThis.fetch = createFetchMock({
+        settings: { preferredPlatform: "PC", importPlatformIds: [6] },
+        search: makeSearchResult([
+          makeTorrentItem({ guid: "ps5-1", title: "Test Game PS5-GROUP", seeders: 50 }),
+          makeTorrentItem({ guid: "pc-1", title: "Test Game PC-SKIDROW", seeders: 40 }),
+        ]),
+      });
+      const gameWithTarget = {
+        ...mockGame,
+        targetPlatformId: 167,
+        targetPlatformName: "PlayStation 5",
+      } as import("@shared/schema").Game;
+
+      renderComponent(mockOnOpenChange, gameWithTarget);
+
+      await waitFor(() => {
+        expect(screen.getAllByText("Test Game PC-SKIDROW").length).toBeGreaterThan(0);
+      });
+      expect(screen.queryByText("Test Game PS5-GROUP")).toBeNull();
+      expect(screen.queryByText(/No results match your preferred platform/i)).toBeNull();
+    });
+
     it("PC preselection includes releases with no detected platform", async () => {
       await renderWithPlatform("PC", [
         makeTorrentItem({ guid: "noplatform-1", title: "Test Game-CODEX", seeders: 80 }),
@@ -1100,6 +1628,58 @@ describe("GameDownloadDialog", () => {
     });
   });
 
+  it("shows a confirmation warning for an unverified qBittorrent add", async () => {
+    const message =
+      "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.";
+    globalThis.fetch = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const target = getRequestUrl(url);
+      if (target.includes("/api/search")) {
+        return { ok: true, json: async () => mockTorrents } as Response;
+      }
+      if (target.includes("/api/indexers/enabled")) {
+        return { ok: true, json: async () => mockEnabledIndexers } as Response;
+      }
+      if (target.includes("/api/downloaders/enabled")) {
+        return {
+          ok: true,
+          json: async () => [
+            { id: "1", name: "qBittorrent", enabled: true, type: "qbittorrent" },
+            { id: "2", name: "Transmission", enabled: true, type: "transmission" },
+            { id: "3", name: "SABnzbd", enabled: true, type: "sabnzbd" },
+          ],
+        } as Response;
+      }
+      if (target.includes("/api/settings")) {
+        return { ok: true, json: async () => ({}) } as Response;
+      }
+      if (target.includes("/api/downloaders/1/downloads") && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({ success: true, correlationTag: "questarr-add-pending", message }),
+        } as Response;
+      }
+      if (target.includes("/api/downloaders/")) {
+        return { ok: true, json: async () => ({ success: true }) } as Response;
+      }
+      return { ok: true, json: async () => ({ success: true }) } as Response;
+    }) as typeof fetch;
+
+    renderComponent();
+
+    expect(await screen.findAllByText("Copy Torrent Link")).not.toHaveLength(0);
+    fireEvent.click(screen.getAllByText("qBittorrent")[0]);
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/downloaders/1/downloads",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Checking qBittorrent", description: message })
+      );
+    });
+  });
+
   it("shows a destructive toast when copying a link fails on non-secure contexts", async () => {
     Object.assign(navigator, {
       clipboard: {
@@ -1169,7 +1749,7 @@ describe("GameDownloadDialog", () => {
     fireEvent.click(screen.getByText("Select All"));
     expect(screen.getByText("Selection: 1/1")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Only the main game"));
+    fireEvent.click(screen.getByText("Download game only"));
 
     await waitFor(() => {
       expect(globalThis.fetch).toHaveBeenCalledWith(

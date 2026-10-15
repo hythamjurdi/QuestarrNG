@@ -39,6 +39,7 @@ const mockGetEnabledIndexers = vi.fn().mockResolvedValue([]);
 const mockHasAiAutoDownloadHold = vi.fn().mockResolvedValue(false);
 const mockRecordAiAutoDownloadHold = vi.fn().mockResolvedValue(true);
 const mockClearAiAutoDownloadHold = vi.fn().mockResolvedValue(undefined);
+const mockGetDownloadsByGameId = vi.fn().mockResolvedValue([]);
 
 vi.mock("../storage.js", () => ({
   storage: {
@@ -59,6 +60,7 @@ vi.mock("../storage.js", () => ({
     hasAiAutoDownloadHold: mockHasAiAutoDownloadHold,
     recordAiAutoDownloadHold: mockRecordAiAutoDownloadHold,
     clearAiAutoDownloadHold: mockClearAiAutoDownloadHold,
+    getDownloadsByGameId: mockGetDownloadsByGameId,
   },
 }));
 
@@ -82,8 +84,10 @@ vi.mock("../apprise.js", () => ({
 
 // Mock search
 const mockSearchAllIndexers = vi.fn();
+const mockScoreSearchItems = vi.fn();
 vi.mock("../search.js", () => ({
   searchAllIndexers: mockSearchAllIndexers,
+  scoreSearchItems: mockScoreSearchItems,
   filterBlacklistedReleases: (items: { title: string }[], blacklisted: Set<string>) =>
     blacklisted.size > 0 ? items.filter((item) => !blacklisted.has(item.title)) : items,
   filterByReleaseNameBlacklist: (items: { title: string }[], terms: string[]) => {
@@ -174,6 +178,8 @@ describe("Cron - checkAutoSearch", () => {
     xrelSceneReleases: true,
     xrelP2pReleases: false,
     autoSearchUnreleased: false, // Default: false
+    releaseScoringEnabled: false,
+    releaseScoringProfile: null,
     preferredReleaseGroups: null,
     filterByPreferredGroups: false,
     preferredPlatform: null,
@@ -194,6 +200,7 @@ describe("Cron - checkAutoSearch", () => {
     mockGetGame.mockResolvedValue(baseGame);
     mockGetUserSettings.mockResolvedValue(baseSettings);
     mockSearchAllIndexers.mockResolvedValue({ items: [], errors: [], total: 0 });
+    mockScoreSearchItems.mockReset();
     mockGetEnabledDownloaders.mockResolvedValue([]);
     mockAddNotification.mockResolvedValue({ id: "notif-1" });
     mockGetReleaseBlacklistSet.mockResolvedValue(new Set());
@@ -229,6 +236,70 @@ describe("Cron - checkAutoSearch", () => {
         query: game.title,
       })
     );
+  });
+
+  it("scores automatic candidates and passes only accepted releases to categorization", async () => {
+    const accepted = {
+      title: "Test Game-CODEX",
+      link: "https://example.com/accepted",
+      pubDate: FIXED_PUB_DATE,
+      seeders: 50,
+      size: 1024,
+      downloadType: "torrent" as const,
+      indexerId: "indexer-1",
+      indexerName: "Test Indexer",
+    };
+    const rejected = {
+      ...accepted,
+      title: "Test Game.2-CODEX",
+      link: "https://example.com/rejected",
+    };
+    mockGetUserSettings.mockResolvedValue({
+      ...baseSettings,
+      releaseScoringEnabled: true,
+      releaseScoringProfile: JSON.stringify({
+        profile: {
+          minScore: 0,
+          protocolPreference: "either",
+          requiredTerms: [],
+          ignoredTerms: [],
+          minSeeders: 0,
+          maxSizeBytes: null,
+          builtInOverrides: {},
+          formatScores: {},
+        },
+        formats: [],
+      }),
+    });
+    mockSearchAllIndexers.mockResolvedValue({ items: [rejected, accepted], errors: [], total: 2 });
+    mockScoreSearchItems.mockImplementation(
+      (
+        items: Array<typeof accepted>,
+        _context: unknown,
+        _profile: unknown,
+        _formats: unknown,
+        acceptedOnly: boolean
+      ) =>
+        acceptedOnly
+          ? items
+              .filter((item) => item.title === accepted.title)
+              .map((item) => ({
+                ...item,
+                releaseEvaluation: { accepted: true, score: 100 } as never,
+              }))
+          : items
+    );
+
+    await checkAutoSearch();
+
+    expect(mockScoreSearchItems).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ title: accepted.title })]),
+      expect.objectContaining({ gameTitle: "Test Game" }),
+      expect.any(Object),
+      [],
+      true
+    );
+    expect(mockUpdateGameSearchResultsAvailable).toHaveBeenCalledWith(baseGame.id, true);
   });
 
   it("should NOT search for unreleased games when autoSearchUnreleased is false", async () => {
@@ -408,6 +479,10 @@ describe("Cron - checkAutoSearch", () => {
         updates: true,
         packs: true,
       });
+      expect(mockNotifyUser).toHaveBeenCalledWith("gameUpdated", game.id, userId);
+      const notificationEvents = mockNotifyUser.mock.calls.filter(
+        ([event]) => event === "notification"
+      );
       if (shouldNotify) {
         expect(mockAddNotification).toHaveBeenCalledWith(
           expect.objectContaining({ title: "Game Updates Available", userId })
@@ -415,11 +490,11 @@ describe("Cron - checkAutoSearch", () => {
         expect(mockAddNotification).toHaveBeenCalledWith(
           expect.objectContaining({ title: "Game Packs Available", userId })
         );
-        expect(mockNotifyUser).toHaveBeenCalledTimes(2);
+        expect(notificationEvents).toHaveLength(2);
         expect(mockAppriseSend).toHaveBeenCalledTimes(2);
       } else {
         expect(mockAddNotification).not.toHaveBeenCalled();
-        expect(mockNotifyUser).not.toHaveBeenCalled();
+        expect(notificationEvents).toHaveLength(0);
         expect(mockAppriseSend).not.toHaveBeenCalled();
       }
     }
@@ -719,6 +794,35 @@ describe("Cron - checkAutoSearch", () => {
           message: expect.stringContaining("[SKIDROW]"),
         })
       );
+    });
+
+    it("sends an auto-download notification through Apprise when in-app delivery is disabled", async () => {
+      mockGetUserSettings.mockResolvedValue({
+        ...baseSettings,
+        autoDownloadEnabled: true,
+        notificationPreferences: JSON.stringify({ autoDownload: { inApp: false, apprise: true } }),
+      });
+      mockGetEnabledDownloaders.mockResolvedValue([
+        { id: "dl-1", name: "qBittorrent", type: "torrent", enabled: true },
+      ]);
+      mockAddDownloadWithFallback.mockResolvedValue({
+        success: true,
+        id: "hash-abc",
+        downloaderId: "dl-1",
+      });
+      mockSearchAllIndexers.mockResolvedValue({
+        items: [{ ...SKIDROW_ITEM, downloadType: "torrent" }],
+        errors: [],
+        total: 1,
+      });
+
+      await checkAutoSearch();
+
+      expect(mockAddNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Download Started" })
+      );
+      expect(mockNotifyUser).not.toHaveBeenCalled();
+      expect(mockAppriseSend).toHaveBeenCalledWith({ id: "notif-1" });
     });
 
     it("guards the downloading status write so a status curated mid-search survives", async () => {
@@ -1051,6 +1155,74 @@ describe("Cron - checkAutoSearch", () => {
         expect.objectContaining({
           title: "Game Updates Available",
           message: "1 update(s) found for Test Game",
+        })
+      );
+    });
+
+    it("applies platform, architecture, preferred-group, and dedup filters to packs", async () => {
+      const ownedGame = {
+        ...baseGame,
+        targetOperatingSystem: "linux",
+        targetArchitecture: "x64",
+        status: "owned" as const,
+        releaseStatus: "released" as const,
+        packsSearchResultsAvailable: false,
+      };
+      const acceptedPack = {
+        ...UPDATE_ITEM,
+        title: "Test Game.Content.Pack.Linux.x64.v1.2-CODEX",
+        group: "CODEX",
+        indexerId: "indexer-low",
+      };
+      mockGetWantedGamesGroupedByUser.mockResolvedValue(new Map([[userId, []]]));
+      mockGetUserGames.mockResolvedValue([ownedGame]);
+      mockGetUserSettings.mockResolvedValue({
+        ...baseSettings,
+        preferredReleaseGroups: '["CODEX"]',
+        filterByPreferredGroups: true,
+      });
+      mockGetEnabledIndexers.mockResolvedValue([
+        { id: "indexer-low", priority: 5 },
+        { id: "indexer-high", priority: 1 },
+      ]);
+      mockSearchAllIndexers.mockResolvedValue({
+        items: [
+          acceptedPack,
+          { ...acceptedPack, indexerId: "indexer-high" },
+          {
+            ...acceptedPack,
+            title: "Test Game.Content.Pack.Linux.arm64.v1.2-CODEX",
+            link: "https://example.com/arm64-pack",
+            indexerId: "indexer-high",
+          },
+          {
+            ...acceptedPack,
+            title: "Test Game.Content.Pack.Windows.x64.v1.2-CODEX",
+            link: "https://example.com/windows-pack",
+            indexerId: "indexer-high",
+          },
+          {
+            ...acceptedPack,
+            title: "Test Game.Content.Pack.Linux.x64.v1.2-PLAZA",
+            link: "https://example.com/wrong-group-pack",
+            group: "PLAZA",
+            indexerId: "indexer-high",
+          },
+        ],
+        errors: [],
+        total: 5,
+      });
+
+      await checkAutoSearch();
+
+      expect(mockUpdateGameSearchResultsByCategory).toHaveBeenCalledWith(ownedGame.id, {
+        updates: false,
+        packs: true,
+      });
+      expect(mockAddNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Game Packs Available",
+          message: "1 pack/add-on result(s) found for Test Game",
         })
       );
     });
@@ -1564,6 +1736,56 @@ describe("Cron - checkAutoSearch", () => {
       );
     });
 
+    it("should keep same-title torrent and Usenet releases as separate choices", async () => {
+      const settings = { ...baseSettings, autoDownloadEnabled: true };
+      const torrentDownloader = {
+        id: "torrent-downloader",
+        name: "qBittorrent",
+        type: "torrent",
+        enabled: true,
+      };
+      const usenetDownloader = {
+        id: "usenet-downloader",
+        name: "SABnzbd",
+        type: "usenet",
+        enabled: true,
+      };
+      const torrentItem = {
+        ...ITEM_INDEXER_A,
+        downloadType: "torrent" as const,
+        seeders: 50,
+      };
+      const usenetItem = {
+        ...ITEM_INDEXER_B,
+        link: "https://indexer-b.example.com/skidrow.nzb",
+        downloadType: "usenet" as const,
+        grabs: 500,
+      };
+
+      mockGetUserSettings.mockResolvedValue(settings);
+      mockGetEnabledDownloaders.mockResolvedValue([torrentDownloader, usenetDownloader]);
+      mockGetEnabledIndexers.mockResolvedValue([
+        { id: "indexer-a", priority: 1 },
+        { id: "indexer-b", priority: 2 },
+      ]);
+      mockSearchAllIndexers.mockResolvedValue({
+        items: [torrentItem, usenetItem],
+        errors: [],
+        total: 2,
+      });
+
+      await checkAutoSearch();
+
+      expect(mockUpdateGameSearchResultsAvailable).toHaveBeenCalledWith(baseGame.id, true);
+      expect(mockAddNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Multiple Results Found",
+          message: expect.stringContaining("2 result(s) found"),
+        })
+      );
+      expect(mockAddDownloadWithFallback).not.toHaveBeenCalled();
+    });
+
     it("should treat titles as duplicates despite punctuation or casing differences", async () => {
       // "Test Game SKIDROW" and "Test.Game.SKIDROW" normalise to the same key → de-duplicated to 1.
       const settings = { ...baseSettings, autoDownloadEnabled: true };
@@ -1642,6 +1864,24 @@ describe("Cron - checkAutoSearch", () => {
       expect(mockAddNotification).toHaveBeenCalledWith(
         expect.objectContaining({ title: "Game Available" })
       );
+    });
+
+    it("respects selected categories and groups DLC and extras as auto-search packs", () => {
+      const mainGame = { ...ITEM_HIGH_SEEDERS, title: "Test Game-CODEX" };
+      const update = { ...ITEM_HIGH_SEEDERS, title: "Test Game.Update.v1.2-GROUP" };
+      const dlc = { ...ITEM_HIGH_SEEDERS, title: "Test Game.DLC.Expansion.v1-GROUP" };
+      const extra = { ...ITEM_HIGH_SEEDERS, title: "Test Game.Original.Soundtrack-GROUP" };
+      const packs = { ...ITEM_HIGH_SEEDERS, title: "Test Game.Content.Pack-GROUP" };
+
+      const result = categorizeSearchItems([mainGame, update, dlc, extra, packs], {
+        minSeeders: 0,
+        sortBy: "seeders",
+        visibleCategoriesSet: new Set(["update", "dlc", "extra", "packs"]),
+      });
+
+      expect(result.mainItems).toEqual([]);
+      expect(result.updateItems).toEqual([update]);
+      expect(result.packsItems).toEqual([dlc, extra, packs]);
     });
 
     it("should fall back to default rules when downloadRules JSON is malformed", async () => {
@@ -2124,6 +2364,32 @@ describe("Cron - checkAutoSearch", () => {
         errors: [],
         total: 1,
       });
+    });
+
+    it("does not auto-download a release that already failed for this game", async () => {
+      mockGetUserSettings.mockResolvedValue({ ...baseSettings, autoDownloadEnabled: true });
+      // Same release, different casing/punctuation: a client that purges finished jobs or a
+      // dead torrent would otherwise be grabbed again on every cycle.
+      mockGetDownloadsByGameId.mockResolvedValueOnce([
+        { id: "old", gameId: wantedGame.id, downloadTitle: "test game group", status: "failed" },
+      ]);
+
+      await checkAutoSearch();
+
+      expect(mockGetDownloadsByGameId).toHaveBeenCalledWith(wantedGame.id);
+      expect(mockAddDownloadWithFallback).not.toHaveBeenCalled();
+      expect(mockAnalyzeRelease).not.toHaveBeenCalled();
+    });
+
+    it("still auto-downloads when only a different release failed for this game", async () => {
+      mockGetUserSettings.mockResolvedValue({ ...baseSettings, autoDownloadEnabled: true });
+      mockGetDownloadsByGameId.mockResolvedValueOnce([
+        { id: "old", gameId: wantedGame.id, downloadTitle: "Test Game-OTHER", status: "failed" },
+      ]);
+
+      await checkAutoSearch();
+
+      expect(mockAddDownloadWithFallback).toHaveBeenCalledTimes(1);
     });
 
     it("auto-downloads as before when TypeSafe is not configured", async () => {

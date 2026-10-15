@@ -19,6 +19,10 @@ import {
   logDownloaderDebugResponse,
 } from "./utils.js";
 
+const UNCONFIRMED_ADD_MESSAGE =
+  "qBittorrent accepted the request, but the download is not confirmed yet. Check qBittorrent before retrying to avoid creating a duplicate.";
+const QB_HASH_RESOLUTION_TIMEOUT_MS = 15_000;
+
 interface QBittorrentTorrent {
   hash: string;
   name: string;
@@ -35,9 +39,33 @@ interface QBittorrentTorrent {
   num_leechs: number;
   num_complete: number;
   num_incomplete: number;
+  error_string?: string;
   category?: string;
   save_path?: string;
   [key: string]: unknown;
+}
+
+/**
+ * Pick the torrent carrying `tag` out of a `/torrents/info?tag=` response.
+ *
+ * qBittorrent before 4.4 ignores the `tag` filter and returns every torrent, so the
+ * first entry is not necessarily the one we tagged. Match on each torrent's own
+ * comma-separated `tags` field instead. `filterIgnored` is set when the response lists
+ * a torrent without our tag: the client did not apply the filter, and if it is older
+ * than 4.3.3 it also never set the tag on the add, so a caller should fall back to
+ * other heuristics rather than wait for a tag that will never appear.
+ */
+function findTaggedTorrent<T extends { hash?: string; tags?: unknown }>(
+  torrents: T[],
+  tag: string
+): { match: T | undefined; filterIgnored: boolean } {
+  const carriesTag = (t: T) =>
+    typeof t.tags === "string" &&
+    t.tags
+      .split(",")
+      .map((value) => value.trim())
+      .includes(tag);
+  return { match: torrents.find(carriesTag), filterIgnored: !torrents.every(carriesTag) };
 }
 
 /**
@@ -158,14 +186,24 @@ export class QBittorrentClient implements DownloaderClient {
         name: string;
         hash: string;
         added_on: number;
+        tags?: string;
       }
 
       const findRecentlyAddedDownload = async (
-        options: { skipInitialWait?: boolean; correlationTag?: string | undefined } = {}
+        options: {
+          skipInitialWait?: boolean;
+          correlationTag?: string | undefined;
+          signal?: AbortSignal | undefined;
+        } = {}
       ): Promise<{
         hash: string;
         name?: string;
       } | null> => {
+        const getInfo = (path: string) =>
+          options.signal
+            ? this.makeRequest("GET", path, undefined, undefined, options.signal)
+            : this.makeRequest("GET", path);
+
         // Wait a bit for qBittorrent to process the add (URL add or torrent upload).
         // Callers that already pace their own waits between attempts (e.g. a
         // retry loop) can skip this to avoid stacking an extra delay on top.
@@ -178,17 +216,21 @@ export class QBittorrentClient implements DownloaderClient {
         // which matters most here since polling can now span several seconds
         // during which other downloads may also be added.
         if (options.correlationTag) {
-          const taggedResponse = await this.makeRequest(
-            "GET",
+          const taggedResponse = await getInfo(
             `/api/v2/torrents/info?tag=${encodeURIComponent(options.correlationTag)}`
           );
           const tagged = (await taggedResponse.json()) as QBittorrentTorrent[];
-          const match = tagged[0];
-          return match?.hash ? { hash: match.hash, name: match.name } : null;
+          const { match, filterIgnored } = findTaggedTorrent(tagged, options.correlationTag);
+          if (match?.hash) return { hash: match.hash, name: match.name };
+          if (!filterIgnored) return null;
+          downloadersLogger.debug(
+            { correlationTag: options.correlationTag },
+            "qBittorrent ignored the tag filter and no torrent carries the tag; " +
+              "falling back to title/recency matching"
+          );
         }
 
-        const allTorrentsResponse = await this.makeRequest(
-          "GET",
+        const allTorrentsResponse = await getInfo(
           "/api/v2/torrents/info?sort=added_on&reverse=true"
         );
         const allDownloads = (await allTorrentsResponse.json()) as QBittorrentTorrent[];
@@ -320,20 +362,38 @@ export class QBittorrentClient implements DownloaderClient {
               const maxAttempts = 10;
               let successfulPolls = 0;
               if (!resolvedHash) {
+                const resolutionDeadline = Date.now() + QB_HASH_RESOLUTION_TIMEOUT_MS;
+                const resolutionSignal = AbortSignal.timeout(QB_HASH_RESOLUTION_TIMEOUT_MS);
                 for (let attempt = 0; attempt < maxAttempts && !resolvedHash; attempt++) {
-                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                  const remainingMs = resolutionDeadline - Date.now();
+                  if (remainingMs <= 0 || resolutionSignal.aborted) break;
+                  await new Promise((resolve) => setTimeout(resolve, Math.min(1000, remainingMs)));
+                  if (resolutionSignal.aborted || Date.now() >= resolutionDeadline) break;
                   try {
                     const recent = await findRecentlyAddedDownload({
                       skipInitialWait: true,
                       correlationTag,
+                      signal: resolutionSignal,
                     });
                     successfulPolls++;
                     if (recent?.hash) resolvedHash = recent.hash;
                   } catch (error) {
+                    if (resolutionSignal.aborted || Date.now() >= resolutionDeadline) {
+                      downloadersLogger.warn(
+                        { url: request.url, timeoutMs: QB_HASH_RESOLUTION_TIMEOUT_MS },
+                        "Stopped waiting for qBittorrent to resolve the accepted download"
+                      );
+                      break;
+                    }
                     downloadersLogger.warn(
                       { error, url: request.url },
-                      "Failed to poll qBittorrent for the newly added torrent; will retry"
+                      "Failed to poll qBittorrent for the newly added torrent; returning its correlation tag"
                     );
+                    // A failed lookup means this qBittorrent API path is unavailable (or
+                    // otherwise failing). Repeating a request with a 30-second timeout can
+                    // keep the user waiting for minutes even though the accepted add is
+                    // already safely tracked by its correlation tag.
+                    break;
                   }
                 }
               }
@@ -359,9 +419,11 @@ export class QBittorrentClient implements DownloaderClient {
                 return {
                   success: true,
                   ...(resolvedHash ? { id: resolvedHash } : { correlationTag }),
-                  message: isPending
-                    ? "Download queued in qBittorrent"
-                    : "Download added successfully",
+                  message: resolvedHash
+                    ? isPending
+                      ? "Download queued in qBittorrent"
+                      : "Download added successfully"
+                    : UNCONFIRMED_ADD_MESSAGE,
                 };
               }
 
@@ -771,13 +833,19 @@ export class QBittorrentClient implements DownloaderClient {
           }
 
           downloadersLogger.warn(
-            { title: request.title },
+            {
+              title: request.title,
+              correlationTag: pendingFallbackCorrelationTag ?? pendingUrlCorrelationTag,
+            },
             "Could not find matching download after adding"
           );
           return {
             success: true,
-            id: request.title || "added",
-            message: "Download added but hash could not be verified",
+            correlationTag:
+              pendingFallbackCorrelationTag ??
+              pendingUrlCorrelationTag ??
+              `questarr-add-${randomUUID()}`,
+            message: UNCONFIRMED_ADD_MESSAGE,
           };
         }
 
@@ -872,7 +940,8 @@ export class QBittorrentClient implements DownloaderClient {
       `/api/v2/torrents/info?tag=${encodeURIComponent(tag)}`
     );
     const torrents = (await response.json()) as QBittorrentTorrent[];
-    const match = torrents?.[0];
+    // Never guess from the first entry: an older qBittorrent returns every torrent here.
+    const { match } = findTaggedTorrent(torrents ?? [], tag);
     if (match?.hash) {
       downloadersLogger.info(
         { tag, hash: match.hash, name: match.name },
@@ -884,7 +953,10 @@ export class QBittorrentClient implements DownloaderClient {
     return null;
   }
 
-  async getDownloadStatus(id: string): Promise<DownloadStatus | null> {
+  async getDownloadStatus(
+    id: string,
+    options?: { throwOnError?: boolean }
+  ): Promise<DownloadStatus | null> {
     try {
       await this.authenticate();
 
@@ -902,6 +974,7 @@ export class QBittorrentClient implements DownloaderClient {
       return null;
     } catch (error) {
       downloadersLogger.error({ error, id }, "Error getting download status");
+      if (options?.throwOnError) throw error;
       return null;
     }
   }
@@ -1025,7 +1098,7 @@ export class QBittorrentClient implements DownloaderClient {
     }
   }
 
-  async getAllDownloads(): Promise<DownloadStatus[]> {
+  async getAllDownloads(options?: { throwOnError?: boolean }): Promise<DownloadStatus[]> {
     try {
       await this.authenticate();
 
@@ -1040,6 +1113,7 @@ export class QBittorrentClient implements DownloaderClient {
       return [];
     } catch (error) {
       downloadersLogger.error({ error }, "Error getting all downloads");
+      if (options?.throwOnError) throw error;
       return [];
     }
   }
@@ -1287,7 +1361,7 @@ export class QBittorrentClient implements DownloaderClient {
       seeders: swarmSeeders ?? connectedSeeders,
       leechers: swarmLeechers ?? connectedLeechers,
       ratio: torrent.ratio,
-      error: torrent.state === "error" ? "Torrent error" : undefined,
+      error: torrent.state === "error" ? torrent.error_string || "Torrent error" : undefined,
       category: torrent.category,
     };
   }
@@ -1323,7 +1397,7 @@ export class QBittorrentClient implements DownloaderClient {
    * @throws If the transport policy forbids the configured credentials, or the login
    * request itself fails.
    */
-  private async authenticate(force = false): Promise<void> {
+  private async authenticate(force = false, requestSignal?: AbortSignal): Promise<void> {
     if (this.cookie && !force) {
       return; // Already authenticated
     }
@@ -1355,7 +1429,7 @@ export class QBittorrentClient implements DownloaderClient {
           "User-Agent": "Questarr/1.0",
         },
         body: formData.toString(),
-        signal: AbortSignal.timeout(30000),
+        signal: requestSignal ?? AbortSignal.timeout(30000),
         // The login request body carries the plaintext password -- once the guard above
         // has permitted an HTTPS connection, don't let a redirect downgrade it mid-flight.
         requireHttps: isHttpsUrl(url),
@@ -1474,7 +1548,8 @@ export class QBittorrentClient implements DownloaderClient {
     method: string,
     path: string,
     body?: string | Buffer,
-    additionalHeaders?: Record<string, string>
+    additionalHeaders?: Record<string, string>,
+    requestSignal?: AbortSignal
   ): Promise<Response> {
     const url = this.getBaseUrl() + path;
 
@@ -1508,7 +1583,7 @@ export class QBittorrentClient implements DownloaderClient {
       method,
       headers,
       ...(requestBody !== undefined ? { body: requestBody } : {}),
-      signal: AbortSignal.timeout(30000),
+      signal: requestSignal ?? AbortSignal.timeout(30000),
       requireHttps: isHttpsUrl(url),
     });
     await logDownloaderDebugResponse("qBittorrent", method, url, response);
@@ -1517,7 +1592,8 @@ export class QBittorrentClient implements DownloaderClient {
       // Session expired or unauthorized, re-authenticate
       downloadersLogger.debug({ status: response.status, path }, "Got 403/401, re-authenticating");
       this.cookie = null;
-      await this.authenticate(true);
+      if (requestSignal) await this.authenticate(true, requestSignal);
+      else await this.authenticate(true);
 
       // Retry with new cookie
       const retryHeaders = { ...headers };
@@ -1529,7 +1605,7 @@ export class QBittorrentClient implements DownloaderClient {
         method,
         headers: retryHeaders,
         ...(requestBody !== undefined ? { body: requestBody } : {}),
-        signal: AbortSignal.timeout(30000),
+        signal: requestSignal ?? AbortSignal.timeout(30000),
         requireHttps: isHttpsUrl(url),
       });
       await logDownloaderDebugResponse("qBittorrent", method, url, response);

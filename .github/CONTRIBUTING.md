@@ -11,7 +11,7 @@ Report bugs and request enhancements in the [QuestarrNG issue tracker](https://g
 3. Create a new branch: `git checkout -b feature/your-feature-name`
 4. Make your changes
 5. Test your changes thoroughly
-6. Commit with clear messages: `git commit -m "Add feature: description"`
+6. Commit with clear messages and a DCO sign-off: `git commit -s -m "Add feature: description"`
 7. Push to your fork: `git push origin feature/your-feature-name`
 8. Open a Pull Request
    Note: do not merge into your own branch if you intend to do a PR
@@ -138,6 +138,20 @@ See [docs/DEPENDENCIES.md](../docs/DEPENDENCIES.md) for how QuestarrNG selects, 
 - Use clear, descriptive commit messages
 - Start with a verb in the present tense (e.g., "Add", "Fix", "Update")
 - Reference issue numbers when applicable (e.g., "Fix #123: description")
+
+### DCO sign-off
+
+Every non-merge commit in a pull request from a human contributor must include
+a valid `Signed-off-by: Name <email>` trailer. Create the trailer by running
+`git commit -s` with your own configured name and email, and only when you
+can truthfully make one of the certifications in [DCO.md](../DCO.md). Never
+add another person's name or sign-off on their behalf. GitHub-verified
+automation accounts are exempt because they cannot make a human DCO
+certification. The DCO file also explains the information recorded with each
+sign-off.
+Maintainers must add the `DCO / Verify sign-offs` check as a required status
+check in branch protection for `main` and release branches to enforce the
+policy before merging.
 
 ### Pull Requests
 

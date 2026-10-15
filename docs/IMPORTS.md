@@ -5,6 +5,9 @@ review before they enter a library. Open **Settings → Import** to configure th
 pipeline. Its tabs cover **General Config**, **RomM**, **Path Mappings**, and
 **Security & Scanning**.
 
+For root-folder discovery, import history, and download recovery, see the
+[Library Import guide](LIBRARY_IMPORT.md).
+
 ## Set up post-processing
 
 1. In **General Config**, enable **Post-Processing** and choose the library
@@ -66,7 +69,7 @@ buttons test the saved configuration.
 | Scanner        | What QuestarrNG sends                                                                                                                             | Configuration and behavior                                                                                                                                                                                                          |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **VirusTotal** | A SHA-256 hash over HTTPS. The file itself is not uploaded. For a directory download, QuestarrNG checks the largest file as the primary artifact. | Enter an API key and set the detection threshold. An import is blocked when the number of malicious detections is greater than the threshold. Unknown hashes are allowed by default; enable **Block Unknown Hashes** to block them. |
-| **ClamAV**     | File contents streamed to the configured ClamAV daemon over its INSTREAM TCP protocol.                                                            | Enter the daemon host and port (default `3310`). ClamAV examines up to 100 files in a directory download. A partial or incomplete directory scan blocks the import.                                                                 |
+| **ClamAV**     | File contents streamed to the configured ClamAV daemon over its INSTREAM TCP protocol.                                                            | Enter the daemon host and port (default `3310`). ClamAV examines up to 10,000 files in a directory download. A partial or incomplete directory scan blocks the import.                                                              |
 
 The VirusTotal API key is stored in QuestarrNG's database without encryption;
 protect the database and its backups. ClamAV's INSTREAM connection is not

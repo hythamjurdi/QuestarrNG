@@ -13,9 +13,9 @@ PostgreSQL** installation who need to bring that data across.
 >
 > **Not to be confused with the optional Postgres backend.** Questarr can now
 > also be _run_ on PostgreSQL as an opt-in alternative to the SQLite default
-> (from v1.5.0; see `docs/DATABASE.md`). That is a different thing entirely, and
-> this guide does not apply to it. There is no automated path from that backend
-> back to SQLite.
+> (from v1.5.0; see `docs/DATABASE.md`). Current optional-Postgres installs have
+> a separate current-schema copy tool documented there; this guide only applies
+> to the older pre-v1.1 PostgreSQL schema.
 
 ## Compatibility
 

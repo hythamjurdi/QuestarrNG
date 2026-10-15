@@ -37,8 +37,18 @@ function parseArgs(argv) {
 
 function readAuditReport(reportPath) {
   if (reportPath) return JSON.parse(readFileSync(reportPath, "utf8"));
+  const auditEnv = { ...process.env };
+  // npm run exports the user-level allow-scripts setting into child processes, where
+  // it conflicts with the package's own allowScripts policy. The audit disables scripts.
+  delete auditEnv.npm_config_allow_scripts;
+  delete auditEnv.NPM_CONFIG_ALLOW_SCRIPTS;
   try {
-    return JSON.parse(execFileSync("npm", ["audit", "--omit=dev", "--json"], { encoding: "utf8" }));
+    return JSON.parse(
+      execFileSync("npm", ["audit", "--omit=dev", "--ignore-scripts", "--json"], {
+        encoding: "utf8",
+        env: auditEnv,
+      })
+    );
   } catch (error) {
     // npm audit exits non-zero whenever it finds anything; the JSON is still on stdout.
     if (error.stdout) return JSON.parse(error.stdout);

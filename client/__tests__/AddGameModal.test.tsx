@@ -164,6 +164,14 @@ describe("AddGameModal", () => {
     );
   });
 
+  it("shows a zero IGDB score in search results", async () => {
+    setupFetch({ searchResults: [{ ...makeSearchResult(), rating: 0 }] });
+    renderModal({ initialQuery: "Test Game" });
+    fireEvent.click(screen.getByTestId("open-btn"));
+
+    expect(await screen.findAllByText("0/10")).not.toHaveLength(0);
+  });
+
   it("shows release year only for year-end release dates (Dec 31)", async () => {
     setupFetch({ searchResults: [makeSearchResult("TBD Game", "2024-12-31")] });
     renderModal({ initialQuery: "TBD Game" });
@@ -353,6 +361,19 @@ describe("AddGameModal", () => {
     expect(screen.getByText("2024")).toBeInTheDocument();
   });
 
+  it("does not treat games without an IGDB ID as already in the collection", async () => {
+    setupFetch({
+      searchResults: [{ ...makeSearchResult("No ID Game"), igdbId: null }],
+      userGames: [{ ...makeSearchResult("Manually Added Game"), igdbId: null }],
+    });
+    renderModal({ initialQuery: "No ID Game" });
+    fireEvent.click(screen.getByTestId("open-btn"));
+
+    expect(
+      await screen.findByRole("button", { name: "Add No ID Game to collection" })
+    ).toBeVisible();
+  });
+
   it("shows the mobile add spinner while a game is being added", async () => {
     mockIsMobile = true;
 
@@ -369,6 +390,7 @@ describe("AddGameModal", () => {
     fireEvent.click(screen.getByTestId("open-btn"));
 
     const addButton = await screen.findByTestId("button-add-igdb-1");
+    expect(addButton).toHaveAttribute("aria-label", "Add Pending Game to collection");
     fireEvent.click(addButton);
 
     await waitFor(() => {

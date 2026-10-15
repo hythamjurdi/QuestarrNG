@@ -13,7 +13,7 @@ describe("recordVersionFromCompletedDownload", () => {
   const getGame = vi.fn();
   const store = { getGame, replaceGameInstalledVersion };
   const record = (installedVersion: string | null, title: string) => {
-    getGame.mockResolvedValue({ id: "g1", installedVersion });
+    getGame.mockResolvedValue({ id: "g1", installedVersion, userId: "user-1" });
     return recordVersionFromCompletedDownload(store, "g1", title);
   };
 
@@ -26,7 +26,7 @@ describe("recordVersionFromCompletedDownload", () => {
     const recorded = await record(null, "Test.Game.v1.2.3-RUNE");
     expect(recorded).toBe("v1.2.3");
     expect(replaceGameInstalledVersion).toHaveBeenCalledWith("g1", null, "v1.2.3");
-    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "g1");
+    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "g1", "user-1");
   });
 
   it("moves the version forward on a newer update", async () => {
@@ -73,13 +73,13 @@ describe("recordVersionFromCompletedDownload", () => {
   it("compares again after losing the write to a concurrent older import", async () => {
     // A v1.2 import wrote between this v1.3 import's read and its write.
     getGame
-      .mockResolvedValueOnce({ id: "g1", installedVersion: "v1.0" })
-      .mockResolvedValueOnce({ id: "g1", installedVersion: "v1.2" });
+      .mockResolvedValueOnce({ id: "g1", installedVersion: "v1.0", userId: "user-1" })
+      .mockResolvedValueOnce({ id: "g1", installedVersion: "v1.2", userId: "user-1" });
     replaceGameInstalledVersion.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     const recorded = await recordVersionFromCompletedDownload(store, "g1", "Game.Update.v1.3-RUNE");
     expect(recorded).toBe("v1.3");
     expect(replaceGameInstalledVersion).toHaveBeenLastCalledWith("g1", "v1.2", "v1.3");
-    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "g1");
+    expect(notifyUser).toHaveBeenCalledWith("gameUpdated", "g1", "user-1");
   });
 
   it("stops when a concurrent import already wrote a newer version", async () => {
