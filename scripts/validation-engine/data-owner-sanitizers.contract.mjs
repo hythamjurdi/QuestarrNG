@@ -44,6 +44,57 @@ test("Home Assistant ownership helper survives ASan and UBSan fixture traversal"
 
   const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), "questarr-data-owner-sanitizer-"));
   try {
+    const sanitizerEnvironment = {
+      ...childEnvironment,
+      ASAN_OPTIONS: "detect_leaks=1:halt_on_error=1:abort_on_error=1",
+      UBSAN_OPTIONS: "halt_on_error=1:print_stacktrace=1",
+    };
+    const probeBinaryPath = path.join(temporaryRoot, "sanitizer-toolchain-probe");
+    const probe = spawnSync(
+      "cc",
+      [
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-x",
+        "c",
+        "-o",
+        probeBinaryPath,
+        "-",
+      ],
+      {
+        encoding: "utf8",
+        env: childEnvironment,
+        input:
+          "#define _XOPEN_SOURCE 700\n#include <errno.h>\n#include <ftw.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <sys/stat.h>\n#include <sys/types.h>\n#include <unistd.h>\nint main(void) { return 0; }\n",
+      }
+    );
+    const probeRun =
+      probe.error || probe.status !== 0
+        ? null
+        : spawnSync(probeBinaryPath, [], { encoding: "utf8", env: sanitizerEnvironment });
+    if (
+      probe.error ||
+      probe.status !== 0 ||
+      probeRun?.error ||
+      probeRun?.status !== 0
+    ) {
+      const detail =
+        probe.error?.message ||
+        probe.stderr ||
+        probeRun?.error?.message ||
+        probeRun?.stderr ||
+        "sanitizer probe exited unsuccessfully";
+      if (requireSanitizerToolchain) {
+        assert.fail(`The sanitizer contract requires a complete C sanitizer toolchain: ${detail}`);
+      }
+      t.skip("The isolated validation sandbox does not expose a complete C sanitizer toolchain.");
+      return;
+    }
+
     const dataRoot = path.join(temporaryRoot, "data");
     const nested = path.join(dataRoot, "nested");
     const file = path.join(nested, "fixture.txt");
@@ -77,12 +128,6 @@ test("Home Assistant ownership helper survives ASan and UBSan fixture traversal"
       ],
       { cwd: repositoryRoot, stdio: "pipe", env: childEnvironment }
     );
-
-    const sanitizerEnvironment = {
-      ...childEnvironment,
-      ASAN_OPTIONS: "detect_leaks=1:halt_on_error=1:abort_on_error=1",
-      UBSAN_OPTIONS: "halt_on_error=1:print_stacktrace=1",
-    };
 
     for (const args of [
       [],
