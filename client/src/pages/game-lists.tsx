@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { InterfaceText } from "@/components/InterfaceText";
+import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
+import { formatRegionalNumber, useRegionalPreference } from "@/lib/regional-format";
 
 type ListDialogMode = "create" | "rename" | null;
 
@@ -50,6 +53,8 @@ async function fetchJson<T>(url: string): Promise<T> {
 export default function GameListsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { language } = useInterfaceLanguage();
+  const regionalPreference = useRegionalPreference();
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [listDialogMode, setListDialogMode] = useState<ListDialogMode>(null);
   const [editingListId, setEditingListId] = useState<string | undefined>();
@@ -110,12 +115,19 @@ export default function GameListsPage() {
       setListDialogMode(null);
       setEditingListId(undefined);
       setListName("");
-      toast({ title: "List saved", description: `“${list.name}” is ready.` });
+      toast({
+        title: formatInterfaceMessage("List saved", {}, language),
+        description: formatInterfaceMessage("“{name}” is ready.", { name: list.name }, language),
+      });
     },
     onError: () => {
       toast({
-        title: "Couldn't save list",
-        description: "Check the name and try again. List names must be unique.",
+        title: formatInterfaceMessage("Couldn't save list", {}, language),
+        description: formatInterfaceMessage(
+          "Check the name and try again. List names must be unique.",
+          {},
+          language
+        ),
         variant: "destructive",
       });
     },
@@ -130,7 +142,10 @@ export default function GameListsPage() {
       setDeleteListId(null);
     },
     onError: () => {
-      toast({ title: "Couldn't delete list", variant: "destructive" });
+      toast({
+        title: formatInterfaceMessage("Couldn't delete list", {}, language),
+        variant: "destructive",
+      });
     },
   });
 
@@ -151,7 +166,10 @@ export default function GameListsPage() {
       ]);
     },
     onError: () => {
-      toast({ title: "Couldn't update this list", variant: "destructive" });
+      toast({
+        title: formatInterfaceMessage("Couldn't update this list", {}, language),
+        variant: "destructive",
+      });
     },
   });
 
@@ -182,11 +200,10 @@ export default function GameListsPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
             <List className="h-6 w-6 text-primary" aria-hidden="true" />
-            Custom Lists
+            <InterfaceText source="Custom Lists" />
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Make your own collections for co-op nights, favorites, or whatever you want to play
-            next.
+            <InterfaceText source="Make your own collections for co-op nights, favorites, or whatever you want to play next." />
           </p>
         </div>
         <Button
@@ -197,24 +214,29 @@ export default function GameListsPage() {
           }}
         >
           <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-          Create list
+          <InterfaceText source="Create list" />
         </Button>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
         <Card className="h-fit">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Your lists</CardTitle>
-            <CardDescription>Only you can see and edit these lists.</CardDescription>
+            <CardTitle className="text-base">
+              <InterfaceText source="Your lists" />
+            </CardTitle>
+            <CardDescription>
+              <InterfaceText source="Only you can see and edit these lists." />
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {listsLoading ? (
               <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading lists…
+                <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                <InterfaceText source="Loading lists…" />
               </div>
             ) : lists.length === 0 ? (
               <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                Your lists will show up here. Start with one for a group, mood, or goal.
+                <InterfaceText source="Your lists will show up here. Start with one for a group, mood, or goal." />
               </p>
             ) : (
               lists.map((list) => (
@@ -244,7 +266,13 @@ export default function GameListsPage() {
                     size="icon"
                     variant="ghost"
                     className="h-8 w-8 shrink-0"
-                    aria-label={`Rename ${list.name}`}
+                    aria-label={formatInterfaceMessage(
+                      "Rename {list}",
+                      { list: list.name },
+                      language
+                    )}
+                    data-i18n-aria-label="Rename {list}"
+                    data-i18n-aria-label-values={JSON.stringify({ list: list.name })}
                     onClick={() => openRename(list)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -253,7 +281,13 @@ export default function GameListsPage() {
                     size="icon"
                     variant="ghost"
                     className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                    aria-label={`Delete ${list.name}`}
+                    aria-label={formatInterfaceMessage(
+                      "Delete {list}",
+                      { list: list.name },
+                      language
+                    )}
+                    data-i18n-aria-label="Delete {list}"
+                    data-i18n-aria-label-values={JSON.stringify({ list: list.name })}
                     onClick={() => setDeleteListId(list.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -271,35 +305,49 @@ export default function GameListsPage() {
                 <div>
                   <CardTitle>{selectedList.name}</CardTitle>
                   <CardDescription className="mt-1">
-                    {listGames.length} {listGames.length === 1 ? "game" : "games"}
+                    <InterfaceText
+                      source={listGames.length === 1 ? "{count} game" : "{count} games"}
+                      values={{
+                        count: formatRegionalNumber(
+                          listGames.length,
+                          undefined,
+                          regionalPreference
+                        ),
+                      }}
+                    />
                   </CardDescription>
                 </div>
                 <Button onClick={() => setAddGamesOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add games
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                  <InterfaceText source="Add games" />
                 </Button>
               </CardHeader>
               <CardContent>
                 {listGamesLoading ? (
                   <div className="flex items-center justify-center py-16 text-muted-foreground">
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading games…
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <InterfaceText source="Loading games…" />
                   </div>
                 ) : listGamesError ? (
                   <p role="alert" className="py-12 text-center text-sm text-destructive">
-                    Couldn't load games for this list. Try again in a moment.
+                    <InterfaceText source="Couldn't load games for this list. Try again in a moment." />
                   </p>
                 ) : listGames.length === 0 ? (
                   <div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-14 text-center">
                     <Archive className="mb-3 h-9 w-9 text-muted-foreground/60" aria-hidden="true" />
-                    <h2 className="font-semibold">This list is ready for games</h2>
+                    <h2 className="font-semibold">
+                      <InterfaceText source="This list is ready for games" />
+                    </h2>
                     <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                      Add games from your library. You can keep them in other lists too.
+                      <InterfaceText source="Add games from your library. You can keep them in other lists too." />
                     </p>
                     <Button
                       className="mt-4"
                       variant="outline"
                       onClick={() => setAddGamesOpen(true)}
                     >
-                      <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Browse library
+                      <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                      <InterfaceText source="Browse library" />
                     </Button>
                   </div>
                 ) : (
@@ -320,17 +368,29 @@ export default function GameListsPage() {
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium">{game.title}</p>
-                          <p className="text-xs capitalize text-muted-foreground">{game.status}</p>
+                          <p className="text-xs capitalize text-muted-foreground">
+                            <InterfaceText source={game.status} />
+                          </p>
                         </div>
                         <Button
                           size="sm"
                           variant="ghost"
                           className="shrink-0 text-muted-foreground hover:text-destructive"
-                          aria-label={`Remove ${game.title} from ${selectedList.name}`}
+                          aria-label={formatInterfaceMessage(
+                            "Remove {game} from {list}",
+                            { game: game.title, list: selectedList.name },
+                            language
+                          )}
+                          data-i18n-aria-label="Remove {game} from {list}"
+                          data-i18n-aria-label-values={JSON.stringify({
+                            game: game.title,
+                            list: selectedList.name,
+                          })}
                           disabled={membershipMutation.isPending}
                           onClick={() => toggleMembership(game.id, false)}
                         >
-                          <X className="mr-1 h-4 w-4" aria-hidden="true" /> Remove
+                          <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                          <InterfaceText source="Remove" />
                         </Button>
                       </div>
                     ))}
@@ -341,16 +401,19 @@ export default function GameListsPage() {
           ) : (
             <CardContent className="flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
               <List className="mb-3 h-10 w-10 text-muted-foreground/60" aria-hidden="true" />
-              <h2 className="font-semibold">Start a custom list</h2>
+              <h2 className="font-semibold">
+                <InterfaceText source="Start a custom list" />
+              </h2>
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Collect games for a co-op night, a backlog goal, or any theme you like.
+                <InterfaceText source="Collect games for a co-op night, a backlog goal, or any theme you like." />
               </p>
               <Button
                 className="mt-4"
                 variant="outline"
                 onClick={() => setListDialogMode("create")}
               >
-                <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Create your first list
+                <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                <InterfaceText source="Create your first list" />
               </Button>
             </CardContent>
           )}
@@ -364,28 +427,32 @@ export default function GameListsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {listDialogMode === "rename" ? "Rename list" : "Create a list"}
+              <InterfaceText
+                source={listDialogMode === "rename" ? "Rename list" : "Create a list"}
+              />
             </DialogTitle>
             <DialogDescription>
-              Give it a short name so you can find the right games later.
+              <InterfaceText source="Give it a short name so you can find the right games later." />
             </DialogDescription>
           </DialogHeader>
           <Input
             autoFocus
-            aria-label="List name"
+            aria-label={formatInterfaceMessage("List name", {}, language)}
+            data-i18n-aria-label="List name"
             maxLength={80}
             value={listName}
             onChange={(event) => setListName(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && saveList()}
-            placeholder="e.g. Co-op with friends"
+            placeholder={formatInterfaceMessage("e.g. Co-op with friends", {}, language)}
+            data-i18n-placeholder="e.g. Co-op with friends"
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setListDialogMode(null)}>
-              Cancel
+              <InterfaceText source="Cancel" />
             </Button>
             <Button onClick={saveList} disabled={!listName.trim() || saveListMutation.isPending}>
               {saveListMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {listDialogMode === "rename" ? "Save name" : "Create list"}
+              <InterfaceText source={listDialogMode === "rename" ? "Save name" : "Create list"} />
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -400,17 +467,25 @@ export default function GameListsPage() {
       >
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Add games to {selectedList?.name ?? "your list"}</DialogTitle>
+            <DialogTitle>
+              {selectedList ? (
+                <InterfaceText source="Add games to {list}" values={{ list: selectedList.name }} />
+              ) : (
+                <InterfaceText source="Add games to your list" />
+              )}
+            </DialogTitle>
             <DialogDescription>
-              Select games from your library. A game can be in more than one list.
+              <InterfaceText source="Select games from your library. A game can be in more than one list." />
             </DialogDescription>
           </DialogHeader>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              aria-label="Search library games"
+              aria-label={formatInterfaceMessage("Search library games", {}, language)}
+              data-i18n-aria-label="Search library games"
               className="pl-9"
-              placeholder="Search your games…"
+              placeholder={formatInterfaceMessage("Search your games…", {}, language)}
+              data-i18n-placeholder="Search your games…"
               value={gameSearch}
               onChange={(event) => setGameSearch(event.target.value)}
             />
@@ -418,25 +493,35 @@ export default function GameListsPage() {
           <ScrollArea className="h-[min(55vh,420px)] pr-3">
             {gamesLoading ? (
               <div className="flex items-center justify-center py-12 text-muted-foreground">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading library…
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <InterfaceText source="Loading library…" />
               </div>
             ) : filteredLibraryGames.length === 0 ? (
               <div className="py-12 text-center text-sm text-muted-foreground">
-                {libraryGames.length === 0
-                  ? "Add games to your library before building a list."
-                  : "No games match that search."}
+                {libraryGames.length === 0 ? (
+                  <InterfaceText source="Add games to your library before building a list." />
+                ) : (
+                  <InterfaceText source="No games match that search." />
+                )}
               </div>
             ) : (
               <div className="divide-y">
                 {filteredLibraryGames.map((game) => {
                   const checked = memberIds.has(game.id);
+                  const source = checked ? "Remove {game} from {list}" : "Add {game} to {list}";
+                  const values = {
+                    game: game.title,
+                    list: selectedList?.name ?? formatInterfaceMessage("your list", {}, language),
+                  };
                   return (
                     <label key={game.id} className="flex cursor-pointer items-center gap-3 py-2.5">
                       <Checkbox
                         checked={checked}
                         disabled={!selectedListId || membershipMutation.isPending}
                         onCheckedChange={(value) => toggleMembership(game.id, value === true)}
-                        aria-label={`${checked ? "Remove" : "Add"} ${game.title} ${checked ? "from" : "to"} ${selectedList?.name ?? "list"}`}
+                        aria-label={formatInterfaceMessage(source, values, language)}
+                        data-i18n-aria-label={source}
+                        data-i18n-aria-label-values={JSON.stringify(values)}
                       />
                       {game.coverUrl ? (
                         <img src={game.coverUrl} alt="" className="h-12 w-9 rounded object-cover" />
@@ -449,7 +534,7 @@ export default function GameListsPage() {
                         {game.title}
                       </span>
                       <span className="text-xs capitalize text-muted-foreground">
-                        {game.status}
+                        <InterfaceText source={game.status} />
                       </span>
                     </label>
                   );
@@ -459,7 +544,7 @@ export default function GameListsPage() {
           </ScrollArea>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddGamesOpen(false)}>
-              Done
+              <InterfaceText source="Done" />
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -471,13 +556,17 @@ export default function GameListsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this list?</AlertDialogTitle>
+            <AlertDialogTitle>
+              <InterfaceText source="Delete this list?" />
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              The games stay in your library. Only this list and its membership are removed.
+              <InterfaceText source="The games stay in your library. Only this list and its membership are removed." />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>
+              <InterfaceText source="Cancel" />
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
                 event.preventDefault();
@@ -487,7 +576,7 @@ export default function GameListsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteListMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete list
+              <InterfaceText source="Delete list" />
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

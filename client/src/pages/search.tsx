@@ -14,6 +14,7 @@ import {
   getInterfaceLanguageDirection,
   useInterfaceLanguage,
 } from "@/lib/interface-locale";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
 import { isTorrentDownloaderType, isUsenetDownloaderType } from "@shared/downloader-types";
 import { cleanReleaseName } from "@shared/title-utils";
 import {
@@ -570,7 +571,7 @@ export default function SearchPage() {
                       className="text-muted-foreground"
                       data-testid={`error-message-${index}`}
                     >
-                      • {error}
+                      • <ApiErrorDetailText source={error} />
                     </li>
                   ))}
                 </ul>
@@ -774,9 +775,11 @@ export default function SearchPage() {
                   <InterfaceText source={"No Results Found"} />
                 </p>
                 <p className="text-sm mt-1">
-                  {dateFrom || dateTo
-                    ? "No releases match the selected date range. Try adjusting the filter."
-                    : "Try adjusting your search terms or check if your indexers are properly configured."}
+                  {dateFrom || dateTo ? (
+                    <InterfaceText source="No releases match the selected date range. Try adjusting the filter." />
+                  ) : (
+                    <InterfaceText source="Try adjusting your search terms or check if your indexers are properly configured." />
+                  )}
                 </p>
                 {!!(dateFrom || dateTo) && hasNextPage && (
                   <Button

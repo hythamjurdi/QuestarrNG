@@ -9,6 +9,7 @@ import {
   useInterfaceLanguage,
   formatInterfaceMessage,
 } from "@/lib/interface-locale";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
 import { Plus, Edit, Trash2, Check, X, Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1208,7 +1209,7 @@ export default function IndexersPage() {
                 </div>
                 {prowlarrDiagnostics.management.error && (
                   <p className="text-muted-foreground mt-1 text-sm">
-                    {prowlarrDiagnostics.management.error}
+                    <ApiErrorDetailText source={prowlarrDiagnostics.management.error} />
                   </p>
                 )}
                 {prowlarrDiagnostics.indexers.length > 0 && (
@@ -1222,7 +1223,7 @@ export default function IndexersPage() {
                           <div className="truncate font-medium">{item.name}</div>
                           {item.error && (
                             <div className="text-muted-foreground break-words text-xs">
-                              {item.error}
+                              <ApiErrorDetailText source={item.error} />
                             </div>
                           )}
                         </div>

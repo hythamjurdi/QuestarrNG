@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { GAME_LINK_REQUIRED_STATUS, QUARANTINED_STATUS } from "@shared/schema";
 import { RegionalRelativeTime } from "./RegionalRelativeTime";
 import { InterfaceText } from "@/components/InterfaceText";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
+import { useInterfaceLanguage } from "@/lib/interface-locale";
+import { getLocalizedApiErrorDetail } from "@/lib/api-error-locale";
 
 interface PendingImport {
   id: string;
@@ -21,15 +24,21 @@ interface PendingImport {
   passwordRequired?: boolean;
 }
 
-function describeImportError(item: PendingImport): string | null | undefined {
-  if (!item.errorMessage) return item.errorMessage;
-  if (item.status === QUARANTINED_STATUS) return `Security alert: ${item.errorMessage}`;
-  if (item.status === GAME_LINK_REQUIRED_STATUS) return item.errorMessage;
-  if (item.passwordRequired) return `Password required: ${item.errorMessage}`;
-  return `Import failed: ${item.errorMessage}`;
+function describeImportError(item: PendingImport): string | undefined {
+  if (!item.errorMessage) return undefined;
+  const source =
+    item.status === QUARANTINED_STATUS
+      ? "Security alert: " + item.errorMessage
+      : item.status === GAME_LINK_REQUIRED_STATUS
+        ? item.errorMessage
+        : item.passwordRequired
+          ? "Password required: " + item.errorMessage
+          : "Import failed: " + item.errorMessage;
+  return source;
 }
 
 export default function PendingImportsCard() {
+  const { language } = useInterfaceLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -146,9 +155,12 @@ export default function PendingImportsCard() {
                     {item.errorMessage && (
                       <p
                         className="text-xs text-destructive truncate max-w-[300px]"
-                        title={item.errorMessage}
+                        title={
+                          getLocalizedApiErrorDetail(describeImportError(item) ?? "", language) ??
+                          describeImportError(item)
+                        }
                       >
-                        {describeImportError(item)}
+                        <ApiErrorDetailText source={describeImportError(item) ?? ""} />
                       </p>
                     )}
                   </div>
@@ -168,9 +180,13 @@ export default function PendingImportsCard() {
                     {item.status !== QUARANTINED_STATUS && (
                       <Button size="sm" onClick={() => setSelectedImport(item)}>
                         {(() => {
-                          if (item.status === GAME_LINK_REQUIRED_STATUS) return "Link Game";
-                          if (item.passwordRequired) return "Enter Password";
-                          return "Review";
+                          if (item.status === GAME_LINK_REQUIRED_STATUS) {
+                            return <InterfaceText source="Link Game" />;
+                          }
+                          if (item.passwordRequired) {
+                            return <InterfaceText source="Enter Password" />;
+                          }
+                          return <InterfaceText source="Review" />;
                         })()}
                       </Button>
                     )}

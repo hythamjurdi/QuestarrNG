@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { getSocket } from "@/lib/socket";
 import type { ImportTask, ImportTaskItem } from "@shared/schema";
 import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
+import { ApiErrorDetailText } from "@/components/ApiErrorDetailText";
 
 const TASK_TYPE_LABELS: Record<string, string> = {
   steam_wishlist: "Steam Wishlist",
@@ -357,9 +358,7 @@ export default function ImportHistoryPage() {
 
               {selectedTask.errorMessage && (
                 <div className="rounded-md bg-red-900/20 border border-red-700/30 px-3 py-2 text-sm text-red-400">
-                  <span lang="und" dir="auto">
-                    {selectedTask.errorMessage}
-                  </span>
+                  <ApiErrorDetailText source={selectedTask.errorMessage} />
                 </div>
               )}
 
@@ -383,8 +382,8 @@ export default function ImportHistoryPage() {
                           {item.gameTitle ?? item.itemName}
                         </p>
                         {item.errorMessage && (
-                          <p className="text-xs text-red-400 mt-0.5" lang="und" dir="auto">
-                            {item.errorMessage}
+                          <p className="text-xs text-red-400 mt-0.5">
+                            <ApiErrorDetailText source={item.errorMessage} />
                           </p>
                         )}
                       </div>
