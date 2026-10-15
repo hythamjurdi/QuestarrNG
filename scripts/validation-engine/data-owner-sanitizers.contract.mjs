@@ -19,21 +19,21 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const requireSanitizer = process.env.REQUIRE_VALIDATION_SANDBOX === "1";
+const requireSanitizerToolchain = process.env.REQUIRE_SANITIZER_TOOLCHAIN === "1";
 
 test("Home Assistant ownership helper survives ASan and UBSan fixture traversal", (t) => {
   if (process.platform !== "linux") {
-    if (requireSanitizer) assert.fail("The sanitizer contract requires Linux.");
+    if (requireSanitizerToolchain) assert.fail("The sanitizer contract requires Linux.");
     t.skip("The Home Assistant helper sanitizer contract runs on Linux CI.");
     return;
   }
 
   const compiler = spawnSync("cc", ["--version"], { encoding: "utf8" });
   if (compiler.error || compiler.status !== 0) {
-    if (requireSanitizer) {
+    if (requireSanitizerToolchain) {
       assert.fail("The sanitizer contract requires the C compiler available in CI.");
     }
-    t.skip("A C compiler is not installed on this development host.");
+    t.skip("The isolated validation sandbox does not expose a C compiler.");
     return;
   }
 
