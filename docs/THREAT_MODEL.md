@@ -262,13 +262,13 @@ environment. It checks out only trusted default-branch code and uses the trigger
 commit SHA as Codecov's report override. Its event and environment restrictions prevent
 pull-request workflows from obtaining the Codecov token. The Codecov token must be stored
 as an environment secret, not a repository-wide or organization-wide secret. The release
-announcement job uses the `discord-release` environment and its separately named
-`DISCORD_WEBHOOK` secret. The existing
-repository-level webhook must be replaced in that environment and removed before
-same-repository pull-request workflows are fully isolated from secrets. The environment
-is restricted to `main`; tag-triggered image runs cannot access its secret. A trusted
-default-branch `workflow_run` sends tag announcements only after the release workflow
-completes successfully.
+announcement job uses the `discord-release` environment and its `DISCORD_WEBHOOK`
+secret. The former repository-level webhook secret has been removed, so
+same-repository pull-request workflows cannot read it. The environment is
+restricted to `main`; tag-triggered image runs cannot access its secret. A trusted
+default-branch `workflow_run` sends tag announcements only after the release
+workflow completes successfully, and both announcement paths fail if the secret
+is missing.
 
 ---
 

@@ -47,10 +47,10 @@ jobs:
             echo 'Release announcement tag must use vMAJOR.MINOR.PATCH.' >&2
             exit 1
           fi
-          if [[ -z "$DISCORD_WEBHOOK" ]]; then
-            echo '::warning::Discord announcement skipped because discord-release has no webhook secret.'
-            exit 0
-          fi
+          test -n "$DISCORD_WEBHOOK" || {
+            echo 'DISCORD_WEBHOOK is required in the discord-release environment.' >&2
+            exit 1
+          }
 
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
             --json body,isDraft,isPrerelease,tagName,url > release.json

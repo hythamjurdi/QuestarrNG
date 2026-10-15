@@ -10,8 +10,10 @@ the repository-scoped `GITHUB_TOKEN`. Docker Hub publishing has been removed.
 Tag releases include validated `release-notes/` fragments in the GitHub release
 and Discord announcement. Configure the `DISCORD_WEBHOOK` secret in the
 `discord-release` GitHub Actions environment with the release-announcement
-channel webhook. The announcement job skips with a warning while that secret is
-unset.
+channel webhook. The environment allows `main` only; tag announcements run
+automatically after a successful release workflow. Both announcement paths fail
+if the secret is missing. Keep `DISCORD_RELEASE_WEBHOOK` out of repository
+secrets.
 Repository administrators manage Actions permissions and release access in
 GitHub settings, following the [Collaborator Access & Escalation Policy](SECURITY.md#collaborator-access--escalation-policy).
 

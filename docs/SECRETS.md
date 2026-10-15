@@ -355,10 +355,10 @@ environment can restrict their use. The Codecov upload workflow uses the
 from a separate default-branch `workflow_run` workflow after the image-release
 workflow succeeds; manual announcements run only from `main`.
 
-Create a new `DISCORD_WEBHOOK` secret in `discord-release`, then delete the
-existing repository-level `DISCORD_RELEASE_WEBHOOK`. The different name prevents
-the release workflow from silently falling back to the repository secret.
-GitHub does not return stored secret values through its API, so create a
-replacement Discord webhook instead of trying to copy the old value. Until the
-repository-scoped secret is removed, any same-repository pull-request workflow
-could still reference it.
+The release webhook is stored as `DISCORD_WEBHOOK` in the `discord-release`
+environment, restricted to `main`. The former repository-level
+`DISCORD_RELEASE_WEBHOOK` has been removed. Keep it removed so
+same-repository pull-request workflows cannot read the webhook. Tag announcements
+use the trusted default-branch `workflow_run` workflow after a successful image
+release; both that path and manual announcements fail if the environment secret
+is missing.
