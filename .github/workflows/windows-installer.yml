@@ -116,8 +116,8 @@ jobs:
             }
           }
 
-          $lock = Get-Content package-lock.json | ConvertFrom-Json
-          $lockedVersion = [version]$lock.packages.'node_modules/node-gyp'.version
+          $lock = Get-Content package-lock.json | ConvertFrom-Json -AsHashtable
+          $lockedVersion = [version]$lock['packages']['node_modules/node-gyp']['version']
           if ($lockedVersion -lt [version]'12.1.0') {
             throw "node-gyp $lockedVersion does not support the Visual Studio 18 toolchain."
           }
