@@ -57,7 +57,7 @@ Evidence: [`ci.yml`](../.github/workflows/ci.yml),
 
 ## [dynamic_analysis]
 
-**Status: Routine analysis is active; release-specific timing is recorded below.**
+**Status: Met.**
 
 [`dast.yml`](../.github/workflows/dast.yml) builds and starts the production
 server, waits for its health endpoint, and runs the OWASP ZAP baseline scan
@@ -66,12 +66,31 @@ and by manual dispatch. `fail_action: true` makes unignored scan alerts fail the
 workflow; accepted rule IDs and their rationale are recorded in
 [`.zap/rules.tsv`](../.zap/rules.tsv).
 
-The successful DAST run on the `main` commit for v1.9.1 is
-[run 37546640378](https://github.com/snapetech-org/QuestarrNG/actions/runs/37546640378).
-The v1.9.1 release was published at 23:17 UTC on 2026-10-06, and this run
-started at 23:27 UTC. It is evidence of routine scanning, not evidence that the
-scan completed before that release was published. No major release occurred in
-this evidence period.
+The v1.9.1 DAST run started after publication, so it is not cited as
+pre-release evidence. Since then, the version-tag workflow has required a
+successful OWASP ZAP check on the exact tagged commit before it builds and
+publishes a versioned image or GitHub release. The latest successful main scan
+is [run 38654596755](https://github.com/snapetech-org/QuestarrNG/actions/runs/38654596755)
+on commit `858e81c64d49fcf75bfa0ee17b93f5f705a2174e`.
+
+## [dynamic_analysis_unsafe]
+
+**Status: Met.**
+
+The Home Assistant ownership helper is compiled and exercised with AddressSanitizer
+and UndefinedBehaviorSanitizer in a disposable fixture. The test checks argument
+rejection, nested-file traversal, physical symlink handling, error handling, and
+the ownership callback without changing any real data. It is part of the
+source-bound validation contract inventory; the isolated JavaScript suite skips
+the compiler-dependent case when its sandbox lacks a C compiler. The required
+C++ CodeQL job recompiles the production helper and runs this contract with the
+compiler required.
+
+Evidence: [`fix-data-owner.c`](../questarr/fix-data-owner.c), the
+[test-only `lchown` wrapper](../questarr/fix-data-owner-test-wrap.c),
+[sanitizer contract](../scripts/validation-engine/data-owner-sanitizers.contract.mjs),
+[`ci.yml`](../.github/workflows/ci.yml), and
+[`codeql.yml`](../.github/workflows/codeql.yml).
 
 ## [dynamic_analysis_enable_assertions]
 
@@ -108,6 +127,31 @@ not claim that dynamic analysis can discover every exploitable vulnerability.
 The rule-level suppression and its compensating test should be reviewed if ZAP
 changes its alert IDs or behavior.
 
+## [crypto_tls12]
+
+**Status: Met.**
+
+Questarr's built-in HTTPS listener explicitly sets `minVersion` to `TLSv1.2`.
+Node.js documents TLS 1.2 as its default minimum and the application now pins
+that floor in its server options so a runtime-wide setting cannot lower it.
+
+Evidence: [`createHttpsServerOptions`](../server/ssl.ts), its
+[regression test](../server/__tests__/ssl.test.ts), and the
+[Node.js TLS documentation](https://nodejs.org/api/tls.html).
+
+## [crypto_pfs]
+
+**Status: Met.**
+
+The built-in HTTPS listener does not replace Node.js's default cipher
+configuration. Node.js documents that its default suite prefers ECDHE and DHE
+for forward secrecy and that TLS 1.3 uses ephemeral key agreement by default.
+The listener now explicitly requires TLS 1.2 or newer.
+
+Evidence: [`server/index.ts`](../server/index.ts),
+[`createHttpsServerOptions`](../server/ssl.ts), and the
+[Node.js TLS documentation](https://nodejs.org/api/tls.html#perfect-forward-secrecy).
+
 ## Current OpenSSF Scorecard findings and disposition
 
 These repository-level findings are separate from the Badge criteria above.
@@ -115,13 +159,13 @@ The latest main-branch scan completed on 2026-10-14. CodeQL, Dependabot, and
 secret-scanning alert lists are clear; the remaining Code Scanning alerts are
 Scorecard process and maturity metrics, not identified vulnerable source code.
 
-| Finding | Fork-specific evidence and status |
-| --- | --- |
-| [CI-Tests #149](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/149) | The latest Scorecard scan reports CI tests for 18 of the 19 sampled merged pull requests (score 9/10). Branch protection now requires the current test and build checks for every protected merge; the remaining miss is historical and does not identify a current failing test. |
-| [SAST #148](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/148) | Scorecard reports SAST for 28 of the 30 sampled commits (score 9/10). The SAST workflow is active and passed on current `main`; the remaining score reflects its sampled history. |
-| [CodeReviewID #10](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/10) | Scorecard reports 0/13 approved changesets. The maintainer accepted the single-maintainer process and dismissed this historical process alert as `won't fix`; PRs still require all configured status checks and conversation resolution. AI review is advisory and is not represented as independent human approval. |
-| [MaintainedID #11](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/11) | GitHub records repository creation as 2026-09-25T23:50:31Z. Scorecard requires more than 90 days of repository history, so the earliest age-based reassessment is after 2026-12-24T23:50:31Z. Releases and CI demonstrate current activity, but cannot change repository age. |
-| [CIIBestPracticesID #12](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/12) | The [OpenSSF profile](https://www.bestpractices.dev/en/projects/15269/passing) is 94% complete and still `in_progress`. Its stored repository URL points to `snapetech/QuestarrNG`, not canonical `snapetech-org/QuestarrNG`. Main now enforces the 32-byte JWT minimum, but the external profile still needs an authorized owner to correct the mapping and attest to remaining criteria. |
+| Finding                                                                                         | Fork-specific evidence and status                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [CI-Tests #149](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/149)         | The latest Scorecard scan reports CI tests for 20 of 21 sampled merged pull requests (score 9/10). Branch protection requires current test and build checks for protected merges; the remaining miss is historical and does not identify a current failing test.                                                        |
+| [SAST #148](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/148)             | Scorecard reports SAST for 28 of the 30 sampled commits (score 9/10). The SAST workflow is active and passed on current `main`; the remaining score reflects its sampled history.                                                                                                                                       |
+| [CodeReviewID #10](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/10)       | Scorecard reports 0/13 approved changesets. The maintainer accepted the single-maintainer process and dismissed this historical process alert as `won't fix`; PRs still require all configured status checks and conversation resolution. AI review is advisory and is not represented as independent human approval.   |
+| [MaintainedID #11](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/11)       | GitHub records repository creation as 2026-09-25T23:50:31Z. Scorecard requires more than 90 days of repository history, so the earliest age-based reassessment is after 2026-12-24T23:50:31Z. Releases and CI demonstrate current activity, but cannot change repository age.                                           |
+| [CIIBestPracticesID #12](https://github.com/snapetech-org/QuestarrNG/security/code-scanning/12) | The [OpenSSF profile](https://www.bestpractices.dev/en/projects/15269/passing) is 97% complete and still `in_progress`. The project has corrected the repository URLs and 61 stale evidence links. The remaining profile answers require an authorized owner to record current evidence and the new repository history. |
 
 ### Secure development knowledge
 
@@ -133,10 +177,12 @@ Supporting public technical evidence includes [THREAT_MODEL.md](THREAT_MODEL.md)
 [SECURITY_ASSESSMENT.md](SECURITY_ASSESSMENT.md), and regression tests for SSRF,
 path traversal, CSRF, authentication boundaries, and secret redaction.
 Both knowledge criteria are recorded as `Met` in the public OpenSSF profile.
-The response-history and forward-secrecy criteria remain unknown. The profile
-still reports `crypto_keylength`, dynamic-analysis, and cryptography criteria
-as unmet even though the JWT enforcement is now present on `main`; the profile
-owner must review and update those external attestations.
+The enhancement-response criterion has no eligible QuestarrNG issue history
+yet: the fork was created on 2026-09-25, after the start of the current
+2-to-12-month evaluation window. The profile must describe that limitation
+without attributing upstream issue activity to this fork. The cryptographic
+criteria for key length, TLS 1.2, and forward secrecy now have repository
+evidence above.
 
 ### JWT key length
 
@@ -148,9 +194,10 @@ profile owner's external review.
 See [SECRETS.md](SECRETS.md#2-authentication-secret-jwt_secret) and
 `server/__tests__/config.test.ts` / `jwt-secret-rotation.test.ts`.
 
-The live `main` branch requires the 11 current PR checks: release notes, SCA,
+The live `main` branch requires the current PR checks: release notes, SCA,
 Windows service publishing, unit tests, the minimum-Node build, validation-receipt
-reconciliation, three CodeQL language jobs, Semgrep, and Playwright. All
+reconciliation, four CodeQL language jobs (including the Home Assistant C
+helper), Semgrep, and Playwright. All
 status-check and conversation-resolution requirements apply to administrators.
 Pull requests require no separate approval. See [branch protection
 settings](https://github.com/snapetech-org/QuestarrNG/settings/branches).

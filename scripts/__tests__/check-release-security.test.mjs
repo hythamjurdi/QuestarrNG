@@ -175,7 +175,7 @@ describe("release security gate", () => {
     const ref = "refs/tags/v1.2.3";
     const commit_sha = "a".repeat(40);
     const analyses = [
-      ...["csharp", "javascript-typescript", "actions"].map((language) => ({
+      ...["csharp", "javascript-typescript", "actions", "cpp"].map((language) => ({
         ref,
         commit_sha,
         tool: { name: "CodeQL" },
@@ -193,7 +193,7 @@ describe("release security gate", () => {
       },
     ];
     expect(sourceAnalysisBlockers(analyses, ref, commit_sha)).toEqual([]);
-    analyses[3].error = "SARIF processing failed";
+    analyses[4].error = "SARIF processing failed";
     expect(sourceAnalysisBlockers(analyses, ref, commit_sha)).toHaveLength(1);
   });
 
