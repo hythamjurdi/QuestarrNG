@@ -128,20 +128,18 @@ jobs:
 
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-        env:
-          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
         with:
           global-json-file: global.json
 
       - name: Verify selected .NET SDK
-        run: '"$RUNNER_TEMP/dotnet/dotnet" --version'
+        run: dotnet --version
 
       - name: Restore locked Windows service dependencies
-        run: '"$RUNNER_TEMP/dotnet/dotnet" restore installer/windows/Questarr.Service/Questarr.Service.csproj --runtime win-x64 --locked-mode'
+        run: dotnet restore installer/windows/Questarr.Service/Questarr.Service.csproj --runtime win-x64 --locked-mode
 
       - name: Publish self-contained Windows service host
         run: >-
-          "$RUNNER_TEMP/dotnet/dotnet" publish installer/windows/Questarr.Service/Questarr.Service.csproj
+          dotnet publish installer/windows/Questarr.Service/Questarr.Service.csproj
           --configuration Release
           --no-restore
           --runtime win-x64
