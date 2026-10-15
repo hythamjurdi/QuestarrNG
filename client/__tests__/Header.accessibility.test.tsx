@@ -31,7 +31,12 @@ vi.mock("../src/components/NotificationCenter", () => ({
 }));
 
 vi.mock("../src/components/AddGameModal", () => ({
-  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  default: ({ children }: { children: React.ReactNode }) => (
+    <>
+      <span data-testid="add-game-modal-loaded" hidden />
+      {children}
+    </>
+  ),
 }));
 
 describe("Header accessibility", () => {
@@ -54,8 +59,9 @@ describe("Header accessibility", () => {
       </QueryClientProvider>
     );
 
-    expect(
-      await screen.findByRole("button", { name: "Add Game" }, { timeout: 5000 })
-    ).toBeInTheDocument();
+    await screen.findByTestId("add-game-modal-loaded");
+    expect(screen.getByRole("button", { name: "Add Game", exact: true })).toHaveAccessibleName(
+      "Add Game"
+    );
   });
 });
