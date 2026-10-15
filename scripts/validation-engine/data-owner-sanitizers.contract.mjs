@@ -20,6 +20,8 @@ import test from "node:test";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const requireSanitizerToolchain = process.env.REQUIRE_SANITIZER_TOOLCHAIN === "1";
+const childEnvironment = { ...process.env };
+delete childEnvironment.LD_PRELOAD;
 
 test("Home Assistant ownership helper survives ASan and UBSan fixture traversal", (t) => {
   if (process.platform !== "linux") {
@@ -28,7 +30,10 @@ test("Home Assistant ownership helper survives ASan and UBSan fixture traversal"
     return;
   }
 
-  const compiler = spawnSync("cc", ["--version"], { encoding: "utf8" });
+  const compiler = spawnSync("cc", ["--version"], {
+    encoding: "utf8",
+    env: childEnvironment,
+  });
   if (compiler.error || compiler.status !== 0) {
     if (requireSanitizerToolchain) {
       assert.fail("The sanitizer contract requires the C compiler available in CI.");
@@ -70,11 +75,11 @@ test("Home Assistant ownership helper survives ASan and UBSan fixture traversal"
         "-o",
         binaryPath,
       ],
-      { cwd: repositoryRoot, stdio: "pipe" }
+      { cwd: repositoryRoot, stdio: "pipe", env: childEnvironment }
     );
 
     const sanitizerEnvironment = {
-      ...process.env,
+      ...childEnvironment,
       ASAN_OPTIONS: "detect_leaks=1:halt_on_error=1:abort_on_error=1",
       UBSAN_OPTIONS: "halt_on_error=1:print_stacktrace=1",
     };

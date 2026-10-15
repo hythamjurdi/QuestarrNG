@@ -81,12 +81,16 @@ The Home Assistant ownership helper is compiled and exercised with AddressSaniti
 and UndefinedBehaviorSanitizer in a disposable fixture. The test checks argument
 rejection, nested-file traversal, physical symlink handling, error handling, and
 the ownership callback without changing any real data. It is part of the
-source-bound validation contract suite run by the required CI test job.
+source-bound validation contract inventory; the isolated JavaScript suite skips
+the compiler-dependent case when its sandbox lacks a C compiler. The required
+C++ CodeQL job recompiles the production helper and runs this contract with the
+compiler required.
 
 Evidence: [`fix-data-owner.c`](../questarr/fix-data-owner.c), the
 [test-only `lchown` wrapper](../questarr/fix-data-owner-test-wrap.c),
 [sanitizer contract](../scripts/validation-engine/data-owner-sanitizers.contract.mjs),
-and [`ci.yml`](../.github/workflows/ci.yml).
+[`ci.yml`](../.github/workflows/ci.yml), and
+[`codeql.yml`](../.github/workflows/codeql.yml).
 
 ## [dynamic_analysis_enable_assertions]
 
