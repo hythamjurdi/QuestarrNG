@@ -248,6 +248,6 @@ export function getLocalizedApiErrorMessage(
   const message = API_ERROR_MESSAGES[key][LOCALE_ORDER.indexOf(language)];
   if (!message) return detail;
   if (!detail) return message;
-  const summary = message.replace(/[.!?…。！？؟]+$/u, "");
+  const summary = message.replace(/[.!?…。！？؟।]+$/u, "");
   return `${summary}: \u2068${detail}\u2069`;
 }

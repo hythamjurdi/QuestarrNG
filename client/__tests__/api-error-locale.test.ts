@@ -20,8 +20,9 @@ const badRequestByLanguage = [
 
 describe("localized API error catalog", () => {
   it.each(badRequestByLanguage)("selects the correct message for %s", (language, expected) => {
+    const detailPrefix = expected.replace(/[.!?。！？।]$/u, "");
     expect(getLocalizedApiErrorMessage("api.bad_request", 400, "invalid input", language)).toBe(
-      `${expected}: \u2068invalid input\u2069`
+      `${detailPrefix}: \u2068invalid input\u2069`
     );
   });
 
