@@ -59,6 +59,15 @@ jobs:
             echo "Release tag must use vMAJOR.MINOR.PATCH."
             exit 1
           fi
+          if ! grep -Fxq "version: \"$version\"" questarr/config.yaml || \
+             ! grep -Fxq "ARG QUESTARR_VERSION=$version" questarr/Dockerfile || \
+             ! grep -Eq "^ARG QUESTARR_IMAGE=ghcr\.io/snapetech-org/questarrng:[0-9]+\.[0-9]+\.[0-9]+@sha256:[a-f0-9]{64}$" questarr/Dockerfile || \
+             ! grep -Fxq "appVersion: \"$version\"" charts/questarr/Chart.yaml || \
+             ! grep -Fxq "  version: \"$version\"" casaos/docker-compose.yml || \
+             ! grep -Fxq "version: \"$version\"" doezer-questarr/umbrel-app.yml; then
+            echo "Home Assistant, Helm, CasaOS, and Umbrel versions must match package.json; the Home Assistant base image must have a pinned digest."
+            exit 1
+          fi
           git fetch origin main:refs/remotes/origin/main
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main || {
             echo "Release tag $TAG is not on main."
@@ -83,8 +92,8 @@ jobs:
         shell: bash
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-      # Push only the immutable source tag first. Attach the version and latest
-      # tags after both platform scans and the smoke test below pass.
+      # Push only the immutable source tag here. The release job attaches the
+      # version and latest tags only after the release assets have passed.
       - name: Set image tags
         id: tags
         shell: bash
@@ -219,20 +228,6 @@ jobs:
           curl -fsS http://127.0.0.1:15001/api/health >/dev/null
           test "$(docker exec questarrng-rootless-smoke id -u)" = "1000"
 
-      - name: Attach publish tag after scans and smoke test pass
-        shell: bash
-        env:
-          IMAGE: ${{ steps.image.outputs.name }}
-          RELEASE_TAG: ${{ steps.tags.outputs.release_tag }}
-          BUILD_DIGEST: ${{ steps.build-image.outputs.digest }}
-        run: |
-          set -euo pipefail
-          for tag in "$RELEASE_TAG" latest; do
-            docker buildx imagetools create \
-              --tag "${IMAGE}:${tag}" \
-              "${IMAGE}@${BUILD_DIGEST}"
-          done
-
   addon-smoke:
     if: github.repository_id == '1388297896'
     needs: publish
@@ -283,12 +278,25 @@ jobs:
             "$ha_image" \
             sh -c 'test -w /data && test "$(stat -c "%u:%g" /data/root-owned.db)" = "1000:1000"'
 
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
+  build-windows-installer:
+    name: Build Windows installer
+    if: github.repository_id == '1388297896' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [publish, addon-smoke]
-    runs-on: ubuntu-latest
     permissions:
       contents: write
+    uses: ./.github/workflows/windows-installer.yml
+    with:
+      source_ref: ${{ github.sha }}
+      release_tag: ${{ github.ref_name }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [publish, addon-smoke, build-windows-installer]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+      packages: write
       security-events: read
       checks: read
       vulnerability-alerts: read
@@ -308,6 +316,55 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22.x
+
+      - name: Download verified Windows installer
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: questarr-windows-installer-${{ github.ref_name }}
+          path: release-assets
+
+      - name: Package versioned Helm chart
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          chart_version="$(sed -n 's/^version: *//p' charts/questarr/Chart.yaml | head -n 1 | tr -d '\"')"
+          if [[ ! "$chart_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid Helm chart version: $chart_version" >&2
+            exit 1
+          fi
+          helm lint charts/questarr
+          helm package charts/questarr --app-version "$VERSION" --destination release-assets
+          chart="questarr-${chart_version}.tgz"
+          chart_metadata="$(helm show chart "release-assets/$chart")"
+          grep -Fxq "appVersion: $VERSION" <<< "$chart_metadata"
+          grep -Fxq "version: $chart_version" <<< "$chart_metadata"
+          (cd release-assets && sha256sum "$chart" > "$chart.sha256")
+
+      - name: Verify release asset inventory and checksums
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          installer="QuestarrSetup-${VERSION}-windows-x64.exe"
+          chart_version="$(sed -n 's/^version: *//p' charts/questarr/Chart.yaml | head -n 1 | tr -d '\"')"
+          chart="questarr-${chart_version}.tgz"
+          expected=("$installer" "$installer.sha256" "$chart" "$chart.sha256")
+          mapfile -t actual < <(find release-assets -maxdepth 1 -type f -printf '%f\n' | sort)
+          diff -u <(printf '%s\n' "${expected[@]}" | sort) <(printf '%s\n' "${actual[@]}")
+          (cd release-assets && sha256sum -c "$installer.sha256" && sha256sum -c "$chart.sha256")
+
+      - name: Upload versioned release asset bundle for recovery
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: questarr-release-assets-${{ github.ref_name }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Require clean security findings and completed source scans
         env:
@@ -346,25 +403,102 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
+          chart_version="$(sed -n 's/^version: *//p' charts/questarr/Chart.yaml | head -n 1 | tr -d '\"')"
+          chart="questarr-${chart_version}.tgz"
           {
             echo ""
             echo "**Container image**: \`${IMAGE}:${VERSION}\`"
             echo "- [GitHub Container Registry](https://github.com/orgs/snapetech-org/packages/container/package/questarrng)"
             echo ""
             echo "Pull with: \`docker pull ${IMAGE}:${VERSION}\`."
+            echo ""
+            echo "**Windows installer**: [QuestarrSetup-${VERSION}-windows-x64.exe](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/QuestarrSetup-${VERSION}-windows-x64.exe)"
+            echo "- [SHA-256 checksum](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/QuestarrSetup-${VERSION}-windows-x64.exe.sha256)"
+            echo ""
+            echo "**Helm chart**: [${chart}](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${chart})"
+            echo "- [SHA-256 checksum](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${chart}.sha256)"
+            echo ""
+            echo "**Install channels**: Compose, Home Assistant, CasaOS, Cosmos, Umbrel, Unraid, and Helm deploy the GHCR image; the Proxmox LXC installer builds from source."
           } >> changelog-section.md
 
-      - name: Publish GitHub release
+      - name: Create draft GitHub release with verified assets
         uses: step-security/action-gh-release@44319d37c8b7966bf07f89f0cbf63408141446df # v3.0.3
         with:
           tag_name: ${{ github.ref_name }}
           name: QuestarrNG ${{ github.ref_name }}
           body_path: changelog-section.md
-          draft: false
+          draft: true
+          files: release-assets/*
+
+      - name: Verify draft release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          installer="QuestarrSetup-${VERSION}-windows-x64.exe"
+          chart_version="$(sed -n 's/^version: *//p' charts/questarr/Chart.yaml | head -n 1 | tr -d '\"')"
+          chart="questarr-${chart_version}.tgz"
+          release_json="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,assets)"
+          asset_check='.tagName == $tag and .isDraft and (.isPrerelease | not) and (([.assets[].name] | sort) == ([$installer, ($installer + ".sha256"), $chart, ($chart + ".sha256")] | sort))'
+          jq -e --arg tag "$TAG" --arg installer "$installer" --arg chart "$chart" "$asset_check" <<<"$release_json" > /dev/null
+
+      - name: Log in to GHCR after all release assets pass
+        uses: step-security/docker-login-action@8c7b695d8738c5699a679ff5254baf0f19f20a94 # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx for release tag aliases
+        uses: step-security/setup-buildx-action@e50058a0fcd8d1a7d626c905502d010a468bf238 # v4.4.1
+
+      - name: Attach versioned GHCR tags after all release assets pass
+        shell: bash
+        env:
+          IMAGE: ${{ needs.publish.outputs.image }}
+          BUILD_DIGEST: ${{ needs.publish.outputs.digest }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          if [[ ! "$BUILD_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "Invalid release image digest: $BUILD_DIGEST" >&2
+            exit 1
+          fi
+          for tag in "$VERSION" latest; do
+            docker buildx imagetools create \
+              --tag "${IMAGE}:${tag}" \
+              "${IMAGE}@${BUILD_DIGEST}"
+          done
+
+      - name: Publish verified GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+
+      - name: Verify published release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          installer="QuestarrSetup-${VERSION}-windows-x64.exe"
+          chart_version="$(sed -n 's/^version: *//p' charts/questarr/Chart.yaml | head -n 1 | tr -d '\"')"
+          chart="questarr-${chart_version}.tgz"
+          asset_check='.tagName == $tag and (.isDraft | not) and (.isPrerelease | not) and (([.assets[].name] | sort) == ([$installer, ($installer + ".sha256"), $chart, ($chart + ".sha256")] | sort))'
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,assets \
+            | jq -e --arg tag "$TAG" --arg installer "$installer" --arg chart "$chart" "$asset_check" > /dev/null
 
   update-changelog:
     name: Open changelog update pull request
-    needs: [release]
+    needs: [release, publish]
     if: startsWith(github.ref, 'refs/tags/v') && needs.release.result == 'success'
     runs-on: ubuntu-latest
     permissions:
@@ -373,6 +507,8 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TAG: ${{ github.ref_name }}
+      IMAGE: ${{ needs.publish.outputs.image }}
+      IMAGE_DIGEST: ${{ needs.publish.outputs.digest }}
     steps:
       - name: Checkout release history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -396,6 +532,32 @@ jobs:
           release_date="$(git show -s --format=%cs "$release_sha")"
           git fetch origin main:refs/remotes/origin/main
           git checkout -B "$branch" origin/main
+          if [[ "$IMAGE" != "ghcr.io/${GITHUB_REPOSITORY,,}" || ! "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo 'The published image reference or digest is invalid.' >&2
+            exit 1
+          fi
+          python3 - "$IMAGE" "$VERSION" "$IMAGE_DIGEST" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          image, version, digest = sys.argv[1:]
+          if image != "ghcr.io/snapetech-org/questarrng":
+              raise SystemExit("Unexpected Home Assistant base image repository")
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version) or not re.fullmatch(r"sha256:[a-f0-9]{64}", digest):
+              raise SystemExit("Invalid release version or OCI digest")
+
+          path = Path("questarr/Dockerfile")
+          lines = path.read_text().splitlines()
+          matches = [
+              index for index, line in enumerate(lines)
+              if re.fullmatch(r"ARG QUESTARR_IMAGE=ghcr\.io/snapetech-org/questarrng:\d+\.\d+\.\d+@sha256:[a-f0-9]{64}", line)
+          ]
+          if len(matches) != 1:
+              raise SystemExit("Expected exactly one pinned Home Assistant base image")
+          lines[matches[0]] = f"ARG QUESTARR_IMAGE={image}:{version}@{digest}"
+          path.write_text("\n".join(lines) + "\n")
+          PY
           node scripts/assemble-release-notes.mjs \
             --previous-tag "$previous_tag" \
             --head "$release_sha" \
@@ -403,7 +565,7 @@ jobs:
             --date "$release_date" \
             --changelog docs/CHANGELOG.md \
             --output docs/CHANGELOG.md
-          git add docs/CHANGELOG.md
+          git add docs/CHANGELOG.md questarr/Dockerfile
           if git diff --cached --quiet; then
             echo 'The checked-in changelog already contains these release notes.'
             exit 0
@@ -412,7 +574,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit \
-            -m "docs(changelog): include curated notes for ${TAG}" \
+            -m "docs(changelog): sync release notes and Home Assistant image for ${TAG}" \
             -m 'release-note: none'
           git push --force origin "HEAD:refs/heads/${branch}"
 
@@ -421,8 +583,8 @@ jobs:
             gh pr create \
               --base main \
               --head "$branch" \
-              --title "docs(changelog): include curated notes for ${TAG}" \
-              --body "Automated changelog update for the published ${TAG} release. The release notes are already published; merge this pull request to sync docs/CHANGELOG.md."
+              --title "docs(changelog): sync release assets for ${TAG}" \
+              --body "Automated follow-up for the published ${TAG} release. It syncs docs/CHANGELOG.md and the Home Assistant add-on's pinned base image to the released GHCR digest."
           else
             echo "Updated existing changelog pull request: ${pr_url}"
           fi
@@ -433,7 +595,7 @@ jobs:
     permissions:
       actions: read
       contents: write
-      packages: read
+      packages: write
       security-events: read
       checks: read
       vulnerability-alerts: read
@@ -442,6 +604,9 @@ jobs:
       previous_tag: ${{ steps.validate.outputs.previous_tag }}
       release_date: ${{ steps.validate.outputs.release_date }}
       version: ${{ steps.validate.outputs.version }}
+      source_run_id: ${{ steps.validate.outputs.source_run_id }}
+      image: ${{ steps.validate.outputs.image }}
+      release_image_digest: ${{ steps.validate.outputs.release_image_digest }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -524,17 +689,35 @@ jobs:
             echo "The previous $TAG run did not fail at the release-note step." >&2
             exit 1
           fi
+          artifact_name="questarr-release-assets-${TAG}"
+          artifacts_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")"
+          jq -e --arg name "$artifact_name" \
+            'any(.artifacts[]; .name == $name and (.expired | not))' \
+            <<< "$artifacts_json" > /dev/null
           gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --job "$release_job_id" --log-failed > release-failure.log
           grep -Fq "Changelog is missing the section for version ${version}." release-failure.log || {
             echo "The previous $TAG release-note failure does not match the known missing-section error." >&2
             exit 1
           }
 
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          package_api="orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/questarrng/versions?per_page=100"
+          image_digest="$(gh api --paginate "$package_api" \
+            --jq ".[] | select((.metadata.container.tags // []) | index(\"${version}\")) | .name" \
+            | tail -n 1)"
+          if [[ ! "$image_digest" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "Could not resolve the immutable GHCR digest for $TAG." >&2
+            exit 1
+          fi
+
           {
             echo "release_sha=$release_sha"
             echo "previous_tag=$previous_tag"
             echo "release_date=$release_date"
             echo "version=$version"
+            echo "source_run_id=$run_id"
+            echo "image=$image"
+            echo "release_image_digest=$image_digest"
           } >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
@@ -551,25 +734,18 @@ jobs:
         id: verify-image
         shell: bash
         env:
-          VERSION: ${{ steps.validate.outputs.version }}
           RELEASE_SHA: ${{ steps.validate.outputs.release_sha }}
         run: |
           set -euo pipefail
           image="ghcr.io/${GITHUB_REPOSITORY,,}"
-          docker buildx imagetools inspect --raw "${image}:${VERSION}" > version-image.json
           docker buildx imagetools inspect --raw "${image}:sha-${RELEASE_SHA}" > source-image.json
-          for manifest in version-image.json source-image.json; do
-            jq -e '
-              [.manifests[] | select(.platform.os != null and .platform.os != "unknown") |
-                "\(.platform.os)/\(.platform.architecture)"] | sort == ["linux/amd64", "linux/arm64"]
-            ' "$manifest" > /dev/null
-          done
-          diff -u \
-            <(jq -Sc . version-image.json) \
-            <(jq -Sc . source-image.json)
+          jq -e '
+            [.manifests[] | select(.platform.os != null and .platform.os != "unknown") |
+              "\(.platform.os)/\(.platform.architecture)"] | sort == ["linux/amd64", "linux/arm64"]
+          ' source-image.json > /dev/null
 
-          amd64_digest="$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' version-image.json)"
-          arm64_digest="$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' version-image.json)"
+          amd64_digest="$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' source-image.json)"
+          arm64_digest="$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' source-image.json)"
           if [[ ! "$amd64_digest" =~ ^sha256:[a-f0-9]{64}$ || ! "$arm64_digest" =~ ^sha256:[a-f0-9]{64}$ ]]; then
             echo "Could not resolve valid release image digests: amd64=$amd64_digest arm64=$arm64_digest" >&2
             exit 1
@@ -610,6 +786,36 @@ jobs:
           RELEASE_REF: refs/tags/${{ inputs.finalize_release_tag }}
         run: node scripts/check-release-security.mjs
 
+      - name: Download verified Windows assets from the failed release run
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: questarr-release-assets-${{ inputs.finalize_release_tag }}
+          run-id: ${{ steps.validate.outputs.source_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: release-assets
+
+      - name: Verify recovered release asset inventory and checksums
+        shell: bash
+        env:
+          TAG: ${{ inputs.finalize_release_tag }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          installer="QuestarrSetup-${VERSION}-windows-x64.exe"
+          shopt -s nullglob
+          charts=(release-assets/questarr-*.tgz)
+          if [[ ${#charts[@]} -ne 1 ]]; then
+            echo "Expected one packaged Helm chart, found ${#charts[@]}." >&2
+            exit 1
+          fi
+          chart="${charts[0]##*/}"
+          expected=("$installer" "$installer.sha256" "$chart" "$chart.sha256")
+          mapfile -t actual < <(find release-assets -maxdepth 1 -type f -printf '%f\n' | sort)
+          diff -u <(printf '%s\n' "${expected[@]}" | sort) <(printf '%s\n' "${actual[@]}")
+          (cd release-assets && sha256sum -c "$installer.sha256" && sha256sum -c "$chart.sha256")
+          chart_metadata="$(helm show chart "release-assets/$chart")"
+          grep -Fxq "appVersion: $VERSION" <<< "$chart_metadata"
+
       - name: Assemble release body
         shell: bash
         env:
@@ -632,21 +838,68 @@ jobs:
             echo 'Generated release notes contain no changelog entries.' >&2
             exit 1
           fi
+          chart="$(find release-assets -maxdepth 1 -type f -name 'questarr-*.tgz' -printf '%f\n')"
+          if [[ -z "$chart" ]]; then
+            echo 'Missing packaged Helm chart from the original tag build.' >&2
+            exit 1
+          fi
           {
             echo ""
             echo "**Container image**: \`ghcr.io/${GITHUB_REPOSITORY,,}:${VERSION}\`"
             echo "- [GitHub Container Registry](https://github.com/orgs/snapetech-org/packages/container/package/questarrng)"
             echo ""
             echo "Pull with: \`docker pull ghcr.io/${GITHUB_REPOSITORY,,}:${VERSION}\`."
+            echo ""
+            echo "**Windows installer**: [QuestarrSetup-${VERSION}-windows-x64.exe](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/QuestarrSetup-${VERSION}-windows-x64.exe)"
+            echo "- [SHA-256 checksum](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/QuestarrSetup-${VERSION}-windows-x64.exe.sha256)"
+            echo ""
+            echo "**Helm chart**: [${chart}](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${chart})"
+            echo "- [SHA-256 checksum](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${chart}.sha256)"
           } >> release-body.md
 
-      - name: Publish recovered GitHub release
+      - name: Create recovered draft GitHub release with verified assets
         uses: step-security/action-gh-release@44319d37c8b7966bf07f89f0cbf63408141446df # v3.0.3
         with:
           tag_name: ${{ inputs.finalize_release_tag }}
           name: QuestarrNG ${{ inputs.finalize_release_tag }}
           body_path: release-body.md
-          draft: false
+          draft: true
+          files: release-assets/*
+
+      - name: Verify recovered draft assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.finalize_release_tag }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          installer="QuestarrSetup-${VERSION}-windows-x64.exe"
+          chart="$(find release-assets -maxdepth 1 -type f -name 'questarr-*.tgz' -printf '%f\n')"
+          release_json="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,body,assets)"
+          asset_check='.tagName == $tag and .isDraft and (.isPrerelease | not) and (.body | type == "string" and length > 0) and (([.assets[].name] | sort) == ([$installer, ($installer + ".sha256"), $chart, ($chart + ".sha256")] | sort))'
+          jq -e --arg tag "$TAG" --arg installer "$installer" --arg chart "$chart" "$asset_check" <<<"$release_json" > /dev/null
+
+      - name: Attach versioned GHCR tags after recovered assets pass
+        shell: bash
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/questarrng
+          RELEASE_SHA: ${{ steps.validate.outputs.release_sha }}
+          VERSION: ${{ steps.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          for tag in "$VERSION" latest; do
+            docker buildx imagetools create \
+              --tag "${IMAGE}:${tag}" \
+              "${IMAGE}:sha-${RELEASE_SHA}"
+          done
+
+      - name: Publish recovered GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.finalize_release_tag }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
 
       - name: Verify recovered release publication
         shell: bash
@@ -655,11 +908,12 @@ jobs:
           TAG: ${{ inputs.finalize_release_tag }}
         run: |
           set -euo pipefail
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --json tagName,isDraft,isPrerelease,body > release.json
-          jq -e --arg tag "$TAG" \
-            '.tagName == $tag and .isDraft == false and .isPrerelease == false and (.body | type == "string" and length > 0)' \
-            release.json > /dev/null
+          VERSION="${TAG#v}"
+          installer="QuestarrSetup-${VERSION}-windows-x64.exe"
+          chart="$(find release-assets -maxdepth 1 -type f -name 'questarr-*.tgz' -printf '%f\n')"
+          release_json="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,body,assets)"
+          asset_check='.tagName == $tag and (.isDraft | not) and (.isPrerelease | not) and (.body | type == "string" and length > 0) and (([.assets[].name] | sort) == ([$installer, ($installer + ".sha256"), $chart, ($chart + ".sha256")] | sort))'
+          jq -e --arg tag "$TAG" --arg installer "$installer" --arg chart "$chart" "$asset_check" <<<"$release_json" > /dev/null
 
   update-finalized-changelog:
     if: github.repository_id == '1388297896' && github.event_name == 'workflow_dispatch' && inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success'
@@ -675,6 +929,8 @@ jobs:
       PREVIOUS_TAG: ${{ needs['finalize-release'].outputs.previous_tag }}
       RELEASE_DATE: ${{ needs['finalize-release'].outputs.release_date }}
       VERSION: ${{ needs['finalize-release'].outputs.version }}
+      IMAGE: ${{ needs['finalize-release'].outputs.image }}
+      IMAGE_DIGEST: ${{ needs['finalize-release'].outputs.release_image_digest }}
     steps:
       - name: Checkout current release history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -701,6 +957,33 @@ jobs:
             exit 1
           fi
           git checkout -b "$branch" origin/main
+          version="${TAG#v}"
+          if [[ "$IMAGE" != "ghcr.io/${GITHUB_REPOSITORY,,}" || ! "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo 'The published image reference or digest is invalid.' >&2
+            exit 1
+          fi
+          python3 - "$IMAGE" "$version" "$IMAGE_DIGEST" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          image, version, digest = sys.argv[1:]
+          if image != "ghcr.io/snapetech-org/questarrng":
+              raise SystemExit("Unexpected Home Assistant base image repository")
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version) or not re.fullmatch(r"sha256:[a-f0-9]{64}", digest):
+              raise SystemExit("Invalid release version or OCI digest")
+
+          path = Path("questarr/Dockerfile")
+          lines = path.read_text().splitlines()
+          matches = [
+              index for index, line in enumerate(lines)
+              if re.fullmatch(r"ARG QUESTARR_IMAGE=ghcr\.io/snapetech-org/questarrng:\d+\.\d+\.\d+@sha256:[a-f0-9]{64}", line)
+          ]
+          if len(matches) != 1:
+              raise SystemExit("Expected exactly one pinned Home Assistant base image")
+          lines[matches[0]] = f"ARG QUESTARR_IMAGE={image}:{version}@{digest}"
+          path.write_text("\n".join(lines) + "\n")
+          PY
           node scripts/assemble-release-notes.mjs \
             --previous-tag "$PREVIOUS_TAG" \
             --head "$RELEASE_SHA" \
@@ -708,7 +991,7 @@ jobs:
             --date "$RELEASE_DATE" \
             --changelog docs/CHANGELOG.md \
             --output docs/CHANGELOG.md
-          git add docs/CHANGELOG.md
+          git add docs/CHANGELOG.md questarr/Dockerfile
           if git diff --cached --quiet; then
             echo 'The checked-in changelog already contains these release notes.'
             exit 0
@@ -716,14 +999,14 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit \
-            -m "docs(changelog): include curated notes for ${TAG}" \
+            -m "docs(changelog): sync release notes and Home Assistant image for ${TAG}" \
             -m 'release-note: none'
           git push origin "HEAD:refs/heads/${branch}"
           gh pr create \
             --base main \
             --head "$branch" \
-            --title "docs(changelog): include curated notes for ${TAG}" \
-            --body "Automated changelog update for the published ${TAG} release. The release notes are already published; merge this pull request to sync docs/CHANGELOG.md."
+              --title "docs(changelog): sync release assets for ${TAG}" \
+              --body "Automated follow-up for the published ${TAG} release. It syncs docs/CHANGELOG.md and the Home Assistant add-on's pinned base image to the released GHCR digest."
 
   announce-release:
     name: Announce release to Discord

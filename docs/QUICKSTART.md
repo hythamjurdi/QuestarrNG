@@ -12,7 +12,7 @@ Install Docker, then run:
 mkdir -p ./data
 docker run -d -p 5000:5000 --user "$(id -u):$(id -g)" \
   -e PUID="$(id -u)" -e PGID="$(id -g)" \
-  -v ./data:/app/data --name questarrng ghcr.io/snapetech/questarrng:latest
+  -v ./data:/app/data --name questarrng ghcr.io/snapetech-org/questarrng:latest
 ```
 
 Open [http://localhost:5000](http://localhost:5000) and follow the setup
@@ -24,7 +24,7 @@ this install, pull the current image, stop and remove the existing container,
 then rerun the `docker run` command above. Keep the `./data` directory:
 
 ```sh
-docker pull ghcr.io/snapetech/questarrng:latest
+docker pull ghcr.io/snapetech-org/questarrng:latest
 docker stop questarrng
 docker rm questarrng
 ```

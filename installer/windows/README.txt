@@ -39,11 +39,16 @@ versions.
 
 Building the installer
 -----------------------
-The installer is built by the "windows-installer" job in
-.github/workflows/deploy.yml. It is opt-in and does not run by default: to
-build it, trigger the "Deploy Web App" workflow manually (workflow_dispatch)
-with the "build_windows_installer" input set to true. The finished
-QuestarrSetup-<version>-windows-x64.exe and its matching .sha256 checksum
-file are uploaded as a workflow artifact; if a release tag was supplied and
-a matching GitHub Release already exists, they are also attached to that
-release.
+Every valid vMAJOR.MINOR.PATCH release tag builds this installer automatically.
+The versioned release is published only after the Windows x64 installer and
+Helm chart, with their SHA-256 checksums, are attached and verified.
+
+To recover assets for an already-published release, run the Build Windows and
+Helm assets workflow from the main branch and enter the published release tag.
+The workflow validates that the tag matches package.json and points to main
+before building; it then replaces the installer and checksum on that release
+and refreshes the download links.
+
+The optional Deploy Web App workflow can still build a Windows installer
+artifact for dev/test evaluation. That manual build does not publish a
+production release.

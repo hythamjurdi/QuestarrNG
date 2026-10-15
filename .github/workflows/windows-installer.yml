@@ -1,0 +1,444 @@
+name: Build Windows and Helm assets
+
+on:
+  workflow_call:
+    inputs:
+      source_ref:
+        description: Source ref for a non-release build
+        required: false
+        type: string
+        default: ''
+      release_tag:
+        description: Exact version tag for a production installer build
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published release tag to build and attach Windows installer and Helm assets to
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows x64 installer
+    if: github.repository_id == '1388297896' && (github.event_name != 'workflow_dispatch' || inputs.release_tag == '' || github.ref == 'refs/heads/main')
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      artifact: ${{ steps.meta.outputs.artifact }}
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.release_tag || inputs.source_ref || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate release tag and main ancestry
+        if: inputs.release_tag != ''
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tag = $env:RELEASE_TAG
+          if ($tag -notmatch '^v(?<version>[0-9]+\.[0-9]+\.[0-9]+)$') {
+            throw "Invalid release tag: $tag"
+          }
+
+          $package = Get-Content package.json | ConvertFrom-Json
+          if ($tag -ne "v$($package.version)") {
+            throw "Release tag $tag does not match package version $($package.version)."
+          }
+
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          if ($LASTEXITCODE -ne 0) { throw "Could not fetch main for release validation." }
+          $tagCommit = git rev-parse "$tag^{commit}"
+          if ($LASTEXITCODE -ne 0) { throw "Could not resolve release tag $tag." }
+          git merge-base --is-ancestor $tagCommit refs/remotes/origin/main
+          if ($LASTEXITCODE -ne 0) { throw "Release tag $tag is not on main." }
+
+      - name: Verify existing published release before recovery build
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $releaseJson = gh release view $env:RELEASE_TAG --repo ${{ github.repository }} --json tagName,isDraft,isPrerelease
+          if ($LASTEXITCODE -ne 0) { throw "Release $env:RELEASE_TAG does not exist." }
+          $release = $releaseJson | ConvertFrom-Json
+          if ($release.tagName -ne $env:RELEASE_TAG -or $release.isDraft -or $release.isPrerelease) {
+            throw "Release $env:RELEASE_TAG must already be published and stable before asset recovery."
+          }
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.x
+          cache: "npm"
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --version=6.7.1 --no-progress -y
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run check
+
+      - name: Build project
+        run: npm run build
+
+      - name: Publish Windows service host
+        shell: pwsh
+        run: |
+          dotnet publish installer/windows/Questarr.Service/Questarr.Service.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:PublishTrimmed=false `
+            --output release/service
+
+      - name: Prune development dependencies
+        run: npm prune --omit=dev
+
+      # 7zip-bin (used for mod/archive extraction) ships prebuilt 7za
+      # binaries for every OS/arch it supports; only linux/win-x64 is
+      # relevant to a Windows install, so drop the rest to keep the
+      # installer lean. Defensive: no-ops if the package or its layout
+      # isn't what's expected, rather than failing the build.
+      - name: Strip non-Windows-x64 7zip-bin binaries
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = "node_modules/7zip-bin"
+          if (-not (Test-Path $root)) {
+            Write-Host "7zip-bin not present; nothing to strip."
+            return
+          }
+
+          foreach ($platform in @("mac", "linux")) {
+            $dir = Join-Path $root $platform
+            if (Test-Path $dir) {
+              Remove-Item -Recurse -Force $dir
+            }
+          }
+
+          $winDir = Join-Path $root "win"
+          if (Test-Path $winDir) {
+            Get-ChildItem -LiteralPath $winDir -Directory |
+              Where-Object { $_.Name -ne "x64" } |
+              Remove-Item -Recurse -Force
+
+            if (-not (Test-Path (Join-Path $winDir "x64"))) {
+              throw "Expected 7zip-bin/win/x64 to remain after pruning"
+            }
+          }
+
+      - name: Resolve release metadata
+        id: meta
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $packageJson = Get-Content package.json | ConvertFrom-Json
+          $version = $packageJson.version
+          $artifact = "QuestarrSetup-$version-windows-x64.exe"
+
+          Write-Host "Resolved Windows installer version: $version"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "artifact=$artifact" >> $env:GITHUB_OUTPUT
+
+      - name: Prepare installer payload
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $payloadRoot = Join-Path "release" "payload"
+          $binDir = Join-Path $payloadRoot "bin"
+
+          New-Item -ItemType Directory -Force -Path $payloadRoot, $binDir | Out-Null
+          # dist/ already contains the compiled server AND compiled shared/
+          # code (tsconfig.build.json builds server/** and shared/** into a
+          # single dist/ tree), so shared/ does not need to be copied
+          # separately the way the Dockerfile does defensively.
+          Copy-Item -Path dist, migrations, node_modules -Destination $payloadRoot -Recurse
+          Copy-Item -Path package.json, package-lock.json, README.md, COPYING -Destination $payloadRoot
+          Copy-Item -Path installer/windows/README.txt -Destination (Join-Path $payloadRoot "README-WINDOWS.txt")
+          Copy-Item -Path release/service/Questarr.Service.exe -Destination (Join-Path $payloadRoot "Questarr.Service.exe")
+
+          if (Test-Path docs) {
+            Copy-Item -Path docs -Destination $payloadRoot -Recurse
+          }
+
+          $nodePath = (Get-Command node).Source
+          Copy-Item -Path $nodePath -Destination (Join-Path $binDir "node.exe")
+
+          $payloadRootPath = (Get-Item -LiteralPath $payloadRoot).FullName
+          $manifestPath = Join-Path $payloadRootPath "questarr-install-manifest.json"
+          $includePath = Join-Path "release" "questarr-files.iss"
+
+          function ConvertTo-InnoString {
+            param([Parameter(Mandatory = $true)][string] $Value)
+            return $Value.Replace('"', '""')
+          }
+
+          function ConvertTo-InnoSingleQuotedString {
+            param([Parameter(Mandatory = $true)][string] $Value)
+            return $Value.Replace("'", "''")
+          }
+
+          $payloadRootPrefix = $payloadRootPath.TrimEnd('\') + '\'
+          $payloadFiles = Get-ChildItem -LiteralPath $payloadRootPath -Recurse -File |
+            Where-Object { $_.FullName -ne $manifestPath } |
+            Sort-Object FullName
+
+          $manifestFiles = foreach ($file in $payloadFiles) {
+            if (-not $file.FullName.StartsWith($payloadRootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+              throw "Payload file is outside the payload root: $($file.FullName)"
+            }
+
+            $relativePath = $file.FullName.Substring($payloadRootPrefix.Length).Replace('\', '/')
+            [ordered]@{
+              path = $relativePath
+              size = $file.Length
+              sha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            }
+          }
+
+          [ordered]@{
+            version = "${{ steps.meta.outputs.version }}"
+            generatedAt = (Get-Date).ToUniversalTime().ToString("o")
+            files = @($manifestFiles)
+          } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+
+          $includeLines = foreach ($entry in $manifestFiles) {
+            $relativeWindowsPath = $entry.path.Replace('/', '\')
+            $sourcePath = Join-Path $payloadRootPath $relativeWindowsPath
+            $relativeDir = Split-Path $relativeWindowsPath -Parent
+            $destDir = if ([string]::IsNullOrWhiteSpace($relativeDir)) {
+              "{app}"
+            } else {
+              "{app}\$relativeDir"
+            }
+
+            'Source: "' + (ConvertTo-InnoString $sourcePath) + '"; DestDir: "' + (ConvertTo-InnoString $destDir) + '"; Flags: ignoreversion; Check: ShouldInstallPayloadFile(''' + (ConvertTo-InnoSingleQuotedString $entry.path) + ''')'
+          }
+
+          $includeLines | Set-Content -LiteralPath $includePath -Encoding utf8
+          if (Select-String -LiteralPath $includePath -Pattern "createallsubdirs" -Quiet) {
+            throw "Generated Inno file list must not use createallsubdirs for per-file entries"
+          }
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installerOutput = Join-Path "release" "installer"
+          New-Item -ItemType Directory -Force -Path $installerOutput | Out-Null
+
+          $env:QUESTARR_VERSION = "${{ steps.meta.outputs.version }}"
+          $env:QUESTARR_SOURCE_DIR = (Resolve-Path (Join-Path "release" "payload")).Path
+          $env:QUESTARR_OUTPUT_DIR = (Resolve-Path $installerOutput).Path
+          $env:QUESTARR_FILES_INCLUDE = (Resolve-Path (Join-Path "release" "questarr-files.iss")).Path
+
+          $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
+          & $iscc installer/windows/Questarr.iss
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed with exit code $LASTEXITCODE"
+          }
+
+      - name: Validate installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installerPath = Join-Path "release/installer" "${{ steps.meta.outputs.artifact }}"
+          if (-not (Test-Path $installerPath)) {
+            throw "Missing installer: $installerPath"
+          }
+
+          $installer = Get-Item $installerPath
+          if ($installer.Length -lt 10MB) {
+            throw "Installer looks too small: $($installer.Length) bytes"
+          }
+          $hash = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Set-Content -LiteralPath "$installerPath.sha256" -Encoding ascii
+
+          $requiredPaths = @(
+            "release/payload/bin/node.exe",
+            "release/payload/Questarr.Service.exe",
+            "release/payload/dist/server/index.js",
+            "release/payload/migrations/meta/_journal.json",
+            "release/payload/node_modules/better-sqlite3",
+            "release/payload/README-WINDOWS.txt",
+            "release/payload/questarr-install-manifest.json",
+            "release/questarr-files.iss"
+          )
+
+          foreach ($path in $requiredPaths) {
+            if (-not (Test-Path $path)) {
+              throw "Missing installer payload file: $path"
+            }
+          }
+
+          & release/payload/bin/node.exe --check release/payload/dist/server/index.js
+          $checksumLine = (Get-Content -LiteralPath "$installerPath.sha256" -Raw).Trim()
+          $expectedLine = "$($hash)  $($installer.Name)"
+          if ($checksumLine -ne $expectedLine) {
+            throw "Installer checksum file does not match the built executable."
+          }
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: questarr-windows-installer-${{ inputs.release_tag || steps.meta.outputs.version }}
+          path: |
+            release/installer/${{ steps.meta.outputs.artifact }}
+            release/installer/${{ steps.meta.outputs.artifact }}.sha256
+          if-no-files-found: error
+
+      - name: Windows installer summary
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_EVENT: ${{ github.event_name }}
+          ARTIFACT: ${{ steps.meta.outputs.artifact }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          ARTIFACT_NAME: questarr-windows-installer-${{ inputs.release_tag || steps.meta.outputs.version }}
+        run: |
+          $releaseNote = if ([string]::IsNullOrEmpty($env:RELEASE_TAG)) {
+            "no production release attachment requested for this build"
+          } elseif ($env:RELEASE_EVENT -eq "workflow_dispatch") {
+            "will be attached by a separate protected job after checksum validation"
+          } else {
+            "passed to the tag release workflow for gated publication"
+          }
+
+          $SUMMARY = @"
+          ## Windows Installer
+
+          - **Artifact:** $env:ARTIFACT (+ matching .sha256)
+          - **Version:** $env:VERSION
+          - **Download:** workflow artifact ``$env:ARTIFACT_NAME`` on this run
+          - **Release attachment:** $releaseNote
+          "@
+
+          $SUMMARY | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+  attach-release-assets:
+    name: Attach verified installer to published release
+    if: github.repository_id == '1388297896' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_tag != ''
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Download verified Windows installer
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: questarr-windows-installer-${{ inputs.release_tag }}
+          path: release-assets
+
+      - name: Check out tagged Helm chart source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.release_tag }}
+          path: release-source
+          persist-credentials: false
+
+      - name: Package Helm chart from the release tag
+        id: chart
+        shell: bash
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          chart_version="$(sed -n 's/^version: *//p' release-source/charts/questarr/Chart.yaml | head -n 1 | tr -d '\"')"
+          if [[ ! "$chart_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid Helm chart version: $chart_version" >&2
+            exit 1
+          fi
+          helm lint release-source/charts/questarr
+          helm package release-source/charts/questarr --app-version "$VERSION" --destination release-assets
+          chart="questarr-${chart_version}.tgz"
+          chart_metadata="$(helm show chart "release-assets/$chart")"
+          grep -Fxq "appVersion: $VERSION" <<< "$chart_metadata"
+          grep -Fxq "version: $chart_version" <<< "$chart_metadata"
+          (cd release-assets && sha256sum "$chart" > "$chart.sha256")
+          echo "asset=$chart" >> "$GITHUB_OUTPUT"
+
+      - name: Verify installer checksum
+        shell: bash
+        env:
+          INSTALLER: ${{ needs.build.outputs.artifact }}
+          CHART: ${{ steps.chart.outputs.asset }}
+        run: |
+          set -euo pipefail
+          (cd release-assets && sha256sum -c "$INSTALLER.sha256" && sha256sum -c "$CHART.sha256")
+
+      - name: Verify published stable release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          release_json="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease)"
+          jq -e --arg tag "$TAG" '.tagName == $tag and (.isDraft | not) and (.isPrerelease | not)' <<<"$release_json" > /dev/null
+
+      - name: Attach installer and checksum
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.release_tag }}
+          INSTALLER: ${{ needs.build.outputs.artifact }}
+          CHART: ${{ steps.chart.outputs.asset }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" "release-assets/$INSTALLER" "release-assets/$INSTALLER.sha256" \
+            "release-assets/$CHART" "release-assets/$CHART.sha256" \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          release_json="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,assets)"
+          jq -e --arg tag "$TAG" --arg installer "$INSTALLER" \
+            --arg chart "$CHART" \
+            '.tagName == $tag and (.isDraft | not) and (.isPrerelease | not) and ([.assets[].name] | sort | index($installer)) != null and ([.assets[].name] | sort | index($installer + ".sha256")) != null and ([.assets[].name] | sort | index($chart)) != null and ([.assets[].name] | sort | index($chart + ".sha256")) != null' \
+            <<<"$release_json" > /dev/null
+
+          if ! jq -e --arg chart "$CHART" '.body | contains($chart)' <<<"$release_json" > /dev/null; then
+            release_body="$(jq -r '.body // ""' <<<"$release_json")"
+            notes_file="$RUNNER_TEMP/release-notes.md"
+            {
+              printf '%s\n\n### Release assets\n\n' "$release_body"
+              printf '%s\n' \
+                "- [Download $INSTALLER](https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$INSTALLER)" \
+                "- [Windows installer SHA-256](https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$INSTALLER.sha256)" \
+                "- [Download Helm chart $CHART](https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$CHART)" \
+                "- [Helm chart SHA-256](https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$CHART.sha256)"
+            } > "$notes_file"
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file "$notes_file"
+          fi

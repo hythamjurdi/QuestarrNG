@@ -15,8 +15,9 @@ state Questarr persists).
 
 ## Install
 
-The chart is not published to a Helm repository yet — install it from a clone of the
-repository:
+There is no Helm repository yet. Each version-tag release includes a packaged
+chart (`questarr-<chart-version>.tgz`) on its GitHub release page. You can also
+install the chart directly from a repository clone:
 
 ```bash
 git clone https://github.com/snapetech-org/QuestarrNG.git

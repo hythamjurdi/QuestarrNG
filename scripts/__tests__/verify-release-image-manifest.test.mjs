@@ -90,29 +90,19 @@ describe("release image manifest verification", () => {
     expect(sourceLabel?.[1]).toBe("https://github.com/snapetech-org/QuestarrNG");
   });
 
-  it("scans both exact platform digests before attaching the release tag", () => {
+  it("scans both exact platform digests before attaching release aliases", () => {
     const workflow = load(readFileSync(resolve(cwd(), ".github/workflows/fork-image.yml"), "utf8"));
     const steps = workflow.jobs.publish.steps;
     const tagsStep = steps.find((step) => step.id === "tags");
     const buildIndex = steps.findIndex((step) => step.id === "build-image");
     const verifyIndex = steps.findIndex((step) => step.id === "verify-image");
     const scanSteps = steps.filter((step) => step.name?.startsWith("Scan the verified linux/"));
-    const smokeIndex = steps.findIndex(
-      (step) => step.name === "Smoke test published image and SeerrNG route"
-    );
-    const attachIndex = steps.findIndex(
-      (step) => step.name === "Attach publish tag after scans and smoke test pass"
-    );
-    const attachStep = steps[attachIndex];
-
     expect(tagsStep.run).toContain("node scripts/fork-image-tags.mjs");
     expect(tagsStep.run).not.toContain("$IMAGE:latest");
     expect(tagsStep.run).not.toContain("$IMAGE:${GITHUB_REF_NAME#v}");
     expect(steps[buildIndex].with.tags).toBe("${{ steps.tags.outputs.tags }}");
     expect(verifyIndex).toBeGreaterThan(buildIndex);
     expect(scanSteps).toHaveLength(2);
-    expect(attachIndex).toBeGreaterThan(verifyIndex);
-    expect(attachIndex).toBeGreaterThan(smokeIndex);
     const scanByPlatform = Object.fromEntries(
       scanSteps.map((step) => [step.name.match(/linux\/(amd64|arm64)/)[1], step])
     );
@@ -132,13 +122,24 @@ describe("release image manifest verification", () => {
         cache: "false",
       });
     }
-    expect(
-      scanSteps.every(
-        (step) => steps.indexOf(step) > verifyIndex && steps.indexOf(step) < attachIndex
-      )
-    ).toBe(true);
+    expect(scanSteps.every((step) => steps.indexOf(step) > verifyIndex)).toBe(true);
+
+    const releaseSteps = workflow.jobs.release.steps;
+    const assetsVerifiedIndex = releaseSteps.findIndex(
+      (step) => step.name === "Verify draft release assets"
+    );
+    const attachIndex = releaseSteps.findIndex(
+      (step) => step.name === "Attach versioned GHCR tags after all release assets pass"
+    );
+    const publishIndex = releaseSteps.findIndex(
+      (step) => step.name === "Publish verified GitHub release"
+    );
+    const attachStep = releaseSteps[attachIndex];
+    expect(assetsVerifiedIndex).toBeGreaterThanOrEqual(0);
+    expect(attachIndex).toBeGreaterThan(assetsVerifiedIndex);
+    expect(publishIndex).toBeGreaterThan(attachIndex);
     expect(attachStep.run).toContain("docker buildx imagetools create");
-    expect(attachStep.env.BUILD_DIGEST).toBe("${{ steps.build-image.outputs.digest }}");
-    expect(attachStep.env.RELEASE_TAG).toBe("${{ steps.tags.outputs.release_tag }}");
+    expect(attachStep.env.BUILD_DIGEST).toBe("${{ needs.publish.outputs.digest }}");
+    expect(attachStep.env.TAG).toBe("${{ github.ref_name }}");
   });
 });
