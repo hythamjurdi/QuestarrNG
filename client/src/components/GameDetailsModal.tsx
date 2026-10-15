@@ -105,7 +105,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { cn, safeUrl, formatBytes, isDiscoveryId } from "@/lib/utils";
 import { addDiscoveryGameToLibrary, hideDiscoveryGame } from "@/lib/discover-hidden-mutation";
 import { carriesBaseGameVersion } from "@shared/version-utils";
-import { formatInterfaceMessage, useInterfaceLanguage } from "@/lib/interface-locale";
+import {
+  formatInterfaceMessage,
+  translateInterfaceLabel,
+  useInterfaceLanguage,
+} from "@/lib/interface-locale";
 import { InterfaceText } from "@/components/InterfaceText";
 
 const GameDownloadDialog = lazy(() => import("./GameDownloadDialog"));
@@ -839,7 +843,10 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
         toast({
           description: formatInterfaceMessage(
             "Game removed, but files were not deleted ({reasonText}): {path}",
-            { reasonText: String(reasonText ?? ""), path: String(data.fileDeletion.path ?? "") }
+            {
+              reasonText: translateInterfaceLabel(String(reasonText ?? "")),
+              path: String(data.fileDeletion.path ?? ""),
+            }
           ),
           variant: "destructive",
         });
@@ -1415,7 +1422,9 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     {hltbTimes.map(({ label, hours }) => (
                       <div key={label} className="rounded-md border bg-muted/30 px-3 py-2">
-                        <div className="text-xs text-muted-foreground">{label}</div>
+                        <div className="text-xs text-muted-foreground">
+                          <InterfaceText source={label} />
+                        </div>
                         <div
                           className="text-lg font-semibold"
                           aria-label={formatInterfaceMessage(
@@ -2107,11 +2116,15 @@ export default function GameDetailsModal({ game, open, onOpenChange }: GameDetai
                                 <a href={safeUrl(w.url)} target="_blank" rel="noopener noreferrer">
                                   <Button variant="outline" size="sm" className="gap-2 h-10 sm:h-9">
                                     <Icon size={16} className={colorClass} />
-                                    <span className="hidden sm:inline">{label}</span>
+                                    <span className="hidden sm:inline">
+                                      <InterfaceText source={label} />
+                                    </span>
                                   </Button>
                                 </a>
                               </TooltipTrigger>
-                              <TooltipContent className="sm:hidden">{label}</TooltipContent>
+                              <TooltipContent className="sm:hidden">
+                                <InterfaceText source={label} />
+                              </TooltipContent>
                             </Tooltip>
                           );
                         })}

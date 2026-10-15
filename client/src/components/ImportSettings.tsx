@@ -26,6 +26,29 @@ import SecurityScanSettings from "./SecurityScanSettings";
 import { InterfaceText } from "@/components/InterfaceText";
 import { formatInterfaceMessage } from "@/lib/interface-locale";
 
+const IMPORT_PIPELINE_STEP_TEXT = [
+  [
+    "Path translation",
+    "The path reported by your download client (e.g. /downloads/Game.zip) is translated to the path that Questarr can actually read on its host. Configure this in Path Mappings if Questarr and your download client run in separate containers or machines.",
+  ],
+  [
+    "Strategy selection",
+    "Questarr inspects the game's platform and routes the file to the configured library root.",
+  ],
+  [
+    "File transfer",
+    "The file is hardlinked, copied, moved, or symlinked to its destination using the Transfer Mode you configured.",
+  ],
+  [
+    "Game status update",
+    'The download is marked "imported" and the game is marked "owned" in your library.',
+  ],
+  [
+    "Manual review",
+    'If Questarr cannot determine the correct destination — for example, because the platform slug is unknown — the download is flagged as "manual review required". You can resolve it from the Downloads page.',
+  ],
+] as const;
+
 type HardlinkPairCheck = {
   sourcePath: string;
   targetPath: string;
@@ -853,35 +876,16 @@ export default function ImportSettings() {
                   />
                 </p>
                 <ol className="space-y-2 text-muted-foreground">
-                  {[
-                    [
-                      "Path translation",
-                      "The path reported by your download client (e.g. /downloads/Game.zip) is translated to the path that Questarr can actually read on its host. Configure this in Path Mappings if Questarr and your download client run in separate containers or machines.",
-                    ],
-                    [
-                      "Strategy selection",
-                      "Questarr inspects the game's platform and routes the file to the configured library root.",
-                    ],
-                    [
-                      "File transfer",
-                      "The file is hardlinked, copied, moved, or symlinked to its destination using the Transfer Mode you configured.",
-                    ],
-                    [
-                      "Game status update",
-                      'The download is marked "imported" and the game is marked "owned" in your library.',
-                    ],
-                    [
-                      "Manual review",
-                      'If Questarr cannot determine the correct destination — for example, because the platform slug is unknown — the download is flagged as "manual review required". You can resolve it from the Downloads page.',
-                    ],
-                  ].map(([title, desc], i) => (
+                  {IMPORT_PIPELINE_STEP_TEXT.map(([title, desc], i) => (
                     <li key={title} className="flex gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                         {i + 1}
                       </span>
                       <span>
-                        <span className="font-medium text-foreground">{title} — </span>
-                        {desc}
+                        <span className="font-medium text-foreground">
+                          <InterfaceText source={title} /> —
+                        </span>{" "}
+                        <InterfaceText source={desc} />
                       </span>
                     </li>
                   ))}
@@ -899,40 +903,44 @@ export default function ImportSettings() {
                   {[
                     {
                       icon: <Link className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />,
-                      name: "Hardlink",
+                      label: "Hardlink",
                       desc: "Creates a second directory entry pointing to the same file on disk. Zero extra space used, and your torrent client continues seeding normally. Requires the source and destination to be on the same physical volume (same drive or mount point).",
                       when: "Best choice when your download folder and library are on the same disk. Preferred for seedbox-style setups.",
                     },
                     {
                       icon: <Copy className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />,
-                      name: "Copy",
+                      label: "Copy",
                       desc: "Duplicates the file to the destination. The original is kept intact so the torrent can continue seeding, but you use double the disk space.",
                       when: "Use when your library is on a different drive or network share than your download folder, and you still want to keep seeding.",
                     },
                     {
                       icon: <MoveRight className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />,
-                      name: "Move",
+                      label: "Move",
                       desc: "Moves the file to the destination and removes it from the download folder. No extra space used, but the torrent will stop seeding.",
                       when: "Use when you do not care about seeding after import, or when disk space is tight.",
                     },
                     {
                       icon: <ArrowRight className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />,
-                      name: "Symlink",
+                      label: "Symlink",
                       desc: "Creates a symbolic link at the destination pointing back to the original file in your download folder. The file is not duplicated or moved.",
                       when: "Use when you want your library to reflect downloads without copying files. The torrent keeps seeding.",
                     },
-                  ].map(({ icon, name, desc, when }) => (
-                    <div key={name} className="rounded-md border p-3 space-y-1">
+                  ].map(({ icon, label, desc, when }) => (
+                    <div key={label} className="rounded-md border p-3 space-y-1">
                       <div className="flex items-start gap-2">
                         {icon}
-                        <span className="font-medium text-foreground">{name}</span>
+                        <span className="font-medium text-foreground">
+                          <InterfaceText source={label} />
+                        </span>
                       </div>
-                      <p className="text-muted-foreground pl-6">{desc}</p>
+                      <p className="text-muted-foreground pl-6">
+                        <InterfaceText source={desc} />
+                      </p>
                       <p className="text-xs text-muted-foreground pl-6">
                         <span className="font-medium text-foreground">
                           <InterfaceText source={"When to use:"} />{" "}
                         </span>
-                        {when}
+                        <InterfaceText source={when} />
                       </p>
                     </div>
                   ))}
@@ -949,33 +957,37 @@ export default function ImportSettings() {
                 <div className="space-y-3">
                   {[
                     {
-                      name: "Enable Post-Processing",
+                      label: "Enable Post-Processing",
                       desc: "Master switch. When off, downloads are marked completed without any file being moved or organised. Turn this off if you manage your own file organisation externally.",
                     },
                     {
-                      name: "Auto-Unpack Archives",
+                      label: "Auto-Unpack Archives",
                       desc: "When enabled, zip, rar, and 7z archives are extracted before the files are transferred to the library. The extracted folder is what gets imported, not the archive itself.",
                     },
                     {
-                      name: "Library Root",
+                      label: "Library Root",
                       desc: String.raw`Destination folder for imported games. Example: /data/library or D:\Games.`,
                     },
                     {
-                      name: "Transfer Mode",
+                      label: "Transfer Mode",
                       desc: "How files are transferred to the library root. See Transfer Modes above. Hardlink is recommended when possible.",
                     },
                     {
-                      name: "Platform Filter",
+                      label: "Platform Filter",
                       desc: "Limits imports to the platforms chosen under Settings → Appearance → Platforms. If no platforms are checked, all platforms are eligible.",
                     },
                     {
-                      name: "Rename Pattern",
+                      label: "Rename Pattern",
                       desc: "Controls the file name after import. Tokens: {Title} = game title, {Region} = region tag from the release name, {Platform} = platform name, {Year} = release year. Example: {Title} ({Year}) ({Platform}).",
                     },
-                  ].map(({ name, desc }) => (
-                    <div key={name}>
-                      <p className="font-medium text-foreground">{name}</p>
-                      <p className="text-muted-foreground">{desc}</p>
+                  ].map(({ label, desc }) => (
+                    <div key={label}>
+                      <p className="font-medium text-foreground">
+                        <InterfaceText source={label} />
+                      </p>
+                      <p className="text-muted-foreground">
+                        <InterfaceText source={desc} />
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -1061,7 +1073,7 @@ export default function ImportSettings() {
                     <div key={title} className="rounded-md border p-3 space-y-2">
                       <p className="font-medium text-foreground flex items-center gap-1.5">
                         <Folder className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        {title}
+                        <InterfaceText source={title} />
                       </p>
                       <ol className="space-y-1 pl-1">
                         {steps.map((step, i) => (
@@ -1069,7 +1081,7 @@ export default function ImportSettings() {
                             <span className="text-xs font-semibold text-primary mt-0.5 shrink-0">
                               {i + 1}.
                             </span>
-                            {step}
+                            <InterfaceText source={step} />
                           </li>
                         ))}
                       </ol>

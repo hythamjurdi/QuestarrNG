@@ -818,7 +818,7 @@ export default function IndexersPage() {
                       ) : form.watch("protocol") === "newznab" ? (
                         <InterfaceText source={"Newznab URL"} />
                       ) : form.watch("protocol") === "g4u" ? (
-                        "g4u.to URL"
+                        <InterfaceText source="g4u.to URL" />
                       ) : (
                         <InterfaceText source={"Torznab URL"} />
                       )}

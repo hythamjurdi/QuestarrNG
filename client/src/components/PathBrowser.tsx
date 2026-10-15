@@ -125,7 +125,7 @@ export function PathBrowser({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HardDrive className="h-5 w-5" />
-            {title}
+            <InterfaceText source={title} />
           </DialogTitle>
         </DialogHeader>
 
@@ -205,7 +205,7 @@ export function PathBrowser({
         <DialogFooter>
           <div className="flex justify-between w-full items-center pt-2">
             <div className="text-xs text-muted-foreground truncate max-w-[300px] font-mono mr-2">
-              {selectedPath || "No file selected"}
+              {selectedPath || <InterfaceText source="No file selected" />}
             </div>
             <div className="gap-2 flex">
               <Button type="button" variant="outline" onClick={onClose}>

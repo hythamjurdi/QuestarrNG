@@ -314,8 +314,9 @@ export default function DownloadDetailsModal({
                         className="text-center text-muted-foreground py-8"
                         data-testid="files-unsupported"
                       >
-                        {details.filesSupportReason ||
-                          "This downloader does not expose per-file listing."}
+                        {details.filesSupportReason || (
+                          <InterfaceText source="This downloader does not expose per-file listing." />
+                        )}
                       </div>
                     ) : details.files.length === 0 ? (
                       <div

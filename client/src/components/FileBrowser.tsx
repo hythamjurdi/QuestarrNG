@@ -119,7 +119,9 @@ export function FileBrowser({
     );
   } else if (error) {
     scrollContent = (
-      <div className="flex items-center justify-center h-40 text-destructive">{error}</div>
+      <div className="flex items-center justify-center h-40 text-destructive">
+        <InterfaceText source={error} />
+      </div>
     );
   } else {
     scrollContent = (
@@ -165,7 +167,9 @@ export function FileBrowser({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl h-[500px] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>
+            <InterfaceText source={title} />
+          </DialogTitle>
           <DialogDescription>
             <InterfaceText source={"Navigate and select a directory"} />
           </DialogDescription>

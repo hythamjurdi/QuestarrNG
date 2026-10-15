@@ -85,6 +85,12 @@ function formatBytes(bytes: number | null): string {
 
 // How long to keep polling scan status after starting a scan, until it shows up.
 const SCAN_KICKOFF_GRACE_MS = 5000;
+const SCAN_STATUS_LABEL_TEXT: Record<string, string> = {
+  queued: "Queued",
+  running: "Running",
+  completed: "Completed",
+  failed: "Failed",
+};
 
 export function RootFolderDiscovery() {
   const { toast } = useToast();
@@ -548,7 +554,9 @@ export function RootFolderDiscovery() {
                 <div key={p.rootFolderId} className="rounded-md border p-3 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-mono">{p.rootFolderPath}</span>
-                    <Badge variant={badgeVariant}>{p.status}</Badge>
+                    <Badge variant={badgeVariant}>
+                      <InterfaceText source={SCAN_STATUS_LABEL_TEXT[p.status] ?? p.status} />
+                    </Badge>
                   </div>
                   {p.totalCandidates > 0 && (
                     <Progress value={(p.processedCandidates / p.totalCandidates) * 100} />

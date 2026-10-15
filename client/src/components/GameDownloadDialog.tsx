@@ -1279,8 +1279,8 @@ export default function GameDownloadDialog({ game, open, onOpenChange }: GameDow
             >
               <Plus className="h-4 w-4" />
               {savePreferredGroupsMutation.isPending
-                ? "Saving groups..."
-                : "Add to preferred groups"}
+                ? localizedText("Saving groups...")
+                : localizedText("Add to preferred groups")}
             </Button>
             <p className="text-xs text-muted-foreground">
               {localizedText(

@@ -22,6 +22,8 @@ const INTENTIONALLY_UNTRANSLATED_SOURCE_KEYS = new Set([
   "appriseit.com/url-builder",
   "steamid.io",
   "xREL.to",
+  "itch.io",
+  "g4u.to",
   "&mdash;",
   "&rdquo;",
   "0",
@@ -59,7 +61,71 @@ const INTENTIONALLY_UNTRANSLATED_SOURCE_KEYS = new Set([
   "my-config-key",
   "jev-latest",
   "********",
+  "{Title}",
+  "{Region}",
+  "{Platform}",
+  "{Year}",
 ]);
+
+const UI_TEXT_PROPERTY_NAMES = new Set([
+  "title",
+  "description",
+  "desc",
+  "label",
+  "subtitle",
+  "placeholder",
+  "helperText",
+  "emptyMessage",
+  "emptyState",
+  "buttonText",
+  "ariaLabel",
+  "aria-label",
+  "ariaDescription",
+  "aria-description",
+  "tooltip",
+  "heading",
+  "message",
+  "caption",
+  "actionLabel",
+  "confirmLabel",
+  "cancelLabel",
+  "successMessage",
+  "errorMessage",
+  "successTitle",
+  "successDescription",
+  "saveLabel",
+  "emptyText",
+  "noResultsText",
+  "helpText",
+  "labelText",
+  "altText",
+  "statusLabel",
+  "summary",
+  "hint",
+  "content",
+  "footer",
+  "emptyLabel",
+  "steps",
+  "step",
+  "when",
+]);
+
+function isUiTextVariable(name: string): boolean {
+  return (
+    !/^(is|has)[A-Z]/.test(name) &&
+    /(?:Title|Description|Label|Message|Text|Subtitle|Hint|Tooltip|Prompt|Caption)(?:Source|Key)?$/i.test(
+      name
+    )
+  );
+}
+
+function isHumanReadableCopy(value: string): boolean {
+  return (
+    value.trim().length > 2 &&
+    /\p{L}/u.test(value) &&
+    (/\s|[.!?:;{}→·]/u.test(value) || /^[A-ZÀ-ÖØ-Þ\p{Lu}]/u.test(value))
+  );
+}
 
 function sourceFilesIn(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -74,13 +140,56 @@ function sourceFilesIn(directory: string): string[] {
   });
 }
 
-function messageKeys(node: ts.Node): string[] {
+function messageKeys(
+  node: ts.Node,
+  variableSources: Map<string, ts.Expression[]> = new Map(),
+  seen = new Set<string>()
+): string[] {
   if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return [node.text];
-  if (ts.isConditionalExpression(node)) {
-    return [...messageKeys(node.whenTrue), ...messageKeys(node.whenFalse)];
+  if (ts.isTaggedTemplateExpression(node)) {
+    if (node.tag.getText() === "String.raw" && ts.isNoSubstitutionTemplateLiteral(node.template)) {
+      const sourceFile = node.getSourceFile();
+      return [
+        sourceFile.text.slice(node.template.getStart(sourceFile) + 1, node.template.getEnd() - 1),
+      ];
+    }
+    return messageKeys(node.template, variableSources, seen);
   }
-  if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node)) {
-    return messageKeys(node.expression);
+  if (ts.isConditionalExpression(node)) {
+    return [
+      ...messageKeys(node.whenTrue, variableSources, seen),
+      ...messageKeys(node.whenFalse, variableSources, seen),
+    ];
+  }
+  if (ts.isBinaryExpression(node)) {
+    return [
+      ...messageKeys(node.left, variableSources, seen),
+      ...messageKeys(node.right, variableSources, seen),
+    ];
+  }
+  if (ts.isArrayLiteralExpression(node)) {
+    return node.elements.flatMap((element) => messageKeys(element, variableSources, seen));
+  }
+  if (ts.isObjectLiteralExpression(node)) {
+    return node.properties.flatMap((property) =>
+      ts.isPropertyAssignment(property)
+        ? messageKeys(property.initializer, variableSources, seen)
+        : []
+    );
+  }
+  if (
+    ts.isParenthesizedExpression(node) ||
+    ts.isAsExpression(node) ||
+    ts.isSatisfiesExpression(node)
+  ) {
+    return messageKeys(node.expression, variableSources, seen);
+  }
+  if (ts.isIdentifier(node) && !seen.has(node.text)) {
+    const sources = variableSources.get(node.text);
+    if (sources) {
+      const nextSeen = new Set(seen).add(node.text);
+      return sources.flatMap((source) => messageKeys(source, variableSources, nextSeen));
+    }
   }
   return [];
 }
@@ -102,10 +211,35 @@ function interfaceSourceKeys(): Set<string> {
       path.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
     );
     const hasInterfaceLanguageHook = text.includes("useInterfaceLanguage");
+    const variableSources = new Map<string, ts.Expression[]>();
+    const indexVariableSource = (name: string, expression: ts.Expression) => {
+      if (!isUiTextVariable(name)) return;
+      const sources = variableSources.get(name) ?? [];
+      sources.push(expression);
+      variableSources.set(name, sources);
+    };
+    const indexTextVariables = (node: ts.Node) => {
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+        indexVariableSource(node.name.text, node.initializer);
+      }
+      if (
+        ts.isBinaryExpression(node) &&
+        node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+        ts.isIdentifier(node.left)
+      ) {
+        indexVariableSource(node.left.text, node.right);
+      }
+      ts.forEachChild(node, indexTextVariables);
+    };
+    indexTextVariables(sourceFile);
 
     const collect = (value: string) => {
-      if (value.trim() && /\p{L}/u.test(value)) keys.add(value);
+      if (isHumanReadableCopy(value)) keys.add(value);
     };
+    for (const sources of variableSources.values()) {
+      sources.flatMap((source) => messageKeys(source, variableSources)).forEach(collect);
+    }
+
     const visit = (node: ts.Node) => {
       if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
         for (const attribute of node.attributes.properties) {
@@ -114,13 +248,7 @@ function interfaceSourceKeys(): Set<string> {
           const localizedSourceAttribute =
             node.tagName.getText(sourceFile) === "InterfaceText" && name === "source";
           const localizedMarker = /^data-i18n-(title|placeholder|aria-label|alt)$/.test(name);
-          const staticInterfaceAttribute = [
-            "title",
-            "placeholder",
-            "aria-label",
-            "aria-description",
-            "alt",
-          ].includes(name);
+          const staticInterfaceAttribute = UI_TEXT_PROPERTY_NAMES.has(name);
           if (!localizedSourceAttribute && !localizedMarker && !staticInterfaceAttribute) continue;
           if (attribute.initializer && ts.isStringLiteral(attribute.initializer)) {
             collect(attribute.initializer.text);
@@ -129,8 +257,16 @@ function interfaceSourceKeys(): Set<string> {
             ts.isJsxExpression(attribute.initializer) &&
             attribute.initializer.expression
           ) {
-            messageKeys(attribute.initializer.expression).forEach(collect);
+            messageKeys(attribute.initializer.expression, variableSources).forEach(collect);
           }
+        }
+      }
+
+      if (ts.isPropertyAssignment(node)) {
+        const name =
+          ts.isIdentifier(node.name) || ts.isStringLiteral(node.name) ? node.name.text : "";
+        if (UI_TEXT_PROPERTY_NAMES.has(name)) {
+          messageKeys(node.initializer, variableSources).forEach(collect);
         }
       }
 
@@ -142,7 +278,7 @@ function interfaceSourceKeys(): Set<string> {
           callee === "localizedText" ||
           (callee === "t" && hasInterfaceLanguageHook)
         ) {
-          messageKeys(node.arguments[0]).forEach(collect);
+          messageKeys(node.arguments[0], variableSources).forEach(collect);
         }
       }
 
@@ -199,12 +335,42 @@ function rawInterfaceCopy(): Set<string> {
     };
     const collect = (value: string) => {
       const normalized = value.replace(/\s+/g, " ").trim();
-      if (normalized && /\p{L}/u.test(normalized)) keys.add(normalized);
+      if (isHumanReadableCopy(normalized)) keys.add(normalized);
+    };
+    const collectRawExpression = (node: ts.Node) => {
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+        collect(node.text);
+      } else if (ts.isConditionalExpression(node)) {
+        collectRawExpression(node.whenTrue);
+        collectRawExpression(node.whenFalse);
+      } else if (
+        ts.isBinaryExpression(node) &&
+        [
+          ts.SyntaxKind.PlusToken,
+          ts.SyntaxKind.AmpersandAmpersandToken,
+          ts.SyntaxKind.BarBarToken,
+          ts.SyntaxKind.QuestionQuestionToken,
+        ].includes(node.operatorToken.kind)
+      ) {
+        collectRawExpression(node.left);
+        collectRawExpression(node.right);
+      } else if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node)) {
+        collectRawExpression(node.expression);
+      }
     };
     const visit = (node: ts.Node) => {
       if (ts.isJsxText(node) && !isInsideLocalizedWrapper(node)) {
         const parentTag = tagName(node.parent);
         if (!["code", "pre", "script", "style"].includes(parentTag)) collect(node.text);
+      }
+
+      if (
+        ts.isJsxExpression(node) &&
+        node.expression &&
+        (ts.isJsxElement(node.parent) || ts.isJsxFragment(node.parent)) &&
+        !isInsideLocalizedWrapper(node)
+      ) {
+        collectRawExpression(node.expression);
       }
 
       if (ts.isJsxAttribute(node) && localizableAttributes.has(node.name.getText(sourceFile))) {
@@ -243,6 +409,75 @@ function rawInterfaceCopy(): Set<string> {
   return keys;
 }
 
+function rawToastCopy(): Set<string> {
+  const keys = new Set<string>();
+  const localizedHelpers = new Set([
+    "formatInterfaceMessage",
+    "localizedText",
+    "t",
+    "translateInterfaceLabel",
+  ]);
+
+  for (const path of sourceFilesIn(CLIENT_SOURCE_ROOT)) {
+    const sourceFile = ts.createSourceFile(
+      path,
+      readFileSync(path, "utf8"),
+      ts.ScriptTarget.Latest,
+      true,
+      path.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+    );
+    const collect = (value: string) => {
+      const normalized = value.replace(/\s+/g, " ").trim();
+      if (isHumanReadableCopy(normalized)) keys.add(normalized);
+    };
+    const inspect = (node: ts.Node) => {
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+        collect(node.text);
+      } else if (ts.isConditionalExpression(node)) {
+        inspect(node.whenTrue);
+        inspect(node.whenFalse);
+      } else if (
+        ts.isBinaryExpression(node) &&
+        [
+          ts.SyntaxKind.PlusToken,
+          ts.SyntaxKind.AmpersandAmpersandToken,
+          ts.SyntaxKind.BarBarToken,
+          ts.SyntaxKind.QuestionQuestionToken,
+        ].includes(node.operatorToken.kind)
+      ) {
+        inspect(node.left);
+        inspect(node.right);
+      } else if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node)) {
+        inspect(node.expression);
+      } else if (ts.isArrayLiteralExpression(node)) {
+        node.elements.forEach(inspect);
+      } else if (ts.isCallExpression(node)) {
+        const callee = node.expression.getText(sourceFile);
+        if (!localizedHelpers.has(callee)) return;
+      }
+    };
+    const visit = (node: ts.Node) => {
+      if (
+        ts.isCallExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === "toast" &&
+        node.arguments[0] &&
+        ts.isObjectLiteralExpression(node.arguments[0])
+      ) {
+        for (const property of node.arguments[0].properties) {
+          if (!ts.isPropertyAssignment(property)) continue;
+          const name = ts.isIdentifier(property.name) ? property.name.text : "";
+          if (name === "title" || name === "description") inspect(property.initializer);
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+  }
+
+  return keys;
+}
+
 describe("interface source coverage", () => {
   it("catalogs every fixed interface string reference", () => {
     const uncatalogued = [...interfaceSourceKeys()].filter(
@@ -259,5 +494,19 @@ describe("interface source coverage", () => {
     );
 
     expect(raw).toEqual([]);
+  });
+
+  it("catalogs fixed toast copy and translates it in the shared toast hook", () => {
+    const uncatalogued = [...rawToastCopy()].filter(
+      (source) =>
+        !Object.hasOwn(UI_LABELS, source) && !INTENTIONALLY_UNTRANSLATED_SOURCE_KEYS.has(source)
+    );
+    const toastHook = readFileSync(resolve(CLIENT_SOURCE_ROOT, "hooks/use-toast.ts"), "utf8");
+
+    expect(uncatalogued).toEqual([]);
+    expect(toastHook).toMatch(/props\.title\s*=\s*translateInterfaceLabel\(props\.title\)/);
+    expect(toastHook).toMatch(
+      /props\.description\s*=\s*translateInterfaceLabel\(props\.description\)/
+    );
   });
 });
