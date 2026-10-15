@@ -38,10 +38,11 @@ describe("optional RAWG provider", () => {
   });
 
   it("uses RAWG's documented API-key parameter and caches successful results", async () => {
-    safeFetch.mockResolvedValue(
-      new Response(JSON.stringify({ results: [{ id: 1, name: "Game", slug: "game" }] }), {
-        headers: { "content-type": "application/json" },
-      })
+    safeFetch.mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ results: [{ id: 1, name: "Game", slug: "game" }] }), {
+          headers: { "content-type": "application/json" },
+        })
     );
     expect((await rawgClient.popular("example-secret", 1))[0]).toMatchObject({
       rawgId: 1,
@@ -53,6 +54,8 @@ describe("optional RAWG provider", () => {
     expect(safeFetch).toHaveBeenCalledTimes(1);
     await rawgClient.popular("example-secret", 1);
     expect(safeFetch).toHaveBeenCalledTimes(1);
+    await rawgClient.popular("different-secret", 1);
+    expect(safeFetch).toHaveBeenCalledTimes(2);
   });
 
   it("returns a safe settings error for rejected credentials", async () => {

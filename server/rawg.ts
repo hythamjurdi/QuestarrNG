@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { safeFetch } from "./ssrf.js";
 
@@ -7,6 +7,8 @@ const REQUEST_INTERVAL_MS = 2100;
 const MAX_PENDING_REQUESTS = 30;
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 const CACHE_TTL_MS = 5 * 60 * 1000;
+// The cache is process-local; a per-process key avoids an unkeyed digest of credentials.
+const CACHE_KEY_SECRET = randomBytes(32);
 
 const entitySchema = z.object({ id: z.number().int().positive(), name: z.string() }).passthrough();
 const rawgGameSchema = z
@@ -43,10 +45,8 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function cacheKey(url: URL, apiKey: string): string {
-  const keyHash = createHash("sha256").update(apiKey).digest("hex");
-  return createHash("sha256")
-    .update(keyHash)
+function cacheKey(url: URL): string {
+  return createHmac("sha256", CACHE_KEY_SECRET)
     .update(url.pathname + url.search)
     .digest("hex");
 }
@@ -86,7 +86,7 @@ async function requestGames(
   for (const [name, value] of Object.entries(params)) {
     if (name !== "page_size") url.searchParams.set(name, String(value));
   }
-  const key = cacheKey(url, apiKey);
+  const key = cacheKey(url);
   const hit = cache.get(key);
   if (hit && hit.expiresAt > Date.now()) return hit.games;
 
