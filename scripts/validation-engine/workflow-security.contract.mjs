@@ -83,6 +83,8 @@ test('Windows native installs use the project-locked Visual Studio 18 compatible
     major > 12 || (major === 12 && minor >= 1),
     `node-gyp ${lockedVersion} must support the Visual Studio 18 toolchain`
   );
+  assert.match(windowsInstallerWorkflow, /ConvertFrom-Json -AsHashtable/u);
+  assert.match(windowsInstallerWorkflow, /node_modules\/node-gyp/u);
   assert.match(
     windowsInstallerWorkflow,
     /name: Ensure VS 18 compatible node-gyp for legacy tags[\s\S]*?npm install --package-lock-only --ignore-scripts --no-audit --save-dev --save-exact 'node-gyp@12\.4\.0'[\s\S]*?name: Install dependencies[\s\S]*?run: npm ci/u
