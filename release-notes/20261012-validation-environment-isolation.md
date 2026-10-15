@@ -6,4 +6,4 @@ action: none
 breaking: false
 ---
 
-Validation tasks and runtime probes now use restricted environments and private temporary settings, reducing exposure of unrelated credentials. Isolated tasks keep Playwright browsers available, disable inherited configuration, and remove task-owned temporary files. CI uses a reviewed npm runtime and locked dependencies.
+Validation tasks now isolate inherited credentials and configuration, keep Playwright browsers available to isolated test processes, and remove task-owned temporary files after execution.
