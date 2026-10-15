@@ -3,7 +3,7 @@ import { seedGame, uniqueId } from "./helpers";
 
 test("identifies update releases on library thumbnails and clears the badge with fresh results", async ({
   page,
-}) => {
+}, testInfo) => {
   const id = uniqueId();
   const title = `Update available ${id}`;
   await page.goto("/");
@@ -28,12 +28,12 @@ test("identifies update releases on library thumbnails and clears the badge with
   await expect(
     card.getByRole("status", { name: "Game updates available on indexers" })
   ).toBeVisible();
-  await page.screenshot({ path: "docs/pr-evidence/upstream-update-available.png" });
+  await page.screenshot({ path: testInfo.outputPath("upstream-update-available.png") });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(
     card.getByRole("status", { name: "Game updates available on indexers" })
   ).toBeVisible();
-  await page.screenshot({ path: "docs/pr-evidence/upstream-update-available-mobile.png" });
+  await page.screenshot({ path: testInfo.outputPath("upstream-update-available-mobile.png") });
   available = false;
   await page.reload();
   await page.getByPlaceholder("Search your library…").fill(title);

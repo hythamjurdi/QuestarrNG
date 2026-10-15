@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test("optional RAWG provider saves its key and powers the discovery tab", async ({ page }) => {
+test("optional RAWG provider saves its key and powers the discovery tab", async ({
+  page,
+}, testInfo) => {
   await page.route("**/api/config", async (route) => {
     const response = await route.fetch();
     const config = await response.json();
@@ -48,7 +50,7 @@ test("optional RAWG provider saves its key and powers the discovery tab", async 
   await page.goto("/discover");
   await page.getByRole("tab", { name: "RAWG" }).click();
   await expect(page.getByText("Sample Game").first()).toBeVisible();
-  await page.screenshot({ path: "docs/pr-evidence/upstream-rawg-discovery.png" });
+  await page.screenshot({ path: testInfo.outputPath("upstream-rawg-discovery.png") });
   await page.getByLabel("Search RAWG games").fill("Sample");
   await expect(page.getByText("RAWG Search Results")).toBeVisible();
   await expect(page.getByText("Sample Game").first()).toBeVisible();

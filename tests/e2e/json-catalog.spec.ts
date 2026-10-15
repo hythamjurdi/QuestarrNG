@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { uniqueId } from "./helpers";
 
-test("saves and reloads a JSON catalog without an API key", async ({ page }) => {
+test("saves and reloads a JSON catalog without an API key", async ({ page }, testInfo) => {
   const name = `Catalog ${uniqueId()}`;
   await page.goto("/indexers");
   await page.getByTestId("button-add-indexer").click();
@@ -10,7 +10,7 @@ test("saves and reloads a JSON catalog without an API key", async ({ page }) => 
   await page.getByRole("option", { name: "JSON catalog (Hydra format)" }).click();
   await page.getByTestId("input-indexer-url").fill("https://example.com/catalog.json");
   await expect(page.getByTestId("input-indexer-apikey")).toBeDisabled();
-  await page.screenshot({ path: "docs/pr-evidence/upstream-json-catalog.png" });
+  await page.screenshot({ path: testInfo.outputPath("upstream-json-catalog.png") });
   const saved = page.waitForResponse(
     (response) => response.url().endsWith("/api/indexers") && response.request().method() === "POST"
   );
