@@ -238,7 +238,7 @@ describe("RootFolderDiscovery", () => {
     });
 
     expect(await screen.findByText("/mnt/scan-pushed")).toBeInTheDocument();
-    expect(screen.getByText("running")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
   });
 
   it("lets the user search IGDB under their own name when no candidate fits", async () => {
