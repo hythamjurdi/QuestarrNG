@@ -343,6 +343,7 @@ jobs:
     # PRs build on the minimum supported Node only (tests already run on 26.x);
     # pushes to main/release also build on 26.x.
     strategy:
+      fail-fast: false
       matrix:
         node-version: ${{ fromJSON(github.event_name == 'pull_request' && '["22.19.0"]' || '["22.19.0", "26.x"]') }}
 
