@@ -33,7 +33,16 @@ test.describe("Release name blacklist journey", () => {
 
       await page.getByRole("button", { name: `Remove ${term.toLowerCase()}` }).click();
       await expect(page.getByText(term.toLowerCase(), { exact: true })).toHaveCount(0);
+      const blacklistUpdate = page.waitForResponse(
+        (response) =>
+          response.url().endsWith("/api/settings") && response.request().method() === "PATCH"
+      );
       await page.getByRole("button", { name: "Save Blacklist" }).click();
+      const blacklistUpdateResponse = await blacklistUpdate;
+      expect(blacklistUpdateResponse.ok()).toBe(true);
+      expect((await blacklistUpdateResponse.json()).releaseNameBlacklist).toBe(
+        JSON.stringify(initialTerms)
+      );
       await expect(page.getByText("Release Blacklist Saved", { exact: true })).toBeVisible();
 
       const restoredSettings = await page.request.get("/api/settings");

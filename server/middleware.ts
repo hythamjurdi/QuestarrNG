@@ -27,31 +27,86 @@ export function rateLimitsDisabled(): boolean {
   );
 }
 
-// Dynamic rate limiter for IGDB API endpoints to prevent blacklisting
-// IGDB has a limit of 4 requests per second, we default to 3 to be conservative
-// The rate limit can be configured per user in settings
-export const igdbRateLimiter = rateLimit({
-  windowMs: 1000, // 1 second
-  max: async (req: Request) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return 20; // Default for unauthenticated requests
-      }
+// Pace IGDB-backed API routes to the configured per-user request rate. Browsing
+// one page can issue several independent queries at once; rejecting those with
+// 429s makes normal navigation fail. Queue ordinary bursts, while bounding the
+// pending work so a client cannot build an unbounded backlog. IGDBClient also
+// paces actual upstream requests globally.
+type IgdbRequestQueue = {
+  tail: Promise<void>;
+  nextAllowedAt: number;
+  pending: number;
+  cleanupTimer?: ReturnType<typeof setTimeout>;
+};
 
-      const settings = await storage.getUserSettings(userId);
-      return settings?.igdbRateLimitPerSecond ?? 20;
-    } catch (error) {
-      middlewareLogger.error({ error }, "Error fetching user rate limit");
-      return 20; // Fallback to default on error
+const igdbRequestQueues = new Map<string, IgdbRequestQueue>();
+const MAX_PENDING_IGDB_REQUESTS = 30;
+
+export const igdbRateLimiter = (req: Request, res: Response, next: NextFunction): void => {
+  if (rateLimitsDisabled()) {
+    next();
+    return;
+  }
+
+  const userId = req.user?.id;
+  const queueKey = userId ? `user:${userId}` : `ip:${ipKeyGenerator(req.ip ?? "unknown")}`;
+  let queue = igdbRequestQueues.get(queueKey);
+  if (!queue) {
+    queue = { tail: Promise.resolve(), nextAllowedAt: 0, pending: 0 };
+    igdbRequestQueues.set(queueKey, queue);
+  }
+
+  if (queue.cleanupTimer) {
+    clearTimeout(queue.cleanupTimer);
+    delete queue.cleanupTimer;
+  }
+
+  if (queue.pending >= MAX_PENDING_IGDB_REQUESTS) {
+    res.set("Retry-After", "1").status(429).json({
+      message: "Too many IGDB requests are queued; try again shortly",
+    });
+    return;
+  }
+
+  queue.pending++;
+  const queuedRequest = queue.tail.then(async () => {
+    let requestsPerSecond = 3;
+    if (userId) {
+      try {
+        const settings = await storage.getUserSettings(userId);
+        requestsPerSecond = settings?.igdbRateLimitPerSecond ?? requestsPerSecond;
+      } catch (error) {
+        middlewareLogger.error({ error }, "Error fetching user IGDB rate limit; defaulting to 3");
+      }
     }
-  },
-  message: "Too many IGDB requests, please try again later",
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: rateLimitsDisabled,
-  skipSuccessfulRequests: false,
-});
+
+    const intervalMs = 1000 / Math.min(4, Math.max(1, requestsPerSecond));
+    const delayMs = Math.max(0, queue!.nextAllowedAt - Date.now());
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+    queue!.nextAllowedAt = Date.now() + intervalMs;
+    if (!res.destroyed) next();
+  });
+
+  queue.tail = queuedRequest
+    .catch((error) => {
+      middlewareLogger.error({ error }, "Error scheduling IGDB request");
+      if (!res.headersSent && !res.destroyed) next();
+    })
+    .finally(() => {
+      queue!.pending--;
+      if (queue!.pending === 0) {
+        const cleanupDelay = Math.max(0, queue!.nextAllowedAt - Date.now());
+        queue!.cleanupTimer = setTimeout(() => {
+          if (queue!.pending === 0 && igdbRequestQueues.get(queueKey) === queue) {
+            igdbRequestQueues.delete(queueKey);
+          }
+        }, cleanupDelay);
+        queue!.cleanupTimer.unref?.();
+      }
+    });
+};
 
 // Rate limiter for sensitive endpoints (write operations)
 export const sensitiveEndpointLimiter = rateLimit({

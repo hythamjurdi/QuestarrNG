@@ -960,6 +960,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/robots.txt", (_req, res) => {
     res.type("text/plain").send("User-agent: *\nDisallow: /\n");
   });
+  // API responses are personalized or dynamic unless a route explicitly opts
+  // into caching. React Query consumes fresh JSON and does not resolve a raw
+  // 304 response body, so prevent browser validation from turning a normal
+  // reload of authenticated data into a query error.
+  app.use("/api", (_req, res, next) => {
+    res.setHeader("Cache-Control", "no-store");
+    next();
+  });
   // Default-deny auth boundary for the whole /api surface. Mounted before any
   // /api route (including the routers below) is registered, so every /api/*
   // request is required to authenticate unless explicitly allowlisted above.
@@ -1679,7 +1687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // authentication (enforced by the default-deny API auth boundary below);
   // the unauthenticated setup flow instead uses the `igdb` field on
   // GET /api/auth/status, which exposes only the configured/source booleans.
-  app.get("/api/config", sensitiveEndpointLimiter, async (_req, res) => {
+  app.get("/api/config", async (_req, res) => {
     try {
       // 🛡️ Sentinel: Harden config endpoint to prevent information disclosure.
       // Only expose boolean flags indicating if services are configured, not
@@ -5491,7 +5499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // IGDB Configuration endpoint
-  app.get("/api/settings/igdb", sensitiveEndpointLimiter, async (_req, res) => {
+  app.get("/api/settings/igdb", async (_req, res) => {
     try {
       const dbClientId = await storage.getSystemConfig("igdb.clientId");
       const dbClientSecret = await storage.getSystemConfig("igdb.clientSecret");
@@ -5618,7 +5626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // RAWG is an optional, additive metadata provider. Its API key is stored
   // encrypted and is never returned to the browser.
-  app.get("/api/settings/rawg", sensitiveEndpointLimiter, async (_req, res) => {
+  app.get("/api/settings/rawg", async (_req, res) => {
     try {
       res.set("Cache-Control", "no-store");
       const stored = await storage.getSystemConfig("rawg.apiKey");
@@ -5695,7 +5703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  app.get("/api/settings/discord", sensitiveEndpointLimiter, async (_req, res) => {
+  app.get("/api/settings/discord", async (_req, res) => {
     try {
       const webhookUrl = await storage.getSystemConfig("discord.webhookUrl");
       const isConfigured = !!(webhookUrl && webhookUrl.length > 0);
@@ -5712,7 +5720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Exposes only whether a Steam Web API key is configured server-side, so the
   // client can conditionally show the achievements section in the game details
   // Journal tab without ever seeing the key itself.
-  app.get("/api/settings/steam", sensitiveEndpointLimiter, async (_req, res) => {
+  app.get("/api/settings/steam", async (_req, res) => {
     res.json({ apiKeyConfigured: appConfig.steam.isConfigured });
   });
 
@@ -5875,7 +5883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Security & Scanning settings (Settings > Post-Processing > Security & Scanning)
-  app.get("/api/settings/security-scan", sensitiveEndpointLimiter, async (_req, res) => {
+  app.get("/api/settings/security-scan", async (_req, res) => {
     try {
       const [vt, clamav] = await Promise.all([
         readVirusTotalSettings(storage),
@@ -6543,7 +6551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ── NexusMods settings ───────────────────────────────────────────────────────
 
-  app.get("/api/settings/nexusmods", sensitiveEndpointLimiter, async (_req, res) => {
+  app.get("/api/settings/nexusmods", async (_req, res) => {
     try {
       const dbKey = await storage.getSystemConfig("nexusmods.apiKey");
       const configured = !!(dbKey && dbKey.length > 0) || nexusmodsClient.isConfigured();
@@ -6583,7 +6591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ── TypeSafe (Jev) AI settings ────────────────────────────────────────────────
 
-  app.get("/api/settings/typesafe", sensitiveEndpointLimiter, async (_req, res) => {
+  app.get("/api/settings/typesafe", async (_req, res) => {
     try {
       const [dbUrl, dbKey, dbModel] = await Promise.all([
         storage.getSystemConfig(TYPESAFE_URL_CONFIG_KEY),

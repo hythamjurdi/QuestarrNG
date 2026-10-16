@@ -411,7 +411,7 @@ jobs:
       release_tag: ${{ github.ref_name }}
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.repository_id == '1388297896' && startsWith(github.ref, 'refs/tags/v')
     needs: [publish, addon-smoke, build-windows-installer]
     runs-on: ubuntu-latest
     permissions:
@@ -617,23 +617,23 @@ jobs:
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,assets \
             | jq -e --arg tag "$TAG" --arg installer "$installer" --arg chart "$chart" "$asset_check" > /dev/null
 
-  update-changelog:
-    name: Open changelog update pull request
+  sync-release-metadata:
+    name: Sync release metadata directly to main
+    if: github.repository_id == '1388297896' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && needs.release.result == 'success' && needs.publish.result == 'success'
     needs: [release, publish]
-    if: startsWith(github.ref, 'refs/tags/v') && needs.release.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TAG: ${{ github.ref_name }}
       IMAGE: ${{ needs.publish.outputs.image }}
       IMAGE_DIGEST: ${{ needs.publish.outputs.digest }}
+      TAG: ${{ github.ref_name }}
+      RELEASE_SHA: ${{ github.sha }}
     steps:
-      - name: Checkout release history
+      - name: Checkout main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -642,73 +642,30 @@ jobs:
           node-version: 26.x
           package-manager-cache: false
 
-      - name: Open a changelog update pull request
+      - name: Verify release is still the main head and sync the Home Assistant image pin
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin '+refs/heads/main:refs/remotes/origin/main' --tags
+          test "$(git rev-parse origin/main)" = "$RELEASE_SHA"
           VERSION="${TAG#v}"
-          branch="release/changelog-${TAG}"
-          previous_tag="$(scripts/release-notes-base-tag.sh "$TAG")"
-          release_sha="$(git rev-parse "${TAG}^{commit}")"
-          release_date="$(git show -s --format=%cs "$release_sha")"
-          git fetch origin main:refs/remotes/origin/main
-          git checkout -B "$branch" origin/main
-          if [[ "$IMAGE" != "ghcr.io/${GITHUB_REPOSITORY,,}" || ! "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
-            echo 'The published image reference or digest is invalid.' >&2
-            exit 1
-          fi
-          python3 - "$IMAGE" "$VERSION" "$IMAGE_DIGEST" <<'PY'
-          import re
-          import sys
-          from pathlib import Path
+          test "$(node -p "require('./package.json').version")" = "$VERSION"
+          node scripts/sync-release-metadata.mjs "$VERSION" "$IMAGE" "$IMAGE_DIGEST"
+          git diff --check
 
-          image, version, digest = sys.argv[1:]
-          if image != "ghcr.io/snapetech-org/questarrng":
-              raise SystemExit("Unexpected Home Assistant base image repository")
-          if not re.fullmatch(r"\d+\.\d+\.\d+", version) or not re.fullmatch(r"sha256:[a-f0-9]{64}", digest):
-              raise SystemExit("Invalid release version or OCI digest")
-
-          path = Path("questarr/Dockerfile")
-          lines = path.read_text().splitlines()
-          matches = [
-              index for index, line in enumerate(lines)
-              if re.fullmatch(r"ARG QUESTARR_IMAGE=ghcr\.io/snapetech-org/questarrng:\d+\.\d+\.\d+@sha256:[a-f0-9]{64}", line)
-          ]
-          if len(matches) != 1:
-              raise SystemExit("Expected exactly one pinned Home Assistant base image")
-          lines[matches[0]] = f"ARG QUESTARR_IMAGE={image}:{version}@{digest}"
-          path.write_text("\n".join(lines) + "\n")
-          PY
-          node scripts/assemble-release-notes.mjs \
-            --previous-tag "$previous_tag" \
-            --head "$release_sha" \
-            --version "$VERSION" \
-            --date "$release_date" \
-            --changelog docs/CHANGELOG.md \
-            --output docs/CHANGELOG.md
-          git add docs/CHANGELOG.md questarr/Dockerfile
-          if git diff --cached --quiet; then
-            echo 'The checked-in changelog already contains these release notes.'
+      - name: Commit and push release metadata to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- questarr/Dockerfile; then
+            echo 'Home Assistant already references the published release image.'
             exit 0
           fi
-
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit \
-            -m "docs(changelog): sync release notes and Home Assistant image for ${TAG}" \
-            -m 'release-note: none'
-          git push --force origin "HEAD:refs/heads/${branch}"
-
-          pr_url="$(gh pr list --base main --head "$branch" --state open --json url --jq '.[0].url // empty')"
-          if [[ -z "$pr_url" ]]; then
-            gh pr create \
-              --base main \
-              --head "$branch" \
-              --title "docs(changelog): sync release assets for ${TAG}" \
-              --body "Automated follow-up for the published ${TAG} release. It syncs docs/CHANGELOG.md and the Home Assistant add-on's pinned base image to the released GHCR digest."
-          else
-            echo "Updated existing changelog pull request: ${pr_url}"
-          fi
+          git add questarr/Dockerfile
+          git commit -m "chore(release): pin Home Assistant image for ${TAG}" -m 'release-note: none'
+          git push origin HEAD:refs/heads/main
 
   finalize-release:
     if: github.repository_id == '1388297896' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.finalize_release_tag != ''
@@ -1036,103 +993,61 @@ jobs:
           asset_check='.tagName == $tag and (.isDraft | not) and (.isPrerelease | not) and (.body | type == "string" and length > 0) and (([.assets[].name] | sort) == ([$installer, ($installer + ".sha256"), $chart, ($chart + ".sha256")] | sort))'
           jq -e --arg tag "$TAG" --arg installer "$installer" --arg chart "$chart" "$asset_check" <<<"$release_json" > /dev/null
 
-  update-finalized-changelog:
-    if: github.repository_id == '1388297896' && github.event_name == 'workflow_dispatch' && inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success'
+  sync-finalized-metadata:
+    name: Sync recovered release metadata directly to main
+    if: github.repository_id == '1388297896' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success'
     needs: [finalize-release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TAG: ${{ inputs.finalize_release_tag }}
-      RELEASE_SHA: ${{ needs['finalize-release'].outputs.release_sha }}
-      PREVIOUS_TAG: ${{ needs['finalize-release'].outputs.previous_tag }}
-      RELEASE_DATE: ${{ needs['finalize-release'].outputs.release_date }}
-      VERSION: ${{ needs['finalize-release'].outputs.version }}
       IMAGE: ${{ needs['finalize-release'].outputs.image }}
       IMAGE_DIGEST: ${{ needs['finalize-release'].outputs.release_image_digest }}
+      TAG: ${{ inputs.finalize_release_tag }}
+      RELEASE_SHA: ${{ needs['finalize-release'].outputs.release_sha }}
+      VERSION: ${{ needs['finalize-release'].outputs.version }}
     steps:
-      - name: Checkout current release history
+      - name: Checkout main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: main
           fetch-depth: 0
 
-      - name: Set up Node.js 22.x
+      - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22.x
+          node-version: 26.x
+          package-manager-cache: false
 
-      - name: Open changelog update pull request
+      - name: Verify release is on main and sync the Home Assistant image pin
         shell: bash
         run: |
           set -euo pipefail
-          branch="release/changelog-${TAG}"
           git fetch origin '+refs/heads/main:refs/remotes/origin/main' --tags
-          if ! git diff --quiet "$RELEASE_SHA" origin/main -- release-notes; then
-            echo 'Release-note fragments changed after the tagged source; refusing to assemble a mismatched changelog.' >&2
-            exit 1
-          fi
-          if git ls-remote --exit-code --heads origin "refs/heads/${branch}" >/dev/null; then
-            echo "Changelog branch ${branch} already exists; inspect it before updating the release history." >&2
-            exit 1
-          fi
-          git checkout -b "$branch" origin/main
-          version="${TAG#v}"
-          if [[ "$IMAGE" != "ghcr.io/${GITHUB_REPOSITORY,,}" || ! "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
-            echo 'The published image reference or digest is invalid.' >&2
-            exit 1
-          fi
-          python3 - "$IMAGE" "$version" "$IMAGE_DIGEST" <<'PY'
-          import re
-          import sys
-          from pathlib import Path
+          git merge-base --is-ancestor "$RELEASE_SHA" origin/main
+          test "$(node -p "require('./package.json').version")" = "$VERSION"
+          test "$TAG" = "v$VERSION"
+          node scripts/sync-release-metadata.mjs "$VERSION" "$IMAGE" "$IMAGE_DIGEST"
+          git diff --check
 
-          image, version, digest = sys.argv[1:]
-          if image != "ghcr.io/snapetech-org/questarrng":
-              raise SystemExit("Unexpected Home Assistant base image repository")
-          if not re.fullmatch(r"\d+\.\d+\.\d+", version) or not re.fullmatch(r"sha256:[a-f0-9]{64}", digest):
-              raise SystemExit("Invalid release version or OCI digest")
-
-          path = Path("questarr/Dockerfile")
-          lines = path.read_text().splitlines()
-          matches = [
-              index for index, line in enumerate(lines)
-              if re.fullmatch(r"ARG QUESTARR_IMAGE=ghcr\.io/snapetech-org/questarrng:\d+\.\d+\.\d+@sha256:[a-f0-9]{64}", line)
-          ]
-          if len(matches) != 1:
-              raise SystemExit("Expected exactly one pinned Home Assistant base image")
-          lines[matches[0]] = f"ARG QUESTARR_IMAGE={image}:{version}@{digest}"
-          path.write_text("\n".join(lines) + "\n")
-          PY
-          node scripts/assemble-release-notes.mjs \
-            --previous-tag "$PREVIOUS_TAG" \
-            --head "$RELEASE_SHA" \
-            --version "$VERSION" \
-            --date "$RELEASE_DATE" \
-            --changelog docs/CHANGELOG.md \
-            --output docs/CHANGELOG.md
-          git add docs/CHANGELOG.md questarr/Dockerfile
-          if git diff --cached --quiet; then
-            echo 'The checked-in changelog already contains these release notes.'
+      - name: Commit and push recovered release metadata to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- questarr/Dockerfile; then
+            echo 'Home Assistant already references the published release image.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit \
-            -m "docs(changelog): sync release notes and Home Assistant image for ${TAG}" \
-            -m 'release-note: none'
-          git push origin "HEAD:refs/heads/${branch}"
-          gh pr create \
-            --base main \
-            --head "$branch" \
-              --title "docs(changelog): sync release assets for ${TAG}" \
-              --body "Automated follow-up for the published ${TAG} release. It syncs docs/CHANGELOG.md and the Home Assistant add-on's pinned base image to the released GHCR digest."
+          git add questarr/Dockerfile
+          git commit -m "chore(release): pin Home Assistant image for ${TAG}" -m 'release-note: none'
+          git push origin HEAD:refs/heads/main
 
   announce-release:
     name: Announce release to Discord
-    needs: [release, finalize-release]
-    if: ${{ always() && github.repository_id == '1388297896' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && ((inputs.finalize_release_tag == '' && inputs.announce_release_tag != '') || (inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success')) }}
+    needs: [release, finalize-release, sync-finalized-metadata]
+    if: ${{ always() && github.repository_id == '1388297896' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && ((inputs.finalize_release_tag == '' && inputs.announce_release_tag != '') || (inputs.finalize_release_tag != '' && needs['finalize-release'].result == 'success' && needs['sync-finalized-metadata'].result == 'success')) }}
     runs-on: ubuntu-latest
     environment:
       name: discord-release

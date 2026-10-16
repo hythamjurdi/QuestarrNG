@@ -115,8 +115,9 @@ The release workflow verifies both packages and checksums after the container
 scans and smoke tests pass, uploads all four files to a draft GitHub release,
 and publishes only after the asset list is verified. A failed build or missing
 asset leaves the release unpublished.
-The post-release changelog pull request also updates the Home Assistant
-add-on's pinned base-image digest to the newly published image.
+After publication, the release workflow directly commits the Home Assistant
+add-on's pinned base-image digest to `main`. A recovered release follows the
+same path before its manual announcement can run.
 
 To rebuild assets for an already-published release, run the Build Windows and
 Helm assets workflow from the main branch and provide that stable release tag.

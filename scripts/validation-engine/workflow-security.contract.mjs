@@ -242,7 +242,7 @@ test('production image releases require a version-tag push', () => {
   const smokeIndex = publishJob.indexOf('Smoke test published image and SeerrNG route');
   assert.ok(smokeIndex >= 0);
   assert.doesNotMatch(publishJob, /Attach publish tag/u);
-  const releaseJob = jobBlock(releaseWorkflow, 'release', 'update-changelog');
+  const releaseJob = jobBlock(releaseWorkflow, 'release', 'sync-release-metadata');
   const assetsVerified = releaseJob.indexOf('name: Verify draft release assets');
   const attachIndex = releaseJob.indexOf('Attach versioned GHCR tags after all release assets pass');
   const publishIndex = releaseJob.indexOf('name: Publish verified GitHub release');
@@ -282,7 +282,7 @@ test('version-tag releases include verified Windows and Helm assets before publi
     'build-windows-installer'
   ]);
 
-  const release = jobBlock(releaseWorkflow, 'release', 'update-changelog');
+  const release = jobBlock(releaseWorkflow, 'release', 'sync-release-metadata');
   assert.match(release, /draft: true[\s\S]*files: release-assets\/\*/u);
   const verifyDraft = release.indexOf('name: Verify draft release assets');
   const publishRelease = release.indexOf('name: Publish verified GitHub release');
@@ -309,18 +309,30 @@ test('version-tag releases include verified Windows and Helm assets before publi
   assert.match(releaseWorkflow, /Home Assistant, Helm, CasaOS, and Umbrel versions must match package\.json/u);
   assert.match(releaseWorkflow, /Download verified Windows assets from the failed release run/u);
   assert.match(releaseWorkflow, /Create recovered draft GitHub release with verified assets[\s\S]*?draft: true[\s\S]*?files: release-assets\/\*/u);
-  const recovery = jobBlock(releaseWorkflow, 'finalize-release', 'update-finalized-changelog');
+  const recovery = jobBlock(releaseWorkflow, 'finalize-release', 'sync-finalized-metadata');
   const recoveryAssetsVerified = recovery.indexOf('name: Verify recovered draft assets');
   const recoveryAttach = recovery.indexOf('Attach versioned GHCR tags after recovered assets pass');
   const recoveryPublish = recovery.indexOf('name: Publish recovered GitHub release');
   assert.ok(recoveryAssetsVerified >= 0 && recoveryAttach > recoveryAssetsVerified && recoveryPublish > recoveryAttach);
   assert.match(releaseWorkflow, /needs: \[release, publish\][\s\S]*?IMAGE_DIGEST: \$\{\{ needs\.publish\.outputs\.digest \}\}/u);
-  assert.match(releaseWorkflow, /sync release notes and Home Assistant image/u);
+  const metadataSync = jobBlock(releaseWorkflow, 'sync-release-metadata', 'finalize-release');
+  assert.match(metadataSync, /needs: \[release, publish\][\s\S]*?permissions:\n\s+contents: write/u);
+  assert.match(metadataSync, /git rev-parse origin\/main[\s\S]*git push origin HEAD:refs\/heads\/main/u);
+  assert.match(metadataSync, /scripts\/sync-release-metadata\.mjs/u);
+  const recoveredMetadataSync = jobBlock(releaseWorkflow, 'sync-finalized-metadata', 'announce-release');
+  assert.match(recoveredMetadataSync, /needs: \[finalize-release\][\s\S]*?contents: write/u);
+  assert.match(recoveredMetadataSync, /git push origin HEAD:refs\/heads\/main/u);
+  assert.match(releaseWorkflow, /needs: \[release, finalize-release, sync-finalized-metadata\]/u);
+  assert.doesNotMatch(
+    releaseWorkflow,
+    /update-changelog|update-finalized-changelog|pull-requests:\s*write|gh pr create|release\/changelog-/u,
+    'tag publishing must not create a follow-up changelog branch or pull request'
+  );
   assert.match(releaseWorkflow, /release_image_digest: \$\{\{ steps\.validate\.outputs\.release_image_digest \}\}/u);
   assert.equal(
     (releaseWorkflow.match(/scripts\/release-notes-base-tag\.sh "\$TAG"/gu) ?? []).length,
-    3,
-    'normal, recovery, and changelog workflows must use the same release-note base'
+    2,
+    'normal and recovery releases must use the same release-note base'
   );
   assert.match(releaseNotesBaseScript, /release_tag" == "v2\.1\.0"[\s\S]*v1\.11\.0/u);
   assert.equal(
@@ -335,7 +347,7 @@ test('version-tag releases include verified Windows and Helm assets before publi
 test('release publishing and announcements are gated to QuestarrNG by stable repository ID', () => {
   assert.equal(
     (releaseWorkflow.match(/github\.repository_id == '1388297896'/gu) ?? []).length,
-    8,
+    10,
     'release and recovery jobs use the stable repository ID'
   );
   for (const [name, nextName] of [
@@ -344,8 +356,10 @@ test('release publishing and announcements are gated to QuestarrNG by stable rep
     ['publish', 'addon-smoke'],
     ['addon-smoke', 'build-windows-installer'],
     ['build-windows-installer', 'release'],
-    ['finalize-release', 'update-finalized-changelog'],
-    ['update-finalized-changelog', 'announce-release'],
+    ['release', 'sync-release-metadata'],
+    ['sync-release-metadata', 'finalize-release'],
+    ['finalize-release', 'sync-finalized-metadata'],
+    ['sync-finalized-metadata', 'announce-release'],
     ['announce-release', undefined],
   ]) {
     assert.match(

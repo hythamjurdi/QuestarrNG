@@ -135,8 +135,12 @@ test.describe("v1.5 changes since RC1", () => {
       await dialog.getByRole("button", { name: "Add Root Folder", exact: true }).click();
       const response = await created;
       expect(response.status()).toBe(201);
-      folderId = (await response.json()).id;
       await expect(page.getByText("Root Folder Added", { exact: true })).toBeVisible();
+      const foldersResponse = await page.request.get("/api/root-folders");
+      expect(foldersResponse.ok()).toBe(true);
+      const folders = await foldersResponse.json();
+      folderId = folders.find((folder: { path: string }) => folder.path === folderPath)?.id;
+      expect(folderId).toBeTruthy();
       await expect(
         page.getByRole("switch", { name: `Allow deleting files in ${folderPath}` })
       ).not.toBeChecked();

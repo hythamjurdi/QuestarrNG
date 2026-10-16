@@ -21,7 +21,7 @@ import {
 } from "./fixtures/common-route-mocks.js";
 import { registerRoutes } from "../routes.js";
 import { storage } from "../storage.js";
-import { scanRateLimiter } from "../middleware.js";
+import { igdbRateLimiter, scanRateLimiter } from "../middleware.js";
 
 vi.mock("../storage.js", () => ({ storage: createStorageMock() }));
 vi.mock("../igdb.js", () => ({ igdbClient: createIgdbMock() }));
@@ -92,5 +92,26 @@ describe("scan rate limiting by client IP", () => {
     }
 
     expect(lastStatus).toBe(429);
+  });
+});
+
+describe("IGDB request pacing", () => {
+  it("queues normal parallel page requests at the configured rate instead of rejecting them", async () => {
+    const app = express();
+    const requestStarts: number[] = [];
+    app.get("/paced-igdb", igdbRateLimiter, (_req, res) => {
+      requestStarts.push(Date.now());
+      res.sendStatus(204);
+    });
+
+    const responses = await Promise.all(
+      Array.from({ length: 4 }, () => request(app).get("/paced-igdb"))
+    );
+
+    expect(responses.map((response) => response.status)).toEqual([204, 204, 204, 204]);
+    expect(requestStarts).toHaveLength(4);
+    for (let index = 1; index < requestStarts.length; index++) {
+      expect(requestStarts[index]! - requestStarts[index - 1]!).toBeGreaterThanOrEqual(300);
+    }
   });
 });

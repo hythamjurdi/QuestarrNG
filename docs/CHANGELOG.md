@@ -8,6 +8,15 @@ Discord announcement while this file remains the chronological changelog.
 For a reader-oriented summary of the Snapetech fork's additions since the
 upstream baseline, see [What changed in QuestarrNG](FORK_CHANGES.md).
 
+## [2.1.1] - 2026-10-15
+
+### User-facing changes
+
+#### Fixed
+
+- Settings and configuration screens now load reliably after repeated visits instead of using stale cached API responses.
+- Parallel game metadata searches now wait in a bounded queue at the configured request pace instead of failing with rate-limit errors.
+
 ## [2.1.0] - 2026-10-15
 
 ### User-facing changes
@@ -254,7 +263,6 @@ upstream baseline, see [What changed in QuestarrNG](FORK_CHANGES.md).
 #### Added
 
 - **Integration:** SeerrNG requests can now retrieve a request-scoped `.tar.gz` bundle when an imported game has multiple registered files, while single-file downloads keep using the existing stream route.
-
 
 ## [1.9.1] - 2026-10-06
 

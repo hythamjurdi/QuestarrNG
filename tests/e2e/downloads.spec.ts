@@ -7,6 +7,6 @@ test.describe("Downloads journey", () => {
     await page.goto("/downloads");
 
     await expect(page).toHaveURL("/downloads");
-    await expect(page.getByRole("heading", { name: /Downloads/i })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("heading", { name: /Downloads/i })).toBeVisible();
   });
 });
