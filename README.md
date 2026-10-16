@@ -56,28 +56,29 @@ A video game management application inspired by the -Arr apps (Sonarr, Radarr, P
 ## What this fork adds
 
 QuestarrNG continues to share its foundation with upstream Questarr. We
-maintain a separate fork because the current
-[upstream `main` snapshot](https://github.com/Doezer/Questarr/commit/fb650bab63cb2f7ce3c9004ab9028cfc3b210a01)
-does not expose the SeerrNG provider contract. QuestarrNG adds that versioned,
-request-scoped integration while developing standalone library, acquisition,
-and deployment capabilities. Its maintained work has expanded in several
-areas. The [fork guide](docs/FORK_CHANGES.md) records
-the comparison date, the differences, and the upstream capabilities that
-would let SeerrNG stop depending on this fork.
+maintain a separate fork for the versioned SeerrNG provider and the standalone
+library, acquisition, and deployment capabilities described in the
+[fork and convergence guide](docs/FORK_CHANGES.md). Its
+[convergence matrix](docs/FORK_CHANGES.md#convergence-matrix-what-upstream-needs-before-the-fork-can-retire)
+lists the contract and operator checks for moving off this fork.
 
 - **A richer game library:** platform-scoped discovery and filters, local
   library scanning, a Playing page with journal entries, milestones, screenshots
-  and Steam achievements, plus DLC and expansion details.
+  and Steam achievements, personal game lists, update availability, and DLC and
+  expansion details.
 - **A complete acquisition path:** Prowlarr and Torznab/Newznab search,
-  configurable release selection, download monitoring, automated post-
-  processing, safer archive extraction, and optional VirusTotal or ClamAV
-  checks before import.
+  Hydra-format JSON catalogs, optional RAWG discovery, file-type filtering,
+  release scoring, direct torrent/NZB downloads, configurable release
+  selection, download monitoring, automated post-processing, safer archive
+  extraction, and optional VirusTotal or ClamAV checks before import.
 - **External library workflows:** mapped RomM imports, a Playnite extension
   for library sync and request-to-download, and a versioned SeerrNG catalog and
   PC acquisition API.
 - **More deployment choices:** optional PostgreSQL alongside the default
   SQLite setup, multi-architecture images, a Windows service installer, and
   rootless container configurations with release attestations.
+- **A more accessible interface:** English plus twelve translated locales,
+  regional date and number formats, and right-to-left layout support.
 
 The [fork changes guide](docs/FORK_CHANGES.md) summarizes these additions and
 their release history. The [documentation map](docs/GITHUB_DOCUMENTATION.md)
@@ -85,19 +86,20 @@ links to setup, integration, API, database, and security guides.
 
 ## List of features
 
-| Feature                     | Description                                                                                                                                                                                                                                                                                                                           |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Backlog management**      | Track your collection with status indicators (Wanted, Owned, Playing, Completed, Shelved), ratings, and notes. A dedicated **Playing** page adds journal notes, a milestones checklist, screenshots, and Steam achievements per game, plus Crack status and Time to Beat (via IGDB) on the game detail page and a DLC/expansions tab. |
-| **Game Discovery**          | Browse popular, new, and upcoming titles via IGDB, RSS feeds, and xREL.to, or sync your Steam wishlist directly into the app. A per-platform **Root folder / Scan Disk** discovers games already on disk and reconciles their files.                                                                                                  |
-| **Search & Filter**         | Find games by genre, platform, and keyword, with automatic search until a release is found, plus release blacklisting and preferred release groups/platforms. A Platforms setting scopes the whole app to your platform(s) of choice, with optional filters to hide shelved/owned games and age-restricted or erotic content.         |
-| **Download Management**     | Integrates with indexers and downloaders, optional auto-download and post-processing, and a bundle picker for updates and small optional extras. Includes password-protected archive handling, optional VirusTotal/ClamAV scanning, and an experimental BYOK workflow using Typesafe's Jev to improve game matches.                   |
-| **Real-time Notifications** | In-app alerts for releases and downloads, plus external notifications to 100+ providers via [Apprise](https://github.com/caronc/apprise).                                                                                                                                                                                             |
-| **Rich Game Metadata**      | Details enriched with IGDB, Steam, PCGamingWiki, and NexusMods, including trending mods where available.                                                                                                                                                                                                                              |
-| **Statistics**              | Review collection and download statistics, with sharing to Discord where supported.                                                                                                                                                                                                                                                   |
-| **Security Focused**        | General security hardening and SSL support — see [SECURITY.md](docs/SECURITY.md) for the reporting and deployment hardening process.                                                                                                                                                                                                  |
-| **Deployment**              | Install through Unraid, CasaOS, Umbrel, Cosmos Cloud, Home Assistant, Windows, or Kubernetes; use published amd64/arm64 images and optional rootless container settings.                                                                                                                                                              |
-| **Integrations**            | Connect Playnite, RomM, and SeerrNG using the documented integration paths.                                                                                                                                                                                                                                                           |
-| **Design**                  | Clean, minimalist, dark-first UI built with mobile usage in mind.                                                                                                                                                                                                                                                                     |
+| Feature                     | Description                                                                                                                                                                                                                                                                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Backlog management**      | Track collection status, ratings, and notes; make private game lists; and distinguish available updates from ordinary search results. The **Playing** page adds journal notes, milestones, screenshots, and Steam achievements, with crack status, DLC, and expansion details on each game.                                                 |
+| **Game Discovery**          | Browse popular, new, and upcoming titles via IGDB or optional RAWG, follow RSS and xREL.to feeds, or sync a Steam wishlist. Per-platform **Root folder / Scan Disk** discovers games already on disk. Game details can show HowLongToBeat estimates for close title matches.                                                                |
+| **Search & Filter**         | Search by genre, platform, and keyword; filter torrent results by verified file extensions; and use public Hydra-format catalogs. Release scoring, preferred groups/platforms, and blacklists help narrow results. A Platforms setting scopes discovery, library views, downloads, and imports, with optional visibility filters.           |
+| **Download Management**     | Send releases to a configured downloader or download torrent/NZB files directly. Choose updates and small extras, rank results with saved scoring profiles, then monitor and post-process downloads. Includes password-protected archive handling, optional VirusTotal/ClamAV scanning, and experimental BYOK matching with TypeSafe's Jev. |
+| **Real-time Notifications** | In-app alerts for releases and downloads, plus external notifications to 100+ providers via [Apprise](https://github.com/caronc/apprise).                                                                                                                                                                                                   |
+| **Rich Game Metadata**      | Details enriched with IGDB, optional RAWG, Steam, HowLongToBeat, PCGamingWiki, and NexusMods, including trending mods where available.                                                                                                                                                                                                      |
+| **Localization**            | Use the interface in English or one of twelve translated locales, with regional date and number formatting and right-to-left layout support.                                                                                                                                                                                                |
+| **Statistics**              | Review collection and download statistics, with sharing to Discord where supported.                                                                                                                                                                                                                                                         |
+| **Security Focused**        | General security hardening and SSL support — see [SECURITY.md](docs/SECURITY.md) for the reporting and deployment hardening process.                                                                                                                                                                                                        |
+| **Deployment**              | Install through Unraid, CasaOS, Umbrel, Cosmos Cloud, Home Assistant, Windows, or Kubernetes; use published amd64/arm64 images and optional rootless container settings.                                                                                                                                                                    |
+| **Integrations**            | Connect Playnite, RomM, and SeerrNG using the documented integration paths.                                                                                                                                                                                                                                                                 |
+| **Design**                  | Clean, minimalist, dark-first UI built with mobile usage in mind.                                                                                                                                                                                                                                                                           |
 
 Can't decide what to play? Click **Pick a game** in your Library for
 [Backlog roulette](docs/BACKLOG_ROULETTE.md): draw a game, roll again, or mark it as Playing.
@@ -135,12 +137,12 @@ Questarr restarts during a handoff before recording its download, it pauses the
 request for a duplicate-download check before retrying or cancelling. The retry
 or cancel endpoint returns `409` with `confirmationRequired` until the caller
 checks the download queue/history and sends `confirmNoExistingDownload: true`.
-QuestarrNG 1.11.0 adds browser-local interface language selection and regional
-date and number formatting. It also advertises provider contract v2, preserves
-exact IGDB request identity, and can show verified Steam ownership and
-community play-time estimates. It supports authenticated multi-file bundles
-and can stage Real-Debrid downloads locally before import. Emulation
-acquisition remains unsupported. See the
+QuestarrNG 2.1.1's provider advertises contract v2 and preserves exact IGDB
+request identity, verified Steam ownership, and community play-time estimates.
+It supports authenticated multi-file bundles and can stage Real-Debrid
+downloads locally before import. The wider interface is available in English
+and twelve translated locales with regional date and number formatting.
+Emulation acquisition remains unsupported. See the
 [compatibility guide](docs/SEERRNG-INTEGRATION.md#current-capability-status).
 
 ### Import processing and file safety
@@ -680,17 +682,14 @@ The [campaign overview](docs/upstream-resolution/README.md) links to the full
 [audit and evidence process](docs/upstream-resolution/AUDIT-PROCESS.md), the
 [per-item ledger](docs/upstream-resolution/ledger.json), the generated
 [1,163-item inventory](docs/upstream-resolution/inventory.md), and each batch's
-[validation evidence](docs/upstream-resolution/evidence/). After Batch 73, the
-ledger records 634 verified, 191 superseded, 13 not applicable, five
-implemented-unverified, zero needing implementation, and 320 unreviewed
-records. Batch 73 reviewed PRs #846–848, #850–853, #855–856, and issue #849.
-It added regression coverage for idle download-status logging and clarified
-Unraid 6.10+ local user-template installation and path mapping. Existing
-archive-password, NZBGet, GHCR-pruning, and single-file import behavior was
-verified. The full suite passed 4,256 tests with 7 skipped. See [the Batch 73
-validation record](docs/upstream-resolution/evidence/validation-batch-73.txt),
-[the Batch 72 validation record](docs/upstream-resolution/evidence/validation-batch-72.txt),
-and the [Batch 71 mobile screenshot](docs/upstream-resolution/evidence/validation-batch-71-mobile-download-card.png).
+[validation evidence](docs/upstream-resolution/evidence/). After Batch 83, the
+ledger records 690 verified, 224 superseded, 14 not applicable, six
+implemented-but-unverified, zero needing implementation, and 229 unreviewed
+records. Batch 83 reviewed PRs #942–943, issue #944, and PRs #945–949. It
+bounded recursive game-file scans and made partial results clear in the Files
+tab. See the [campaign overview](docs/upstream-resolution/README.md),
+[the Batch 83 validation record](docs/upstream-resolution/evidence/validation-batch-83.md),
+and the [Batch 82 validation record](docs/upstream-resolution/evidence/validation-batch-82.md).
 The DCO sign-off policy is implemented in the campaign branch, but its
 rollout still needs a maintainer decision because the campaign history includes
 unsigned commits. The full review and validation gate must pass before campaign

@@ -1,7 +1,7 @@
 # QuestarrNG — Product Requirements Document
 
-- **Version:** 1.1
-- **Last reviewed:** 2026-10-04
+- **Version:** 1.2
+- **Last reviewed:** 2026-10-16
 - **Maintainer:** Snapetech QuestarrNG
 - **Audience:** Project owner, contributors, and coding agents
 - **Status:** Living product brief; planned work has no release-date commitment.
@@ -46,95 +46,78 @@ A user who wants to automate ROM downloads for retro gaming, feeding tools like 
 
 ---
 
-## 4. Shipped in 1.5.0
+## 4. Current shipped capabilities (QuestarrNG 2.1.1)
 
-QuestarrNG is a maintained fork of Questarr. The following capabilities are
-available in the current release; the fork's release-by-release additions are
-summarized in [FORK_CHANGES.md](FORK_CHANGES.md).
+QuestarrNG 2.1.1 is the latest stable release reviewed for this brief. The
+release history and full change list are in [FORK_CHANGES.md](FORK_CHANGES.md)
+and [CHANGELOG.md](CHANGELOG.md).
 
-- IGDB discovery and metadata, Steam wishlist import and scheduled sync, RSS
-  feeds refreshed at startup and hourly, and xREL release monitoring.
-- Wanted, Owned, Playing, Completed, and Shelved statuses, ratings, notes,
-  platform/content filters, sorting, and Backlog roulette.
-- Playing journal, milestones, screenshots, and Steam achievements; game details
-  include DLC/expansions, crack status, Time to Beat, PCGamingWiki, and NexusMods.
-- Root-folder discovery with scan progress, automatic rescans, and IGDB review
-  for unmatched folders. Existing files stay in place.
-- Installed-version tracking, populated from completed downloads or edited in
-  game details. Older update releases do not produce newer-version alerts.
+### Library and discovery
 
-- Add games manually, through IGDB discovery, from a Steam wishlist, or from a
-  scan of configured local platform roots
-- Track wanted, owned, playing, completed, and shelved titles with ratings and
-  notes; hide owned or shelved results where appropriate
+- Add games manually or discover them through IGDB and optional RAWG; follow
+  RSS and xREL feeds; sync a Steam wishlist; or scan configured local platform
+  roots. Platform, genre, year, and content filters narrow discovery results.
+- Track Wanted, Owned, Playing, Completed, and Shelved games, ratings, and
+  notes. Sort and filter the library, keep private game lists, use release
+  calendars, and pick a game with Backlog roulette. Platform preferences scope
+  discovery, library views, game adds, download searches, and import eligibility.
 - Record Playing journal entries, milestones, screenshots, and Steam
-  achievements; view game DLC and expansions
-- Scope discovery, library views, downloads, and import eligibility by platform
+  achievements. Game details include DLC/expansions, crack status, HowLongToBeat
+  estimates for close title matches, PCGamingWiki, and NexusMods trends.
+- Track installed versions from completed downloads or game details, see
+  available update indicators, and keep selected platform release dates in
+  discovery and the SeerrNG catalog.
 
-- Torznab, Newznab, and G4U indexers, plus Prowlarr synchronization with saved
-  connection, category, and priority defaults.
-- Manual and scheduled searches, auto-download, release blacklisting, preferred
-  release groups, source-page links, and per-game target platforms.
-- qBittorrent, Transmission, rTorrent, Deluge, Synology Download Station,
-  SABnzbd, and NZBGet integrations with live download progress.
-- Optional experimental AI release analysis using TypeSafe/Jev through
-  OpenRouter with the user's API key.
+### Search, downloads, and imports
 
-- IGDB discovery and metadata enrichment, including exact platform release
-  dates, Steam App ID matching, PCGamingWiki links, and NexusMods trends
-- RSS and xREL release feeds, with platform, genre, year, and content filters
+- Search Torznab, Newznab, G4U, Prowlarr-synced indexers, and public HTTPS
+  Hydra-format catalogs. Manual and scheduled searches support auto-download,
+  release blacklists, verified torrent file-type filters, saved scoring
+  profiles, preferred groups/platforms, and source-page links.
+- Send results to configured download clients or download `.torrent` and
+  `.nzb` files directly. Choose which updates and small extras to include with
+  a main release; scheduled searches honor selected DLC/extra categories, and
+  game files can keep their own category and installed version.
+- Monitor qBittorrent, Transmission, rTorrent, Deluge, Synology Download
+  Station, SABnzbd, and NZBGet. Real-Debrid supports OAuth device authorization
+  and local staging before the regular import pipeline.
+- Move, copy, hardlink, or symlink completed downloads; unpack archives; and
+  route matched ROM imports to RomM. Optional VirusTotal and ClamAV checks can
+  quarantine flagged files. Archive, path, ownership, and scan limits protect
+  the import boundary. Import history, manual review, and recovery cover failed,
+  interrupted, and orphaned downloads.
+- Optional experimental release analysis uses TypeSafe/Jev through OpenRouter
+  with the user's own API key.
 
-- Configurable library root, rename pattern, copy/move/hardlink transfer,
-  hardlink fallback, archive extraction, path mappings, and add-on organization.
-- Manual review for failed or ambiguous imports, archive passwords, and orphaned
-  downloads; import history records task results.
-- Optional VirusTotal and ClamAV checks quarantine detected files before import;
-  incomplete ClamAV scans wait for informed manual review.
-- Playing, Shelved, and Completed statuses survive download and import updates.
+### Integrations and interface
 
-- Torznab and Newznab search, direct configuration or Prowlarr synchronization
-- Per-indexer feed diagnostics and manual per-release download actions
-- Preferred release groups/platforms and a global release-name blacklist
+- The Playnite extension can synchronize a library, promote installed games to
+  owned, and submit requests to Questarr's search/download workflow.
+- The versioned SeerrNG provider carries the external request ID and selected
+  PC variant through acquisition, supports retry/cancel and request status, and
+  streams imported files through authenticated request-scoped routes. It
+  supports both single files and multi-file bundles.
+- The interface is available in English and twelve translated locales with
+  browser-local language selection, regional date and number formats, and
+  right-to-left layout support.
+- In-app and Apprise notifications have independent preferences. The interface
+  also includes collection/download statistics, optional Discord sharing,
+  settings, and system logs.
 
-### Download Client Integration
+### Operations and releases
 
-- Supported torrent and usenet clients, including qBittorrent, Transmission,
-  rTorrent, Deluge, Synology Download Station, SABnzbd, and NZBGet
-- Download status tracking, progress updates, and configurable cleanup
-- Automated post-processing, archive extraction, and optional pre-import
-  VirusTotal or ClamAV checks
-- Optional RomM folder routing for matched ROM imports
-
-### Automation
-
-- Scheduled search for wanted games and download-completion processing
-- xREL and RSS release monitoring with direct add-to-library actions
-
-### Calendar
-
-- Release calendar for tracked games
-
-### Stats
-
-- Library and download statistics dashboard
-
-### Settings & Config
-
-- Platform and content preferences, release selection, indexer/downloader
-  configuration, and system logs
-- In-app and external notifications, including Apprise providers
-- Library and download statistics
-
-### Infrastructure
-
-- JWT authentication and a REST/Socket.io API
-- SQLite by default, with PostgreSQL as an optional backend
-- Docker images for `linux/amd64` and `linux/arm64`, plus Helm and home-server
-  install definitions
-- A self-contained .NET 10 Windows service host for the Node.js application
-- Rootless container options, SSRF and filesystem boundary checks, and
-  published SBOM/provenance attestations
-- Playnite integration and a versioned SeerrNG catalog/acquisition provider
+- JWT-authenticated REST and Socket.IO APIs support the browser and documented
+  integrations.
+- SQLite is the default database; PostgreSQL is optional. Documented migration
+  paths cover SQLite-to-PostgreSQL and PostgreSQL-to-SQLite copies.
+- Deploy with multi-architecture `linux/amd64` and `linux/arm64` images, the
+  self-contained .NET 10 Windows service installer, Helm, or supported
+  home-server app definitions.
+- Version-tag releases publish the GHCR image and versioned release assets,
+  including the Windows x64 installer and Helm chart with checksums. Production
+  image publication runs through release security and smoke-check gates.
+- Rootless deployment options, SSRF and filesystem boundary checks, and
+  published SBOM/provenance attestations support hardened operation.
 
 ---
 
@@ -158,28 +141,32 @@ See the [import and security details](IMPORTS.md) and the
 
 ### External integrations
 
-### P1 — Smart game backlog (version-aware updates) _(planned)_
+### P1 — Smart game backlog (version-aware updates) _(partly shipped)_
 
-### Ongoing quality
+**Shipped:** Completed downloads record installed versions, older update
+releases are not suggested, and library cards distinguish available updates
+from ordinary search results.
 
-**Feature:**
+**Remaining:**
 
-- Track the last downloaded version per game (parsed from release title)
-- On each scheduled search, compare new results against the stored version
-- Notify the user only when a strictly higher version is found (e.g. v1.0 → v1.1)
-- Option to auto-download upgrades
+- Parse release versions reliably across supported release naming patterns.
+- Compare new scheduled-search results with the stored installed version.
+- Notify only when a strictly higher version is available (e.g. v1.0 → v1.1).
+- Offer an opt-in to automatically download upgrades.
 
 **Why:** Moves Questarr from "download once" to "keep library current" — the full \*Arr experience.
 
 ---
 
-### P2 — Direct download support (Real-Debrid shipped; other providers proposed)
+### P2 — Direct search-result and debrid downloads (Real-Debrid shipped; other providers proposed)
 
-**Status:** QuestarrNG includes a first-class Real-Debrid downloader. Users link
-their account through device authorization, submit magnets or torrent files,
-and stage completed files locally for the normal post-processing and import
-flow. This shipped in QuestarrNG 1.10.0. Support for AllDebrid and similar
-providers remains a future proposal.
+**Status:** QuestarrNG can download `.torrent` and `.nzb` files directly from
+search results or send a release to a configured client. It also includes a
+first-class Real-Debrid downloader. Users link their account through device
+authorization, submit magnets or torrent files, and stage completed files
+locally for the normal post-processing and import flow. Real-Debrid shipped in
+QuestarrNG 1.10.0; direct search-result downloads shipped in 2.0.0. Support for
+AllDebrid and similar services remains a separate proposal.
 
 **Problem:** Some users prefer direct download services (Real-Debrid, AllDebrid, etc.) over traditional torrent/usenet pipelines — no seeding required.
 
@@ -253,10 +240,11 @@ backend. See [DATABASE.md](DATABASE.md) for setup and migration guidance.
 
 **Feature:**
 
-- Re-introduce PostgreSQL as an optional database backend
-- Maintain SQLite as the default (zero-config)
-- Abstract the Drizzle schema to work cleanly on both dialects
-- Document migration path from SQLite to PostgreSQL
+- Keep SQLite as the default and PostgreSQL as an optional backend.
+- Maintain the Drizzle schema across both database dialects.
+- Provide a documented SQLite-to-PostgreSQL migration path.
+- Provide a verified PostgreSQL-to-empty-SQLite copy migration for operators
+  who want to move back to the default database.
 
 **Why:** Enables production-grade deployments and unblocks potential multi-user or multi-instance scenarios.
 

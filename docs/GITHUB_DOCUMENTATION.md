@@ -9,8 +9,8 @@ documentation in this repository.
 - First install and initial setup: [`docs/QUICKSTART.md`](./QUICKSTART.md)
 - Selecting a main release, updates, and optional extras:
   [`docs/DOWNLOAD_RECOMMENDATIONS.md`](./DOWNLOAD_RECOMMENDATIONS.md)
-- Why QuestarrNG is maintained, how it differs from upstream, and replacement
-  criteria:
+- Why QuestarrNG is maintained, how it differs from upstream, and the
+  [convergence matrix for retiring the fork](./FORK_CHANGES.md#convergence-matrix-what-upstream-needs-before-the-fork-can-retire):
   [`docs/FORK_CHANGES.md`](./FORK_CHANGES.md)
 - Download post-processing, RomM routing, and pre-import security scans:
   [`docs/IMPORTS.md`](./IMPORTS.md)
