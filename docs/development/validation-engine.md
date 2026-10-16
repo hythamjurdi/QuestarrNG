@@ -7,12 +7,9 @@ or coverage thresholds.
 
 ## GitHub runner routing
 
-The `sca-scan` and `windows-service` jobs may use the organization `trusted-main`
-runner group on pushes and manual runs targeting `main` only after
-`TRUSTED_MAIN_RUNNERS_ENABLED` is set to `true`. Until then, they use
-GitHub-hosted runners. Pull requests, release branches, and the Bubblewrap test
-and build jobs remain on GitHub-hosted runners. The organization runner group
-restricts access to the approved workflow on `refs/heads/main`.
+All GitHub Actions jobs use GitHub-hosted Linux runners. The `pull_request_target`
+workflow still loads its validation code from the pull-request base and runs the
+exact candidate snapshot inside Bubblewrap with a read-only token.
 
 Run the default local gate with:
 
@@ -166,14 +163,10 @@ offline with no GitHub token or repository secrets in the sandbox. Synthetic
 host and resolver files support local socket tests without restoring host
 network or DNS settings. Regular test and build jobs also use the reviewed launcher, prefetch dependencies inside
 Bubblewrap, and produce source-bound receipts. Coverage and JUnit files are
-copied to the short-lived artifact with size and symlink checks. For same-repository pull requests authored by `snapetech`, the workflow can use
-the `Default` runner group when `TRUSTED_MAIN_RUNNERS_ENABLED` is `true`;
-fork and bot pull requests remain on GitHub-hosted runners. Candidate files stay
-in the read-only Bubblewrap sandbox, with no token or secrets inside it. When a
-runner restricts unprivileged user namespaces, the job loads or replaces the
-AppArmor profile attached to `/usr/bin/bwrap`, so repeated jobs on persistent
-runners remain usable while the restriction stays enabled. Other runner hosts
-must pass the same Bubblewrap namespace preflight. Local runs may
+copied to the short-lived artifact with size and symlink checks. All pull requests use the GitHub-hosted workflow. Candidate files stay in the
+read-only Bubblewrap sandbox, with no token or secrets inside it. When the host
+restricts unprivileged user namespaces, the job loads or replaces the AppArmor
+profile attached to `/usr/bin/bwrap` before the namespace preflight. Local runs may
 skip the integration check when Bubblewrap is unavailable. Use the complete GitHub-hosted validation run for
 the full test suite.
 

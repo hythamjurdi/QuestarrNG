@@ -15,8 +15,8 @@ concurrency:
 jobs:
   trusted-pr-validation:
     name: trusted-pr-validation
-    # Same-repository owner PRs use the restricted local pool; forks and bots stay hosted.
-    runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login == 'snapetech' && vars.TRUSTED_MAIN_RUNNERS_ENABLED == 'true' && fromJSON('{"group":"Default","labels":["self-hosted","Linux","X64","host"]}') || 'ubuntu-24.04' }}
+    # Candidate snapshots are evaluated in a read-only sandbox on hosted Linux.
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
       contents: read
@@ -106,7 +106,7 @@ jobs:
             userns,
           }
           APPARMOR
-              # Persistent runners may already have this profile from an earlier job.
+              # Replace the profile if one is already loaded.
               sudo apparmor_parser --replace "$profile"
               test "$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)" = 1
             fi
