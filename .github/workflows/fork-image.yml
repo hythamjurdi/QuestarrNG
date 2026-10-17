@@ -589,7 +589,7 @@ jobs:
             echo "Invalid release image digest: $BUILD_DIGEST" >&2
             exit 1
           fi
-          for tag in "$VERSION" latest; do
+          for tag in "$VERSION" main latest; do
             docker buildx imagetools create \
               --tag "${IMAGE}:${tag}" \
               "${IMAGE}@${BUILD_DIGEST}"
@@ -966,7 +966,7 @@ jobs:
           VERSION: ${{ steps.validate.outputs.version }}
         run: |
           set -euo pipefail
-          for tag in "$VERSION" latest; do
+          for tag in "$VERSION" main latest; do
             docker buildx imagetools create \
               --tag "${IMAGE}:${tag}" \
               "${IMAGE}:sha-${RELEASE_SHA}"
