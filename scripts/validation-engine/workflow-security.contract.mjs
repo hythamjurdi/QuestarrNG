@@ -247,7 +247,7 @@ test('production image releases require a version-tag push', () => {
   const attachIndex = releaseJob.indexOf('Attach versioned GHCR tags after all release assets pass');
   const publishIndex = releaseJob.indexOf('name: Publish verified GitHub release');
   assert.ok(assetsVerified >= 0 && attachIndex > assetsVerified && publishIndex > attachIndex);
-  assert.match(releaseJob.slice(attachIndex), /for tag in "\$VERSION" latest/u);
+  assert.match(releaseJob.slice(attachIndex), /for tag in "\$VERSION" main latest/u);
 
   const deployConfig = load(deployWorkflow);
   assert.deepEqual(deployConfig.on.workflow_dispatch.inputs.environment.options, ['dev', 'test']);
@@ -526,8 +526,9 @@ test('test and build jobs execute the base-reviewed launcher with isolated depen
 });
 
 test('main workflow jobs use GitHub-hosted Linux runners', () => {
-  assert.equal(ciWorkflow.jobs['sca-scan']?.['runs-on'], 'ubuntu-latest');
-  assert.equal(ciWorkflow.jobs['windows-service']?.['runs-on'], 'ubuntu-latest');
+  const parsedCiWorkflow = load(ciWorkflow);
+  assert.equal(parsedCiWorkflow.jobs['sca-scan']?.['runs-on'], 'ubuntu-latest');
+  assert.equal(parsedCiWorkflow.jobs['windows-service']?.['runs-on'], 'ubuntu-latest');
   assert.doesNotMatch(ciWorkflow, /TRUSTED_MAIN_RUNNERS_ENABLED|self-hosted/u);
 });
 
