@@ -39,6 +39,9 @@ A video game management application inspired by the -Arr apps (Sonarr, Radarr, P
 
 ## Table of Contents
 
+For local MCP access, see the [SnapeTech MCP integration guide](docs/integrations/snapetech-mcp.md).
+
+
 - [What this fork adds](#what-this-fork-adds)
 - [List of features](#list-of-features)
 - [Installation](#installation)
