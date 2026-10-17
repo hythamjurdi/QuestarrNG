@@ -1,0 +1,22 @@
+name: QuestarrNG fork PR validation
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+concurrency:
+  group: public-fork-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    name: Run disposable fork validation
+    if: >-
+      github.event.pull_request.head.repo.fork == true &&
+      github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name &&
+      github.event.pull_request.base.repo.full_name == 'snapetech-org/QuestarrNG' &&
+      github.event.pull_request.base.ref == 'main'
+    permissions:
+      contents: read
+    uses: snapetech-org/QuestarrNG/.github/workflows/fork-safe-validation.yml@b8fdc8311fc8dd8a0f706be9e6874a70b14c26e2
+
