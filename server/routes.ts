@@ -7,7 +7,7 @@ import { createServer, type Server } from "http";
 import { storage, type IStorage } from "./storage.js";
 import { stripUndefined } from "./object-utils.js";
 import { normalizeDownloadHash, normalizeTrackedKey } from "./download-hash.js";
-import { checkDownloadStatus, withGameOperationLock } from "./cron.js";
+import { checkAutoSearch, checkDownloadStatus, withGameOperationLock } from "./cron.js";
 import { igdbClient } from "./igdb.js";
 import type { IGDBGame } from "./igdb.js";
 import { rawgClient } from "./rawg.js";
@@ -2129,6 +2129,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // A game that becomes wanted is searched right away (and auto-downloaded when that's
+  // enabled) instead of waiting for the next scheduled auto-search, which can be hours
+  // away — so adding a game from a phone starts the whole pipeline at once. Respects the
+  // user's Auto Search switch; never blocks or fails the request.
+  const searchNowIfWanted = (
+    userId: string,
+    game: { id: string; status?: string | null; hidden?: boolean | null }
+  ): void => {
+    if (game.status !== "wanted" || game.hidden) return;
+    void (async () => {
+      const settings = await storage.getUserSettings(userId);
+      if (!settings?.autoSearchEnabled) return;
+      await checkAutoSearch({ userId, gameId: game.id, force: true });
+    })().catch((error: unknown) =>
+      routesLogger.warn({ error, gameId: game.id }, "Immediate search for a wanted game failed")
+    );
+  };
+
   // Add game to collection
   app.post(
     "/api/games",
@@ -2159,6 +2177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Avoid a misleading release notification for games already released at add time.
         const normalizedGameData = normalizeInitialReleaseStatus(gameData);
         const game = await storage.addGame(normalizedGameData);
+        searchNowIfWanted(userId, game);
         return res.status(201).json(game);
       } catch (error) {
         if (error instanceof z.ZodError) {
@@ -2192,6 +2211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ error: "Game not found" });
         }
 
+        if (statusUpdate.status === "wanted") searchNowIfWanted(userId, updatedGame);
         return res.json(updatedGame);
       } catch (error) {
         if (error instanceof z.ZodError) {

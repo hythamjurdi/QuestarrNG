@@ -61,9 +61,14 @@ vi.mock("../ssrf.js", async () => {
 });
 
 const checkDownloadStatusMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const checkAutoSearchMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 vi.mock("../cron.js", async () => {
   const actual = await vi.importActual<typeof import("../cron.js")>("../cron.js");
-  return { ...actual, checkDownloadStatus: checkDownloadStatusMock };
+  return {
+    ...actual,
+    checkDownloadStatus: checkDownloadStatusMock,
+    checkAutoSearch: checkAutoSearchMock,
+  };
 });
 
 // Mock dependencies (factory bodies live in ./fixtures/common-route-mocks.ts so they can be
@@ -824,6 +829,52 @@ describe("API Routes - Extended Coverage", () => {
       const response = await request(app).post("/api/games").send(newGame);
       expect(response.status).toBe(201);
       expect(response.body).toEqual(savedGame);
+    });
+
+    it("searches a newly added wanted game right away when auto-search is on", async () => {
+      vi.mocked(storage.getUserGames).mockResolvedValue([]);
+      vi.mocked(storage.addGame).mockResolvedValue({
+        id: "game-now",
+        title: "Castlevania: Belmont's Curse",
+        userId: "user-1",
+        status: "wanted",
+        hidden: false,
+      } as unknown as Game);
+      vi.mocked(storage.getUserSettings).mockResolvedValue({
+        autoSearchEnabled: true,
+      } as never);
+      checkAutoSearchMock.mockClear();
+
+      const response = await request(app)
+        .post("/api/games")
+        .send({ title: "Castlevania: Belmont's Curse", igdbId: 999 });
+
+      expect(response.status).toBe(201);
+      await vi.waitFor(() =>
+        expect(checkAutoSearchMock).toHaveBeenCalledWith({
+          userId: "user-1",
+          gameId: "game-now",
+          force: true,
+        })
+      );
+    });
+
+    it("does not search right away when auto-search is off", async () => {
+      vi.mocked(storage.getUserGames).mockResolvedValue([]);
+      vi.mocked(storage.addGame).mockResolvedValue({
+        id: "game-off",
+        title: "Some Game",
+        userId: "user-1",
+        status: "wanted",
+      } as unknown as Game);
+      vi.mocked(storage.getUserSettings).mockResolvedValue({
+        autoSearchEnabled: false,
+      } as never);
+      checkAutoSearchMock.mockClear();
+
+      await request(app).post("/api/games").send({ title: "Some Game", igdbId: 998 });
+      await new Promise((r) => setTimeout(r, 20));
+      expect(checkAutoSearchMock).not.toHaveBeenCalled();
     });
 
     it("defaults a null discovery status before storing the game", async () => {
