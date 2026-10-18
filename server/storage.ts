@@ -384,6 +384,9 @@ export interface IStorage {
   getDownloadSummaryByGame(userId: string): Promise<Record<string, DownloadSummary>>;
   getTrackedDownloadKeys(): Promise<Set<string>>;
   getTrackedDownloadGameStatuses(): Promise<Map<string, string>>;
+  // `${downloaderId}:${downloadHash}` → the tracked row's id and import status, so the
+  // downloads list can offer an Import action for downloads that were never imported.
+  getTrackedDownloadImportInfo(): Promise<Map<string, { id: string; status: string }>>;
   // Lightweight aggregate stats for the /api/status dashboard endpoint.
   getDashboardStatus(userId: string): Promise<DashboardStatus>;
 
@@ -1529,6 +1532,14 @@ export class MemStorage implements IStorage {
       keys.add(`${gd.downloaderId}:${gd.downloadHash}`);
     }
     return keys;
+  }
+
+  async getTrackedDownloadImportInfo(): Promise<Map<string, { id: string; status: string }>> {
+    const result = new Map<string, { id: string; status: string }>();
+    for (const gd of Array.from(this.gameDownloads.values())) {
+      result.set(`${gd.downloaderId}:${gd.downloadHash}`, { id: gd.id, status: gd.status });
+    }
+    return result;
   }
 
   async getTrackedDownloadGameStatuses(): Promise<Map<string, string>> {
@@ -3508,6 +3519,20 @@ export class DatabaseStorage implements IStorage {
       })
       .from(gameDownloads);
     return new Set(rows.map((r) => `${r.downloaderId}:${r.downloadHash}`));
+  }
+
+  async getTrackedDownloadImportInfo(): Promise<Map<string, { id: string; status: string }>> {
+    const rows = await db
+      .select({
+        id: gameDownloads.id,
+        downloaderId: gameDownloads.downloaderId,
+        downloadHash: gameDownloads.downloadHash,
+        status: gameDownloads.status,
+      })
+      .from(gameDownloads);
+    return new Map(
+      rows.map((r) => [`${r.downloaderId}:${r.downloadHash}`, { id: r.id, status: r.status }])
+    );
   }
 
   async getTrackedDownloadGameStatuses(): Promise<Map<string, string>> {

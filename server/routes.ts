@@ -4537,12 +4537,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/downloads", async (_req, res) => {
     try {
       const enabledDownloaders = await storage.getEnabledDownloaders();
-      const [trackedKeys, gameStatuses] = await Promise.all([
+      const [trackedKeys, gameStatuses, importInfo] = await Promise.all([
         storage.getTrackedDownloadKeys(),
         storage.getTrackedDownloadGameStatuses().catch((err) => {
           routesLogger.error({ err }, "Failed to fetch tracked download game statuses");
           return new Map<string, string>();
         }),
+        // Wrapped so a storage double without this method degrades to "no info".
+        Promise.resolve()
+          .then(() => storage.getTrackedDownloadImportInfo())
+          .catch((err) => {
+            routesLogger.error({ err }, "Failed to fetch tracked download import info");
+            return new Map<string, { id: string; status: string }>();
+          }),
       ]);
       // ⚡ Bolt: Fetch downloads from all downloaders in parallel to reduce latency.
       const results = await Promise.all(
@@ -4560,6 +4567,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   downloaderName: downloader.name,
                   trackedByQuestarr: trackedKeys.has(keyNormal) || trackedKeys.has(keyLower),
                   gameStatus: gameStatuses.get(keyNormal) ?? gameStatuses.get(keyLower),
+                  gameDownloadId: (importInfo.get(keyNormal) ?? importInfo.get(keyLower))?.id,
+                  importStatus: (importInfo.get(keyNormal) ?? importInfo.get(keyLower))?.status,
                   downloaderCategory: downloader.category ?? undefined,
                 };
               }),

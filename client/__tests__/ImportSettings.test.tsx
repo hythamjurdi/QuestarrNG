@@ -50,6 +50,7 @@ function mockFetch({
   hardlink = {
     generic: { targetRoot: "/data/library", supportedForAll: true, checkedSources: [] },
   },
+  storageCheck = { inContainer: false, paths: [] },
 }: {
   config?: ImportConfig | undefined;
   rommConfig?: unknown;
@@ -57,6 +58,7 @@ function mockFetch({
   platforms?: unknown[];
   settings?: Record<string, unknown>;
   hardlink?: unknown;
+  storageCheck?: unknown;
 } = {}) {
   vi.spyOn(globalThis, "fetch").mockImplementation(async (url: RequestInfo | URL) => {
     const u = getRequestUrl(url);
@@ -66,6 +68,7 @@ function mockFetch({
     if (u.includes("/api/igdb/platforms")) return createJsonResponse(platforms);
     if (u.includes("/api/settings")) return createJsonResponse(settings);
     if (u.includes("/api/imports/hardlink/check")) return createJsonResponse(hardlink);
+    if (u.includes("/api/imports/storage-check")) return createJsonResponse(storageCheck);
     return createJsonResponse({});
   });
 }
@@ -198,6 +201,18 @@ describe("ImportSettings", () => {
       screen.queryByText(/If your download client runs on a different machine/)
     ).not.toBeInTheDocument();
     expect(container.querySelector(".pointer-events-none")).toBeInTheDocument();
+  });
+
+  it("warns when the library root is not on a mounted volume", async () => {
+    mockFetch({
+      storageCheck: {
+        inContainer: true,
+        paths: [{ key: "libraryRoot", path: "/data", onContainerDisk: true }],
+      },
+    });
+    renderComponent();
+    await screen.findByText("Enable Post-Processing");
+    expect(await screen.findByText(/This folder isn't a mounted volume/)).toBeInTheDocument();
   });
 
   it("saves RomM settings and reports a successful update", async () => {

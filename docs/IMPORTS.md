@@ -62,6 +62,32 @@ Downloads that need a destination choice, archive password, or other review
 appear in the **Pending Imports** card on the Library page. Use **Review** to
 inspect the proposed source and destination before confirming the import.
 
+### Import a download by hand
+
+A finished download that was never imported (for example, because
+post-processing was off when it completed) shows a **Not imported — Import…**
+badge on the **Downloads** page, and an **Import…** item in its menu. Both open
+the review dialog, which shows where the import will go before anything is
+copied:
+
+- **Imports into RomM as ps5**, with the destination folder, when the game's
+  platform (or the release's platform tag, such as `PS5-DUPLEX`) maps to a
+  RomM platform. RomM is preselected in that case.
+- **Imports into the PC game library**, with the reason it isn't going to RomM
+  (no mapping for the platform, RomM routing turned off, or a missing folder
+  binding).
+
+**Unpack Archive** is preselected when the download contains archives that the
+settings would unpack (the RomM archive switches for RomM imports, **Auto-Unpack
+Archives** otherwise). The original download stays in place either way.
+
+### Storage warnings
+
+When QuestarrNG runs in a container, the settings page warns when the library
+root, the RomM library root, or the extraction temp directory is not on a
+mounted volume. Such a folder lives inside the container: files written there
+disappear when the container is recreated, and on Unraid they fill `docker.img`.
+
 ## Route ROM imports to RomM
 
 QuestarrNG writes files into RomM's mounted library folders and, when

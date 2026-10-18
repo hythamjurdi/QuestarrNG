@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FolderOpen, Package, File } from "lucide-react";
+import { Loader2, FolderOpen, Package, File, ArrowRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -36,6 +36,8 @@ interface ImportReviewModalProps {
    * password-protected — shows a required password field and pre-enables Unpack Archive
    * instead of the normal path-review form. */
   passwordRequired?: boolean;
+  /** Hide "Skip Import" when the dialog is opened from somewhere other than Pending Imports. */
+  allowSkip?: boolean;
 }
 
 export default function ImportReviewModal({
@@ -44,6 +46,7 @@ export default function ImportReviewModal({
   downloadId,
   downloadTitle,
   passwordRequired = false,
+  allowSkip = true,
 }: Readonly<ImportReviewModalProps>) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -78,6 +81,9 @@ export default function ImportReviewModal({
   const [isDestBrowserOpen, setIsDestBrowserOpen] = useState(false);
 
   const planApplied = useRef(false);
+  // Set once the user picks a destination themselves, so the suggested one stops applying.
+  const strategyTouched = useRef(false);
+  const unpackTouched = useRef(false);
 
   const planUrl = `/api/imports/${downloadId}/plan?strategy=${strategy}${sourcePath ? `&sourcePath=${encodeURIComponent(sourcePath)}` : ""}`;
 
@@ -87,6 +93,9 @@ export default function ImportReviewModal({
     files: Array<{ name: string; isArchive: boolean }>;
     hasArchive: boolean;
     totalCount: number;
+    suggestedStrategy?: "pc" | "romm";
+    romm?: { slug: string | null; platformDir: string | null; error: string | null };
+    suggestUnpack?: boolean;
   }>({
     queryKey: [planUrl],
     enabled: open,
@@ -98,6 +107,8 @@ export default function ImportReviewModal({
   useEffect(() => {
     if (open) {
       planApplied.current = false;
+      strategyTouched.current = false;
+      unpackTouched.current = passwordRequired;
       setStrategy("pc");
       setSourcePath("");
       setDestinationPath(importConfig?.libraryRoot ?? "");
@@ -133,11 +144,26 @@ export default function ImportReviewModal({
   // Pre-fill paths from plan once when it loads
   useEffect(() => {
     if (open && planData && !planApplied.current) {
+      // Preselect where Questarr would route this download on its own (RomM when the
+      // game's platform maps to a RomM folder). Switching strategy refetches the plan.
+      if (
+        !strategyTouched.current &&
+        rommConfig?.enabled &&
+        planData.suggestedStrategy &&
+        planData.suggestedStrategy !== strategy
+      ) {
+        strategyTouched.current = true;
+        setStrategy(planData.suggestedStrategy);
+        return;
+      }
       planApplied.current = true;
       if (planData.originalPath) setSourcePath(planData.originalPath);
       if (planData.proposedPath) setDestinationPath(planData.proposedPath);
+      if (!unpackTouched.current && planData.suggestUnpack !== undefined) {
+        setUnpackArchive(planData.suggestUnpack);
+      }
     }
-  }, [open, planData]);
+  }, [open, planData, rommConfig?.enabled, strategy]);
 
   const skipMutation = useMutation({
     mutationFn: async () => {
@@ -278,7 +304,10 @@ export default function ImportReviewModal({
                 </Label>
                 <Select
                   value={strategy}
-                  onValueChange={(value) => setStrategy(value as "pc" | "romm")}
+                  onValueChange={(value) => {
+                    strategyTouched.current = true;
+                    setStrategy(value as "pc" | "romm");
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -293,6 +322,7 @@ export default function ImportReviewModal({
                     </SelectItem>
                     <SelectItem
                       value="romm"
+                      disabled={!planData?.romm?.platformDir}
                       lang={languageFor("RomM ROM library")}
                       dir={directionFor("RomM ROM library")}
                     >
@@ -300,6 +330,54 @@ export default function ImportReviewModal({
                     </SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+            {planData && (
+              <div
+                className="rounded-md border bg-muted/40 p-3 text-xs space-y-1"
+                data-testid="import-routing-summary"
+              >
+                {strategy === "romm" && planData.romm?.platformDir ? (
+                  <>
+                    <p className="font-medium text-sm">
+                      {formatInterfaceMessage(
+                        "Imports into RomM as {platform}",
+                        { platform: planData.romm.slug ?? "" },
+                        language
+                      )}
+                    </p>
+                    <p className="flex items-center gap-1 break-all text-muted-foreground">
+                      <ArrowRight className="h-3 w-3 shrink-0" />
+                      <code lang="und" dir="auto">
+                        {destinationPath || planData.romm.platformDir}
+                      </code>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-sm">{t("Imports into the PC game library")}</p>
+                    <p className="text-muted-foreground">
+                      {planData.romm?.error
+                        ? formatInterfaceMessage(
+                            "Not routed to RomM: {reason}",
+                            { reason: planData.romm.error },
+                            language
+                          )
+                        : rommConfig?.enabled
+                          ? t(
+                              "Not routed to RomM: this game's platform has no RomM platform mapping."
+                            )
+                          : t("RomM routing is turned off in Settings → Import → RomM.")}
+                    </p>
+                  </>
+                )}
+                {unpackArchive && (
+                  <p className="text-muted-foreground">
+                    {t(
+                      "Archives are extracted into the destination. The original download is left in place, so it keeps seeding."
+                    )}
+                  </p>
+                )}
               </div>
             )}
             {/* Source Path */}
@@ -535,7 +613,10 @@ export default function ImportReviewModal({
               </div>
               <Switch
                 checked={unpackArchive}
-                onCheckedChange={setUnpackArchive}
+                onCheckedChange={(value) => {
+                  unpackTouched.current = true;
+                  setUnpackArchive(value);
+                }}
                 disabled={passwordRequired}
               />
             </div>
@@ -568,17 +649,19 @@ export default function ImportReviewModal({
                 {t("Cancel")}
               </span>
             </Button>
-            <Button
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={() => skipMutation.mutate()}
-              disabled={skipMutation.isPending || confirmMutation.isPending}
-            >
-              {skipMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <span lang={languageFor("Skip Import")} dir={directionFor("Skip Import")}>
-                {t("Skip Import")}
-              </span>
-            </Button>
+            {allowSkip && (
+              <Button
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                onClick={() => skipMutation.mutate()}
+                disabled={skipMutation.isPending || confirmMutation.isPending}
+              >
+                {skipMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <span lang={languageFor("Skip Import")} dir={directionFor("Skip Import")}>
+                  {t("Skip Import")}
+                </span>
+              </Button>
+            )}
             <Button
               onClick={handleConfirm}
               disabled={confirmMutation.isPending || skipMutation.isPending}

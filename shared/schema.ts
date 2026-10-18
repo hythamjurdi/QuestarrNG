@@ -1270,6 +1270,8 @@ export interface DownloadStatus {
   category?: string | undefined;
   // Questarr tracking fields
   trackedByQuestarr?: boolean; // True if the download was initiated through Questarr
+  gameDownloadId?: string | undefined; // Questarr's tracked row, for manual import
+  importStatus?: string | undefined; // That row's status (e.g. "imported", "completed")
   downloaderCategory?: string; // The category configured on the downloader (for display purposes)
   downloaderId?: string;
   downloaderName?: string;

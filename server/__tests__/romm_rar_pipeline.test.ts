@@ -176,7 +176,7 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
       undefined,
       rommScan
     );
-    return { storage, manager, extractSpy, rommScan };
+    return { storage, manager, extractSpy, rommScan, pathService };
   }
 
   it("unpacks multi-disc, multi-volume RAR sets into the RomM platform folder and leaves the download untouched", async () => {
@@ -295,6 +295,81 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
       "roms/Ghost of Yotei/Ghost.of.Yotei.PS5.pkg",
     ]);
     expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "ps5");
+  });
+
+  it("manual import: the plan previews the RomM folder and the import extracts there", async () => {
+    const release = path.join(downloads, "Castlevania.Belmonts.Curse.PS5-DUPLEX");
+    const data = payload("cv-pkg");
+    await makeRar(work, release, "dup-cbc", { "Castlevania.pkg": data });
+    await fs.writeFile(path.join(release, "dup-cbc.nfo"), "nfo");
+    const before = await snapshot(release);
+
+    const { manager, storage, rommScan, pathService } = setup({
+      rommOverrides: { folderLayout: "platform-roms" },
+    });
+    pathService.getConfiguredRoots.mockResolvedValue([downloads]);
+    storage.getGameDownload.mockResolvedValue({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadHash: "abc",
+      downloadTitle: "Castlevania.Belmonts.Curse.PS5-DUPLEX",
+      status: "completed",
+    });
+    storage.getGame.mockResolvedValue(
+      makeGame({ id: "g1", userId: "u1", title: "Castlevania: Belmont's Curse", platforms: [] })
+    );
+    storage.getPlatformMapping.mockImplementation(async (id: number) =>
+      id === 167 ? { rommPlatformSlug: "ps5" } : undefined
+    );
+
+    // What the review dialog shows before anything is touched.
+    const plan = await manager.planConfirmImport("dl-1", release, "u1", "romm");
+    expect(plan.suggestedStrategy).toBe("romm");
+    expect(plan.romm).toEqual({
+      slug: "ps5",
+      platformDir: path.join(rommRoot, "ps5", "roms"),
+      error: null,
+    });
+    expect(plan.suggestUnpack).toBe(true);
+    expect(plan.proposedPath.startsWith(path.join(rommRoot, "ps5", "roms") + path.sep)).toBe(true);
+
+    await manager.confirmImport(
+      "dl-1",
+      {
+        strategy: "romm",
+        originalPath: release,
+        proposedPath: plan.proposedPath,
+        needsReview: false,
+        unpack: true,
+      },
+      "u1"
+    );
+
+    const placed = await listTree(path.join(rommRoot, "ps5", "roms"));
+    expect(placed).toHaveLength(1);
+    expect(placed[0]).toMatch(/\/Castlevania\.pkg$/);
+    expect(await snapshot(release)).toEqual(before);
+    expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "ps5");
+  });
+
+  it("manual import: the plan falls back to PC with a reason when the platform is unmapped", async () => {
+    const release = path.join(downloads, "Some.Game.PS5-GRP");
+    await makeRar(work, release, "g", { "g.pkg": payload("g") });
+    const { manager, storage, pathService } = setup();
+    pathService.getConfiguredRoots.mockResolvedValue([downloads]);
+    storage.getGameDownload.mockResolvedValue({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadHash: "abc",
+      downloadTitle: "Some.Game.PS5-GRP",
+    });
+    storage.getPlatformMapping.mockResolvedValue(undefined);
+
+    const plan = await manager.planConfirmImport("dl-1", release, "u1", "romm");
+    expect(plan.suggestedStrategy).toBe("pc");
+    expect(plan.romm.slug).toBeNull();
   });
 
   it("copies every file when the skip list is empty", async () => {

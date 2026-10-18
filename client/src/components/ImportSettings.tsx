@@ -111,6 +111,12 @@ export default function ImportSettings() {
   const { data: extractionSettings } = useQuery<{ extractTempDir: string }>({
     queryKey: ["/api/imports/extraction"],
   });
+  const { data: storageCheck } = useQuery<{
+    inContainer: boolean;
+    paths: Array<{ key: string; path: string; onContainerDisk: boolean }>;
+  }>({ queryKey: ["/api/imports/storage-check"] });
+  const onContainerDisk = (key: string): boolean =>
+    !!(storageCheck?.paths ?? []).some((p) => p.key === key && p.onContainerDisk);
   // Read-only mirror of the Platforms card (Appearance tab), which owns this setting.
   const { data: userSettings } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
@@ -187,6 +193,7 @@ export default function ImportSettings() {
           : "Import configuration updated.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/imports/config"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/imports/storage-check"] });
       queryClient.invalidateQueries({ queryKey: ["/api/imports/hardlink/check"] });
       if (scanStarted) {
         queryClient.invalidateQueries({ queryKey: ["/api/library/scan/status"] });
@@ -210,6 +217,7 @@ export default function ImportSettings() {
     onSuccess: () => {
       toast({ title: "Settings Saved", description: "RomM import configuration updated." });
       queryClient.invalidateQueries({ queryKey: ["/api/imports/romm"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/imports/storage-check"] });
     },
     onError: () => {
       if (rommConfig) setLocalRommConfig(rommConfig);
@@ -228,6 +236,7 @@ export default function ImportSettings() {
     onSuccess: () => {
       toast({ title: "Settings Saved", description: "Extraction temp directory updated." });
       queryClient.invalidateQueries({ queryKey: ["/api/imports/extraction"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/imports/storage-check"] });
     },
     onError: (error: Error) => {
       toast({ title: "Save Failed", description: error.message, variant: "destructive" });
@@ -440,8 +449,8 @@ export default function ImportSettings() {
                         <div className="flex gap-2">
                           <Input
                             id="extract-temp-dir"
-                            placeholder="/tmp/questarr"
-                            data-i18n-placeholder={"/tmp/questarr"}
+                            placeholder="/downloads/.questarr-tmp"
+                            data-i18n-placeholder={"/downloads/.questarr-tmp"}
                             value={extractTempDir}
                             onChange={(e) => setExtractTempDir(e.target.value)}
                             className="flex-1"
@@ -462,6 +471,15 @@ export default function ImportSettings() {
                             }
                           />
                         </p>
+                        {onContainerDisk("extractTempDir") && (
+                          <p className="text-xs text-amber-500" role="alert">
+                            <InterfaceText
+                              source={
+                                "This folder isn't a mounted volume, so it lives inside the container: files put here are lost when the container is updated (on Unraid they also fill docker.img). Map it to a share in the container settings, or pick a mounted path."
+                              }
+                            />
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -499,6 +517,15 @@ export default function ImportSettings() {
                         <p className="text-xs text-muted-foreground">
                           <InterfaceText source={"Where files are placed after import."} />
                         </p>
+                        {onContainerDisk("libraryRoot") && (
+                          <p className="text-xs text-amber-500" role="alert">
+                            <InterfaceText
+                              source={
+                                "This folder isn't a mounted volume, so it lives inside the container: files put here are lost when the container is updated (on Unraid they also fill docker.img). Map it to a share in the container settings, or pick a mounted path."
+                              }
+                            />
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1.5">
                         <Label>
@@ -727,6 +754,15 @@ export default function ImportSettings() {
                       }
                     />
                   </p>
+                  {onContainerDisk("rommLibraryRoot") && (
+                    <p className="text-xs text-amber-500" role="alert">
+                      <InterfaceText
+                        source={
+                          "This folder isn't a mounted volume, so it lives inside the container: files put here are lost when the container is updated (on Unraid they also fill docker.img). Map it to a share in the container settings, or pick a mounted path."
+                        }
+                      />
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>

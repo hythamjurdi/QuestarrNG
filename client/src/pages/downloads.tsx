@@ -53,6 +53,7 @@ import {
   ArrowUp,
   CheckCircle2,
   AlertCircle,
+  FolderInput,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,19 @@ import { InterfaceText } from "@/components/InterfaceText";
 
 const ClaimDownloadModal = lazy(() => import("@/components/ClaimDownloadModal"));
 const ClaimBatchModal = lazy(() => import("@/components/ClaimBatchModal"));
+const ImportReviewModal = lazy(() => import("@/components/ImportReviewModal"));
+
+// A finished download Questarr tracks but never imported (post-processing was off, or the
+// import was skipped) can be imported by hand from the downloads list.
+export function canImportManually(download: DownloadStatus): boolean {
+  if (!download.gameDownloadId) return false;
+  if (download.importStatus === "imported" || download.importStatus === "quarantined") {
+    return false;
+  }
+  return (
+    download.progress >= 100 || download.status === "seeding" || download.status === "completed"
+  );
+}
 
 type DownloadListItem = DownloadStatus &
   Required<Pick<DownloadStatus, "downloaderId" | "downloaderName">>;
@@ -164,6 +178,7 @@ export default function Downloads() {
   const [questarrFilter, setQuestarrFilter] = useState<"all" | "questarr">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [claimTarget, setClaimTarget] = useState<DownloadListItem | null>(null);
+  const [importTarget, setImportTarget] = useState<DownloadListItem | null>(null);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
   const {
@@ -926,7 +941,21 @@ export default function Downloads() {
                               )}
                             </Badge>
                           )}
-                        {importConfig?.enablePostProcessing && download.gameStatus === "owned" && (
+                        {canImportManually(download) && (
+                          <button
+                            type="button"
+                            onClick={() => setImportTarget(download)}
+                            data-testid={`badge-not-imported-${download.id}`}
+                          >
+                            <Badge className="text-xs bg-amber-500/15 text-amber-400 border-amber-500/30 cursor-pointer">
+                              <InterfaceText source={"Not imported — Import…"} />
+                            </Badge>
+                          </button>
+                        )}
+                        {(download.importStatus
+                          ? download.importStatus === "imported"
+                          : importConfig?.enablePostProcessing &&
+                            download.gameStatus === "owned") && (
                           <Badge
                             className="text-xs bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
                             data-testid={`badge-imported-${download.id}`}
@@ -1012,6 +1041,15 @@ export default function Downloads() {
                           <Info className="h-4 w-4 mr-2" />
                           <InterfaceText source={"View Details"} />
                         </DropdownMenuItem>
+                        {canImportManually(download) && (
+                          <DropdownMenuItem
+                            onClick={() => setImportTarget(download)}
+                            data-testid={`button-import-${download.id}`}
+                          >
+                            <FolderInput className="h-4 w-4 mr-2" />
+                            <InterfaceText source={"Import…"} />
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={() => setClaimTarget(download)}
                           data-testid={`button-link-${download.id}`}
@@ -1126,6 +1164,21 @@ export default function Downloads() {
             />
           );
         })()}
+
+      {/* Manual import of a finished, never-imported download */}
+      <Suspense fallback={null}>
+        {importTarget?.gameDownloadId && (
+          <ImportReviewModal
+            open={!!importTarget}
+            onOpenChange={(v) => {
+              if (!v) setImportTarget(null);
+            }}
+            downloadId={importTarget.gameDownloadId}
+            downloadTitle={importTarget.name}
+            allowSkip={false}
+          />
+        )}
+      </Suspense>
 
       {/* Link to Game Modal */}
       <Suspense fallback={<div className="fixed inset-0 bg-background/80 backdrop-blur-sm" />}>

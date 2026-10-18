@@ -43,6 +43,23 @@ vi.mock("@/components/ClaimDownloadModal", () => ({
     ) : null,
 }));
 
+vi.mock("@/components/ImportReviewModal", () => ({
+  default: ({
+    open,
+    downloadId,
+    allowSkip,
+  }: {
+    open: boolean;
+    downloadId: string;
+    allowSkip?: boolean;
+  }) =>
+    open ? (
+      <div data-testid="import-review-modal">
+        {downloadId}:{String(allowSkip)}
+      </div>
+    ) : null,
+}));
+
 vi.mock("@/components/ClaimBatchModal", () => ({
   default: ({ open }: { open: boolean }) =>
     open ? <div data-testid="claim-batch-modal">Claim batch modal</div> : null,
@@ -106,6 +123,48 @@ describe("Downloads page", () => {
         </TooltipProvider>
       </QueryClientProvider>
     );
+
+  it("offers Import for a finished download that was never imported", async () => {
+    const base = {
+      status: "seeding",
+      progress: 100,
+      downloaderId: "downloader-1",
+      downloaderName: "qBittorrent",
+      trackedByQuestarr: true,
+      downloadType: "torrent",
+      size: 1024,
+      downloaded: 1024,
+    };
+    mockDownloadsFetch({
+      downloads: [
+        {
+          ...base,
+          id: "hash-a",
+          name: "Castlevania.Belmonts.Curse.PS5-DUPLEX",
+          gameDownloadId: "gd-1",
+          importStatus: "completed",
+        },
+        {
+          ...base,
+          id: "hash-b",
+          name: "Done.Game",
+          gameDownloadId: "gd-2",
+          importStatus: "imported",
+        },
+        { ...base, id: "hash-c", name: "Untracked.Game", trackedByQuestarr: false },
+      ],
+      errors: [],
+    });
+    renderPage();
+
+    await screen.findByText("Castlevania.Belmonts.Curse.PS5-DUPLEX");
+    expect(screen.queryByTestId("button-import-hash-b")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("button-import-hash-c")).not.toBeInTheDocument();
+    expect(screen.getByTestId("badge-imported-hash-b")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("badge-not-imported-hash-a"));
+    expect(await screen.findByTestId("import-review-modal")).toHaveTextContent("gd-1:false");
+  });
 
   it("keeps the scan unlinked action available and opens the batch modal", async () => {
     renderPage();

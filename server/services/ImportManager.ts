@@ -1424,7 +1424,69 @@ export class ImportManager {
     return expectedPath;
   }
 
+  /**
+   * The review dialog's plan, plus where Questarr would route this download on its own:
+   * the RomM platform (slug and folder) it maps to, the strategy to preselect, and
+   * whether the configured settings would unpack its archives.
+   */
   async planConfirmImport(
+    downloadId: string,
+    overrideSourcePath?: string,
+    callerUserId?: string,
+    requestedStrategy: "pc" | "romm" = "pc"
+  ): Promise<
+    Awaited<ReturnType<ImportManager["planConfirmImportPaths"]>> & {
+      suggestedStrategy: "pc" | "romm";
+      romm: { slug: string | null; platformDir: string | null; error: string | null };
+      suggestUnpack: boolean;
+    }
+  > {
+    const download = await this.storage.getGameDownload(downloadId, callerUserId);
+    if (!download) throw new Error(`Download ${downloadId} not found`);
+    const game = await this.storage.getGame(download.gameId);
+    if (!game) throw new Error(`Game not found for download ${downloadId}`);
+    const config = await this.storage.getImportConfig(game.userId ?? undefined);
+    const rommConfig = await this.storage.getRomMConfig(game.userId ?? callerUserId ?? "");
+
+    const slug = rommConfig.enabled
+      ? ((await this.getRommPlatformSlug(game, download.downloadTitle || "")) ?? null)
+      : null;
+    let platformDir: string | null = null;
+    let rommError: string | null = null;
+    if (slug) {
+      try {
+        platformDir = this.getRommPlatformDir(rommConfig, slug);
+      } catch (err) {
+        rommError = err instanceof Error ? err.message : String(err);
+      }
+    }
+    const suggestedStrategy: "pc" | "romm" = platformDir ? "romm" : "pc";
+
+    const plan = await this.planConfirmImportPaths(
+      downloadId,
+      overrideSourcePath,
+      callerUserId,
+      requestedStrategy === "romm" && !platformDir ? "pc" : requestedStrategy
+    );
+
+    const strategyForUnpack = requestedStrategy === "romm" && platformDir ? "romm" : "pc";
+    const families = strategyForUnpack === "romm" ? rommUnpackFamilies(rommConfig) : null;
+    const suggestUnpack = plan.files.some((f) => {
+      if (!f.isArchive) return false;
+      if (!families) return config.autoUnpack;
+      const family = archiveFamilyOf(f.name);
+      return !!family && families.has(family);
+    });
+
+    return {
+      ...plan,
+      suggestedStrategy,
+      romm: { slug, platformDir, error: rommError },
+      suggestUnpack,
+    };
+  }
+
+  private async planConfirmImportPaths(
     downloadId: string,
     overrideSourcePath?: string,
     callerUserId?: string,
@@ -1646,9 +1708,17 @@ export class ImportManager {
       throw new Error("Proposed path is required for import validation");
     }
 
+    // RomM imports unpack only the archive types enabled in RomM settings (so a zipped
+    // ROM next to a RAR set stays zipped); with none enabled, an explicit request unpacks
+    // any archive.
+    const rommFamilies =
+      overridePlan.strategy === "romm" ? rommUnpackFamilies(rommConfig) : undefined;
     const archiveResolution = overridePlan.unpack
       ? // An explicit unpack request may extract a disc image; auto-unpack never does.
-        await this.resolveArchive(safeOriginalPath, { includeDiscImages: true })
+        await this.resolveArchive(safeOriginalPath, {
+          includeDiscImages: true,
+          ...(rommFamilies && rommFamilies.size > 0 ? { families: rommFamilies } : {}),
+        })
       : null;
     const needsExtraction = !!archiveResolution && !archiveResolution.alreadyExtracted;
 

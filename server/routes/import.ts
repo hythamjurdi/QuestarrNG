@@ -531,6 +531,55 @@ importRouter.post(
   }
 );
 
+// Inside a container, a folder on the same device as "/" is part of the container's own
+// filesystem, not a mounted volume: files written there vanish when the container is
+// recreated (and on Unraid they fill docker.img). Flags configured paths where that's so.
+async function nearestExistingDevice(target: string): Promise<number | null> {
+  let current = path.resolve(target);
+  for (;;) {
+    try {
+      return (await fs.stat(current)).dev;
+    } catch {
+      const parent = path.dirname(current);
+      if (parent === current) return null;
+      current = parent;
+    }
+  }
+}
+
+async function runningInContainer(): Promise<boolean> {
+  return (await fs.pathExists("/.dockerenv")) || (await fs.pathExists("/run/.containerenv"));
+}
+
+importRouter.get("/storage-check", async (_req, res) => {
+  try {
+    const userId = res.locals.userId as string;
+    if (!(await runningInContainer())) return res.json({ inContainer: false, paths: [] });
+    const [config, rommConfig, extractTempDir] = await Promise.all([
+      storage.getImportConfig(userId),
+      storage.getRomMConfig(userId),
+      storage.getSystemConfig(EXTRACT_TEMP_DIR_CONFIG_KEY),
+    ]);
+    const rootDevice = (await fs.stat("/")).dev;
+    const candidates: Array<{ key: string; path: string }> = [
+      { key: "libraryRoot", path: config.libraryRoot },
+      ...(rommConfig.enabled ? [{ key: "rommLibraryRoot", path: rommConfig.libraryRoot }] : []),
+      ...(extractTempDir?.trim() ? [{ key: "extractTempDir", path: extractTempDir.trim() }] : []),
+    ];
+    const paths = await Promise.all(
+      candidates.map(async ({ key, path: p }) => ({
+        key,
+        path: p,
+        onContainerDisk: (await nearestExistingDevice(p)) === rootDevice,
+      }))
+    );
+    return res.json({ inContainer: true, paths });
+  } catch (error) {
+    logger.error({ error }, "Error checking storage paths");
+    return res.status(500).json({ error: "Failed to check storage paths" });
+  }
+});
+
 importRouter.get("/extraction", async (_req, res) => {
   try {
     const extractTempDir = (await storage.getSystemConfig(EXTRACT_TEMP_DIR_CONFIG_KEY)) ?? "";
