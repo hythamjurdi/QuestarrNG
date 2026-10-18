@@ -94,8 +94,13 @@ export default function ImportReviewModal({
   const [isSourceBrowserOpen, setIsSourceBrowserOpen] = useState(false);
   const [isDestBrowserOpen, setIsDestBrowserOpen] = useState(false);
 
-  const planApplied = useRef(false);
-  // Set once the user picks a destination themselves, so the suggested one stops applying.
+  // The plan response last copied into the form. Tracked by identity (not a "done" flag)
+  // so a refetched plan — e.g. a cached response replaced by a fresh one, or the plan for a
+  // newly picked RomM platform — is applied too.
+  const appliedPlan = useRef<unknown>(null);
+  // Set when the user edits the destination by hand, so plans stop overwriting it.
+  const destinationTouched = useRef(false);
+  // Set once the user picks a destination type themselves, so the suggested one stops applying.
   const strategyTouched = useRef(false);
   const unpackTouched = useRef(false);
 
@@ -130,7 +135,8 @@ export default function ImportReviewModal({
   // Reset state on open, defaulting transfer mode to the user's configured setting
   useEffect(() => {
     if (open) {
-      planApplied.current = false;
+      appliedPlan.current = null;
+      destinationTouched.current = false;
       strategyTouched.current = false;
       unpackTouched.current = passwordRequired;
       setStrategy("pc");
@@ -146,7 +152,8 @@ export default function ImportReviewModal({
   }, [open, downloadId, importConfig?.libraryRoot, importConfig?.transferMode, passwordRequired]);
 
   useEffect(() => {
-    planApplied.current = false;
+    appliedPlan.current = null;
+    destinationTouched.current = false;
     if (strategy === "romm") {
       setDestinationPath(rommConfig?.libraryRoot ?? "");
       setTransferMode(rommConfig?.moveMode ?? "hardlink");
@@ -162,13 +169,14 @@ export default function ImportReviewModal({
     importConfig?.transferMode,
   ]);
 
+  // Picking another RomM platform means a new destination folder.
   useEffect(() => {
-    planApplied.current = false;
-  }, [sourcePath, strategy, chosenSlug]);
+    destinationTouched.current = false;
+  }, [chosenSlug]);
 
-  // Pre-fill paths from plan once when it loads
+  // Copy each new plan into the form.
   useEffect(() => {
-    if (open && planData && !planApplied.current) {
+    if (open && planData && appliedPlan.current !== planData) {
       // Preselect where Questarr would route this download on its own (RomM when the
       // game's platform maps to a RomM folder). Switching strategy refetches the plan.
       if (
@@ -181,11 +189,17 @@ export default function ImportReviewModal({
         setStrategy(planData.suggestedStrategy);
         return;
       }
-      planApplied.current = true;
-      if (planData.originalPath) setSourcePath(planData.originalPath);
+      appliedPlan.current = planData;
+      if (planData.originalPath) {
+        setSourcePath((current) => current || planData.originalPath);
+      }
       // A RomM plan without a platform folder carries PC paths; keep the RomM root until
       // a platform is chosen.
-      if (planData.proposedPath && (strategy !== "romm" || planData.romm?.platformDir)) {
+      if (
+        !destinationTouched.current &&
+        planData.proposedPath &&
+        (strategy !== "romm" || planData.romm?.platformDir)
+      ) {
         setDestinationPath(planData.proposedPath);
       }
       if (!unpackTouched.current && planData.suggestUnpack !== undefined) {
@@ -508,7 +522,10 @@ export default function ImportReviewModal({
                 <Input
                   id="import-review-destination-path"
                   value={destinationPath}
-                  onChange={(e) => setDestinationPath(e.target.value)}
+                  onChange={(e) => {
+                    destinationTouched.current = true;
+                    setDestinationPath(e.target.value);
+                  }}
                   placeholder="/path/to/library"
                   lang="und"
                   dir="auto"
@@ -756,7 +773,10 @@ export default function ImportReviewModal({
       <FileBrowser
         open={isDestBrowserOpen}
         onOpenChange={setIsDestBrowserOpen}
-        onSelect={(path) => setDestinationPath(path)}
+        onSelect={(path) => {
+          destinationTouched.current = true;
+          setDestinationPath(path);
+        }}
         initialPath="/"
         title={t("Select Destination")}
         root={strategy === "romm" ? (rommConfig?.libraryRoot ?? "/") : "/"}
