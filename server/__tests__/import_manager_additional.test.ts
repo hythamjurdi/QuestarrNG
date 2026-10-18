@@ -726,7 +726,7 @@ describe("ImportManager - processImport archive cleanup", () => {
     fsMock.stat.mockResolvedValue({ isDirectory: () => false });
   });
 
-  it("removes extracted directory after successful import when autoUnpack is enabled", async () => {
+  it("copy mode extracts from the download without writing a raw archive copy to the library", async () => {
     const storage = makeStorage();
     storage.getGameDownload.mockResolvedValue({
       id: "dl-1",
@@ -768,10 +768,15 @@ describe("ImportManager - processImport archive cleanup", () => {
     const manager = makeManager(storage, { pathService, archiveService });
     await manager.processImport("dl-1", "/remote/path");
 
-    // copy mode relocates the raw archive into the library first (Game.zip's basename,
-    // under the planned destination), extracts it in place there, then removes that
-    // now-redundant copy — not a downloader-side "_extracted" directory.
-    expect(fsMock.remove).toHaveBeenCalledWith("/games/PC/Archive Game/Game.zip");
+    // copy mode extracts straight from the download into the planned destination: no raw
+    // archive copy is ever written to the library (so none needs removing), and the
+    // download itself is left in place for seeding.
+    expect(archiveService.extract).toHaveBeenCalledWith(
+      expect.stringMatching(/Game\.zip$/),
+      "/games/PC/Archive Game",
+      undefined
+    );
+    expect(fsMock.remove).not.toHaveBeenCalledWith("/games/PC/Archive Game/Game.zip");
 
     planSpy.mockRestore();
     execSpy.mockRestore();

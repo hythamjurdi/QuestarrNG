@@ -491,11 +491,11 @@ describe("ImportManager", () => {
 
     await manager.processImport("dl-1", "/remote/path");
 
-    // move mode relocates the raw archive into the library first (file.zip's basename,
-    // under the computed destination), then extracts it in place there — not in a
-    // downloader-side "_extracted" directory.
+    // With auto-delete off, the configured move runs as a seeding-safe copy, which reads
+    // the archive straight from the download folder into the computed destination — no
+    // raw copy in the library, no downloader-side "_extracted" directory.
     expect(archiveService.extract).toHaveBeenCalledWith(
-      "/data/PC/Archive Game/file.zip",
+      "/data/downloads/file.zip",
       "/data/PC/Archive Game",
       undefined
     );
@@ -637,7 +637,7 @@ describe("ImportManager", () => {
     await manager.processImport("dl-1", "/remote/path");
 
     expect(archiveService.extract).toHaveBeenCalledWith(
-      "/data/PC/Archive Game/file.zip",
+      "/data/downloads/file.zip",
       "/data/PC/Archive Game",
       undefined
     );
@@ -1063,7 +1063,7 @@ describe("ImportManager", () => {
     await createManager().processImport("dl-1", "/remote/path", "hunter2");
 
     expect(archiveService.extract).toHaveBeenCalledWith(
-      "/data/PC/Archive Game/file.rar",
+      "/data/downloads/file.rar",
       "/data/PC/Archive Game",
       "hunter2"
     );
@@ -1322,8 +1322,10 @@ describe("ImportManager", () => {
         libraryRoot: "/romm/library",
         conflictPolicy: "overwrite",
         singleFilePlacement: "root",
+        moveMode: "move",
       })
     );
+    storage.getImportConfig.mockResolvedValue(makeImportConfig({ autoDeleteAfterImport: true }));
     storage.getPlatformMapping.mockResolvedValue({ rommPlatformSlug: "switch" });
     pathService.translatePath.mockResolvedValue(sourcePath);
 
@@ -1505,8 +1507,31 @@ describe("ImportManager", () => {
     );
   });
 
-  it("autoDeleteAfterImport: does NOT call removeDownload for hardlink mode", async () => {
+  it("autoDeleteAfterImport: calls removeDownload for hardlink mode (the hardlinked library copy keeps its data)", async () => {
     setupSuccessfulImport("hardlink");
+    // The mocked fs has no link(); stub the transfer itself so the import completes.
+    const { PCImportStrategy } = await import("../services/ImportStrategies.js");
+    const executeSpy = vi.spyOn(PCImportStrategy.prototype, "executeImport").mockResolvedValue({
+      destDir: "/data/PC/My Game",
+      filesPlaced: ["/data/PC/My Game/file.iso"],
+      modeUsed: "hardlink",
+      conflictsResolved: [],
+    });
+
+    const manager = new ImportManager(
+      storage as never, // NOSONAR
+      pathService as never, // NOSONAR
+      platformService as never, // NOSONAR
+      archiveService as never // NOSONAR
+    );
+    await manager.processImport("dl-1", "/remote/path");
+
+    expect(downloadersMock.removeDownload).toHaveBeenCalled();
+    executeSpy.mockRestore();
+  });
+
+  it("autoDeleteAfterImport off: never removes the download, even in move mode", async () => {
+    setupSuccessfulImport("move", false);
 
     const manager = new ImportManager(
       storage as never, // NOSONAR

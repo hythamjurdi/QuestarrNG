@@ -207,7 +207,8 @@ describe("ImportSettings", () => {
     await screen.findByText("Enable Post-Processing");
     fireEvent.mouseDown(screen.getByRole("tab", { name: "RomM" }));
 
-    fireEvent.click(screen.getByRole("switch"));
+    // The first switch on the tab is "Route ROM imports to RomM".
+    fireEvent.click(screen.getAllByRole("switch")[0]!);
     fireEvent.change(screen.getByDisplayValue(DEFAULT_ROMM_CONFIG.libraryRoot), {
       target: { value: "/romm/library/custom" },
     });
@@ -226,6 +227,41 @@ describe("ImportSettings", () => {
         })
       );
     });
+  });
+
+  it("saves RomM scan settings and tests the connection with the unsaved values", async () => {
+    const { apiRequest } = await import("@/lib/queryClient");
+    mockFetch({ rommConfig: { ...DEFAULT_ROMM_CONFIG, enabled: true } });
+    renderComponent();
+    await screen.findByText("Enable Post-Processing");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "RomM" }));
+
+    fireEvent.change(screen.getByLabelText("RomM URL"), {
+      target: { value: "http://romm:8080" },
+    });
+    fireEvent.change(screen.getByLabelText("API token"), { target: { value: "rmm_abc" } });
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
+
+    await waitFor(() =>
+      expect(apiRequest).toHaveBeenCalledWith("POST", "/api/imports/romm/test", {
+        apiUrl: "http://romm:8080",
+        apiToken: "rmm_abc",
+      })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Save RomM settings" }));
+    await waitFor(() =>
+      expect(apiRequest).toHaveBeenCalledWith(
+        "PATCH",
+        "/api/imports/romm",
+        expect.objectContaining({
+          apiUrl: "http://romm:8080",
+          apiToken: "rmm_abc",
+          unpackRar: true,
+          triggerScan: true,
+        })
+      )
+    );
   });
 
   it("edits JSON folder bindings and restores invalid JSON on blur", async () => {

@@ -290,6 +290,34 @@ function safeEntrySegments(name: string): string[] {
   return segments;
 }
 
+// Fails fast, before an hour of unrar, when the extraction temp directory plainly can't
+// hold the archive's declared contents (with a 5% margin for filesystem overhead).
+async function assertFreeSpace(dir: string, entries: ArchiveEntry[]): Promise<void> {
+  const needed = entries.reduce((sum, e) => sum + (e.isDirectory ? 0 : Math.max(0, e.size)), 0);
+  let available: number;
+  try {
+    const stats = await fs.promises.statfs(dir);
+    available = Number(stats.bavail) * Number(stats.bsize);
+  } catch {
+    return; // statfs unsupported here: let the extraction itself report a full disk.
+  }
+  if (needed * 1.05 > available) {
+    const gib = (n: number): string => (n / 1024 ** 3).toFixed(2);
+    throw new Error(
+      `Not enough space in the extraction temp directory ${dir}: the archive needs about ${gib(needed)} GiB and ${gib(available)} GiB is free`
+    );
+  }
+}
+
+async function sameFilesystem(a: string, b: string): Promise<boolean> {
+  try {
+    const [sa, sb] = await Promise.all([fs.stat(a), fs.stat(b)]);
+    return sa.dev === sb.dev;
+  } catch {
+    return false;
+  }
+}
+
 function validateArchiveEntries(entries: ArchiveEntry[], outputDir: string): void {
   if (entries.length > ARCHIVE_MAX_ENTRIES) {
     throw new Error(`Archive contains too many entries (limit: ${ARCHIVE_MAX_ENTRIES}).`);
@@ -607,17 +635,33 @@ export class ArchiveService {
    * @param password Password to supply for an encrypted archive. Omit for an unencrypted
    *   one; if the archive turns out to require one, `extract` rejects with
    *   {@link ArchivePasswordRequiredError} rather than the generic corruption message.
+   * @param options.stagingRoot Scratch directory to unpack into before the merge (e.g. a
+   *   fast cache disk). The per-run directory created there is always removed afterwards.
+   *   When omitted, staging happens in a hidden directory inside outputDir.
    * @returns Paths of files reported as extracted.
    */
-  async extract(filePath: string, outputDir: string, password?: string): Promise<string[]> {
+  async extract(
+    filePath: string,
+    outputDir: string,
+    password?: string,
+    options?: { stagingRoot?: string | undefined }
+  ): Promise<string[]> {
     const tool = resolveTool(filePath);
-    logger.debug({ filePath, outputDir, tool, hasPassword: !!password }, "Extracting archive");
+    const stagingRoot = options?.stagingRoot;
+    logger.debug(
+      { filePath, outputDir, tool, hasPassword: !!password, stagingRoot },
+      "Extracting archive"
+    );
 
     // Inspect and bound attacker-controlled metadata before running the integrity check,
     // which may decompress every entry. Validate before touching the filesystem, so a
     // failing/unsupported archive never leaves behind an empty output directory.
     const entries = await this.listEntriesForExtraction(filePath, password);
     validateArchiveEntries(entries, outputDir);
+    if (stagingRoot) {
+      await fs.ensureDir(stagingRoot);
+      await assertFreeSpace(stagingRoot, entries);
+    }
     await this.testArchive(filePath, tool, password);
 
     // Extract into a private staging directory inside outputDir, then merge the result
@@ -630,26 +674,49 @@ export class ArchiveService {
     // can't delete or mix each other's output. It sits inside outputDir so the merge is a
     // same-filesystem rename, and its reserved name can't collide with the archive volumes
     // the move/copy modes relocate into outputDir before extracting.
+    //
+    // With a stagingRoot the tool writes into a scratch directory there instead. When that
+    // is on another filesystem, its output is copied into the in-destination staging
+    // directory before the merge, so the merge itself stays a same-filesystem rename.
     await fs.ensureDir(outputDir);
     const stagingDir = await fs.mkdtemp(path.join(outputDir, EXTRACT_STAGING_PREFIX));
     const backupDir = `${stagingDir}.bak`;
+    const scratchDir = stagingRoot
+      ? await fs.mkdtemp(path.join(stagingRoot, EXTRACT_STAGING_PREFIX))
+      : undefined;
 
     let extractedFiles: string[];
     let merged = false;
     try {
+      const unpackDir = scratchDir ?? stagingDir;
       if (tool === "unrar") {
-        await this.extractWithUnrar(filePath, stagingDir, password);
+        await this.extractWithUnrar(filePath, unpackDir, password);
       } else {
-        await this.extractWith7zip(filePath, stagingDir, password);
+        await this.extractWith7zip(filePath, unpackDir, password);
+      }
+      let mergeFrom = stagingDir;
+      if (scratchDir) {
+        if (await sameFilesystem(scratchDir, outputDir)) {
+          mergeFrom = scratchDir;
+        } else {
+          await fs.copy(scratchDir, stagingDir, { preserveTimestamps: true, dereference: false });
+          // Free the scratch space before the merge rather than after.
+          await fs.remove(scratchDir).catch(() => undefined);
+        }
       }
       extractedFiles = await serializeMerge(() =>
-        this.mergeExtracted(stagingDir, outputDir, backupDir)
+        this.mergeExtracted(mergeFrom, outputDir, backupDir)
       );
       merged = true;
     } catch (err) {
       logger.error({ err, filePath, tool }, "Extraction failed");
       throw err;
     } finally {
+      if (scratchDir) {
+        await fs.remove(scratchDir).catch((err: unknown) => {
+          logger.warn({ err, dir: scratchDir }, "Could not remove extraction temp directory");
+        });
+      }
       await fs.remove(stagingDir).catch((err: unknown) => {
         logger.warn({ err, dir: stagingDir }, "Could not remove extraction staging directory");
       });

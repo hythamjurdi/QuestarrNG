@@ -86,6 +86,9 @@ export default function ImportSettings() {
   const { data: hardlinkCapability } = useQuery<HardlinkCapabilityResponse>({
     queryKey: ["/api/imports/hardlink/check"],
   });
+  const { data: extractionSettings } = useQuery<{ extractTempDir: string }>({
+    queryKey: ["/api/imports/extraction"],
+  });
   // Read-only mirror of the Platforms card (Appearance tab), which owns this setting.
   const { data: userSettings } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
@@ -121,10 +124,17 @@ export default function ImportSettings() {
   const [localRommConfig, setLocalRommConfig] = useState<RomMConfig | null>(null);
   const [rommBindingsText, setRommBindingsText] = useState("{}");
   const [libraryBrowserOpen, setLibraryBrowserOpen] = useState(false);
+  const [extractTempDir, setExtractTempDir] = useState("");
+  const [rommTestResult, setRommTestResult] = useState<{ ok: boolean; message: string } | null>(
+    null
+  );
 
   useEffect(() => {
     if (config) setLocalConfig(config);
   }, [config]);
+  useEffect(() => {
+    if (extractionSettings) setExtractTempDir(extractionSettings.extractTempDir);
+  }, [extractionSettings]);
   useEffect(() => {
     if (rommConfig) {
       setLocalRommConfig(rommConfig);
@@ -183,6 +193,39 @@ export default function ImportSettings() {
         variant: "destructive",
       });
     },
+  });
+
+  const updateExtractionMutation = useMutation({
+    mutationFn: async (value: string) => {
+      await apiRequest("PUT", "/api/imports/extraction", { extractTempDir: value.trim() });
+    },
+    onSuccess: () => {
+      toast({ title: "Settings Saved", description: "Extraction temp directory updated." });
+      queryClient.invalidateQueries({ queryKey: ["/api/imports/extraction"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Save Failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const testRommMutation = useMutation({
+    mutationFn: async (data: { apiUrl: string; apiToken: string }) => {
+      const res = await apiRequest("POST", "/api/imports/romm/test", data);
+      return (await res.json()) as { ok: boolean; message: string };
+    },
+    onSuccess: (result) => setRommTestResult(result),
+    onError: (error: Error) => setRommTestResult({ ok: false, message: error.message }),
+  });
+
+  const scanRommMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/imports/romm/scan", {});
+      return (await res.json()) as { ok: boolean; message?: string };
+    },
+    onSuccess: () =>
+      toast({ title: "RomM scan started", description: "RomM is scanning your ROM platforms." }),
+    onError: (error: Error) =>
+      toast({ title: "RomM scan failed", description: error.message, variant: "destructive" }),
   });
 
   const updatePlatformSlugMutation = useMutation({
@@ -330,6 +373,36 @@ export default function ImportSettings() {
                           }
                         />
                       </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="extract-temp-dir">
+                          <InterfaceText source={"Extraction temp directory"} />
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="extract-temp-dir"
+                            placeholder="/tmp/questarr"
+                            data-i18n-placeholder={"/tmp/questarr"}
+                            value={extractTempDir}
+                            onChange={(e) => setExtractTempDir(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={updateExtractionMutation.isPending}
+                            onClick={() => updateExtractionMutation.mutate(extractTempDir)}
+                          >
+                            <InterfaceText source={"Save"} />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          <InterfaceText
+                            source={
+                              "Optional scratch folder for unpacking archives. Leave empty to unpack beside the destination. Temporary files are always deleted afterwards."
+                            }
+                          />
+                        </p>
+                      </div>
                     </div>
 
                     <Separator className="mb-6" />
@@ -400,6 +473,16 @@ export default function ImportSettings() {
                             source={"Hardlink keeps torrents seeding while importing."}
                           />
                         </p>
+                        {localConfig.transferMode === "move" &&
+                          !localConfig.autoDeleteAfterImport && (
+                            <p className="text-xs text-amber-500">
+                              <InterfaceText
+                                source={
+                                  "Move deletes the original download. While auto-delete is off, Questarr copies instead so torrents keep seeding."
+                                }
+                              />
+                            </p>
+                          )}
                         {localConfig.transferMode === "hardlink" &&
                           hardlinkCapability?.generic.supportedForAll === true && (
                             <p className="text-xs text-emerald-500">
@@ -435,7 +518,7 @@ export default function ImportSettings() {
                           <p className="text-xs text-muted-foreground">
                             <InterfaceText
                               source={
-                                "After a successful copy or move import, remove the download from the client and delete source files."
+                                "After a successful import (PC or RomM), remove the download from the client and delete its files. Leave off to keep seeding."
                               }
                             />
                           </p>
@@ -585,6 +668,26 @@ export default function ImportSettings() {
                     />
                   </p>
                 </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>
+                      <InterfaceText source={"Unpack RAR archives"} />
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      <InterfaceText
+                        source={
+                          "Extract RAR sets, including multi-part ones, before they reach RomM. Zip and 7z ROMs stay packed."
+                        }
+                      />
+                    </p>
+                  </div>
+                  <Switch
+                    checked={localRommConfig.unpackRar}
+                    onCheckedChange={(unpackRar) =>
+                      setLocalRommConfig({ ...localRommConfig, unpackRar })
+                    }
+                  />
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>
@@ -643,6 +746,15 @@ export default function ImportSettings() {
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                    {localRommConfig.moveMode === "move" && !config?.autoDeleteAfterImport && (
+                      <p className="text-xs text-amber-500">
+                        <InterfaceText
+                          source={
+                            "Move deletes the original download. While auto-delete is off, Questarr copies instead so torrents keep seeding."
+                          }
+                        />
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label>
@@ -771,6 +883,166 @@ export default function ImportSettings() {
                     </p>
                   </div>
                 )}
+                <Separator />
+                <div className="space-y-4">
+                  <div>
+                    <Label>
+                      <InterfaceText source={"RomM scanning"} />
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      <InterfaceText
+                        source={
+                          "After an import, ask RomM to scan the platforms that received new files."
+                        }
+                      />
+                    </p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="romm-api-url">
+                        <InterfaceText source={"RomM URL"} />
+                      </Label>
+                      <Input
+                        id="romm-api-url"
+                        value={localRommConfig.apiUrl}
+                        placeholder="http://romm:8080"
+                        data-i18n-placeholder={"http://romm:8080"}
+                        onChange={(event) =>
+                          setLocalRommConfig({ ...localRommConfig, apiUrl: event.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="romm-api-token">
+                        <InterfaceText source={"API token"} />
+                      </Label>
+                      <Input
+                        id="romm-api-token"
+                        type="password"
+                        autoComplete="off"
+                        value={localRommConfig.apiToken}
+                        placeholder="rmm_…"
+                        data-i18n-placeholder={"rmm_…"}
+                        onChange={(event) =>
+                          setLocalRommConfig({ ...localRommConfig, apiToken: event.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    <InterfaceText
+                      source={
+                        'Create a Client API Token in RomM with the "tasks.run" scope. Add "platforms.read" for RomM versions without the scan API.'
+                      }
+                    />
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Label>
+                      <InterfaceText source={"Scan RomM after import"} />
+                    </Label>
+                    <Switch
+                      checked={localRommConfig.triggerScan}
+                      onCheckedChange={(triggerScan) =>
+                        setLocalRommConfig({ ...localRommConfig, triggerScan })
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label>
+                        <InterfaceText source={"Scan type"} />
+                      </Label>
+                      <Select
+                        value={localRommConfig.scanType}
+                        onValueChange={(value) =>
+                          setLocalRommConfig({
+                            ...localRommConfig,
+                            scanType: value as RomMConfig["scanType"],
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="quick">
+                            <InterfaceText source={"Quick (new files only)"} />
+                          </SelectItem>
+                          <SelectItem value="update">
+                            <InterfaceText source={"Update metadata"} />
+                          </SelectItem>
+                          <SelectItem value="unmatched">
+                            <InterfaceText source={"Unmatched games"} />
+                          </SelectItem>
+                          <SelectItem value="complete">
+                            <InterfaceText source={"Complete rescan"} />
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="romm-scan-delay">
+                        <InterfaceText source={"Scan delay (seconds)"} />
+                      </Label>
+                      <Input
+                        id="romm-scan-delay"
+                        type="number"
+                        min={0}
+                        max={3600}
+                        value={localRommConfig.scanDebounceSeconds}
+                        onChange={(event) =>
+                          setLocalRommConfig({
+                            ...localRommConfig,
+                            scanDebounceSeconds: Math.max(
+                              0,
+                              Math.min(3600, Math.trunc(Number(event.target.value) || 0))
+                            ),
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        <InterfaceText
+                          source={"Imports that finish within this window share one scan."}
+                        />
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={testRommMutation.isPending}
+                      onClick={() =>
+                        testRommMutation.mutate({
+                          apiUrl: localRommConfig.apiUrl,
+                          apiToken: localRommConfig.apiToken,
+                        })
+                      }
+                    >
+                      {testRommMutation.isPending && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      <InterfaceText source={"Test connection"} />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={scanRommMutation.isPending || !rommConfig?.apiToken}
+                      onClick={() => scanRommMutation.mutate()}
+                    >
+                      <InterfaceText source={"Scan RomM now"} />
+                    </Button>
+                  </div>
+                  {rommTestResult && (
+                    <p
+                      className={`text-xs ${rommTestResult.ok ? "text-emerald-500" : "text-amber-500"}`}
+                      role="status"
+                    >
+                      {rommTestResult.message}
+                    </p>
+                  )}
+                </div>
+                <Separator />
                 <div className="space-y-3">
                   <div>
                     <Label>

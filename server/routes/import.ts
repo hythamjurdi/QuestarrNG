@@ -20,7 +20,12 @@ import {
   IMPORT_TRANSFER_MODES,
   GAME_LINK_REQUIRED_STATUS,
   rommConfigSchema,
+  rommConfigPatchBaseSchema,
+  type RomMConfig,
 } from "../../shared/schema.js";
+import { RommApiClient, normalizeRommBaseUrl } from "../services/RommScanService.js";
+import { EXTRACT_TEMP_DIR_CONFIG_KEY } from "../services/extract-staging.js";
+import { isSensitivePath } from "../path-security.js";
 import path from "node:path";
 import fs from "fs-extra";
 import { randomUUID } from "node:crypto";
@@ -68,15 +73,40 @@ const platformMappingPatchSchema = z
 // The earlier RomM client sent this fixed default even though placement for
 // multi-file games is now implicit. Accept that one legacy field so a stale
 // client can save the rest of its settings; keep rejecting other unknown keys.
+const ROMM_TOKEN_PLACEHOLDER = "********";
+
 const rommConfigPatchSchema = z.preprocess((value: unknown) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const patch = value as Record<string, unknown>;
-  if (patch.multiFilePlacement !== "subfolder") return value;
-
   const normalized = { ...patch };
-  delete normalized.multiFilePlacement;
+  if (normalized.multiFilePlacement === "subfolder") delete normalized.multiFilePlacement;
+  // The client echoes back the redacted placeholder for an unchanged token.
+  if (normalized.apiToken === ROMM_TOKEN_PLACEHOLDER) delete normalized.apiToken;
   return normalized;
-}, rommConfigSchema.partial().strict());
+}, rommConfigPatchBaseSchema.strict());
+
+function redactRommConfig(config: RomMConfig): RomMConfig {
+  return { ...config, apiToken: config.apiToken ? ROMM_TOKEN_PLACEHOLDER : "" };
+}
+
+function validateRommApiUrl(apiUrl: string): string | null {
+  if (!apiUrl) return null;
+  try {
+    normalizeRommBaseUrl(apiUrl);
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : "Invalid RomM URL";
+  }
+}
+
+const rommTestBodySchema = z
+  .object({
+    apiUrl: z.string().trim().max(2048).optional(),
+    apiToken: z.string().trim().max(512).optional(),
+  })
+  .strict();
+
+const extractionSettingsSchema = z.object({ extractTempDir: z.string().trim().max(1024) }).strict();
 
 const linkGameDownloadBodySchema = z.object({ gameId: z.string().min(1) }).strict();
 
@@ -390,7 +420,7 @@ importRouter.patch("/config", validate(importConfigPatchSchema), async (req, res
 importRouter.get("/romm", async (_req, res) => {
   try {
     const userId = res.locals.userId as string;
-    return res.json(await storage.getRomMConfig(userId));
+    return res.json(redactRommConfig(await storage.getRomMConfig(userId)));
   } catch (error) {
     logger.error({ error }, "Error fetching RomM config");
     return res.status(500).json({ error: "Failed to fetch RomM config" });
@@ -406,11 +436,125 @@ importRouter.patch("/romm", validate(rommConfigPatchSchema), async (req, res) =>
     if (path.resolve(next.libraryRoot) === path.parse(path.resolve(next.libraryRoot)).root) {
       return res.status(400).json({ error: "RomM library root cannot be the filesystem root" });
     }
-    return res.json(await storage.updateRomMConfig(userId, next));
+    const urlError = validateRommApiUrl(next.apiUrl);
+    if (urlError) return res.status(400).json({ error: urlError });
+    return res.json(redactRommConfig(await storage.updateRomMConfig(userId, next)));
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
     logger.error({ error }, "Error updating RomM config");
     return res.status(500).json({ error: "Failed to update RomM config" });
+  }
+});
+
+// Tests a RomM URL/token: the unsaved values from the form when given, else the saved ones.
+importRouter.post("/romm/test", validate(rommTestBodySchema), async (req, res) => {
+  try {
+    const userId = res.locals.userId as string;
+    const body = rommTestBodySchema.parse(req.body ?? {});
+    const saved = await storage.getRomMConfig(userId);
+    const apiUrl = body.apiUrl || saved.apiUrl;
+    const apiToken =
+      body.apiToken && body.apiToken !== ROMM_TOKEN_PLACEHOLDER ? body.apiToken : saved.apiToken;
+    if (!apiUrl || !apiToken) {
+      return res.status(400).json({ ok: false, message: "Enter the RomM URL and API token first" });
+    }
+    const urlError = validateRommApiUrl(apiUrl);
+    if (urlError) return res.status(400).json({ ok: false, message: urlError });
+    const result = await new RommApiClient(apiUrl, apiToken).testConnection();
+    return res.json(result);
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
+    logger.warn({ error }, "RomM connection test failed");
+    return res.json({
+      ok: false,
+      scanEndpoint: "unknown",
+      message: error instanceof Error ? error.message : "RomM connection test failed",
+    });
+  }
+});
+
+// Starts a RomM scan right away for the given platform slugs (or every platform with a
+// RomM slug mapping when none are given), using the saved settings.
+importRouter.post(
+  "/romm/scan",
+  validate(
+    z.object({ slugs: z.array(z.string().trim().min(1).max(100)).max(200).optional() }).strict()
+  ),
+  async (req, res) => {
+    try {
+      const userId = res.locals.userId as string;
+      const config = await storage.getRomMConfig(userId);
+      if (!config.apiUrl || !config.apiToken) {
+        return res.status(400).json({ ok: false, message: "RomM URL and API token are not set" });
+      }
+      let slugs: string[] = (req.body?.slugs as string[] | undefined) ?? [];
+      if (slugs.length === 0) {
+        const mappings = await storage.getPlatformMappings();
+        slugs = [
+          ...new Set(
+            mappings
+              .map((m) => m.rommPlatformSlug?.trim().toLowerCase())
+              .filter((s): s is string => !!s)
+          ),
+        ];
+      }
+      if (slugs.length === 0) {
+        return res.status(400).json({ ok: false, message: "No RomM platform slugs to scan" });
+      }
+      const outcome = await new RommApiClient(config.apiUrl, config.apiToken).scanPlatforms(
+        slugs,
+        config.scanType
+      );
+      return res.status(outcome.ok ? 202 : 502).json(outcome);
+    } catch (error) {
+      logger.warn({ error }, "Manual RomM scan failed");
+      return res.status(502).json({
+        ok: false,
+        message: error instanceof Error ? error.message : "RomM scan failed",
+      });
+    }
+  }
+);
+
+importRouter.get("/extraction", async (_req, res) => {
+  try {
+    const extractTempDir = (await storage.getSystemConfig(EXTRACT_TEMP_DIR_CONFIG_KEY)) ?? "";
+    return res.json({ extractTempDir });
+  } catch (error) {
+    logger.error({ error }, "Error fetching extraction settings");
+    return res.status(500).json({ error: "Failed to fetch extraction settings" });
+  }
+});
+
+importRouter.put("/extraction", validate(extractionSettingsSchema), async (req, res) => {
+  try {
+    const { extractTempDir } = extractionSettingsSchema.parse(req.body);
+    if (extractTempDir) {
+      if (!path.isAbsolute(extractTempDir)) {
+        return res
+          .status(400)
+          .json({ error: "Extraction temp directory must be an absolute path" });
+      }
+      const resolved = path.resolve(extractTempDir);
+      if (resolved === path.parse(resolved).root || isSensitivePath(resolved)) {
+        return res.status(400).json({ error: "That directory cannot be used for extraction" });
+      }
+      try {
+        await fs.ensureDir(resolved);
+        await fs.access(resolved, fs.constants.W_OK);
+      } catch {
+        return res.status(400).json({ error: `Questarr cannot create or write to ${resolved}` });
+      }
+    }
+    await storage.setSystemConfig(
+      EXTRACT_TEMP_DIR_CONFIG_KEY,
+      extractTempDir ? path.resolve(extractTempDir) : ""
+    );
+    return res.json({ extractTempDir: extractTempDir ? path.resolve(extractTempDir) : "" });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: zodErrorMessage(error) });
+    logger.error({ error }, "Error updating extraction settings");
+    return res.status(500).json({ error: "Failed to update extraction settings" });
   }
 });
 

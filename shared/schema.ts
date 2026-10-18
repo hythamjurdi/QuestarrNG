@@ -154,7 +154,17 @@ export type RomMConflictPolicy = (typeof ROMM_CONFLICT_POLICIES)[number];
 export type RomMSingleFilePlacement = (typeof ROMM_SINGLE_FILE_PLACEMENTS)[number];
 export type RomMBindingMissingBehavior = (typeof ROMM_BINDING_MISSING_BEHAVIORS)[number];
 
-export const rommConfigSchema = z.object({
+// RomM scan types accepted by RomM's `POST /api/tasks/scan` and its `scan` socket event.
+export const ROMM_SCAN_TYPES = [
+  "quick",
+  "new_platforms",
+  "update",
+  "unmatched",
+  "complete",
+] as const;
+export type RomMScanType = (typeof ROMM_SCAN_TYPES)[number];
+
+const rommConfigFields = {
   enabled: z.boolean(),
   libraryRoot: z.string().min(1).max(1024),
   platformRoutingMode: z.enum(ROMM_PLATFORM_ROUTING_MODES),
@@ -163,6 +173,34 @@ export const rommConfigSchema = z.object({
   conflictPolicy: z.enum(ROMM_CONFLICT_POLICIES),
   singleFilePlacement: z.enum(ROMM_SINGLE_FILE_PLACEMENTS),
   bindingMissingBehavior: z.enum(ROMM_BINDING_MISSING_BEHAVIORS),
+  // Unpack RAR sets (.rar, .partN.rar, .rNN) before handing them to RomM. Zip/7z ROMs are
+  // left packed: RomM reads and hashes them as-is.
+  unpackRar: z.boolean(),
+  // RomM API: base URL (e.g. http://romm:8080) and a Client API Token with the
+  // `tasks.run` scope (plus `platforms.read` for the socket fallback on older RomM).
+  apiUrl: z.string().trim().max(2048),
+  apiToken: z.string().trim().max(512),
+  triggerScan: z.boolean(),
+  scanType: z.enum(ROMM_SCAN_TYPES),
+  // Imports finishing within this window share one scan request.
+  scanDebounceSeconds: z.number().int().min(0).max(3600),
+};
+
+// For PATCH bodies. No defaults here on purpose: Zod 4 applies a field's .default() even
+// under .partial(), so a defaulted patch schema would reset every omitted field.
+export const rommConfigPatchBaseSchema = z.object(rommConfigFields).partial();
+
+// The stored config is one JSON blob. Fields added after the first RomM release carry a
+// .default() so an older blob without them still parses — a failed parse falls back to
+// DEFAULT_ROMM_CONFIG and would silently reset the user's settings.
+export const rommConfigSchema = z.object({
+  ...rommConfigFields,
+  unpackRar: rommConfigFields.unpackRar.default(true),
+  apiUrl: rommConfigFields.apiUrl.default(""),
+  apiToken: rommConfigFields.apiToken.default(""),
+  triggerScan: rommConfigFields.triggerScan.default(true),
+  scanType: rommConfigFields.scanType.default("quick"),
+  scanDebounceSeconds: rommConfigFields.scanDebounceSeconds.default(30),
 });
 
 export type RomMConfig = z.infer<typeof rommConfigSchema>;
@@ -172,10 +210,18 @@ export const DEFAULT_ROMM_CONFIG: RomMConfig = {
   libraryRoot: "/data/romm/library/roms",
   platformRoutingMode: "slug-subfolder",
   platformBindings: {},
-  moveMode: "move",
+  // Hardlink keeps the download seeding without using extra space, and falls back to a
+  // copy per file when the download and the RomM library are on different filesystems.
+  moveMode: "hardlink",
   conflictPolicy: "rename",
   singleFilePlacement: "root",
   bindingMissingBehavior: "fallback",
+  unpackRar: true,
+  apiUrl: "",
+  apiToken: "",
+  triggerScan: true,
+  scanType: "quick",
+  scanDebounceSeconds: 30,
 };
 
 // gameDownloads.status value for a download whose linked game record can't be

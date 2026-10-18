@@ -65,7 +65,14 @@ function createManager(
   configOverrides: Partial<ImportConfig>
 ): ImportManager {
   storage.getImportConfig.mockResolvedValue(
-    makeImportConfig({ autoUnpack: true, overwriteExisting: true, ...configOverrides })
+    makeImportConfig({
+      autoUnpack: true,
+      overwriteExisting: true,
+      // "move" consumes the download, so it only runs as a move when the user allowed
+      // source removal; without that it is downgraded to a seeding-safe copy.
+      ...(configOverrides.transferMode === "move" ? { autoDeleteAfterImport: true } : {}),
+      ...configOverrides,
+    })
   );
   return new ImportManager(
     storage as never, // NOSONAR
@@ -428,7 +435,7 @@ describe("ImportManager archive extraction (library-side)", () => {
     expect(await fs.pathExists(path.join(destDir, "Game Update v1.nsp"))).toBe(false);
   });
 
-  it("leaves the raw archive stranded and notifies when extraction fails after a copy", async () => {
+  it("copy mode: extracts straight from the download and strands nothing when extraction fails", async () => {
     const sourcePath = path.join(downloadsRoot, "game.zip");
     await fs.ensureDir(downloadsRoot);
     await fs.writeFile(sourcePath, "zip-bytes");
@@ -441,17 +448,36 @@ describe("ImportManager archive extraction (library-side)", () => {
     await manager.processImport("dl-1", sourcePath);
 
     const destDir = path.join(libraryRoot, "PC", "My Game");
-    // The archive was copied into the library before extraction was attempted, and is
-    // deliberately left there (not cleaned up) once extraction fails.
-    expect(await fs.pathExists(path.join(destDir, "game.zip"))).toBe(true);
-    expect(await fs.pathExists(sourcePath)).toBe(true);
-    expect(storage.addNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "error", title: "Import extraction failed" })
-    );
+    // copy reads the archive in place: no raw copy is written into the library, and the
+    // download itself is untouched so the torrent keeps seeding.
+    expect(archiveService.extract).toHaveBeenCalledWith(sourcePath, destDir, undefined);
+    expect(await fs.pathExists(path.join(destDir, "game.zip"))).toBe(false);
+    expect(await fs.readFile(sourcePath, "utf8")).toBe("zip-bytes");
     expect(storage.updateGameDownloadStatus).toHaveBeenCalledWith(
       "dl-1",
       "manual_review_required",
       expect.stringContaining("corrupt archive")
     );
+  });
+
+  it("downgrades a configured move to copy while auto-delete is off, keeping the download", async () => {
+    const sourceDir = path.join(downloadsRoot, "My Game");
+    await fs.ensureDir(sourceDir);
+    await fs.writeFile(path.join(sourceDir, "game.rar"), "rar-bytes");
+
+    const { archiveService } = makeArchiveService({ extractResult: { "game.iso": "iso-bytes" } });
+    const storage = makeStorage();
+    const manager = createManager(archiveService, storage, {
+      transferMode: "move",
+      autoDeleteAfterImport: false,
+      libraryRoot,
+    });
+
+    await manager.processImport("dl-1", sourceDir);
+
+    const destDir = path.join(libraryRoot, "PC", "My Game");
+    expect(await fs.pathExists(path.join(destDir, "game.iso"))).toBe(true);
+    expect(await fs.pathExists(path.join(destDir, "game.rar"))).toBe(false);
+    expect(await fs.readFile(path.join(sourceDir, "game.rar"), "utf8")).toBe("rar-bytes");
   });
 });

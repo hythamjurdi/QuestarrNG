@@ -113,7 +113,7 @@ export default function ImportReviewModal({
     planApplied.current = false;
     if (strategy === "romm") {
       setDestinationPath(rommConfig?.libraryRoot ?? "");
-      setTransferMode(rommConfig?.moveMode ?? "move");
+      setTransferMode(rommConfig?.moveMode ?? "hardlink");
     } else {
       setDestinationPath(importConfig?.libraryRoot ?? "");
       setTransferMode(importConfig?.transferMode ?? "move");

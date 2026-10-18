@@ -32,6 +32,8 @@ import { recordVersionFromCompletedDownload } from "../game-version.js";
 import { resolvePrefs } from "../notification-prefs.js";
 import { appriseClient } from "../apprise.js";
 import { type SecurityScanService, type ScanResult } from "../security-scan.js";
+import { EXTRACT_TEMP_DIR_CONFIG_KEY } from "./extract-staging.js";
+import { type RommScanService } from "./RommScanService.js";
 
 const RELEASE_PLATFORM_TO_IGDB_ID: Record<string, number> = {
   nes: 18,
@@ -115,8 +117,37 @@ interface ArchiveResolution {
   archivePath: string;
   isDirectorySource: boolean;
   alreadyExtracted: boolean;
+  /** The main archive's volumes (relocated as one family in move mode). */
   excludePaths: Set<string>;
   hasRemainingFiles: boolean;
+  /**
+   * Further independent archive sets in the same directory — e.g. a multi-disc release
+   * shipped as "Game (Disc 1).rar" + "Game (Disc 2).rar", each with its own volumes.
+   * They are extracted straight from the download folder, never relocated.
+   */
+  additionalArchives?: Array<{ archivePath: string; volumes: Set<string> }>;
+}
+
+// RAR family only: .rar (incl. .partN.rar) and classic .rNN continuations.
+export function isRarVolumeName(name: string): boolean {
+  return /\.(rar|r\d{2,3})$/i.test(name);
+}
+
+// Lexicographic sort puts "Game.r00" before "Game.rar" (since '0' < 'a'), but unrar/7-Zip
+// expect the plain .rar as the entry point of a classic multi-volume set — .r00/.r01 are
+// continuations. Only promote a .rar of the same stem, so an unrelated set can't jump the
+// queue ahead of a correctly ordered one.
+function pickFirstVolume(sortedNames: string[]): string {
+  const first = sortedNames[0]!;
+  const continuationMatch = /^(.*)\.r\d{2,3}$/i.exec(first);
+  if (continuationMatch?.[1]) {
+    const stem = continuationMatch[1].toLowerCase();
+    const primaryRar = sortedNames.find(
+      (name) => /\.rar$/i.test(name) && name.slice(0, -".rar".length).toLowerCase() === stem
+    );
+    if (primaryRar) return primaryRar;
+  }
+  return first;
 }
 
 export class ImportManager {
@@ -139,9 +170,30 @@ export class ImportManager {
     private readonly pathService: PathMappingService,
     _platformService: PlatformMappingService,
     private readonly archiveService: ArchiveService,
-    securityScanService?: Pick<SecurityScanService, "scan">
+    securityScanService?: Pick<SecurityScanService, "scan">,
+    private readonly rommScanService?: Pick<RommScanService, "queueScan">
   ) {
     this.securityScanService = securityScanService ?? { scan: async () => ({ blocked: false }) };
+  }
+
+  /**
+   * Original downloads are never deleted unless the user turned on "Delete source after
+   * import": that is what keeps torrents seeding. "move" consumes the source, so a
+   * configured move is downgraded to copy while that toggle is off.
+   */
+  static seedingSafeTransferMode(mode: TransferMode, allowSourceRemoval: boolean): TransferMode {
+    if (mode === "move" && !allowSourceRemoval) {
+      logger.info(
+        "[ImportManager] Transfer mode 'move' downgraded to 'copy' to keep the download seeding — enable 'Delete source after import' to allow moves"
+      );
+      return "copy";
+    }
+    return mode;
+  }
+
+  private queueRommScan(userId: string | null | undefined, slug: string | undefined): void {
+    if (!this.rommScanService || !slug) return;
+    void this.rommScanService.queueScan(userId ?? "", slug);
   }
 
   private extractPlatformIdFromElement(p: unknown): number | undefined {
@@ -258,8 +310,10 @@ export class ImportManager {
    */
   private async resolveArchive(
     sourcePath: string,
-    options?: { includeDiscImages?: boolean }
+    options?: { includeDiscImages?: boolean; rarOnly?: boolean }
   ): Promise<ArchiveResolution | null> {
+    const isCandidate = (name: string): boolean =>
+      this.archiveService.isArchive(name, options) && (!options?.rarOnly || isRarVolumeName(name));
     if (isSensitivePath(sourcePath)) {
       throw new Error("Refusing to process a sensitive system path");
     }
@@ -273,7 +327,7 @@ export class ImportManager {
     const stats = await fs.stat(safeSourcePath);
 
     if (!stats.isDirectory()) {
-      if (!this.archiveService.isArchive(safeSourcePath, options)) return null;
+      if (!isCandidate(safeSourcePath)) return null;
       return {
         archivePath: safeSourcePath,
         isDirectorySource: false,
@@ -284,31 +338,11 @@ export class ImportManager {
     }
 
     const entries = await fs.readdir(safeSourcePath);
-    const archiveEntries = entries
-      .filter((name) => this.archiveService.isArchive(name, options))
-      .sort();
+    const archiveEntries = entries.filter(isCandidate).sort();
     if (archiveEntries.length === 0) return null;
 
-    // Lexicographic sort puts "Game.r00" before "Game.rar" (since '0' < 'a'), but
-    // 7-Zip/unrar expect the plain .rar file as the entry point for classic RAR
-    // multi-volume sets — .r00/.r01/... are continuations, not the first volume. Only
-    // promote a .rar when the current first entry is actually one of ITS continuations
-    // (same stem) — otherwise an unrelated .rar elsewhere in the directory (a second,
-    // independent archive set) could jump the queue ahead of a correctly-ordered one.
-    const continuationMatch = /^(.*)\.r\d{2,3}$/i.exec(archiveEntries[0]!);
-    if (continuationMatch?.[1]) {
-      const stem = continuationMatch[1].toLowerCase();
-      const primaryRarIndex = archiveEntries.findIndex(
-        (name) => /\.rar$/i.test(name) && name.slice(0, -".rar".length).toLowerCase() === stem
-      );
-      if (primaryRarIndex > 0) {
-        const [primaryRar] = archiveEntries.splice(primaryRarIndex, 1);
-        if (primaryRar) archiveEntries.unshift(primaryRar);
-      }
-    }
-
     // 7zip/unrar handle multi-part archives when given the first part.
-    const mainArchive = path.join(safeSourcePath, archiveEntries[0]!);
+    const mainArchive = path.join(safeSourcePath, pickFirstVolume(archiveEntries));
     const allAbsolutePaths = entries.map((name) => path.join(safeSourcePath, name));
     const volumeSiblings = this.archiveService.findVolumeSiblings(mainArchive, allAbsolutePaths);
     const excludePaths = new Set(volumeSiblings.map((p) => path.resolve(p)));
@@ -316,7 +350,31 @@ export class ImportManager {
       mainArchive,
       safeSourcePath
     );
-    const hasRemainingFiles = allAbsolutePaths.some((p) => !excludePaths.has(path.resolve(p)));
+
+    // Any archive entries left over belong to other, independent sets (multi-disc
+    // releases). Group each into its own first volume + volume family.
+    const additionalArchives: NonNullable<ArchiveResolution["additionalArchives"]> = [];
+    const claimed = new Set(excludePaths);
+    let remaining = archiveEntries.filter(
+      (name) => !claimed.has(path.resolve(safeSourcePath, name))
+    );
+    while (remaining.length > 0) {
+      const firstVolume = path.join(safeSourcePath, pickFirstVolume(remaining));
+      const volumes = new Set(
+        this.archiveService
+          .findVolumeSiblings(firstVolume, allAbsolutePaths)
+          .map((p) => path.resolve(p))
+          .filter((p) => !claimed.has(p))
+      );
+      volumes.add(path.resolve(firstVolume));
+      for (const v of volumes) claimed.add(v);
+      if (!(await this.archiveService.isAlreadyExtracted(firstVolume, safeSourcePath))) {
+        additionalArchives.push({ archivePath: firstVolume, volumes });
+      }
+      remaining = remaining.filter((name) => !claimed.has(path.resolve(safeSourcePath, name)));
+    }
+
+    const hasRemainingFiles = allAbsolutePaths.some((p) => !claimed.has(path.resolve(p)));
 
     return {
       archivePath: mainArchive,
@@ -324,17 +382,18 @@ export class ImportManager {
       alreadyExtracted,
       excludePaths,
       hasRemainingFiles,
+      ...(additionalArchives.length > 0 ? { additionalArchives } : {}),
     };
   }
 
   /**
-   * Transfers a plan into the library, unpacking an archive in place at the
-   * destination rather than in the downloader's own directory. move/copy
-   * relocate the raw source into the library first, then extract in place
-   * (a failed extraction strands the raw archive in the library — there is
-   * no retry-import path to recover it, which is an accepted trade-off).
-   * hardlink/symlink never relocate the raw archive: extraction reads
-   * directly from the downloader-side path into the destination.
+   * Transfers a plan into the library, unpacking archives into the destination
+   * rather than in the downloader's own directory. copy/hardlink/symlink read the
+   * archives straight from the download folder and never modify it. move — only
+   * used when the user allowed source removal — relocates the raw archive into the
+   * library first, then extracts in place. Extraction goes through a staging
+   * directory (the configured extraction temp dir, or a hidden one beside the
+   * destination) that is always deleted afterwards.
    */
   private async transferWithUnpack(
     plan: ImportReview,
@@ -350,14 +409,21 @@ export class ImportManager {
       return strategy.executeImport(plan, transferMode, resolution?.excludePaths);
     }
 
-    if (transferMode === "hardlink" || transferMode === "symlink") {
-      return this.unpackViaLinkedExtraction(
+    const stagingRoot = await this.getExtractTempDir();
+
+    // Only "move" may consume the download. copy, hardlink and symlink all extract
+    // straight from the download folder, so the original archives stay where the
+    // download client expects them and the torrent keeps seeding; no raw archive copy
+    // is ever written into the library just to be deleted again.
+    if (transferMode !== "move") {
+      return this.unpackFromSource(
         plan,
         transferMode,
         resolution,
         strategy,
         password,
-        sortExtras
+        sortExtras,
+        stagingRoot
       );
     }
 
@@ -368,28 +434,81 @@ export class ImportManager {
       strategy,
       game,
       password,
-      sortExtras
+      sortExtras,
+      stagingRoot
     );
   }
 
-  // hardlink/symlink never relocate the raw archive: extraction reads directly from the
-  // downloader-side path into the destination.
-  private async unpackViaLinkedExtraction(
+  /** The configured scratch directory for extraction, or undefined to stage beside the destination. */
+  private async getExtractTempDir(): Promise<string | undefined> {
+    try {
+      const value = (await this.storage.getSystemConfig(EXTRACT_TEMP_DIR_CONFIG_KEY))?.trim();
+      return value ? value : undefined;
+    } catch (err) {
+      logger.warn({ err }, "[ImportManager] Could not read extraction temp dir, staging in place");
+      return undefined;
+    }
+  }
+
+  // Passes the staging option only when a temp dir is configured, so the default call
+  // stays exactly extract(archive, dest, password).
+  private extractArchive(
+    archivePath: string,
+    destDir: string,
+    password: string | undefined,
+    stagingRoot: string | undefined
+  ): Promise<string[]> {
+    return stagingRoot
+      ? this.archiveService.extract(archivePath, destDir, password, { stagingRoot })
+      : this.archiveService.extract(archivePath, destDir, password);
+  }
+
+  // Every volume of every archive set in the resolution, so the loose-file transfer that
+  // follows extraction never copies a raw volume into the library.
+  private static allArchiveVolumes(resolution: ArchiveResolution): Set<string> {
+    const all = new Set(resolution.excludePaths);
+    for (const extra of resolution.additionalArchives ?? []) {
+      for (const volume of extra.volumes) all.add(volume);
+    }
+    return all;
+  }
+
+  private async extractAdditionalArchives(
+    resolution: ArchiveResolution,
+    destDir: string,
+    password: string | undefined,
+    stagingRoot: string | undefined
+  ): Promise<void> {
+    for (const extra of resolution.additionalArchives ?? []) {
+      await this.extractArchive(extra.archivePath, destDir, password, stagingRoot);
+    }
+  }
+
+  // copy/hardlink/symlink: extraction reads directly from the downloader-side path into
+  // the destination (via the staging directory), and the source is never modified.
+  private async unpackFromSource(
     plan: ImportReview,
     transferMode: TransferMode,
     resolution: ArchiveResolution,
     strategy: PCImportStrategy,
     password: string | undefined,
-    sortExtras: boolean
+    sortExtras: boolean,
+    stagingRoot: string | undefined
   ): Promise<ImportResult> {
     const destDir = plan.proposedPath;
     await fs.ensureDir(destDir);
-    await this.archiveService.extract(resolution.archivePath, destDir, password);
+    await this.extractArchive(resolution.archivePath, destDir, password, stagingRoot);
+    await this.extractAdditionalArchives(resolution, destDir, password, stagingRoot);
 
     let modeUsed = transferMode;
     if (resolution.isDirectorySource && resolution.hasRemainingFiles) {
-      modeUsed = (await strategy.executeImport(plan, transferMode, resolution.excludePaths))
-        .modeUsed;
+      modeUsed = (
+        await strategy.executeImport(
+          plan,
+          transferMode,
+          ImportManager.allArchiveVolumes(resolution)
+        )
+      ).modeUsed;
     }
 
     // Sorting after the remaining-files transfer (not before) so a categorized loose
@@ -404,9 +523,10 @@ export class ImportManager {
     };
   }
 
-  // move/copy: relocate the raw source into the library first, then extract in place. A
-  // failed extraction strands the raw archive in the library — there is no retry-import
-  // path to recover it, which is an accepted trade-off.
+  // move (only reachable when the user allowed source removal): relocate the raw source
+  // into the library first, then extract in place. A failed extraction strands the raw
+  // archive in the library — there is no retry-import path to recover it, which is an
+  // accepted trade-off.
   private async unpackViaRelocatedExtraction(
     plan: ImportReview,
     transferMode: TransferMode,
@@ -414,9 +534,14 @@ export class ImportManager {
     strategy: PCImportStrategy,
     game: NonNullable<Awaited<ReturnType<IStorage["getGame"]>>>,
     password: string | undefined,
-    sortExtras: boolean
+    sortExtras: boolean,
+    stagingRoot: string | undefined
   ): Promise<ImportResult> {
     const destDir = plan.proposedPath;
+    // Extra sets are read from the download folder before the main set is relocated; the
+    // directory removal below takes their volumes with it.
+    await fs.ensureDir(destDir);
+    await this.extractAdditionalArchives(resolution, destDir, password, stagingRoot);
     const { archiveInDest, siblingsInDest } = await this.relocateArchiveToDest(
       transferMode,
       resolution,
@@ -424,7 +549,7 @@ export class ImportManager {
     );
 
     try {
-      await this.archiveService.extract(archiveInDest, destDir, password);
+      await this.extractArchive(archiveInDest, destDir, password, stagingRoot);
     } catch (err) {
       await this.notifyStrandedImport(game, archiveInDest, err);
       throw err;
@@ -437,8 +562,13 @@ export class ImportManager {
     let modeUsed = transferMode;
     if (resolution.isDirectorySource) {
       if (resolution.hasRemainingFiles) {
-        modeUsed = (await strategy.executeImport(plan, transferMode, resolution.excludePaths))
-          .modeUsed;
+        modeUsed = (
+          await strategy.executeImport(
+            plan,
+            transferMode,
+            ImportManager.allArchiveVolumes(resolution)
+          )
+        ).modeUsed;
       } else if (transferMode === "move") {
         // Only archive-family files were relocated above, leaving an empty source
         // directory behind — the plain-directory transfer path would normally remove
@@ -849,12 +979,12 @@ export class ImportManager {
     downloadId: string,
     download: NonNullable<Awaited<ReturnType<IStorage["getGameDownload"]>>>,
     game: NonNullable<Awaited<ReturnType<IStorage["getGame"]>>>,
-    config: Awaited<ReturnType<IStorage["getImportConfig"]>>
+    config: Awaited<ReturnType<IStorage["getImportConfig"]>>,
+    transferMode: TransferMode
   ): Promise<void> {
-    if (
-      !config.autoDeleteAfterImport ||
-      (config.transferMode !== "copy" && config.transferMode !== "move")
-    ) {
+    // The library must not depend on the download still existing: a symlinked import
+    // would break if its source were removed. Hardlinks keep their data, so they qualify.
+    if (!config.autoDeleteAfterImport || transferMode === "symlink") {
       return;
     }
     try {
@@ -990,14 +1120,24 @@ export class ImportManager {
         return;
       }
 
-      const archiveResolution = config.autoUnpack ? await this.resolveArchive(localPath) : null;
-      const needsExtraction = !!archiveResolution && !archiveResolution.alreadyExtracted;
-
       const rommSlug = rommConfig.enabled
         ? await this.getRommPlatformSlug(game, download.downloadTitle || "")
         : undefined;
-      const strategy = new PCImportStrategy(await this.pathService.getConfiguredRoots());
       const isRommImport = !!rommSlug;
+
+      // RomM imports unpack RAR sets only (their own toggle): zip/7z ROMs stay packed,
+      // since RomM reads and hashes those directly. PC imports keep the general
+      // auto-unpack behavior.
+      const archiveResolution = isRommImport
+        ? rommConfig.unpackRar
+          ? await this.resolveArchive(localPath, { rarOnly: true })
+          : null
+        : config.autoUnpack
+          ? await this.resolveArchive(localPath)
+          : null;
+      const needsExtraction = !!archiveResolution && !archiveResolution.alreadyExtracted;
+
+      const strategy = new PCImportStrategy(await this.pathService.getConfiguredRoots());
       const libraryRoot = isRommImport ? rommConfig.libraryRoot : config.libraryRoot || "/data";
 
       if (
@@ -1073,9 +1213,13 @@ export class ImportManager {
       }
 
       await this.storage.updateGameDownloadStatus(downloadId, "completed_pending_import");
+      const transferMode = ImportManager.seedingSafeTransferMode(
+        isRommImport ? rommConfig.moveMode : config.transferMode,
+        config.autoDeleteAfterImport
+      );
       const result = await this.transferWithUnpack(
         plan,
-        isRommImport ? rommConfig.moveMode : config.transferMode,
+        transferMode,
         archiveResolution,
         game,
         password,
@@ -1083,7 +1227,8 @@ export class ImportManager {
       );
 
       await this.finalizeImport(downloadId, game, result.destDir);
-      if (!isRommImport) await this.autoDeleteIfConfigured(downloadId, download, game, config);
+      if (isRommImport) this.queueRommScan(game.userId, rommSlug);
+      await this.autoDeleteIfConfigured(downloadId, download, game, config, transferMode);
     } catch (err) {
       logger.error({ err, downloadId }, "[ImportManager] Import failed");
       try {
@@ -1440,9 +1585,14 @@ export class ImportManager {
       proposedPath = resolvedConflict;
     }
 
+    // A mode picked in the review dialog is the user's explicit choice for this import;
+    // the configured default still goes through the seeding guard.
     const transferMode =
       overridePlan.transferMode ??
-      (overridePlan.strategy === "romm" ? rommConfig.moveMode : config.transferMode);
+      ImportManager.seedingSafeTransferMode(
+        overridePlan.strategy === "romm" ? rommConfig.moveMode : config.transferMode,
+        config.autoDeleteAfterImport
+      );
 
     const planToExecute: ImportReview = {
       ...overridePlan,
@@ -1473,10 +1623,16 @@ export class ImportManager {
         archiveResolution,
         game,
         overridePlan.password,
-        config.sortExtras
+        overridePlan.strategy === "romm" ? false : config.sortExtras
       );
 
       await this.finalizeImport(downloadId, game, result.destDir);
+      if (overridePlan.strategy === "romm") {
+        this.queueRommScan(
+          game.userId ?? callerUserId,
+          await this.getRommPlatformSlug(game, download.downloadTitle || "")
+        );
+      }
     } catch (err) {
       logger.error({ err, downloadId }, "[ImportManager] confirmImport failed");
       try {
