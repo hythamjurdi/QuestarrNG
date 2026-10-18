@@ -254,6 +254,10 @@ importRouter.post(
   async (req, res) => {
     try {
       const mapping = insertPlatformMappingSchema.parse(req.body);
+      const existing = await storage.getPlatformMappings();
+      if (existing.some((m) => m.igdbPlatformId === mapping.igdbPlatformId)) {
+        return res.status(409).json({ error: "That platform already has a mapping" });
+      }
       const created = await storage.addPlatformMapping(mapping);
       return res.json(created);
     } catch (error) {
@@ -296,6 +300,17 @@ importRouter.delete("/mappings/platforms/:id", async (req, res) => {
   } catch (error) {
     logger.error({ error }, "Error deleting platform mapping");
     res.status(500).json({ error: "Failed to delete platform mapping" });
+  }
+});
+
+// Adds default mappings for platforms that have none, without touching existing ones.
+importRouter.post("/mappings/platforms/defaults", async (_req, res) => {
+  try {
+    const added = await platformMappingService.addMissingDefaults();
+    return res.json({ added, mappings: await storage.getPlatformMappings() });
+  } catch (error) {
+    logger.error({ error }, "Error adding missing platform mappings");
+    return res.status(500).json({ error: "Failed to add default platform mappings" });
   }
 });
 

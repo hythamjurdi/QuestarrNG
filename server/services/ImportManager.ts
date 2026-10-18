@@ -16,7 +16,7 @@ import { DownloaderManager } from "../downloaders.js";
 import { resolveRemoteImportPath } from "../downloaders/utils.js";
 import fs from "fs-extra";
 import path from "node:path";
-import { parseReleaseMetadata } from "../../shared/title-utils.js";
+import { PLATFORM_CATALOG, parseReleaseMetadata } from "../../shared/title-utils.js";
 import {
   GAME_LINK_REQUIRED_STATUS,
   QUARANTINED_STATUS,
@@ -298,7 +298,12 @@ export class ImportManager {
 
   private getReleasePlatformIgdbId(releasePlatformKey: string | null): number | undefined {
     if (!releasePlatformKey) return undefined;
-    return RELEASE_PLATFORM_TO_IGDB_ID[releasePlatformKey];
+    const known = RELEASE_PLATFORM_TO_IGDB_ID[releasePlatformKey];
+    if (known !== undefined) return known;
+    // Any platform the release-title parser recognizes (PS5, Xbox 360, Wii U, …) maps to
+    // its IGDB id through the shared catalog.
+    return PLATFORM_CATALOG.find((p) => p.canonical.toLowerCase() === releasePlatformKey)
+      ?.igdbIds[0];
   }
 
   private resolvePlatformFolderName(downloadTitle: string, game: { platforms?: unknown }): string {
@@ -561,7 +566,12 @@ export class ImportManager {
     stagingRoot: string | undefined
   ): Promise<void> {
     for (const extra of resolution.additionalArchives ?? []) {
-      const extracted = await this.extractArchive(extra.archivePath, destDir, password, stagingRoot);
+      const extracted = await this.extractArchive(
+        extra.archivePath,
+        destDir,
+        password,
+        stagingRoot
+      );
       await ImportManager.removeSkippedExtracted(extracted, resolution.skipExtensions);
     }
   }

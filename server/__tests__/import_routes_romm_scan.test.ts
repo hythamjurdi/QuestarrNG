@@ -11,6 +11,8 @@ const { mockStorage, testConnection, scanPlatforms } = vi.hoisted(() => ({
     getRomMConfig: vi.fn(),
     updateRomMConfig: vi.fn(),
     getPlatformMappings: vi.fn(),
+    getPlatformMapping: vi.fn(),
+    addPlatformMapping: vi.fn(),
     getSystemConfig: vi.fn(),
     setSystemConfig: vi.fn(),
   },
@@ -194,6 +196,25 @@ describe("new RomM settings", () => {
       expect(res.status).toBe(400);
     }
   );
+});
+
+describe("platform mappings", () => {
+  it("adds a mapping for a new platform and refuses a duplicate", async () => {
+    mockStorage.getPlatformMappings.mockResolvedValue([{ igdbPlatformId: 8 }]);
+    mockStorage.addPlatformMapping.mockImplementation(async (m: object) => ({ id: "x", ...m }));
+    const ok = await request(createApp())
+      .post("/api/imports/mappings/platforms")
+      .send({ igdbPlatformId: 167, sourcePlatformName: "PlayStation 5", rommPlatformSlug: "ps5" });
+    expect(ok.status).toBe(200);
+    expect(mockStorage.addPlatformMapping).toHaveBeenCalledWith(
+      expect.objectContaining({ igdbPlatformId: 167, rommPlatformSlug: "ps5" })
+    );
+
+    const dup = await request(createApp())
+      .post("/api/imports/mappings/platforms")
+      .send({ igdbPlatformId: 8, sourcePlatformName: "PlayStation 2", rommPlatformSlug: "ps2" });
+    expect(dup.status).toBe(409);
+  });
 });
 
 describe("extraction temp directory setting", () => {

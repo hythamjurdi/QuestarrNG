@@ -265,6 +265,38 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
     expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "ps2");
   });
 
+  it("routes a scene PS5 release to <root>/ps5/roms/<game> via the release title", async () => {
+    const release = path.join(downloads, "Ghost.of.Yotei.incl.DLC.PS5-DUPLEX");
+    const data = payload("ps5-pkg");
+    await makeRar(work, release, "dup-goy", { "Ghost.of.Yotei.PS5.pkg": data });
+    await fs.writeFile(path.join(release, "dup-goy.nfo"), "nfo");
+
+    const { manager, storage, rommScan } = setup({
+      rommOverrides: { folderLayout: "platform-roms" },
+    });
+    storage.getGameDownload.mockResolvedValue({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadHash: "abc",
+      downloadTitle: "Ghost of Yotei incl DLC PS5-DUPLEX",
+    });
+    storage.getGame.mockResolvedValue(
+      makeGame({ id: "g1", userId: "u1", title: "Ghost of Yotei", platforms: [] })
+    );
+    // Only IGDB 167 (PlayStation 5) is mapped, so the slug must come from the "PS5" tag.
+    storage.getPlatformMapping.mockImplementation(async (id: number) =>
+      id === 167 ? { rommPlatformSlug: "ps5" } : undefined
+    );
+
+    await manager.processImport("dl-1", release);
+
+    expect(await listTree(path.join(rommRoot, "ps5"))).toEqual([
+      "roms/Ghost of Yotei/Ghost.of.Yotei.PS5.pkg",
+    ]);
+    expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "ps5");
+  });
+
   it("copies every file when the skip list is empty", async () => {
     const release = path.join(downloads, "Keep.All");
     await fs.ensureDir(release);

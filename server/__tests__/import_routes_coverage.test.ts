@@ -156,6 +156,7 @@ describe("GET /api/imports/mappings/platforms", () => {
 
 describe("POST /api/imports/mappings/platforms", () => {
   it("creates a platform mapping", async () => {
+    mockStorage.getPlatformMappings.mockResolvedValue([]);
     mockStorage.addPlatformMapping.mockResolvedValue({
       id: "pm-2",
       igdbPlatformId: 19,

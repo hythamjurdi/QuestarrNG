@@ -33,6 +33,22 @@ describe("PlatformMappingService", () => {
     expect(storage.seedPlatformMappingsIfEmpty).toHaveBeenCalledTimes(1);
   });
 
+  it("adds only the missing default platforms and keeps existing mappings", async () => {
+    storage.getPlatformMappings.mockResolvedValue([
+      { id: "m1", igdbPlatformId: 8, sourcePlatformName: "ps2", rommPlatformSlug: "my-ps2" },
+    ]);
+    const service = new PlatformMappingService(storage as never);
+    const added = await service.addMissingDefaults();
+
+    const addedIds = storage.addPlatformMapping.mock.calls.map(([m]) => m.igdbPlatformId);
+    expect(added).toBe(addedIds.length);
+    expect(addedIds).not.toContain(8);
+    expect(addedIds).toEqual(expect.arrayContaining([48, 167]));
+    expect(storage.addPlatformMapping).toHaveBeenCalledWith(
+      expect.objectContaining({ igdbPlatformId: 167, rommPlatformSlug: "ps5" })
+    );
+  });
+
   it("returns mapping values and supports CRUD pass-through", async () => {
     const mapping = { id: "m1", igdbPlatformId: 19, sourcePlatformName: "snes" };
     storage.getPlatformMappings.mockResolvedValue([mapping]);

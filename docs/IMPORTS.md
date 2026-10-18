@@ -87,8 +87,14 @@ and write it.
      ignores the layout; platforms without one use the layout, or go to review
      when **Unmapped platform behavior** is **Require a custom binding**.
 5. In **Platform slug mappings**, assign a RomM slug to each IGDB platform.
-   Use **Load default platform mappings** when the list is empty. A blank slug
-   leaves that platform's imports in the PC library.
+   The slug must match the platform's folder name in your RomM library exactly.
+   Use **Load default platform mappings** when the list is empty, **Add
+   platform** for anything not listed, and **Add any missing default
+   platforms** to pick up defaults added in newer versions without changing
+   your existing mappings. A blank slug leaves that platform's imports in the
+   PC library. When a release name carries a platform tag (for example
+   `PS5-DUPLEX`), that tag decides the platform; otherwise the game's first
+   IGDB platform is used.
 6. Choose the transfer mode (the default is **Hardlink**, which falls back to
    a copy across filesystems) and how to handle an existing game. You can keep
    both files with a new name, skip, replace, or send the conflict for review.

@@ -15,7 +15,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FolderOpen, ArrowRight, Folder, Link, Copy, MoveRight } from "lucide-react";
+import {
+  Loader2,
+  FolderOpen,
+  ArrowRight,
+  Folder,
+  Link,
+  Copy,
+  MoveRight,
+  Trash2,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { ImportConfig, PlatformMapping, RomMConfig, UserSettings } from "@shared/schema";
 import { selectedPlatformNames as resolveSelectedPlatformNames } from "@shared/platforms";
@@ -137,6 +146,8 @@ export default function ImportSettings() {
   const [localRommConfig, setLocalRommConfig] = useState<RomMConfig | null>(null);
   const [rommBindingsText, setRommBindingsText] = useState("{}");
   const [rommSkipText, setRommSkipText] = useState("");
+  const [newMappingPlatformId, setNewMappingPlatformId] = useState("");
+  const [newMappingSlug, setNewMappingSlug] = useState("");
   const [libraryBrowserOpen, setLibraryBrowserOpen] = useState(false);
   const [extractTempDir, setExtractTempDir] = useState("");
   const [rommTestResult, setRommTestResult] = useState<{ ok: boolean; message: string } | null>(
@@ -256,6 +267,40 @@ export default function ImportSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/imports/mappings/platforms"] });
     },
+  });
+
+  const addPlatformMappingMutation = useMutation({
+    mutationFn: async ({ platform, slug }: { platform: IgdbPlatform; slug: string }) => {
+      await apiRequest("POST", "/api/imports/mappings/platforms", {
+        igdbPlatformId: platform.id,
+        sourcePlatformName: platform.name,
+        rommPlatformSlug: slug.trim().toLowerCase() || null,
+      });
+    },
+    onSuccess: () => {
+      setNewMappingPlatformId("");
+      setNewMappingSlug("");
+      queryClient.invalidateQueries({ queryKey: ["/api/imports/mappings/platforms"] });
+    },
+    onError: (error: Error) =>
+      toast({ title: "Save Failed", description: error.message, variant: "destructive" }),
+  });
+
+  const removePlatformMappingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/imports/mappings/platforms/${id}`);
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["/api/imports/mappings/platforms"] }),
+  });
+
+  const addMissingDefaultsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/imports/mappings/platforms/defaults", {});
+      return (await res.json()) as { added: number };
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["/api/imports/mappings/platforms"] }),
   });
 
   const initializePlatformMappingsMutation = useMutation({
@@ -1215,7 +1260,7 @@ export default function ImportSettings() {
                     <p className="text-xs text-muted-foreground">
                       <InterfaceText
                         source={
-                          "Set each IGDB platform's ROMarr/RomM folder slug. Blank slugs keep that system in the PC library."
+                          "Set each platform's RomM folder name (e.g. ps5). It must match the platform folder in your RomM library exactly. Blank keeps that platform in the PC library."
                         }
                       />
                     </p>
@@ -1230,43 +1275,117 @@ export default function ImportSettings() {
                       <InterfaceText source={"Load default platform mappings"} />
                     </Button>
                   ) : (
-                    <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
-                      {platformMappings.map((mapping) => (
-                        <div
-                          key={mapping.id}
-                          className="grid grid-cols-[1fr_1fr] items-center gap-3"
+                    <div className="space-y-3">
+                      <div className="max-h-72 space-y-2 overflow-y-auto rounded-md border p-3">
+                        {platformMappings.map((mapping) => (
+                          <div
+                            key={mapping.id}
+                            className="grid grid-cols-[1fr_1fr_auto] items-center gap-3"
+                          >
+                            <span className="truncate text-sm">
+                              {igdbPlatforms.find(
+                                (platform) => platform.id === mapping.igdbPlatformId
+                              )?.name ?? (
+                                <InterfaceText
+                                  source={"IGDB platform {igdbPlatformId}"}
+                                  values={{ igdbPlatformId: String(mapping.igdbPlatformId ?? "") }}
+                                />
+                              )}
+                            </span>
+                            <Input
+                              aria-label={formatInterfaceMessage(
+                                "RomM slug for platform {igdbPlatformId}",
+                                { igdbPlatformId: String(mapping.igdbPlatformId ?? "") }
+                              )}
+                              defaultValue={mapping.rommPlatformSlug ?? ""}
+                              placeholder="e.g. ps2"
+                              onBlur={(event) => {
+                                const value = event.target.value.trim();
+                                const rommPlatformSlug = value || null;
+                                if (rommPlatformSlug !== mapping.rommPlatformSlug) {
+                                  updatePlatformSlugMutation.mutate({
+                                    id: mapping.id,
+                                    rommPlatformSlug,
+                                  });
+                                }
+                              }}
+                              data-i18n-placeholder={"e.g. ps2"}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={formatInterfaceMessage(
+                                "Remove mapping for platform {igdbPlatformId}",
+                                { igdbPlatformId: String(mapping.igdbPlatformId ?? "") }
+                              )}
+                              disabled={removePlatformMappingMutation.isPending}
+                              onClick={() => removePlatformMappingMutation.mutate(mapping.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+                        <Select
+                          value={newMappingPlatformId}
+                          onValueChange={setNewMappingPlatformId}
                         >
-                          <span className="truncate text-sm">
-                            {igdbPlatforms.find(
-                              (platform) => platform.id === mapping.igdbPlatformId
-                            )?.name ?? (
-                              <InterfaceText
-                                source={"IGDB platform {igdbPlatformId}"}
-                                values={{ igdbPlatformId: String(mapping.igdbPlatformId ?? "") }}
-                              />
-                            )}
-                          </span>
-                          <Input
-                            aria-label={formatInterfaceMessage(
-                              "RomM slug for platform {igdbPlatformId}",
-                              { igdbPlatformId: String(mapping.igdbPlatformId ?? "") }
-                            )}
-                            defaultValue={mapping.rommPlatformSlug ?? ""}
-                            placeholder="e.g. ps2"
-                            onBlur={(event) => {
-                              const value = event.target.value.trim();
-                              const rommPlatformSlug = value || null;
-                              if (rommPlatformSlug !== mapping.rommPlatformSlug) {
-                                updatePlatformSlugMutation.mutate({
-                                  id: mapping.id,
-                                  rommPlatformSlug,
-                                });
-                              }
-                            }}
-                            data-i18n-placeholder={"e.g. ps2"}
-                          />
-                        </div>
-                      ))}
+                          <SelectTrigger
+                            aria-label="Platform to add"
+                            data-i18n-aria-label={"Platform to add"}
+                          >
+                            <SelectValue
+                              placeholder={formatInterfaceMessage("Choose a platform", {})}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {igdbPlatforms
+                              .filter(
+                                (platform) =>
+                                  !platformMappings.some((m) => m.igdbPlatformId === platform.id)
+                              )
+                              .map((platform) => (
+                                <SelectItem key={platform.id} value={String(platform.id)}>
+                                  {platform.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          aria-label="RomM slug for the new platform"
+                          data-i18n-aria-label={"RomM slug for the new platform"}
+                          placeholder="e.g. ps2"
+                          data-i18n-placeholder={"e.g. ps2"}
+                          value={newMappingSlug}
+                          onChange={(event) => setNewMappingSlug(event.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={!newMappingPlatformId || addPlatformMappingMutation.isPending}
+                          onClick={() => {
+                            const platform = igdbPlatforms.find(
+                              (p) => String(p.id) === newMappingPlatformId
+                            );
+                            if (platform) {
+                              addPlatformMappingMutation.mutate({ platform, slug: newMappingSlug });
+                            }
+                          }}
+                        >
+                          <InterfaceText source={"Add platform"} />
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto p-0 text-xs"
+                        disabled={addMissingDefaultsMutation.isPending}
+                        onClick={() => addMissingDefaultsMutation.mutate()}
+                      >
+                        <InterfaceText source={"Add any missing default platforms"} />
+                      </Button>
                     </div>
                   )}
                 </div>
