@@ -166,6 +166,56 @@ describe("Downloads page", () => {
     expect(await screen.findByTestId("import-review-modal")).toHaveTextContent("gd-1:false");
   });
 
+  it("shows live import progress on the download card", async () => {
+    globalThis.fetch = vi.fn(async (url: RequestInfo | URL) => {
+      const u = getRequestUrl(url);
+      if (u.includes("/api/imports/progress")) {
+        return createJsonResponse([
+          {
+            downloadId: "gd-1",
+            gameId: "g1",
+            title: "Castlevania.Belmonts.Curse.PS5-DUPLEX",
+            stage: "extracting",
+            detail: "duplex-castlevania.belmonts.curse.ps5.rar",
+            percent: 45,
+            step: { current: 1, total: 2 },
+            rommSlug: "ps5",
+            startedAt: 1,
+            updatedAt: 2,
+          },
+        ]);
+      }
+      if (u.includes("/api/downloads")) {
+        return createJsonResponse({
+          downloads: [
+            {
+              id: "hash-a",
+              name: "Castlevania.Belmonts.Curse.PS5-DUPLEX",
+              status: "seeding",
+              progress: 100,
+              downloaderId: "downloader-1",
+              downloaderName: "qBittorrent",
+              trackedByQuestarr: true,
+              downloadType: "torrent",
+              gameDownloadId: "gd-1",
+              importStatus: "completed_pending_import",
+            },
+          ],
+          errors: [],
+        });
+      }
+      return createJsonResponse({});
+    });
+    renderPage();
+
+    const panel = await screen.findByTestId("import-progress-gd-1");
+    expect(panel).toHaveTextContent("Extracting…");
+    expect(panel).toHaveTextContent("Archive 1 of 2");
+    expect(panel).toHaveTextContent("RomM · ps5");
+    expect(panel).toHaveTextContent("45%");
+    expect(screen.queryByTestId("badge-not-imported-hash-a")).not.toBeInTheDocument();
+  });
+
   it("keeps the scan unlinked action available and opens the batch modal", async () => {
     renderPage();
 

@@ -17,6 +17,57 @@ export function normalizeTitle(title: string): string {
 }
 
 /**
+ * Makes a game title searchable on indexers, which index scene-style names: apostrophes
+ * are dropped rather than split ("Belmont's" → "Belmonts", matching "Belmonts.Curse"),
+ * accents are folded ("Pokémon" → "Pokemon"), and other punctuation (":", "!", "®",
+ * dashes between words) becomes a space. Hyphens inside a word ("Spider-Man") stay.
+ */
+export function toSearchQuery(title: string): string {
+  return (
+    title
+      .normalize("NFKD")
+      .replaceAll(/[\u0300-\u036f]/g, "")
+      .replaceAll(/['’‘`´]/g, "")
+      // Dotted acronyms read as one word: "S.T.A.L.K.E.R." → "STALKER".
+      .replaceAll(/(?:\b\p{L}\.){2,}(?:\p{L}\b)?/gu, (m) => m.replaceAll(".", ""))
+      .replaceAll(/&/g, " and ")
+      .replaceAll(/(^|\s)-+|-+(\s|$)/g, " ")
+      .replaceAll(/[^\p{L}\p{N}\s-]/gu, " ")
+      .replaceAll(/\s+/g, " ")
+      .trim()
+  );
+}
+
+/**
+ * The queries to try, in order, when searching indexers for a title. The first is the
+ * cleaned title; the rest are fallbacks used only when it finds nothing: "&" kept as-is
+ * instead of "and", hyphens as spaces, and the main title before a subtitle
+ * ("Castlevania: Belmont's Curse" → "Castlevania"). Results are still matched against
+ * the full title before anything is downloaded automatically.
+ */
+export function searchQueryVariants(title: string): string[] {
+  const variants: string[] = [];
+  const add = (value: string): void => {
+    const trimmed = value.replaceAll(/\s+/g, " ").trim();
+    if (trimmed && !variants.some((v) => v.toLowerCase() === trimmed.toLowerCase())) {
+      variants.push(trimmed);
+    }
+  };
+  const primary = toSearchQuery(title);
+  add(primary);
+  add(toSearchQuery(title.replaceAll("&", " ")));
+  add(primary.replaceAll("-", " "));
+  const subtitleSplit = /\s*(?::|\s[-–—]\s)\s*/.exec(title);
+  if (subtitleSplit && subtitleSplit.index > 0) {
+    const main = toSearchQuery(title.slice(0, subtitleSplit.index));
+    // A one-short-word main title ("Doom: …" is fine, "X: …" is not) would match far too much.
+    if (main.length >= 4) add(main);
+  }
+  return variants;
+}
+
+/**
+ * Collapses every run of whitespace/**
  * Collapses every run of whitespace (newlines, tabs, repeated spaces) in a release title
  * into a single space and trims it. Some indexer definitions scrape a whole results-table
  * row into the title, which otherwise blows past the 500-character download title limit.

@@ -182,6 +182,57 @@ describe("Search Module - searchAllIndexers", () => {
     expect(result.errors).toHaveLength(0);
   });
 
+  it("sends a cleaned title and falls back to the main title when nothing is found", async () => {
+    vi.mocked(storage.getEnabledIndexers).mockResolvedValue([makeTorznabIndexer()]);
+    const hit = {
+      title: "Castlevania.Belmonts.Curse.PS5-DUPLEX",
+      link: "http://example.com/dl",
+      pubDate: "2026-01-01T00:00:00Z",
+      size: 1,
+      seeders: 5,
+      leechers: 0,
+      category: "4000",
+      guid: "g-1",
+      indexerId: "torznab-1",
+      indexerName: "Torznab Indexer",
+    };
+    const queries: string[] = [];
+    vi.mocked(torznabClient.searchMultipleIndexers).mockImplementation(async (_i, params) => {
+      queries.push(params.query);
+      return makeTorznabResponse(params.query === "Castlevania" ? [hit] : []);
+    });
+
+    const result = await searchAllIndexers({ query: "Castlevania: Belmont's Curse" });
+
+    expect(queries).toEqual(["Castlevania Belmonts Curse", "Castlevania"]);
+    expect(result.items).toHaveLength(1);
+    expect(result.queryUsed).toBe("Castlevania");
+  });
+
+  it("does not try fallbacks when the cleaned title finds results", async () => {
+    vi.mocked(storage.getEnabledIndexers).mockResolvedValue([makeTorznabIndexer()]);
+    const queries: string[] = [];
+    vi.mocked(torznabClient.searchMultipleIndexers).mockImplementation(async (_i, params) => {
+      queries.push(params.query);
+      return makeTorznabResponse([
+        {
+          title: "Baldurs.Gate.3-RUNE",
+          link: "http://example.com/dl",
+          pubDate: "2026-01-01T00:00:00Z",
+          size: 1,
+          category: "4000",
+          guid: "g-2",
+          indexerId: "torznab-1",
+          indexerName: "Torznab Indexer",
+        },
+      ]);
+    });
+
+    const result = await searchAllIndexers({ query: "Baldur's Gate 3" });
+    expect(queries).toEqual(["Baldurs Gate 3"]);
+    expect(result.queryUsed).toBe("Baldurs Gate 3");
+  });
+
   it("should search newznab indexers and return formatted results", async () => {
     const newznabIndexer = makeNewznabIndexer();
 

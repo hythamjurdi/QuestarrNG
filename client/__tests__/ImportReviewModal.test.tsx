@@ -212,7 +212,7 @@ describe("ImportReviewModal", () => {
       );
       await waitFor(() =>
         expect(mockToast).toHaveBeenCalledWith(
-          expect.objectContaining({ title: "Import Confirmed" })
+          expect.objectContaining({ title: "Import complete" })
         )
       );
     });

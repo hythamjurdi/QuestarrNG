@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { storage } from "../storage.js";
 import { importManager, pathMappingService, platformMappingService } from "../services/index.js";
+import { importProgress } from "../services/ImportProgress.js";
 import {
   ARCHIVE_PASSWORD_REQUIRED_PREFIX,
+  ImportInProgressError,
   IncompleteScanError,
 } from "../services/ImportManager.js";
 import { ArchivePasswordRequiredError } from "../services/ArchiveService.js";
@@ -74,6 +76,8 @@ const platformMappingPatchSchema = z
 // multi-file games is now implicit. Accept that one legacy field so a stale
 // client can save the rest of its settings; keep rejecting other unknown keys.
 const ROMM_TOKEN_PLACEHOLDER = "********";
+// How long a manual import confirmation waits for the import before answering 202.
+const CONFIRM_WAIT_MS = 8_000;
 
 const rommConfigPatchSchema = z.preprocess((value: unknown) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
@@ -581,6 +585,12 @@ importRouter.get("/storage-check", async (_req, res) => {
   }
 });
 
+// Imports running now (or finished in the last couple of minutes) for this user.
+importRouter.get("/progress", (_req, res) => {
+  const userId = res.locals.userId as string;
+  return res.json(importProgress.list(userId));
+});
+
 importRouter.get("/extraction", async (_req, res) => {
   try {
     const extractTempDir = (await storage.getSystemConfig(EXTRACT_TEMP_DIR_CONFIG_KEY)) ?? "";
@@ -873,23 +883,39 @@ importRouter.post("/:id/confirm", validate(confirmImportBodySchema), async (req,
     const targetRoot = body.strategy === "romm" ? rommConfig.libraryRoot : config.libraryRoot;
     const safeProposedPath = resolveProposedPathWithinRoot(targetRoot, body.proposedPath);
 
-    await importManager.confirmImport(
-      id,
-      {
-        strategy: body.strategy,
-        originalPath: body.originalPath ?? "",
-        proposedPath: safeProposedPath,
-        needsReview: false,
-        reviewReason: "Manual Confirmation",
-        transferMode:
-          body.transferMode ?? (body.strategy === "romm" ? rommConfig.moveMode : undefined),
-        unpack: body.unpack,
-        password: body.password,
-        rommSlug: body.rommSlug,
-      },
-      userId
+    const running = Promise.resolve().then(() =>
+      importManager.confirmImport(
+        id,
+        {
+          strategy: body.strategy,
+          originalPath: body.originalPath ?? "",
+          proposedPath: safeProposedPath,
+          needsReview: false,
+          reviewReason: "Manual Confirmation",
+          transferMode:
+            body.transferMode ?? (body.strategy === "romm" ? rommConfig.moveMode : undefined),
+          unpack: body.unpack,
+          password: body.password,
+          rommSlug: body.rommSlug,
+        },
+        userId
+      )
     );
 
+    // Quick problems (bad paths, a password the archive needs, a flagged file) come back
+    // in the response. A big extraction can take many minutes, longer than a browser or
+    // reverse proxy waits, so past this window the import keeps going in the background
+    // and reports through live progress, the download's status, and a notification.
+    const finished = await Promise.race([
+      running.then(() => true),
+      new Promise<false>((resolve) => setTimeout(() => resolve(false), CONFIRM_WAIT_MS).unref()),
+    ]);
+    if (!finished) {
+      running.catch((error: unknown) =>
+        logger.warn({ error, downloadId: id }, "Background import failed")
+      );
+      return res.status(202).json({ success: true, running: true });
+    }
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -898,7 +924,7 @@ importRouter.post("/:id/confirm", validate(confirmImportBodySchema), async (req,
     if (error instanceof ArchivePasswordRequiredError) {
       return res.status(400).json({ error: error.message, passwordRequired: true });
     }
-    if (error instanceof IncompleteScanError) {
+    if (error instanceof IncompleteScanError || error instanceof ImportInProgressError) {
       return res.status(409).json({ error: error.message });
     }
     if (error instanceof Error) {

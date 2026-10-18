@@ -112,7 +112,7 @@ describe("Newznab two-category search request (UI -> server -> Newznab)", () => 
     expect(new URL(url).searchParams.get("cat")).toBe("4050");
   });
 
-  it("does not rewrite a comma in the user's search query", async () => {
+  it("keeps cat separators literal while the query's punctuation is cleaned for indexers", async () => {
     vi.mocked(storage.getEnabledIndexers).mockResolvedValue([
       makeNewznabIndexer(["4050", "1000"]),
     ] as never);
@@ -123,9 +123,9 @@ describe("Newznab two-category search request (UI -> server -> Newznab)", () => 
     const [url] = (safeFetch as Mock).mock.calls[0] as [string];
     // cat separators stay literal...
     expect(url).toContain("cat=4050,1000");
-    // ...while the comma inside q keeps its normal URL encoding.
-    expect(url).toContain("q=Hello%2C+World");
-    expect(url).not.toContain("q=Hello,+World");
-    expect(new URL(url).searchParams.get("q")).toBe("Hello, World");
+    // ...while punctuation in the query is turned into spaces before it is sent (indexers
+    // match scene-style names), so it can never be mistaken for a cat separator.
+    expect(url).not.toContain("q=Hello,");
+    expect(new URL(url).searchParams.get("q")).toBe("Hello World");
   });
 });

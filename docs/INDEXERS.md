@@ -18,6 +18,17 @@ you clear the number while entering a replacement; a blank draft keeps the
 saved value, and the new value is normalized to the supported 1–100 range on
 blur or Enter.
 
+## How searches are spelled
+
+Indexers list releases under scene-style names, so QuestarrNG cleans a title
+before searching: apostrophes are dropped (`Belmont's` → `Belmonts`), accents are
+folded (`Pokémon` → `Pokemon`), dotted acronyms are joined
+(`S.T.A.L.K.E.R.` → `STALKER`), and other punctuation becomes a space. When that
+finds nothing, it retries with `&` instead of `and`, hyphens as spaces, and
+finally the main title before a subtitle (`Castlevania: Belmont's Curse` →
+`Castlevania`). Automatic downloads still check each result against the full
+game title.
+
 ## Sync from Prowlarr
 
 1. Open **Indexers → Sync from Prowlarr** and enter the Prowlarr URL and API key.

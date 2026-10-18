@@ -72,6 +72,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import DownloadDetailsModal from "@/components/DownloadDetailsModal";
 import { InterfaceText } from "@/components/InterfaceText";
+import { ImportProgressPanel } from "@/components/ImportProgressPanel";
+import { useImportProgress } from "@/hooks/use-import-progress";
 
 const ClaimDownloadModal = lazy(() => import("@/components/ClaimDownloadModal"));
 const ClaimBatchModal = lazy(() => import("@/components/ClaimBatchModal"));
@@ -179,6 +181,13 @@ export default function Downloads() {
   const [searchQuery, setSearchQuery] = useState("");
   const [claimTarget, setClaimTarget] = useState<DownloadListItem | null>(null);
   const [importTarget, setImportTarget] = useState<DownloadListItem | null>(null);
+  const importProgress = useImportProgress();
+  const isImporting = (download: DownloadListItem): boolean => {
+    const stage = download.gameDownloadId
+      ? importProgress.get(download.gameDownloadId)?.stage
+      : undefined;
+    return !!stage && stage !== "done" && stage !== "failed";
+  };
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
   const {
@@ -941,7 +950,7 @@ export default function Downloads() {
                               )}
                             </Badge>
                           )}
-                        {canImportManually(download) && (
+                        {canImportManually(download) && !isImporting(download) && (
                           <button
                             type="button"
                             onClick={() => setImportTarget(download)}
@@ -1041,7 +1050,7 @@ export default function Downloads() {
                           <Info className="h-4 w-4 mr-2" />
                           <InterfaceText source={"View Details"} />
                         </DropdownMenuItem>
-                        {canImportManually(download) && (
+                        {canImportManually(download) && !isImporting(download) && (
                           <DropdownMenuItem
                             onClick={() => setImportTarget(download)}
                             data-testid={`button-import-${download.id}`}
@@ -1115,6 +1124,9 @@ export default function Downloads() {
                     >
                       <InterfaceText source={"Error:"} /> {download.error}
                     </div>
+                  )}
+                  {download.gameDownloadId && importProgress.get(download.gameDownloadId) && (
+                    <ImportProgressPanel state={importProgress.get(download.gameDownloadId)!} />
                   )}
                 </div>
               </CardContent>

@@ -11,6 +11,7 @@ import path from "node:path";
 import { ImportManager } from "../services/ImportManager.js";
 import { ArchiveService } from "../services/ArchiveService.js";
 import { EXTRACT_STAGING_PREFIX } from "../services/extract-staging.js";
+import { ImportProgressTracker, type ImportProgressState } from "../services/ImportProgress.js";
 import { makeGame, makeImportConfig, makeRomMConfig } from "./helpers/import-test-helpers.js";
 import type { ImportConfig, RomMConfig } from "../../shared/schema.js";
 
@@ -128,6 +129,7 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
       importOverrides?: Partial<ImportConfig>;
       extractTempDir?: string;
       slug?: string;
+      progress?: ImportProgressTracker;
     } = {}
   ) {
     const storage = {
@@ -174,7 +176,8 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
       {} as never, // NOSONAR
       archiveService,
       undefined,
-      rommScan
+      rommScan,
+      options.progress
     );
     return { storage, manager, extractSpy, rommScan, pathService };
   }
@@ -460,6 +463,77 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
     expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "ps5");
   });
 
+  it("reports live progress through every stage, ending with the destination", async () => {
+    const release = path.join(downloads, "Progress.Release.PS5-GRP");
+    // Big enough that the 2s extraction poll may or may not fire; stages are what matter.
+    await makeRar(work, release, "pr", { "game.pkg": payload("pkg", 400 * 1024) });
+    const events: ImportProgressState[] = [];
+    const progress = new ImportProgressTracker((_user, state) => events.push({ ...state }));
+    const { manager, storage } = setup({
+      progress,
+      rommOverrides: { folderLayout: "platform-roms" },
+    });
+    storage.getPlatformMapping.mockImplementation(async (id: number) =>
+      id === 167 ? { rommPlatformSlug: "ps5" } : undefined
+    );
+    let status = "downloading";
+    storage.updateGameDownloadStatus.mockImplementation(async (_id: string, next: string) => {
+      status = next;
+    });
+    storage.getGameDownload.mockImplementation(async () => ({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadHash: "abc",
+      downloadTitle: "Progress.Release.PS5-GRP",
+      status,
+    }));
+
+    await manager.processImport("dl-1", release);
+
+    const stages = events.map((e) => e.stage);
+    expect(stages[0]).toBe("checking");
+    expect(stages).toEqual(expect.arrayContaining(["verifying", "extracting", "finishing"]));
+    const last = events.at(-1)!;
+    expect(last.stage).toBe("done");
+    expect(last.rommSlug).toBe("ps5");
+    expect(last.detail).toBe(path.join(rommRoot, "ps5", "roms", "Some Game"));
+    expect(progress.list("u1")).toHaveLength(1);
+    expect(progress.isActive("dl-1")).toBe(false);
+  });
+
+  it("reports a failed import with its reason", async () => {
+    const release = path.join(downloads, "Broken.Release");
+    const volumes = await makeRar(work, release, "br", { "game.iso": payload("iso") });
+    await fs.remove(path.join(release, volumes.sort().at(-1)!)); // incomplete set
+    const events: ImportProgressState[] = [];
+    const progress = new ImportProgressTracker((_user, state) => events.push({ ...state }));
+    const { manager, storage } = setup({ progress });
+    let status = "downloading";
+    let errorMessage: string | undefined;
+    storage.updateGameDownloadStatus.mockImplementation(
+      async (_id: string, next: string, message?: string) => {
+        status = next;
+        errorMessage = message;
+      }
+    );
+    storage.getGameDownload.mockImplementation(async () => ({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadHash: "abc",
+      downloadTitle: "Broken.Release",
+      status,
+      errorMessage,
+    }));
+
+    await manager.processImport("dl-1", release);
+
+    const last = events.at(-1)!;
+    expect(last.stage).toBe("failed");
+    expect(last.error).toBeTruthy();
+  });
+
   it("copies every file when the skip list is empty", async () => {
     const release = path.join(downloads, "Keep.All");
     await fs.ensureDir(release);
@@ -571,6 +645,24 @@ describe.skipIf(!toolsAvailable)("ArchiveService extraction temp directory (real
     expect(await fs.readFile(path.join(dest, "nested", "rom.bin"))).toEqual(data);
     expect(await fs.readdir(scratch)).toEqual([]);
     expect(await fs.readdir(dest)).toEqual(["nested"]);
+  });
+
+  it("reports verify, extract and move phases with the archive's total size", async () => {
+    const work = tempDir("as-work3");
+    const src = tempDir("as-src3");
+    const dest = tempDir("as-dest3");
+    const data = payload("rom", 300 * 1024);
+    await makeRar(work, src, "set", { "rom.bin": data });
+    const phases: Array<{ phase: string; bytesTotal: number }> = [];
+
+    await new ArchiveService().extract(path.join(src, "set.part1.rar"), dest, undefined, {
+      onProgress: ({ phase, bytesTotal }) => phases.push({ phase, bytesTotal }),
+    });
+
+    expect(phases.map((p) => p.phase)).toEqual(
+      expect.arrayContaining(["verifying", "extracting", "moving"])
+    );
+    expect(phases.every((p) => p.bytesTotal === data.length)).toBe(true);
   });
 
   it("cleans the scratch dir after a failed extraction too", async () => {

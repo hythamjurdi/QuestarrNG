@@ -3,7 +3,7 @@ import { storage } from "./storage.js";
 import { torznabClient } from "./torznab.js";
 import { newznabClient } from "./newznab.js";
 import { searchLogger } from "./logger.js";
-import { parseReleaseMetadata } from "../shared/title-utils.js";
+import { parseReleaseMetadata, searchQueryVariants } from "../shared/title-utils.js";
 import { typesafeClient, type ReleaseType } from "./typesafe.js";
 import {
   evaluateReleases,
@@ -61,9 +61,43 @@ export interface AggregatedSearchResults {
   total: number;
   offset: number;
   errors: string[];
+  /** The spelling actually sent to the indexers (cleaned, or a fallback variant). */
+  queryUsed?: string;
 }
 
+/**
+ * Searches every enabled indexer for a title. The query is cleaned for indexers first
+ * (see toSearchQuery: apostrophes, accents, punctuation), and when the first page finds
+ * nothing, fallback spellings are tried in turn (searchQueryVariants), so "Castlevania:
+ * Belmont's Curse" finds "Castlevania.Belmonts.Curse.PS5-DUPLEX".
+ */
 export async function searchAllIndexers(
+  options: AggregatedSearchOptions
+): Promise<AggregatedSearchResults> {
+  const variants = options.query ? searchQueryVariants(options.query) : [];
+  if (variants.length === 0) return searchAllIndexersOnce(options);
+
+  const withQuery = (result: AggregatedSearchResults, query: string): AggregatedSearchResults =>
+    query === options.query ? result : { ...result, queryUsed: query };
+  const first = await searchAllIndexersOnce({ ...options, query: variants[0]! });
+  // Later pages continue the spelling page one used; fallbacks only rescue an empty start.
+  if (first.items.length > 0 || (options.offset ?? 0) > 0 || variants.length === 1) {
+    return withQuery(first, variants[0]!);
+  }
+  for (const variant of variants.slice(1)) {
+    const result = await searchAllIndexersOnce({ ...options, query: variant });
+    if (result.items.length > 0) {
+      searchLogger.info(
+        { query: options.query, queryUsed: variant },
+        "No results for the full title; found results with a fallback spelling"
+      );
+      return withQuery({ ...result, errors: [...first.errors, ...result.errors] }, variant);
+    }
+  }
+  return withQuery(first, variants[0]!);
+}
+
+async function searchAllIndexersOnce(
   options: AggregatedSearchOptions
 ): Promise<AggregatedSearchResults> {
   const enabledIndexers = await storage.getEnabledIndexers();

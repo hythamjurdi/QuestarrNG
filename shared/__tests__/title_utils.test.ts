@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
+  searchQueryVariants,
+  toSearchQuery,
   normalizeTitle,
   normalizeReleaseTitle,
   cleanReleaseName,
@@ -321,5 +323,31 @@ describe("title-utils", () => {
         expect(matchesPlatformFilter(undefined, "Switch")).toBe(false);
       });
     });
+  });
+});
+
+describe("search queries for indexers", () => {
+  it.each([
+    ["Castlevania: Belmont's Curse", "Castlevania Belmonts Curse"],
+    ["Marvel’s Spider-Man 2", "Marvels Spider-Man 2"],
+    ["Ghost of Yōtei", "Ghost of Yotei"],
+    ["Tom Clancy's Rainbow Six® Siege", "Tom Clancys Rainbow Six Siege"],
+    ["S.T.A.L.K.E.R. 2: Heart of Chornobyl", "STALKER 2 Heart of Chornobyl"],
+    ["Ratchet & Clank: Rift Apart", "Ratchet and Clank Rift Apart"],
+    ["Half-Life 2", "Half-Life 2"],
+  ])("cleans %s", (title, expected) => {
+    expect(toSearchQuery(title)).toBe(expected);
+  });
+
+  it("orders fallbacks after the cleaned title and drops duplicates", () => {
+    expect(searchQueryVariants("Castlevania: Belmont's Curse")).toEqual([
+      "Castlevania Belmonts Curse",
+      "Castlevania",
+    ]);
+    expect(searchQueryVariants("Mario Kart 8 Deluxe")).toEqual(["Mario Kart 8 Deluxe"]);
+  });
+
+  it("never falls back to a very short main title", () => {
+    expect(searchQueryVariants("X: Beyond")).toEqual(["X Beyond"]);
   });
 });

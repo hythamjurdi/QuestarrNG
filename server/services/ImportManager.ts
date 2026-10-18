@@ -34,9 +34,20 @@ import { appriseClient } from "../apprise.js";
 import { type SecurityScanService, type ScanResult } from "../security-scan.js";
 import { EXTRACT_TEMP_DIR_CONFIG_KEY } from "./extract-staging.js";
 import { type RommScanService } from "./RommScanService.js";
+import { type ImportProgressTracker, type ImportStage } from "./ImportProgress.js";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 // IGDB's "PC (Microsoft Windows)" platform.
 const WINDOWS_IGDB_ID = 6;
+
+// The import a piece of async work belongs to, so deep helpers (archive extraction, file
+// copies) can report progress without every signature carrying an id.
+interface ProgressContext {
+  downloadId: string;
+  archiveIndex: number;
+  archiveTotal: number;
+}
+const progressContext = new AsyncLocalStorage<ProgressContext>();
 
 // The file unrar/7-Zip open a multi-volume set from: Game.rar (not .r00), Game.part1.rar
 // (not .part2.rar), Game.7z.001 (not .002), or any single-volume archive.
@@ -188,6 +199,23 @@ function pickFirstVolume(sortedNames: string[]): string {
   return first;
 }
 
+export type ConfirmImportPlan = ImportReview & {
+  strategy: "pc" | "romm";
+  transferMode?: "move" | "copy" | "hardlink" | "symlink" | undefined;
+  unpack?: boolean | undefined;
+  password?: string | undefined;
+  /** RomM platform picked in the review dialog; otherwise detected. */
+  rommSlug?: string | undefined;
+};
+
+/** A second confirmation for a download whose import is still running. */
+export class ImportInProgressError extends Error {
+  constructor() {
+    super("This download is already being imported.");
+    this.name = "ImportInProgressError";
+  }
+}
+
 export class ImportManager {
   private readonly pathRetryCount = new Map<string, number>();
   // Downloads whose processImport() is running in this process. The
@@ -209,7 +237,11 @@ export class ImportManager {
     _platformService: PlatformMappingService,
     private readonly archiveService: ArchiveService,
     securityScanService?: Pick<SecurityScanService, "scan">,
-    private readonly rommScanService?: Pick<RommScanService, "queueScan">
+    private readonly rommScanService?: Pick<RommScanService, "queueScan">,
+    private readonly progress?: Pick<
+      ImportProgressTracker,
+      "start" | "update" | "finish" | "isActive"
+    >
   ) {
     this.securityScanService = securityScanService ?? { scan: async () => ({ blocked: false }) };
   }
@@ -227,6 +259,57 @@ export class ImportManager {
       return "copy";
     }
     return mode;
+  }
+
+  /**
+   * Runs one import with live progress: starts the tracker entry, makes the import's id
+   * available to nested helpers, and settles the entry from the download's final status
+   * (imported → done; anything else → failed with its reason), so every early return —
+   * review needed, quarantine, skipped — is reported too.
+   */
+  private async withProgress(
+    downloadId: string,
+    info: { userId: string | null | undefined; gameId: string; title: string },
+    run: () => Promise<void>
+  ): Promise<void> {
+    if (!this.progress || !info.userId) {
+      await run();
+      return;
+    }
+    this.progress.start(downloadId, {
+      userId: info.userId,
+      gameId: info.gameId,
+      title: info.title,
+    });
+    let thrown: unknown;
+    try {
+      await progressContext.run({ downloadId, archiveIndex: 0, archiveTotal: 0 }, run);
+    } catch (err) {
+      thrown = err;
+      throw err;
+    } finally {
+      const final = await this.storage.getGameDownload(downloadId).catch(() => undefined);
+      if (final?.status === "imported") {
+        this.progress.finish(downloadId, {});
+      } else {
+        const reason =
+          final?.errorMessage ||
+          (thrown instanceof Error ? thrown.message : undefined) ||
+          (final?.status === "completed"
+            ? "Not imported (skipped by settings)"
+            : `Not imported (${final?.status ?? "unknown"})`);
+        this.progress.finish(downloadId, { error: reason });
+      }
+    }
+  }
+
+  private reportProgress(
+    stage: ImportStage,
+    patch: { detail?: string; percent?: number; rommSlug?: string } = {}
+  ): void {
+    const ctx = progressContext.getStore();
+    if (!ctx || !this.progress) return;
+    this.progress.update(ctx.downloadId, { stage, ...patch });
   }
 
   private queueRommScan(userId: string | null | undefined, slug: string | undefined): void {
@@ -543,7 +626,13 @@ export class ImportManager {
 
     if (!resolution || resolution.alreadyExtracted) {
       const excludes = new Set([...(resolution?.excludePaths ?? []), ...skippedSourceFiles]);
+      this.reportProgress("copying", { detail: plan.proposedPath });
       return strategy.executeImport(plan, transferMode, excludes.size > 0 ? excludes : undefined);
+    }
+    const ctx = progressContext.getStore();
+    if (ctx) {
+      ctx.archiveIndex = 0;
+      ctx.archiveTotal = 1 + (resolution.additionalArchives?.length ?? 0);
     }
 
     if (skippedSourceFiles.size > 0) {
@@ -611,6 +700,28 @@ export class ImportManager {
     password: string | undefined,
     stagingRoot: string | undefined
   ): Promise<string[]> {
+    const ctx = progressContext.getStore();
+    if (ctx && this.progress) {
+      ctx.archiveIndex++;
+      const step =
+        ctx.archiveTotal > 1 ? { current: ctx.archiveIndex, total: ctx.archiveTotal } : undefined;
+      const detail = path.basename(archivePath);
+      const progress = this.progress;
+      return this.archiveService.extract(archivePath, destDir, password, {
+        ...(stagingRoot ? { stagingRoot } : {}),
+        onProgress: ({ phase, bytesDone, bytesTotal }) => {
+          const percent =
+            bytesTotal > 0 ? Math.min(99, Math.round((bytesDone / bytesTotal) * 100)) : undefined;
+          progress.update(ctx.downloadId, {
+            stage:
+              phase === "verifying" ? "verifying" : phase === "moving" ? "finishing" : "extracting",
+            detail,
+            ...(phase === "extracting" && percent !== undefined ? { percent } : {}),
+            ...(step ? { step } : {}),
+          });
+        },
+      });
+    }
     return stagingRoot
       ? this.archiveService.extract(archivePath, destDir, password, { stagingRoot })
       : this.archiveService.extract(archivePath, destDir, password);
@@ -700,6 +811,7 @@ export class ImportManager {
 
     let modeUsed = transferMode;
     if (resolution.isDirectorySource && resolution.hasRemainingFiles) {
+      this.reportProgress("copying", { detail: plan.proposedPath });
       modeUsed = (
         await strategy.executeImport(
           plan,
@@ -761,6 +873,7 @@ export class ImportManager {
     let modeUsed = transferMode;
     if (resolution.isDirectorySource) {
       if (resolution.hasRemainingFiles) {
+        this.reportProgress("copying", { detail: plan.proposedPath });
         modeUsed = (
           await strategy.executeImport(
             plan,
@@ -1218,7 +1331,25 @@ export class ImportManager {
     }
     this.importsInFlight.add(downloadId);
     try {
-      await this.runImport(downloadId, remoteDownloadPath, password);
+      const download = this.progress
+        ? await this.storage.getGameDownload(downloadId).catch(() => undefined)
+        : undefined;
+      const game = download
+        ? await this.storage.getGame(download.gameId).catch(() => undefined)
+        : undefined;
+      const config =
+        game && this.progress
+          ? await this.storage.getImportConfig(game.userId ?? undefined).catch(() => undefined)
+          : undefined;
+      if (download && game && config?.enablePostProcessing) {
+        await this.withProgress(
+          downloadId,
+          { userId: game.userId, gameId: game.id, title: download.downloadTitle || game.title },
+          () => this.runImport(downloadId, remoteDownloadPath, password)
+        );
+      } else {
+        await this.runImport(downloadId, remoteDownloadPath, password);
+      }
     } finally {
       this.importsInFlight.delete(downloadId);
     }
@@ -1323,6 +1454,7 @@ export class ImportManager {
         ? await this.getRommPlatformSlug(game, download.downloadTitle || "", localPath)
         : undefined;
       const isRommImport = !!rommSlug;
+      if (rommSlug) this.reportProgress("checking", { rommSlug });
 
       // RomM imports unpack RAR sets only (their own toggle): zip/7z ROMs stay packed,
       // since RomM reads and hashes those directly. PC imports keep the general
@@ -1426,6 +1558,10 @@ export class ImportManager {
         isRommImport ? rommConfig.skipExtensions : undefined
       );
 
+      this.reportProgress("finishing", {
+        detail: result.destDir,
+        ...(isRommImport && rommSlug ? { rommSlug } : {}),
+      });
       await this.finalizeImport(downloadId, game, result.destDir);
       if (isRommImport) this.queueRommScan(game.userId, rommSlug);
       await this.autoDeleteIfConfigured(downloadId, download, game, config, transferMode);
@@ -1760,14 +1896,39 @@ export class ImportManager {
 
   async confirmImport(
     downloadId: string,
-    overridePlan?: ImportReview & {
-      strategy: "pc" | "romm";
-      transferMode?: "move" | "copy" | "hardlink" | "symlink" | undefined;
-      unpack?: boolean | undefined;
-      password?: string | undefined;
-      /** RomM platform picked in the review dialog; otherwise detected. */
-      rommSlug?: string | undefined;
-    },
+    overridePlan?: ConfirmImportPlan,
+    callerUserId?: string
+  ): Promise<void> {
+    if (this.importsInFlight.has(downloadId)) {
+      throw new ImportInProgressError();
+    }
+    this.importsInFlight.add(downloadId);
+    try {
+      const download = this.progress
+        ? await this.storage.getGameDownload(downloadId, callerUserId).catch(() => undefined)
+        : undefined;
+      if (!download) {
+        await this.runConfirmImport(downloadId, overridePlan, callerUserId);
+        return;
+      }
+      const game = await this.storage.getGame(download.gameId).catch(() => undefined);
+      await this.withProgress(
+        downloadId,
+        {
+          userId: game?.userId ?? callerUserId,
+          gameId: download.gameId,
+          title: download.downloadTitle || game?.title || "",
+        },
+        () => this.runConfirmImport(downloadId, overridePlan, callerUserId)
+      );
+    } finally {
+      this.importsInFlight.delete(downloadId);
+    }
+  }
+
+  private async runConfirmImport(
+    downloadId: string,
+    overridePlan?: ConfirmImportPlan,
     callerUserId?: string
   ): Promise<void> {
     const download = await this.storage.getGameDownload(downloadId, callerUserId);
@@ -1948,6 +2109,10 @@ export class ImportManager {
         overridePlan.strategy === "romm" ? rommConfig.skipExtensions : undefined
       );
 
+      this.reportProgress("finishing", {
+        detail: result.destDir,
+        ...(overridePlan.rommSlug ? { rommSlug: overridePlan.rommSlug } : {}),
+      });
       await this.finalizeImport(downloadId, game, result.destDir);
       if (overridePlan.strategy === "romm") {
         this.queueRommScan(

@@ -8,6 +8,34 @@ import { EXTRACT_STAGING_PREFIX } from "./extract-staging.js";
 type ArchiveTool = "7zip" | "unrar";
 type ExecFileResult = { stdout: string; stderr: string };
 
+export interface ExtractProgress {
+  phase: "verifying" | "extracting" | "moving";
+  bytesDone: number;
+  bytesTotal: number;
+}
+
+const PROGRESS_POLL_MS = 2_000;
+
+/** Total size of the regular files under dir; 0 when it can't be read. */
+async function directorySize(dir: string): Promise<number> {
+  let total = 0;
+  const walk = async (current: string): Promise<void> => {
+    let entries: import("node:fs").Dirent[];
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else if (entry.isFile()) total += (await fs.stat(full).catch(() => ({ size: 0 }))).size;
+    }
+  };
+  await walk(dir);
+  return total;
+}
+
 export interface ArchiveEntry {
   name: string;
   size: number;
@@ -644,10 +672,15 @@ export class ArchiveService {
     filePath: string,
     outputDir: string,
     password?: string,
-    options?: { stagingRoot?: string | undefined }
+    options?: {
+      stagingRoot?: string | undefined;
+      /** Called as the archive is verified, unpacked, and moved into place. */
+      onProgress?: ((progress: ExtractProgress) => void) | undefined;
+    }
   ): Promise<string[]> {
     const tool = resolveTool(filePath);
     const stagingRoot = options?.stagingRoot;
+    const onProgress = options?.onProgress;
     logger.debug(
       { filePath, outputDir, tool, hasPassword: !!password, stagingRoot },
       "Extracting archive"
@@ -662,6 +695,11 @@ export class ArchiveService {
       await fs.ensureDir(stagingRoot);
       await assertFreeSpace(stagingRoot, entries);
     }
+    const bytesTotal = entries.reduce(
+      (sum, e) => sum + (e.isDirectory ? 0 : Math.max(0, e.size)),
+      0
+    );
+    onProgress?.({ phase: "verifying", bytesDone: 0, bytesTotal });
     await this.testArchive(filePath, tool, password);
 
     // Extract into a private staging directory inside outputDir, then merge the result
@@ -689,11 +727,25 @@ export class ArchiveService {
     let merged = false;
     try {
       const unpackDir = scratchDir ?? stagingDir;
-      if (tool === "unrar") {
-        await this.extractWithUnrar(filePath, unpackDir, password);
-      } else {
-        await this.extractWith7zip(filePath, unpackDir, password);
+      // The tools run quiet, so progress is measured by how much has landed on disk.
+      onProgress?.({ phase: "extracting", bytesDone: 0, bytesTotal });
+      const poll = onProgress
+        ? setInterval(() => {
+            void directorySize(unpackDir).then((bytesDone) =>
+              onProgress({ phase: "extracting", bytesDone, bytesTotal })
+            );
+          }, PROGRESS_POLL_MS)
+        : undefined;
+      try {
+        if (tool === "unrar") {
+          await this.extractWithUnrar(filePath, unpackDir, password);
+        } else {
+          await this.extractWith7zip(filePath, unpackDir, password);
+        }
+      } finally {
+        if (poll) clearInterval(poll);
       }
+      onProgress?.({ phase: "moving", bytesDone: bytesTotal, bytesTotal });
       let mergeFrom = stagingDir;
       if (scratchDir) {
         if (await sameFilesystem(scratchDir, outputDir)) {

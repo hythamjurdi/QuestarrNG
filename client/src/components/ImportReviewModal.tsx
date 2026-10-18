@@ -231,8 +231,8 @@ export default function ImportReviewModal({
   });
 
   const confirmMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("POST", `/api/imports/${downloadId}/confirm`, {
+    mutationFn: async (): Promise<{ running: boolean }> => {
+      const res = await apiRequest("POST", `/api/imports/${downloadId}/confirm`, {
         strategy,
         ...(strategy === "romm" && planData?.romm?.slug ? { rommSlug: planData.romm.slug } : {}),
         proposedPath: destinationPath,
@@ -241,12 +241,23 @@ export default function ImportReviewModal({
         unpack: unpackArchive,
         ...(unpackArchive && password ? { password } : {}),
       });
+      const body = (await res?.json?.().catch(() => ({}))) as { running?: boolean } | undefined;
+      return { running: res?.status === 202 || !!body?.running };
     },
-    onSuccess: () => {
-      toast({
-        title: localizedText("Import Confirmed"),
-        description: localizedText("The import has been queued for execution."),
-      });
+    onSuccess: (result?: { running: boolean }) => {
+      toast(
+        result?.running
+          ? {
+              title: localizedText("Import started"),
+              description: localizedText(
+                "This one takes a while. Follow its progress on the Downloads page."
+              ),
+            }
+          : {
+              title: localizedText("Import complete"),
+              description: localizedText("The files are in place."),
+            }
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/imports/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/downloads"] });
       queryClient.invalidateQueries({ queryKey: ["/api/games"] });

@@ -4,10 +4,12 @@ import { PlatformMappingService } from "./PlatformMappingService.js";
 import { ArchiveService } from "./ArchiveService.js";
 import { ImportManager } from "./ImportManager.js";
 import { RommScanService } from "./RommScanService.js";
+import { importProgress } from "./ImportProgress.js";
 import { SecurityScanService } from "../security-scan.js";
 import { logger } from "../logger.js";
 
 // Instantiate services
+export { importProgress };
 export const pathMappingService = new PathMappingService(storage);
 export const platformMappingService = new PlatformMappingService(storage);
 export const archiveService = new ArchiveService();
@@ -28,5 +30,6 @@ export const importManager = new ImportManager(
   platformMappingService,
   archiveService,
   securityScanService,
-  rommScanService
+  rommScanService,
+  importProgress
 );

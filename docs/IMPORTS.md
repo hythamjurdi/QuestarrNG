@@ -97,6 +97,19 @@ defaults, so existing setups keep PC games in the PC library until you add it.
 settings would unpack (the RomM archive switches for RomM imports, **Auto-Unpack
 Archives** otherwise). The original download stays in place either way.
 
+### Follow an import
+
+While an import runs, its download card on the **Downloads** page shows what it
+is doing: preparing, checking the archive (unrar reads the whole set once to
+verify it), extracting with a percentage and "Archive 2 of 3" for multi-disc
+releases, copying files, and finishing. A RomM import also shows its platform.
+When it ends, the card shows the destination folder or the reason it failed for
+two minutes; the download's status and **Import History** keep the result.
+
+A manual import that takes longer than a few seconds keeps running in the
+background after the review dialog closes, so large extractions are not cut off
+by a browser or reverse-proxy timeout.
+
 ### Storage warnings
 
 When QuestarrNG runs in a container, the settings page warns when the library
