@@ -326,7 +326,7 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
     // What the review dialog shows before anything is touched.
     const plan = await manager.planConfirmImport("dl-1", release, "u1", "romm");
     expect(plan.suggestedStrategy).toBe("romm");
-    expect(plan.romm).toEqual({
+    expect(plan.romm).toMatchObject({
       slug: "ps5",
       platformDir: path.join(rommRoot, "ps5", "roms"),
       error: null,
@@ -370,6 +370,94 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
     const plan = await manager.planConfirmImport("dl-1", release, "u1", "romm");
     expect(plan.suggestedStrategy).toBe("pc");
     expect(plan.romm.slug).toBeNull();
+  });
+
+  it("routes an untagged PC release to the Windows folder, detected from the .exe inside its RAR", async () => {
+    const release = path.join(downloads, "Some.Game-RUNE");
+    await makeRar(work, release, "rune-sg", {
+      "setup.exe": payload("setup", 4096),
+      "data.bin": payload("data"),
+    });
+
+    const { manager, storage, rommScan } = setup({
+      rommOverrides: { folderLayout: "platform-roms" },
+    });
+    storage.getGameDownload.mockResolvedValue({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadHash: "abc",
+      downloadTitle: "Some.Game-RUNE",
+    });
+    // PS5 is the game's first IGDB platform; the files say this release is the PC one.
+    storage.getGame.mockResolvedValue(
+      makeGame({ id: "g1", userId: "u1", title: "Some Game", platforms: [167, 6] })
+    );
+    storage.getPlatformMapping.mockImplementation(async (id: number) =>
+      id === 6
+        ? { rommPlatformSlug: "windows" }
+        : id === 167
+          ? { rommPlatformSlug: "ps5" }
+          : undefined
+    );
+
+    await manager.processImport("dl-1", release);
+
+    expect(await listTree(path.join(rommRoot, "windows"))).toEqual([
+      "roms/Some Game/data.bin",
+      "roms/Some Game/setup.exe",
+    ]);
+    expect(await fs.pathExists(path.join(rommRoot, "ps5"))).toBe(false);
+    expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "windows");
+  });
+
+  it("manual import: a platform picked in the dialog overrides an unmapped detection", async () => {
+    const release = path.join(downloads, "Castlevania.Belmonts.Curse.PS5-DUPLEX");
+    await makeRar(work, release, "dup-cbc", { "Castlevania.pkg": payload("cv") });
+
+    const { manager, storage, rommScan, pathService } = setup({
+      rommOverrides: { folderLayout: "platform-roms" },
+    });
+    pathService.getConfiguredRoots.mockResolvedValue([downloads]);
+    storage.getGameDownload.mockResolvedValue({
+      id: "dl-1",
+      gameId: "g1",
+      downloaderId: "d1",
+      downloadHash: "abc",
+      downloadTitle: "Castlevania.Belmonts.Curse.PS5-DUPLEX",
+    });
+    storage.getGame.mockResolvedValue(
+      makeGame({ id: "g1", userId: "u1", title: "Castlevania", platforms: [] })
+    );
+    storage.getPlatformMapping.mockResolvedValue(undefined); // PS5 not mapped yet
+
+    const detected = await manager.planConfirmImport("dl-1", release, "u1", "romm");
+    expect(detected.suggestedStrategy).toBe("pc");
+    expect(detected.romm.detectedPlatform).toEqual({
+      igdbId: 167,
+      name: "PlayStation 5",
+      via: "release-tag",
+      mapped: false,
+    });
+
+    const picked = await manager.planConfirmImport("dl-1", release, "u1", "romm", "ps5");
+    expect(picked.romm.platformDir).toBe(path.join(rommRoot, "ps5", "roms"));
+    await manager.confirmImport(
+      "dl-1",
+      {
+        strategy: "romm",
+        originalPath: release,
+        proposedPath: picked.proposedPath,
+        needsReview: false,
+        unpack: true,
+        rommSlug: "ps5",
+      },
+      "u1"
+    );
+    expect(await listTree(path.join(rommRoot, "ps5", "roms"))).toEqual([
+      "Castlevania/Castlevania.pkg",
+    ]);
+    expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "ps5");
   });
 
   it("copies every file when the skip list is empty", async () => {

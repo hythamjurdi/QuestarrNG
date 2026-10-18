@@ -402,7 +402,8 @@ describe("GET /api/imports/:id/plan", () => {
       "dl-1",
       undefined,
       "user-1",
-      "pc"
+      "pc",
+      undefined
     );
   });
 
@@ -414,7 +415,8 @@ describe("GET /api/imports/:id/plan", () => {
       "dl-2",
       "/custom/source",
       "user-1",
-      "pc"
+      "pc",
+      undefined
     );
   });
 

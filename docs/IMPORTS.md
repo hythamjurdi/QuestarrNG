@@ -73,9 +73,25 @@ copied:
 - **Imports into RomM as ps5**, with the destination folder, when the game's
   platform (or the release's platform tag, such as `PS5-DUPLEX`) maps to a
   RomM platform. RomM is preselected in that case.
-- **Imports into the PC game library**, with the reason it isn't going to RomM
-  (no mapping for the platform, RomM routing turned off, or a missing folder
-  binding).
+- **Imports into the PC game library**, with the reason it isn't going to RomM:
+  the detected platform has no mapping, RomM routing is turned off, or a folder
+  binding is missing.
+
+Choose **RomM ROM library** to pick the **RomM platform** folder yourself, for
+example when the detected platform isn't mapped yet.
+
+### How the platform is chosen
+
+1. A platform tag in the release name, such as `PS5-DUPLEX` or `Xbox 360`.
+2. Otherwise, **PC (Microsoft Windows)** when the download contains a Windows
+   executable or installer (`.exe`/`.msi`), on disk or inside its archive. PC
+   scene releases rarely carry a platform tag.
+3. Otherwise, the game's first IGDB platform.
+
+To send PC games to RomM, add **PC (Microsoft Windows)** under **Platform slug
+mappings** with your RomM Windows folder name (RomM's own slug is `win`; use
+whatever your folder is called, for example `windows`). It is not part of the
+defaults, so existing setups keep PC games in the PC library until you add it.
 
 **Unpack Archive** is preselected when the download contains archives that the
 settings would unpack (the RomM archive switches for RomM imports, **Auto-Unpack

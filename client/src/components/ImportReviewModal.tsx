@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { ImportConfig, RomMConfig } from "@shared/schema";
+import type { ImportConfig, PlatformMapping, RomMConfig } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -67,9 +67,23 @@ export default function ImportReviewModal({
     queryKey: ["/api/imports/config"],
   });
   const { data: rommConfig } = useQuery<RomMConfig>({ queryKey: ["/api/imports/romm"] });
+  const { data: platformMappings } = useQuery<PlatformMapping[]>({
+    queryKey: ["/api/imports/mappings/platforms"],
+    enabled: open && !!rommConfig?.enabled,
+  });
+  // RomM folder names the user has mapped, for picking a platform by hand.
+  const rommSlugs = Array.from(
+    new Set(
+      (Array.isArray(platformMappings) ? platformMappings : [])
+        .map((m) => m.rommPlatformSlug?.trim().toLowerCase())
+        .filter((slug): slug is string => !!slug)
+    )
+  ).sort();
 
   // State
   const [strategy, setStrategy] = useState<"pc" | "romm">("pc");
+  // A RomM platform picked by hand; empty means "use the detected one".
+  const [chosenSlug, setChosenSlug] = useState("");
   const [sourcePath, setSourcePath] = useState("");
   const [destinationPath, setDestinationPath] = useState("");
   const [transferMode, setTransferMode] = useState<"move" | "copy" | "hardlink" | "symlink">(
@@ -85,7 +99,7 @@ export default function ImportReviewModal({
   const strategyTouched = useRef(false);
   const unpackTouched = useRef(false);
 
-  const planUrl = `/api/imports/${downloadId}/plan?strategy=${strategy}${sourcePath ? `&sourcePath=${encodeURIComponent(sourcePath)}` : ""}`;
+  const planUrl = `/api/imports/${downloadId}/plan?strategy=${strategy}${sourcePath ? `&sourcePath=${encodeURIComponent(sourcePath)}` : ""}${strategy === "romm" && chosenSlug ? `&rommSlug=${encodeURIComponent(chosenSlug)}` : ""}`;
 
   const { data: planData } = useQuery<{
     originalPath: string;
@@ -94,7 +108,17 @@ export default function ImportReviewModal({
     hasArchive: boolean;
     totalCount: number;
     suggestedStrategy?: "pc" | "romm";
-    romm?: { slug: string | null; platformDir: string | null; error: string | null };
+    romm?: {
+      slug: string | null;
+      platformDir: string | null;
+      error: string | null;
+      detectedPlatform?: {
+        igdbId: number;
+        name: string;
+        via: "release-tag" | "windows-files" | "game";
+        mapped: boolean;
+      } | null;
+    };
     suggestUnpack?: boolean;
   }>({
     queryKey: [planUrl],
@@ -110,6 +134,7 @@ export default function ImportReviewModal({
       strategyTouched.current = false;
       unpackTouched.current = passwordRequired;
       setStrategy("pc");
+      setChosenSlug("");
       setSourcePath("");
       setDestinationPath(importConfig?.libraryRoot ?? "");
       setTransferMode(importConfig?.transferMode ?? "move");
@@ -139,7 +164,7 @@ export default function ImportReviewModal({
 
   useEffect(() => {
     planApplied.current = false;
-  }, [sourcePath, strategy]);
+  }, [sourcePath, strategy, chosenSlug]);
 
   // Pre-fill paths from plan once when it loads
   useEffect(() => {
@@ -158,7 +183,11 @@ export default function ImportReviewModal({
       }
       planApplied.current = true;
       if (planData.originalPath) setSourcePath(planData.originalPath);
-      if (planData.proposedPath) setDestinationPath(planData.proposedPath);
+      // A RomM plan without a platform folder carries PC paths; keep the RomM root until
+      // a platform is chosen.
+      if (planData.proposedPath && (strategy !== "romm" || planData.romm?.platformDir)) {
+        setDestinationPath(planData.proposedPath);
+      }
       if (!unpackTouched.current && planData.suggestUnpack !== undefined) {
         setUnpackArchive(planData.suggestUnpack);
       }
@@ -191,6 +220,7 @@ export default function ImportReviewModal({
     mutationFn: async () => {
       await apiRequest("POST", `/api/imports/${downloadId}/confirm`, {
         strategy,
+        ...(strategy === "romm" && planData?.romm?.slug ? { rommSlug: planData.romm.slug } : {}),
         proposedPath: destinationPath,
         ...(sourcePath ? { originalPath: sourcePath } : {}),
         transferMode,
@@ -322,12 +352,33 @@ export default function ImportReviewModal({
                     </SelectItem>
                     <SelectItem
                       value="romm"
-                      disabled={!planData?.romm?.platformDir}
                       lang={languageFor("RomM ROM library")}
                       dir={directionFor("RomM ROM library")}
                     >
                       {t("RomM ROM library")}
                     </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {rommConfig?.enabled && strategy === "romm" && (
+              <div className="space-y-2">
+                <Label lang={languageFor("RomM platform")} dir={directionFor("RomM platform")}>
+                  {t("RomM platform")}
+                </Label>
+                <Select
+                  value={chosenSlug || planData?.romm?.slug || ""}
+                  onValueChange={(value) => setChosenSlug(value)}
+                >
+                  <SelectTrigger aria-label={t("RomM platform")}>
+                    <SelectValue placeholder={t("Choose a RomM platform")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rommSlugs.map((slug) => (
+                      <SelectItem key={slug} value={slug}>
+                        {slug}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -353,6 +404,16 @@ export default function ImportReviewModal({
                       </code>
                     </p>
                   </>
+                ) : strategy === "romm" ? (
+                  <p className="font-medium text-sm">
+                    {planData.romm?.error
+                      ? formatInterfaceMessage(
+                          "Not routed to RomM: {reason}",
+                          { reason: planData.romm.error },
+                          language
+                        )
+                      : t("Choose the RomM platform folder for this import.")}
+                  </p>
                 ) : (
                   <>
                     <p className="font-medium text-sm">{t("Imports into the PC game library")}</p>
@@ -363,11 +424,17 @@ export default function ImportReviewModal({
                             { reason: planData.romm.error },
                             language
                           )
-                        : rommConfig?.enabled
-                          ? t(
-                              "Not routed to RomM: this game's platform has no RomM platform mapping."
-                            )
-                          : t("RomM routing is turned off in Settings → Import → RomM.")}
+                        : !rommConfig?.enabled
+                          ? t("RomM routing is turned off in Settings → Import → RomM.")
+                          : planData.romm?.detectedPlatform
+                            ? formatInterfaceMessage(
+                                "Detected {platform}, which has no RomM platform mapping. Choose RomM above to pick a folder, or add the mapping in Settings → Import → RomM.",
+                                { platform: planData.romm.detectedPlatform.name },
+                                language
+                              )
+                            : t(
+                                "Not routed to RomM: this game's platform has no RomM platform mapping."
+                              )}
                     </p>
                   </>
                 )}
@@ -664,7 +731,11 @@ export default function ImportReviewModal({
             )}
             <Button
               onClick={handleConfirm}
-              disabled={confirmMutation.isPending || skipMutation.isPending}
+              disabled={
+                confirmMutation.isPending ||
+                skipMutation.isPending ||
+                (strategy === "romm" && !planData?.romm?.platformDir)
+              }
             >
               {confirmMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <span lang={languageFor("Confirm Import")} dir={directionFor("Confirm Import")}>

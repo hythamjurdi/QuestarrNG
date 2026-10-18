@@ -122,6 +122,7 @@ const confirmImportBodySchema = z
       .max(1024)
       .refine((value) => !value.includes("\0"), "Password must not contain null characters")
       .optional(),
+    rommSlug: z.string().trim().min(1).max(100).optional(),
   })
   .strict();
 
@@ -838,11 +839,16 @@ importRouter.get("/:id/plan", async (req, res) => {
     const overrideSource =
       typeof req.query.sourcePath === "string" ? req.query.sourcePath : undefined;
     const requestedStrategy = req.query.strategy === "romm" ? "romm" : "pc";
+    const requestedSlug =
+      typeof req.query.rommSlug === "string" && req.query.rommSlug.trim()
+        ? req.query.rommSlug.trim().slice(0, 100)
+        : undefined;
     const plan = await importManager.planConfirmImport(
       id,
       overrideSource,
       userId,
-      requestedStrategy
+      requestedStrategy,
+      requestedSlug
     );
     return res.json(plan);
   } catch (error) {
@@ -879,6 +885,7 @@ importRouter.post("/:id/confirm", validate(confirmImportBodySchema), async (req,
           body.transferMode ?? (body.strategy === "romm" ? rommConfig.moveMode : undefined),
         unpack: body.unpack,
         password: body.password,
+        rommSlug: body.rommSlug,
       },
       userId
     );

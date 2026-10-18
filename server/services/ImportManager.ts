@@ -27,13 +27,28 @@ import { logger } from "../logger.js";
 import { extractHostnameFromUrl } from "../url-utils.js";
 import { isSensitivePath, assertWithinRoots } from "../path-security.js";
 import { notifyUser } from "../socket.js";
-import { resolveRommPlatformDir } from "./RommRouting.js";
+import { resolveRommPlatformDir, validateRommSlug } from "./RommRouting.js";
 import { recordVersionFromCompletedDownload } from "../game-version.js";
 import { resolvePrefs } from "../notification-prefs.js";
 import { appriseClient } from "../apprise.js";
 import { type SecurityScanService, type ScanResult } from "../security-scan.js";
 import { EXTRACT_TEMP_DIR_CONFIG_KEY } from "./extract-staging.js";
 import { type RommScanService } from "./RommScanService.js";
+
+// IGDB's "PC (Microsoft Windows)" platform.
+const WINDOWS_IGDB_ID = 6;
+
+// The file unrar/7-Zip open a multi-volume set from: Game.rar (not .r00), Game.part1.rar
+// (not .part2.rar), Game.7z.001 (not .002), or any single-volume archive.
+function isFirstArchiveVolume(filePath: string): boolean {
+  const name = path.basename(filePath).toLowerCase();
+  if (/\.r\d{2,3}$/.test(name)) return false;
+  const part = /\.part(\d+)\.rar$/.exec(name);
+  if (part) return Number(part[1]) === 1;
+  const numbered = /\.(\d{3})$/.exec(name);
+  if (numbered) return Number(numbered[1]) === 1;
+  return true;
+}
 
 const RELEASE_PLATFORM_TO_IGDB_ID: Record<string, number> = {
   nes: 18,
@@ -239,16 +254,101 @@ export class ImportManager {
     return undefined;
   }
 
-  private async getRommPlatformSlug(
+  /**
+   * Which platform a download is for, and its RomM slug when that platform is mapped:
+   * 1. a platform tag in the release name (PS5-DUPLEX, Xbox 360, …);
+   * 2. otherwise, Windows when the files are a PC release (an .exe/.msi on disk or inside
+   *    its archive) — PC scene releases rarely carry a platform tag;
+   * 3. otherwise, the game's first IGDB platform.
+   */
+  private async resolveRommPlatform(
     game: { platforms?: unknown },
-    downloadTitle: string
-  ): Promise<string | undefined> {
+    downloadTitle: string,
+    sourcePath?: string | null
+  ): Promise<{
+    igdbId: number | undefined;
+    slug: string | undefined;
+    via: "release-tag" | "windows-files" | "game";
+  }> {
     const releasePlatformId = this.getReleasePlatformIgdbId(
       this.getReleasePlatformKey(downloadTitle)
     );
-    const platformId = releasePlatformId ?? this.getPrimaryPlatformId(game);
-    if (platformId === undefined) return undefined;
-    return (await this.storage.getPlatformMapping(platformId))?.rommPlatformSlug ?? undefined;
+    let igdbId: number | undefined;
+    let via: "release-tag" | "windows-files" | "game";
+    if (releasePlatformId !== undefined) {
+      igdbId = releasePlatformId;
+      via = "release-tag";
+    } else if (sourcePath && (await this.looksLikeWindowsRelease(sourcePath))) {
+      igdbId = WINDOWS_IGDB_ID;
+      via = "windows-files";
+    } else {
+      igdbId = this.getPrimaryPlatformId(game);
+      via = "game";
+    }
+    const slug =
+      igdbId === undefined
+        ? undefined
+        : ((await this.storage.getPlatformMapping(igdbId))?.rommPlatformSlug ?? undefined);
+    return { igdbId, slug, via };
+  }
+
+  private async getRommPlatformSlug(
+    game: { platforms?: unknown },
+    downloadTitle: string,
+    sourcePath?: string | null
+  ): Promise<string | undefined> {
+    return (await this.resolveRommPlatform(game, downloadTitle, sourcePath)).slug;
+  }
+
+  /**
+   * True when a download contains a Windows executable or installer, either as a file
+   * (up to three folders deep) or inside its first archive set. Never throws: a source it
+   * can't read is simply not detected as a PC release.
+   */
+  private async looksLikeWindowsRelease(sourcePath: string): Promise<boolean> {
+    const isWindowsBinary = (name: string): boolean => /\.(exe|msi)$/i.test(name);
+    try {
+      const stats = await fs.stat(sourcePath);
+      const archives: string[] = [];
+      if (!stats.isDirectory()) {
+        if (isWindowsBinary(sourcePath)) return true;
+        if (this.archiveService.isArchive(sourcePath)) archives.push(sourcePath);
+      } else {
+        const queue: Array<{ dir: string; depth: number }> = [{ dir: sourcePath, depth: 0 }];
+        let seen = 0;
+        while (queue.length > 0 && seen < 2000) {
+          const { dir, depth } = queue.shift()!;
+          for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
+            seen++;
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              if (depth < 2) queue.push({ dir: full, depth: depth + 1 });
+            } else if (isWindowsBinary(entry.name)) {
+              return true;
+            } else if (depth === 0 && this.archiveService.isArchive(entry.name)) {
+              archives.push(full);
+            }
+          }
+        }
+      }
+      // Only the entry point of each set needs listing; volumes are listed together.
+      const firstVolumes = archives.filter(isFirstArchiveVolume).slice(0, 3);
+      for (const archive of firstVolumes) {
+        const entries = await this.archiveService.listEntries(archive).catch(() => []);
+        if (entries.some((e) => !e.isDirectory && isWindowsBinary(e.name))) return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  }
+
+  private async platformDisplayName(igdbId: number): Promise<string> {
+    const known = PLATFORM_CATALOG.find((p) => (p.igdbIds as readonly number[]).includes(igdbId));
+    if (known) return known.igdbNames[0] ?? known.canonical;
+    if (igdbId === WINDOWS_IGDB_ID) return "PC (Microsoft Windows)";
+    const mapping = await this.storage.getPlatformMapping(igdbId).catch(() => undefined);
+    return mapping?.sourcePlatformName ?? `IGDB platform ${igdbId}`;
   }
 
   private getRommPlatformDir(config: RomMConfig, slug: string): string {
@@ -1220,7 +1320,7 @@ export class ImportManager {
       }
 
       const rommSlug = rommConfig.enabled
-        ? await this.getRommPlatformSlug(game, download.downloadTitle || "")
+        ? await this.getRommPlatformSlug(game, download.downloadTitle || "", localPath)
         : undefined;
       const isRommImport = !!rommSlug;
 
@@ -1433,11 +1533,22 @@ export class ImportManager {
     downloadId: string,
     overrideSourcePath?: string,
     callerUserId?: string,
-    requestedStrategy: "pc" | "romm" = "pc"
+    requestedStrategy: "pc" | "romm" = "pc",
+    requestedSlug?: string
   ): Promise<
     Awaited<ReturnType<ImportManager["planConfirmImportPaths"]>> & {
       suggestedStrategy: "pc" | "romm";
-      romm: { slug: string | null; platformDir: string | null; error: string | null };
+      romm: {
+        slug: string | null;
+        platformDir: string | null;
+        error: string | null;
+        detectedPlatform: {
+          igdbId: number;
+          name: string;
+          via: "release-tag" | "windows-files" | "game";
+          mapped: boolean;
+        } | null;
+      };
       suggestUnpack: boolean;
     }
   > {
@@ -1448,11 +1559,31 @@ export class ImportManager {
     const config = await this.storage.getImportConfig(game.userId ?? undefined);
     const rommConfig = await this.storage.getRomMConfig(game.userId ?? callerUserId ?? "");
 
-    const slug = rommConfig.enabled
-      ? ((await this.getRommPlatformSlug(game, download.downloadTitle || "")) ?? null)
-      : null;
-    let platformDir: string | null = null;
+    // Locate the files first: whether this is a PC release can depend on what they are.
+    const located = await this.planConfirmImportPaths(
+      downloadId,
+      overrideSourcePath,
+      callerUserId,
+      "pc"
+    );
+    const detected = rommConfig.enabled
+      ? await this.resolveRommPlatform(game, download.downloadTitle || "", located.originalPath)
+      : { igdbId: undefined, slug: undefined, via: "game" as const };
+
+    let slug: string | null = null;
     let rommError: string | null = null;
+    if (rommConfig.enabled) {
+      if (requestedSlug) {
+        try {
+          slug = validateRommSlug(requestedSlug);
+        } catch (err) {
+          rommError = err instanceof Error ? err.message : String(err);
+        }
+      } else {
+        slug = detected.slug ?? null;
+      }
+    }
+    let platformDir: string | null = null;
     if (slug) {
       try {
         platformDir = this.getRommPlatformDir(rommConfig, slug);
@@ -1462,12 +1593,16 @@ export class ImportManager {
     }
     const suggestedStrategy: "pc" | "romm" = platformDir ? "romm" : "pc";
 
-    const plan = await this.planConfirmImportPaths(
-      downloadId,
-      overrideSourcePath,
-      callerUserId,
-      requestedStrategy === "romm" && !platformDir ? "pc" : requestedStrategy
-    );
+    const plan =
+      requestedStrategy === "romm" && platformDir
+        ? await this.planConfirmImportPaths(
+            downloadId,
+            overrideSourcePath,
+            callerUserId,
+            "romm",
+            slug ?? undefined
+          )
+        : located;
 
     const strategyForUnpack = requestedStrategy === "romm" && platformDir ? "romm" : "pc";
     const families = strategyForUnpack === "romm" ? rommUnpackFamilies(rommConfig) : null;
@@ -1481,7 +1616,20 @@ export class ImportManager {
     return {
       ...plan,
       suggestedStrategy,
-      romm: { slug, platformDir, error: rommError },
+      romm: {
+        slug,
+        platformDir,
+        error: rommError,
+        detectedPlatform:
+          detected.igdbId === undefined
+            ? null
+            : {
+                igdbId: detected.igdbId,
+                name: await this.platformDisplayName(detected.igdbId),
+                via: detected.via,
+                mapped: !!detected.slug,
+              },
+      },
       suggestUnpack,
     };
   }
@@ -1490,7 +1638,8 @@ export class ImportManager {
     downloadId: string,
     overrideSourcePath?: string,
     callerUserId?: string,
-    requestedStrategy: "pc" | "romm" = "pc"
+    requestedStrategy: "pc" | "romm" = "pc",
+    rommSlugOverride?: string
   ): Promise<{
     originalPath: string | null;
     proposedPath: string;
@@ -1511,7 +1660,7 @@ export class ImportManager {
     }
     const rommSlug =
       requestedStrategy === "romm"
-        ? await this.getRommPlatformSlug(game, download.downloadTitle || "")
+        ? (rommSlugOverride ?? (await this.getRommPlatformSlug(game, download.downloadTitle || "")))
         : undefined;
     if (requestedStrategy === "romm" && !rommSlug) {
       throw new Error("No RomM platform slug is configured for this game");
@@ -1616,6 +1765,8 @@ export class ImportManager {
       transferMode?: "move" | "copy" | "hardlink" | "symlink" | undefined;
       unpack?: boolean | undefined;
       password?: string | undefined;
+      /** RomM platform picked in the review dialog; otherwise detected. */
+      rommSlug?: string | undefined;
     },
     callerUserId?: string
   ): Promise<void> {
@@ -1801,7 +1952,9 @@ export class ImportManager {
       if (overridePlan.strategy === "romm") {
         this.queueRommScan(
           game.userId ?? callerUserId,
-          await this.getRommPlatformSlug(game, download.downloadTitle || "")
+          overridePlan.rommSlug
+            ? validateRommSlug(overridePlan.rommSlug)
+            : await this.getRommPlatformSlug(game, download.downloadTitle || "", safeOriginalPath)
         );
       }
     } catch (err) {
