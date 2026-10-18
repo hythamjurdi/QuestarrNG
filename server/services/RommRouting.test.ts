@@ -19,6 +19,41 @@ describe("RomM platform routing", () => {
     ).toBe("/games/snes");
   });
 
+  it("adds RomM's roms/ folder under the platform with the platform-roms layout", () => {
+    expect(
+      resolveRommPlatformDir({
+        libraryRoot: "/romm",
+        fsSlug: "PS2",
+        routingMode: "slug-subfolder",
+        folderLayout: "platform-roms",
+      })
+    ).toBe("/romm/ps2/roms");
+  });
+
+  it("falls back to the layout-shaped folder for an unbound platform", () => {
+    expect(
+      resolveRommPlatformDir({
+        libraryRoot: "/romm",
+        fsSlug: "psx",
+        routingMode: "binding-map",
+        bindings: { n64: "N64/games" },
+        folderLayout: "platform-roms",
+      })
+    ).toBe("/romm/psx/roms");
+  });
+
+  it("takes a custom binding as-is regardless of the layout", () => {
+    expect(
+      resolveRommPlatformDir({
+        libraryRoot: "/romm",
+        fsSlug: "n64",
+        routingMode: "binding-map",
+        bindings: { n64: "N64/games" },
+        folderLayout: "platform-roms",
+      })
+    ).toBe("/romm/N64/games");
+  });
+
   it("resolves a configured binding under the library root", () => {
     expect(
       resolveRommPlatformDir({

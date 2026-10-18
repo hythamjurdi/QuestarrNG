@@ -126,11 +126,34 @@ interface ArchiveResolution {
    * They are extracted straight from the download folder, never relocated.
    */
   additionalArchives?: Array<{ archivePath: string; volumes: Set<string> }>;
+  /** Source files left out of the import because of their extension (RomM clutter). */
+  skippedFiles?: Set<string>;
+  /** Extensions removed from extracted output, lowercase with a leading dot. */
+  skipExtensions?: Set<string>;
 }
+
+export type ArchiveFamily = "rar" | "7z" | "zip";
 
 // RAR family only: .rar (incl. .partN.rar) and classic .rNN continuations.
 export function isRarVolumeName(name: string): boolean {
   return /\.(rar|r\d{2,3})$/i.test(name);
+}
+
+/** The archive family a file name belongs to, or undefined for any other format. */
+export function archiveFamilyOf(name: string): ArchiveFamily | undefined {
+  if (isRarVolumeName(name)) return "rar";
+  if (/\.7z(\.\d{3})?$/i.test(name)) return "7z";
+  if (/\.zip(\.\d{3})?$/i.test(name)) return "zip";
+  return undefined;
+}
+
+/** The archive families a RomM import unpacks, per its settings. */
+export function rommUnpackFamilies(config: RomMConfig): Set<ArchiveFamily> {
+  const families = new Set<ArchiveFamily>();
+  if (config.unpackRar) families.add("rar");
+  if (config.unpack7z) families.add("7z");
+  if (config.unpackZip) families.add("zip");
+  return families;
 }
 
 // Lexicographic sort puts "Game.r00" before "Game.rar" (since '0' < 'a'), but unrar/7-Zip
@@ -235,6 +258,7 @@ export class ImportManager {
       routingMode: config.platformRoutingMode,
       bindings: config.platformBindings,
       bindingMissingBehavior: config.bindingMissingBehavior,
+      folderLayout: config.folderLayout,
     });
   }
 
@@ -310,10 +334,14 @@ export class ImportManager {
    */
   private async resolveArchive(
     sourcePath: string,
-    options?: { includeDiscImages?: boolean; rarOnly?: boolean }
+    options?: { includeDiscImages?: boolean; families?: Set<ArchiveFamily> }
   ): Promise<ArchiveResolution | null> {
-    const isCandidate = (name: string): boolean =>
-      this.archiveService.isArchive(name, options) && (!options?.rarOnly || isRarVolumeName(name));
+    const isCandidate = (name: string): boolean => {
+      if (!this.archiveService.isArchive(name, options)) return false;
+      if (!options?.families) return true;
+      const family = archiveFamilyOf(path.basename(name));
+      return !!family && options.families.has(family);
+    };
     if (isSensitivePath(sourcePath)) {
       throw new Error("Refusing to process a sensitive system path");
     }
@@ -401,13 +429,33 @@ export class ImportManager {
     resolution: ArchiveResolution | null,
     game: NonNullable<Awaited<ReturnType<IStorage["getGame"]>>>,
     password: string | undefined,
-    sortExtras: boolean
+    sortExtras: boolean,
+    skipExtensions?: readonly string[]
   ): Promise<ImportResult> {
     const strategy = new PCImportStrategy(await this.pathService.getConfiguredRoots());
+    const skip = new Set((skipExtensions ?? []).map((e) => e.toLowerCase()));
+    const skippedSourceFiles = await this.findSkippedFiles(plan.originalPath, skip);
 
     if (!resolution || resolution.alreadyExtracted) {
-      return strategy.executeImport(plan, transferMode, resolution?.excludePaths);
+      const excludes = new Set([...(resolution?.excludePaths ?? []), ...skippedSourceFiles]);
+      return strategy.executeImport(plan, transferMode, excludes.size > 0 ? excludes : undefined);
     }
+
+    if (skippedSourceFiles.size > 0) {
+      const archiveVolumes = ImportManager.allArchiveVolumes(resolution);
+      const sourceFiles = resolution.isDirectorySource
+        ? await gatherFiles(plan.originalPath, { skipExtractStaging: true })
+        : [];
+      resolution = {
+        ...resolution,
+        skippedFiles: skippedSourceFiles,
+        hasRemainingFiles: sourceFiles.some((file) => {
+          const resolved = path.resolve(file);
+          return !archiveVolumes.has(resolved) && !skippedSourceFiles.has(resolved);
+        }),
+      };
+    }
+    resolution = { ...resolution, skipExtensions: skip };
 
     const stagingRoot = await this.getExtractTempDir();
 
@@ -464,13 +512,46 @@ export class ImportManager {
   }
 
   // Every volume of every archive set in the resolution, so the loose-file transfer that
-  // follows extraction never copies a raw volume into the library.
+  // follows extraction never copies a raw volume into the library. Skipped clutter files
+  // are excluded the same way.
   private static allArchiveVolumes(resolution: ArchiveResolution): Set<string> {
     const all = new Set(resolution.excludePaths);
     for (const extra of resolution.additionalArchives ?? []) {
       for (const volume of extra.volumes) all.add(volume);
     }
+    for (const skipped of resolution.skippedFiles ?? []) all.add(skipped);
     return all;
+  }
+
+  /** Source files whose extension is in `skip` (release clutter such as .nfo/.sfv). */
+  private async findSkippedFiles(sourcePath: string, skip: Set<string>): Promise<Set<string>> {
+    if (skip.size === 0) return new Set();
+    let files: string[];
+    try {
+      if (!(await fs.stat(sourcePath)).isDirectory()) return new Set();
+      files = await gatherFiles(sourcePath, { skipExtractStaging: true });
+    } catch {
+      return new Set();
+    }
+    return new Set(
+      files
+        .filter((file) => skip.has(path.extname(file).toLowerCase()))
+        .map((file) => path.resolve(file))
+    );
+  }
+
+  // Extracted output is Questarr's own fresh copy, never the download, so clutter that
+  // came out of an archive can simply be removed from the destination.
+  private static async removeSkippedExtracted(
+    extracted: string[],
+    skip: Set<string> | undefined
+  ): Promise<void> {
+    if (!skip || skip.size === 0) return;
+    for (const file of extracted) {
+      if (skip.has(path.extname(file).toLowerCase())) {
+        await fs.remove(file).catch(() => undefined);
+      }
+    }
   }
 
   private async extractAdditionalArchives(
@@ -480,7 +561,8 @@ export class ImportManager {
     stagingRoot: string | undefined
   ): Promise<void> {
     for (const extra of resolution.additionalArchives ?? []) {
-      await this.extractArchive(extra.archivePath, destDir, password, stagingRoot);
+      const extracted = await this.extractArchive(extra.archivePath, destDir, password, stagingRoot);
+      await ImportManager.removeSkippedExtracted(extracted, resolution.skipExtensions);
     }
   }
 
@@ -497,7 +579,13 @@ export class ImportManager {
   ): Promise<ImportResult> {
     const destDir = plan.proposedPath;
     await fs.ensureDir(destDir);
-    await this.extractArchive(resolution.archivePath, destDir, password, stagingRoot);
+    const extracted = await this.extractArchive(
+      resolution.archivePath,
+      destDir,
+      password,
+      stagingRoot
+    );
+    await ImportManager.removeSkippedExtracted(extracted ?? [], resolution.skipExtensions);
     await this.extractAdditionalArchives(resolution, destDir, password, stagingRoot);
 
     let modeUsed = transferMode;
@@ -549,7 +637,8 @@ export class ImportManager {
     );
 
     try {
-      await this.extractArchive(archiveInDest, destDir, password, stagingRoot);
+      const extracted = await this.extractArchive(archiveInDest, destDir, password, stagingRoot);
+      await ImportManager.removeSkippedExtracted(extracted ?? [], resolution.skipExtensions);
     } catch (err) {
       await this.notifyStrandedImport(game, archiveInDest, err);
       throw err;
@@ -1129,8 +1218,8 @@ export class ImportManager {
       // since RomM reads and hashes those directly. PC imports keep the general
       // auto-unpack behavior.
       const archiveResolution = isRommImport
-        ? rommConfig.unpackRar
-          ? await this.resolveArchive(localPath, { rarOnly: true })
+        ? rommUnpackFamilies(rommConfig).size > 0
+          ? await this.resolveArchive(localPath, { families: rommUnpackFamilies(rommConfig) })
           : null
         : config.autoUnpack
           ? await this.resolveArchive(localPath)
@@ -1223,7 +1312,8 @@ export class ImportManager {
         archiveResolution,
         game,
         password,
-        isRommImport ? false : config.sortExtras
+        isRommImport ? false : config.sortExtras,
+        isRommImport ? rommConfig.skipExtensions : undefined
       );
 
       await this.finalizeImport(downloadId, game, result.destDir);
@@ -1623,7 +1713,8 @@ export class ImportManager {
         archiveResolution,
         game,
         overridePlan.password,
-        overridePlan.strategy === "romm" ? false : config.sortExtras
+        overridePlan.strategy === "romm" ? false : config.sortExtras,
+        overridePlan.strategy === "romm" ? rommConfig.skipExtensions : undefined
       );
 
       await this.finalizeImport(downloadId, game, result.destDir);

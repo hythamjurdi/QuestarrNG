@@ -70,46 +70,63 @@ same storage into both services and make sure the QuestarrNG process can read
 and write it.
 
 1. Open **Settings → Import → RomM** and enable **Route ROM imports to RomM**.
-2. Set **RomM ROM library root** to the path inside QuestarrNG's container or
-   host process. The default shown by the app is `/data/romm/library/roms`.
-3. Choose a folder layout:
-   - **RomM platform slug** creates a platform folder from the configured
-     RomM slug.
+2. Set **RomM ROM library root** to the folder that holds your platform
+   folders, as the path inside QuestarrNG's container or host process.
+3. Choose the **Folder layout** that matches your RomM library. The settings
+   page shows where a PS2 game would land.
+
+   | Layout                                    | RomM library looks like | Set the library root to |
+   | ----------------------------------------- | ----------------------- | ----------------------- |
+   | **Library root → platform → game**        | `roms/ps2/Game.iso`     | the `roms` folder       |
+   | **Library root → platform → roms → game** | `ps2/roms/Game.iso`     | the folder above `ps2`  |
+
+4. Choose how platform folders are named:
+   - **RomM platform slug** uses the RomM slug with the layout above.
    - **Custom folder bindings** maps RomM slugs to relative folders under the
-     library root using the JSON editor.
-4. In **Platform slug mappings**, assign a RomM slug to each IGDB platform.
+     library root using the JSON editor. A binding names the exact folder and
+     ignores the layout; platforms without one use the layout, or go to review
+     when **Unmapped platform behavior** is **Require a custom binding**.
+5. In **Platform slug mappings**, assign a RomM slug to each IGDB platform.
    Use **Load default platform mappings** when the list is empty. A blank slug
    leaves that platform's imports in the PC library.
-5. Choose the transfer mode (the default is **Hardlink**, which falls back to
+6. Choose the transfer mode (the default is **Hardlink**, which falls back to
    a copy across filesystems) and how to handle an existing game. You can keep
    both files with a new name, skip, replace, or send the conflict for review.
    Single-file ROMs can go directly in the platform folder or in a game folder.
-6. Leave **Unpack RAR archives** on to extract RAR releases before they reach
-   RomM (see below).
-7. Fill in **RomM scanning** (see below) so new games appear in RomM without
+7. Under **Archives and extra files**, choose what gets unpacked and which file
+   types are skipped (see below).
+8. Fill in **RomM scanning** (see below) so new games appear in RomM without
    a manual scan.
-8. Save the settings. For a manual import, choose **RomM ROM library** in the
+9. Save the settings. For a manual import, choose **RomM ROM library** in the
    review dialog when the option is available.
 
-If a platform has no custom folder binding, select whether to fall back to its
-RomM platform slug or require a binding. Folder bindings are relative to the
-configured RomM library root, so they cannot select an arbitrary destination.
+Folder bindings are relative to the configured RomM library root, so they
+cannot select an arbitrary destination.
 
-### RAR releases
+### Archives and extra files
 
-Scene-style releases often ship a game as a RAR set: `Game.part1.rar`,
-`Game.part2.rar`, … or `Game.rar`, `Game.r00`, `Game.r01`, …. With **Unpack
-RAR archives** on, RomM imports extract these with `unrar` and place only the
-extracted files in the platform folder:
+RomM imports use their own unpack switches; the general **Auto-Unpack
+Archives** switch does not affect them.
+
+| Switch                  | Default | Notes                                                                                           |
+| ----------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| **Unpack RAR archives** | On      | Includes multi-volume sets: `Game.part1.rar`, `Game.part2.rar`, … or `Game.rar`, `Game.r00`, …. |
+| **Unpack 7z archives**  | Off     | Leave off if your RomM platforms store games as `.7z`.                                          |
+| **Unpack zip archives** | Off     | Leave off for cartridge systems; RomM reads and hashes zipped ROMs directly.                    |
+
+Archive types that are switched off are copied as they are. For the types that
+are on:
 
 - Multi-volume sets are extracted from their first volume.
 - A release with several independent sets (for example, one per disc) has
   every set extracted into the same game folder.
-- Zip and 7z ROMs are left packed, because RomM reads and hashes those
-  directly. The general **Auto-Unpack Archives** switch does not affect RomM
-  imports.
 - Extraction reads the volumes in place and goes through the staging folder,
   so the download keeps seeding.
+
+**Skip these file types** lists extensions that are never copied into RomM,
+whether they sit next to the game in the download or come out of an archive.
+The default is `.nfo, .sfv, .diz, .url, .md5, .sha1, .txt`. Skipped files stay
+in the download; leave the list empty to copy everything.
 
 ### Scan RomM after an import
 
@@ -120,7 +137,9 @@ extracted files in the platform folder:
    connection**. The token is never sent back to the browser after saving.
 3. Choose the **Scan type**. **Quick** picks up new files only and is the
    right choice for imports.
-4. Set the **Scan delay**. Imports that finish within this window are sent as
+4. Choose **What to scan**: only the platforms that received new games (the
+   default), or the whole RomM library.
+5. Set the **Scan delay**. Imports that finish within this window are sent as
    one scan covering every platform they touched (default 30 seconds).
 
 QuestarrNG calls `POST /api/tasks/scan` with the RomM platform slugs of the
@@ -129,7 +148,8 @@ imported games. If a scan is already running, it retries after 1, 2, 5, and
 websocket `scan` event instead, which needs `platforms.read` to resolve
 platform IDs. A failed scan request never fails the import: the files are
 already in place, and QuestarrNG records a warning notification. **Scan RomM
-now** starts a scan of every mapped platform on demand.
+now** starts a scan on demand: every mapped platform, or the whole library
+when that scope is selected.
 
 ## Configure pre-import security scans
 

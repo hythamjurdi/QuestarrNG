@@ -213,13 +213,10 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
     const destDir = path.join(rommRoot, "psx", "Some Game");
     const placed = await listTree(destDir);
     expect(placed).toEqual(
-      [
-        "Some Game (Disc 1).bin",
-        "Some Game (Disc 1).cue",
-        "Some Game (Disc 2).bin",
-        "release.nfo",
-      ].sort()
+      ["Some Game (Disc 1).bin", "Some Game (Disc 1).cue", "Some Game (Disc 2).bin"].sort()
     );
+    // release.nfo is release clutter: skipped by default, and left in the download.
+    expect(await fs.pathExists(path.join(release, "release.nfo"))).toBe(true);
     expect(await fs.readFile(path.join(destDir, "Some Game (Disc 1).bin"))).toEqual(disc1);
     expect(await fs.readFile(path.join(destDir, "Some Game (Disc 2).bin"))).toEqual(disc2);
     // One extraction per archive set, each from its first volume, read in place.
@@ -238,6 +235,74 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
     );
     // RomM is asked to scan the platform that received files.
     expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "psx");
+  });
+
+  it("follows the <platform>/roms layout and drops clutter that came out of the archive", async () => {
+    const release = path.join(downloads, "Layout.Release");
+    const iso = payload("ps2-iso");
+    await makeRar(work, release, "game", {
+      "Some Game.iso": iso,
+      "info.nfo": Buffer.from("scene nfo"),
+      "file_id.diz": Buffer.from("diz"),
+    });
+    // Mirrors an existing RomM library laid out as <root>/<platform>/roms/.
+    await fs.ensureDir(path.join(rommRoot, "ps2", "roms"));
+    await fs.writeFile(path.join(rommRoot, "ps2", "roms", "Other Game.iso"), "existing");
+
+    const { manager, rommScan } = setup({
+      slug: "ps2",
+      rommOverrides: { folderLayout: "platform-roms" },
+    });
+    await manager.processImport("dl-1", release);
+
+    expect(await listTree(path.join(rommRoot, "ps2"))).toEqual([
+      "roms/Other Game.iso",
+      "roms/Some Game/Some Game.iso",
+    ]);
+    expect(
+      await fs.readFile(path.join(rommRoot, "ps2", "roms", "Some Game", "Some Game.iso"))
+    ).toEqual(iso);
+    expect(rommScan.queueScan).toHaveBeenCalledWith("u1", "ps2");
+  });
+
+  it("copies every file when the skip list is empty", async () => {
+    const release = path.join(downloads, "Keep.All");
+    await fs.ensureDir(release);
+    await fs.writeFile(path.join(release, "Some Game.gba"), payload("gba", 2048));
+    await fs.writeFile(path.join(release, "notes.txt"), "keep me");
+
+    const { manager } = setup({ slug: "gba", rommOverrides: { skipExtensions: [] } });
+    await manager.processImport("dl-1", release);
+
+    expect(await listTree(path.join(rommRoot, "gba", "Some Game"))).toEqual([
+      "Some Game.gba",
+      "notes.txt",
+    ]);
+  });
+
+  it.skipIf(!hasBinary("7z"))("unpacks 7z and zip only when those switches are on", async () => {
+    const release = path.join(downloads, "Seven.Zip");
+    const contentDir = path.join(work, "sz");
+    await fs.ensureDir(contentDir);
+    await fs.writeFile(path.join(contentDir, "Some Game.bin"), payload("bin"));
+    await fs.ensureDir(release);
+    execFileSync(
+      "7z",
+      ["a", "-bd", "-y", path.join(release, "game.7z"), path.join(contentDir, "Some Game.bin")],
+      {
+        stdio: "ignore",
+      }
+    );
+
+    const off = setup();
+    await off.manager.processImport("dl-1", release);
+    expect(await listTree(path.join(rommRoot, "psx", "Some Game"))).toEqual(["game.7z"]);
+
+    await fs.remove(path.join(rommRoot, "psx"));
+    const on = setup({ rommOverrides: { unpack7z: true } });
+    await on.manager.processImport("dl-1", release);
+    expect(await listTree(path.join(rommRoot, "psx", "Some Game"))).toEqual(["Some Game.bin"]);
+    expect(await fs.pathExists(path.join(release, "game.7z"))).toBe(true);
   });
 
   it("leaves zip ROMs packed for RomM (RAR-only unpacking)", async () => {

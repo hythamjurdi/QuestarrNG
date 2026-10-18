@@ -488,7 +488,7 @@ importRouter.post(
         return res.status(400).json({ ok: false, message: "RomM URL and API token are not set" });
       }
       let slugs: string[] = (req.body?.slugs as string[] | undefined) ?? [];
-      if (slugs.length === 0) {
+      if (slugs.length === 0 && config.scanScope !== "library") {
         const mappings = await storage.getPlatformMappings();
         slugs = [
           ...new Set(
@@ -498,7 +498,7 @@ importRouter.post(
           ),
         ];
       }
-      if (slugs.length === 0) {
+      if (slugs.length === 0 && config.scanScope !== "library") {
         return res.status(400).json({ ok: false, message: "No RomM platform slugs to scan" });
       }
       const outcome = await new RommApiClient(config.apiUrl, config.apiToken).scanPlatforms(

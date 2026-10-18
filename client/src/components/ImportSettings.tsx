@@ -68,6 +68,19 @@ type HardlinkCapabilityResponse = {
   generic: HardlinkCapabilityResult;
 };
 
+// ".nfo, sfv  .TXT" -> [".nfo", ".sfv", ".txt"]: normalizes case and the leading dot,
+// drops blanks and duplicates.
+export function parseExtensionList(text: string): string[] {
+  const out: string[] = [];
+  for (const raw of text.split(/[\s,;]+/)) {
+    const trimmed = raw.trim().toLowerCase();
+    if (!trimmed) continue;
+    const ext = trimmed.startsWith(".") ? trimmed : `.${trimmed}`;
+    if (/^\.[a-z0-9][a-z0-9._-]{0,15}$/.test(ext) && !out.includes(ext)) out.push(ext);
+  }
+  return out;
+}
+
 export default function ImportSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -123,6 +136,7 @@ export default function ImportSettings() {
   const [localConfig, setLocalConfig] = useState<ImportConfig | null>(null);
   const [localRommConfig, setLocalRommConfig] = useState<RomMConfig | null>(null);
   const [rommBindingsText, setRommBindingsText] = useState("{}");
+  const [rommSkipText, setRommSkipText] = useState("");
   const [libraryBrowserOpen, setLibraryBrowserOpen] = useState(false);
   const [extractTempDir, setExtractTempDir] = useState("");
   const [rommTestResult, setRommTestResult] = useState<{ ok: boolean; message: string } | null>(
@@ -139,6 +153,7 @@ export default function ImportSettings() {
     if (rommConfig) {
       setLocalRommConfig(rommConfig);
       setRommBindingsText(JSON.stringify(rommConfig.platformBindings, null, 2));
+      setRommSkipText((rommConfig.skipExtensions ?? []).join(", "));
     }
   }, [rommConfig]);
 
@@ -663,31 +678,151 @@ export default function ImportSettings() {
                   <p className="text-xs text-muted-foreground">
                     <InterfaceText
                       source={
-                        "Use the path as mounted inside Questarr. Platform folders are created below it."
+                        "The folder holding your platform folders, as mounted inside Questarr."
                       }
                     />
                   </p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
+                <div className="space-y-1.5">
+                  <Label>
+                    <InterfaceText source={"Folder layout"} />
+                  </Label>
+                  <Select
+                    value={localRommConfig.folderLayout}
+                    onValueChange={(value) =>
+                      setLocalRommConfig({
+                        ...localRommConfig,
+                        folderLayout: value as RomMConfig["folderLayout"],
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      aria-label="Folder layout"
+                      data-i18n-aria-label={"Folder layout"}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="platform">
+                        <InterfaceText source={"Library root → platform → game"} />
+                      </SelectItem>
+                      <SelectItem value="platform-roms">
+                        <InterfaceText source={"Library root → platform → roms → game"} />
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    <InterfaceText
+                      source={"Match how your RomM library is organized. A PS2 game lands in:"}
+                    />{" "}
+                    <code className="break-all">
+                      {`${(localRommConfig.libraryRoot || "").replace(/\/+$/, "")}/ps2${
+                        localRommConfig.folderLayout === "platform-roms" ? "/roms" : ""
+                      }/`}
+                    </code>
+                  </p>
+                </div>
+                <Separator />
+                <div className="space-y-4">
+                  <div>
                     <Label>
-                      <InterfaceText source={"Unpack RAR archives"} />
+                      <InterfaceText source={"Archives and extra files"} />
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       <InterfaceText
                         source={
-                          "Extract RAR sets, including multi-part ones, before they reach RomM. Zip and 7z ROMs stay packed."
+                          "Choose which archive types are extracted before files reach RomM. Unchecked types are copied as they are."
                         }
                       />
                     </p>
                   </div>
-                  <Switch
-                    checked={localRommConfig.unpackRar}
-                    onCheckedChange={(unpackRar) =>
-                      setLocalRommConfig({ ...localRommConfig, unpackRar })
-                    }
-                  />
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="romm-unpack-rar">
+                        <InterfaceText source={"Unpack RAR archives"} />
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        <InterfaceText
+                          source={
+                            "Includes multi-part sets (.part1.rar, or .rar with .r00, .r01…)."
+                          }
+                        />
+                      </p>
+                    </div>
+                    <Switch
+                      id="romm-unpack-rar"
+                      checked={localRommConfig.unpackRar}
+                      onCheckedChange={(unpackRar) =>
+                        setLocalRommConfig({ ...localRommConfig, unpackRar })
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="romm-unpack-7z">
+                        <InterfaceText source={"Unpack 7z archives"} />
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        <InterfaceText
+                          source={"Leave off if your RomM platforms store games as .7z files."}
+                        />
+                      </p>
+                    </div>
+                    <Switch
+                      id="romm-unpack-7z"
+                      checked={localRommConfig.unpack7z}
+                      onCheckedChange={(unpack7z) =>
+                        setLocalRommConfig({ ...localRommConfig, unpack7z })
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="romm-unpack-zip">
+                        <InterfaceText source={"Unpack zip archives"} />
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        <InterfaceText
+                          source={
+                            "Leave off for cartridge systems: RomM reads zipped ROMs directly."
+                          }
+                        />
+                      </p>
+                    </div>
+                    <Switch
+                      id="romm-unpack-zip"
+                      checked={localRommConfig.unpackZip}
+                      onCheckedChange={(unpackZip) =>
+                        setLocalRommConfig({ ...localRommConfig, unpackZip })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="romm-skip-extensions">
+                      <InterfaceText source={"Skip these file types"} />
+                    </Label>
+                    <Input
+                      id="romm-skip-extensions"
+                      value={rommSkipText}
+                      placeholder=".nfo, .sfv, .txt"
+                      data-i18n-placeholder={".nfo, .sfv, .txt"}
+                      onChange={(event) => setRommSkipText(event.target.value)}
+                      onBlur={() => {
+                        const skipExtensions = parseExtensionList(rommSkipText);
+                        setRommSkipText(skipExtensions.join(", "));
+                        setLocalRommConfig({ ...localRommConfig, skipExtensions });
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      <InterfaceText
+                        source={
+                          "Comma-separated. Release clutter with these extensions is never copied into RomM. Leave empty to copy everything."
+                        }
+                      />
+                    </p>
+                  </div>
                 </div>
+                <Separator />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>
@@ -976,6 +1111,35 @@ export default function ImportSettings() {
                           </SelectItem>
                           <SelectItem value="complete">
                             <InterfaceText source={"Complete rescan"} />
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>
+                        <InterfaceText source={"What to scan"} />
+                      </Label>
+                      <Select
+                        value={localRommConfig.scanScope}
+                        onValueChange={(value) =>
+                          setLocalRommConfig({
+                            ...localRommConfig,
+                            scanScope: value as RomMConfig["scanScope"],
+                          })
+                        }
+                      >
+                        <SelectTrigger
+                          aria-label="What to scan"
+                          data-i18n-aria-label={"What to scan"}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="platforms">
+                            <InterfaceText source={"Only platforms that got new games"} />
+                          </SelectItem>
+                          <SelectItem value="library">
+                            <InterfaceText source={"The whole RomM library"} />
                           </SelectItem>
                         </SelectContent>
                       </Select>

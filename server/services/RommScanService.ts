@@ -279,6 +279,8 @@ export class RommApiClient {
     if (!(await this.transport.isSafeUrl(this.baseUrl))) {
       return { ok: false, busy: false, message: "RomM URL is not allowed by the network policy" };
     }
+    // No slugs means the whole library, which RomM's socket takes as an empty list.
+    if (slugs.length === 0) return this.emitScan({ platforms: [], type: scanType });
     let resolved: { ids: number[]; missing: string[] };
     try {
       resolved = await this.resolvePlatformIds(slugs);
@@ -366,7 +368,11 @@ export class RommScanService {
       const client = this.deps.createClient
         ? this.deps.createClient(config)
         : new RommApiClient(config.apiUrl, config.apiToken);
-      outcome = await client.scanPlatforms(slugs, config.scanType);
+      // "library" scope: an empty platform list asks RomM to scan every platform.
+      outcome = await client.scanPlatforms(
+        config.scanScope === "library" ? [] : slugs,
+        config.scanType
+      );
     } catch (err) {
       outcome = {
         ok: false,

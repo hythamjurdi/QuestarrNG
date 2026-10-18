@@ -264,6 +264,33 @@ describe("ImportSettings", () => {
     );
   });
 
+  it("normalizes the skip list and saves the folder layout", async () => {
+    const { apiRequest } = await import("@/lib/queryClient");
+    mockFetch({ rommConfig: { ...DEFAULT_ROMM_CONFIG, enabled: true } });
+    renderComponent();
+    await screen.findByText("Enable Post-Processing");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "RomM" }));
+
+    const skip = screen.getByLabelText("Skip these file types");
+    fireEvent.change(skip, { target: { value: "NFO, .sfv  .Txt, nfo" } });
+    fireEvent.blur(skip);
+    expect(skip).toHaveValue(".nfo, .sfv, .txt");
+    fireEvent.click(screen.getByLabelText("Unpack zip archives"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Save RomM settings" }));
+    await waitFor(() =>
+      expect(apiRequest).toHaveBeenCalledWith(
+        "PATCH",
+        "/api/imports/romm",
+        expect.objectContaining({
+          skipExtensions: [".nfo", ".sfv", ".txt"],
+          unpackZip: true,
+          folderLayout: "platform",
+        })
+      )
+    );
+  });
+
   it("edits JSON folder bindings and restores invalid JSON on blur", async () => {
     const { apiRequest } = await import("@/lib/queryClient");
     mockFetch({

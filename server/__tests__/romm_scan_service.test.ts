@@ -183,6 +183,12 @@ describe("RommApiClient against a fake RomM", () => {
     ]);
   }, 15_000);
 
+  it("scans the whole library over the socket when given no platforms", async () => {
+    romm.hasScanRoute = false;
+    await new RommApiClient(romm.url, TOKEN, testTransport).scanPlatforms([], "quick");
+    expect(romm.socketScans.map((s) => s.options)).toEqual([{ platforms: [], type: "quick" }]);
+  }, 15_000);
+
   it("adds a new-platforms scan over the socket for a platform RomM has not indexed yet", async () => {
     romm.hasScanRoute = false;
     await new RommApiClient(romm.url, TOKEN, testTransport).scanPlatforms(
@@ -289,6 +295,13 @@ describe("RommScanService batching and retries", () => {
     expect(outcome).toMatchObject({ ok: false, busy: false });
     expect(notify).toHaveBeenCalledTimes(1);
     expect(notify.mock.calls[0]![2]).toMatch(/psx/);
+  });
+
+  it("scans the whole library when the scope is set to library", async () => {
+    const { service } = makeService({ scanScope: "library", scanType: "complete" });
+    await service.queueScan("u1", "psx");
+    await service.flush("u1");
+    expect(romm.scanBodies).toEqual([{ type: "complete", platform_fs_slugs: [] }]);
   });
 
   it("does nothing when scanning is off or the API isn't configured", async () => {

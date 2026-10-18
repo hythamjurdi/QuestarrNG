@@ -1,5 +1,9 @@
 import path from "node:path";
-import type { RomMBindingMissingBehavior, RomMPlatformRoutingMode } from "../../shared/schema.js";
+import type {
+  RomMBindingMissingBehavior,
+  RomMFolderLayout,
+  RomMPlatformRoutingMode,
+} from "../../shared/schema.js";
 
 export interface ResolveRommPlatformDirOptions {
   libraryRoot: string;
@@ -7,6 +11,8 @@ export interface ResolveRommPlatformDirOptions {
   routingMode: RomMPlatformRoutingMode;
   bindings?: Record<string, string>;
   bindingMissingBehavior?: RomMBindingMissingBehavior;
+  /** "platform-roms" adds RomM's roms/ folder under each platform folder. */
+  folderLayout?: RomMFolderLayout;
 }
 
 const SLUG_PATTERN = /^[a-z0-9._-]+$/;
@@ -55,7 +61,12 @@ export function resolveRommPlatformDir(options: ResolveRommPlatformDirOptions): 
     }
   }
 
-  const slugDir = path.resolve(resolvedRoot, safeSlug);
+  // A custom binding above is taken as-is: it names the exact folder. The layout only
+  // shapes the folder derived from the slug.
+  const slugDir =
+    options.folderLayout === "platform-roms"
+      ? path.resolve(resolvedRoot, safeSlug, "roms")
+      : path.resolve(resolvedRoot, safeSlug);
   ensureInsideRoot(resolvedRoot, slugDir);
   return slugDir;
 }

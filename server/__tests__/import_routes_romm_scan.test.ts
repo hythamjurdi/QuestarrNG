@@ -75,7 +75,16 @@ describe("RomM config storage compatibility", () => {
       bindingMissingBehavior: "fallback",
     };
     const parsed = rommConfigSchema.parse(legacy);
-    expect(parsed).toMatchObject({ ...legacy, unpackRar: true, triggerScan: true, apiToken: "" });
+    expect(parsed).toMatchObject({
+      ...legacy,
+      unpackRar: true,
+      unpack7z: false,
+      unpackZip: false,
+      folderLayout: "platform",
+      scanScope: "platforms",
+      triggerScan: true,
+      apiToken: "",
+    });
   });
 
   it("defaults new installs to a seeding-safe transfer", () => {
@@ -143,6 +152,48 @@ describe("POST /api/imports/romm/test and /romm/scan", () => {
     expect(res.status).toBe(202);
     expect(scanPlatforms).toHaveBeenCalledWith(["psx", "snes"], "update");
   });
+});
+
+describe("POST /api/imports/romm/scan with the library scope", () => {
+  it("asks RomM for a whole-library scan without needing platform mappings", async () => {
+    stored = { ...stored, scanScope: "library" };
+    mockStorage.getPlatformMappings.mockResolvedValue([]);
+    scanPlatforms.mockResolvedValue({ ok: true, via: "http" });
+    const res = await request(createApp()).post("/api/imports/romm/scan").send({});
+    expect(res.status).toBe(202);
+    expect(scanPlatforms).toHaveBeenCalledWith([], "update");
+  });
+});
+
+describe("new RomM settings", () => {
+  it("saves layout, unpack and skip settings and normalizes extensions", async () => {
+    const res = await request(createApp())
+      .patch("/api/imports/romm")
+      .send({
+        folderLayout: "platform-roms",
+        unpack7z: true,
+        unpackZip: true,
+        skipExtensions: [".NFO", " .sfv "],
+        scanScope: "library",
+      });
+    expect(res.status).toBe(200);
+    expect(stored).toMatchObject({
+      folderLayout: "platform-roms",
+      unpack7z: true,
+      unpackZip: true,
+      skipExtensions: [".nfo", ".sfv"],
+      scanScope: "library",
+      apiToken: "rmm_secret",
+    });
+  });
+
+  it.each([{ folderLayout: "nested" }, { skipExtensions: ["nfo"] }, { scanScope: "all" }])(
+    "rejects invalid value %o",
+    async (body) => {
+      const res = await request(createApp()).patch("/api/imports/romm").send(body);
+      expect(res.status).toBe(400);
+    }
+  );
 });
 
 describe("extraction temp directory setting", () => {

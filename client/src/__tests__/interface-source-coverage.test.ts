@@ -34,6 +34,7 @@ const INTENTIONALLY_UNTRANSLATED_SOURCE_KEYS = new Set([
   "http://romm:8080",
   "/tmp/questarr",
   "rmm_…",
+  ".nfo, .sfv, .txt",
   "/path/to/directory",
   "/home/user/downloads",
   "/mnt/media/downloads",

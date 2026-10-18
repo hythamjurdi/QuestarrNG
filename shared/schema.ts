@@ -164,6 +164,24 @@ export const ROMM_SCAN_TYPES = [
 ] as const;
 export type RomMScanType = (typeof ROMM_SCAN_TYPES)[number];
 
+// RomM accepts two library layouts: "platform" is <root>/<platform>/ (point the root at
+// RomM's roms/ folder), "platform-roms" is <root>/<platform>/roms/ (point the root at the
+// RomM library folder itself).
+export const ROMM_FOLDER_LAYOUTS = ["platform", "platform-roms"] as const;
+export type RomMFolderLayout = (typeof ROMM_FOLDER_LAYOUTS)[number];
+// "platforms" scans only the platforms that received files; "library" the whole library.
+export const ROMM_SCAN_SCOPES = ["platforms", "library"] as const;
+export type RomMScanScope = (typeof ROMM_SCAN_SCOPES)[number];
+export const DEFAULT_ROMM_SKIP_EXTENSIONS = [
+  ".nfo",
+  ".sfv",
+  ".diz",
+  ".url",
+  ".md5",
+  ".sha1",
+  ".txt",
+];
+
 const rommConfigFields = {
   enabled: z.boolean(),
   libraryRoot: z.string().min(1).max(1024),
@@ -173,9 +191,22 @@ const rommConfigFields = {
   conflictPolicy: z.enum(ROMM_CONFLICT_POLICIES),
   singleFilePlacement: z.enum(ROMM_SINGLE_FILE_PLACEMENTS),
   bindingMissingBehavior: z.enum(ROMM_BINDING_MISSING_BEHAVIORS),
-  // Unpack RAR sets (.rar, .partN.rar, .rNN) before handing them to RomM. Zip/7z ROMs are
-  // left packed: RomM reads and hashes them as-is.
+  folderLayout: z.enum(ROMM_FOLDER_LAYOUTS),
+  // Which archive families to unpack before handing files to RomM. RAR sets (.rar,
+  // .partN.rar, .rNN) by default; zip/7z stay packed because RomM reads and hashes them.
   unpackRar: z.boolean(),
+  unpack7z: z.boolean(),
+  unpackZip: z.boolean(),
+  // Release clutter never copied into the RomM library (lowercase, leading dot).
+  skipExtensions: z
+    .array(
+      z
+        .string()
+        .trim()
+        .toLowerCase()
+        .regex(/^\.[a-z0-9][a-z0-9._-]{0,15}$/, "Extensions look like .nfo")
+    )
+    .max(100),
   // RomM API: base URL (e.g. http://romm:8080) and a Client API Token with the
   // `tasks.run` scope (plus `platforms.read` for the socket fallback on older RomM).
   apiUrl: z.string().trim().max(2048),
@@ -184,6 +215,7 @@ const rommConfigFields = {
   scanType: z.enum(ROMM_SCAN_TYPES),
   // Imports finishing within this window share one scan request.
   scanDebounceSeconds: z.number().int().min(0).max(3600),
+  scanScope: z.enum(ROMM_SCAN_SCOPES),
 };
 
 // For PATCH bodies. No defaults here on purpose: Zod 4 applies a field's .default() even
@@ -195,12 +227,17 @@ export const rommConfigPatchBaseSchema = z.object(rommConfigFields).partial();
 // DEFAULT_ROMM_CONFIG and would silently reset the user's settings.
 export const rommConfigSchema = z.object({
   ...rommConfigFields,
+  folderLayout: rommConfigFields.folderLayout.default("platform"),
   unpackRar: rommConfigFields.unpackRar.default(true),
+  unpack7z: rommConfigFields.unpack7z.default(false),
+  unpackZip: rommConfigFields.unpackZip.default(false),
+  skipExtensions: rommConfigFields.skipExtensions.default(DEFAULT_ROMM_SKIP_EXTENSIONS),
   apiUrl: rommConfigFields.apiUrl.default(""),
   apiToken: rommConfigFields.apiToken.default(""),
   triggerScan: rommConfigFields.triggerScan.default(true),
   scanType: rommConfigFields.scanType.default("quick"),
   scanDebounceSeconds: rommConfigFields.scanDebounceSeconds.default(30),
+  scanScope: rommConfigFields.scanScope.default("platforms"),
 });
 
 export type RomMConfig = z.infer<typeof rommConfigSchema>;
@@ -216,12 +253,17 @@ export const DEFAULT_ROMM_CONFIG: RomMConfig = {
   conflictPolicy: "rename",
   singleFilePlacement: "root",
   bindingMissingBehavior: "fallback",
+  folderLayout: "platform",
   unpackRar: true,
+  unpack7z: false,
+  unpackZip: false,
+  skipExtensions: DEFAULT_ROMM_SKIP_EXTENSIONS,
   apiUrl: "",
   apiToken: "",
   triggerScan: true,
   scanType: "quick",
   scanDebounceSeconds: 30,
+  scanScope: "platforms",
 };
 
 // gameDownloads.status value for a download whose linked game record can't be
