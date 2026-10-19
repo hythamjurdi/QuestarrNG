@@ -47,8 +47,16 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-const EXEC_TIMEOUT_MS = 30 * 60_000;
+// Testing or extracting a ~100 GB release from array disks can take well over an hour per
+// pass, so the per-run limit is generous; it only guards against a hung tool.
+const EXEC_TIMEOUT_MS =
+  (Number(process.env.ARCHIVE_TOOL_TIMEOUT_MINUTES) > 0
+    ? Number(process.env.ARCHIVE_TOOL_TIMEOUT_MINUTES)
+    : 6 * 60) * 60_000;
 const EXEC_MAX_BUFFER = 10 * 1024 * 1024;
+// A technical listing prints a block per file per volume it spans: a console game with tens
+// of thousands of files across ~100 volumes runs to tens of megabytes.
+const LISTING_MAX_BUFFER = 256 * 1024 * 1024;
 const DEFAULT_ARCHIVE_MAX_ENTRIES = 50_000;
 const DEFAULT_ARCHIVE_MAX_EXPANDED_BYTES = 250 * 1024 ** 3;
 const MAX_ARCHIVE_PATH_DEPTH = 64;
@@ -161,7 +169,62 @@ function resolveTool(filePath: string): ArchiveTool {
   return path.extname(filePath).toLowerCase() === ".rar" ? "unrar" : "7zip";
 }
 
-function runTool(binary: string, args: string[], toolLabel: string): Promise<ExecFileResult> {
+// unrar and 7-Zip exit codes, in words.
+const TOOL_EXIT_REASONS: Record<number, string> = {
+  1: "warning",
+  2: "fatal error",
+  3: "checksum (CRC) error — the archive is damaged or incomplete",
+  4: "the archive is locked",
+  5: "could not write the output",
+  6: "could not open a file — a volume may be missing",
+  7: "wrong command-line option",
+  8: "not enough memory",
+  9: "could not create a file",
+  10: "no files to extract",
+  11: "wrong password",
+  255: "stopped",
+};
+
+/**
+ * The part of a failed tool run worth showing: unrar and 7-Zip print the cause on stderr,
+ * or after a long file listing at the end of stdout — never at its start — so the tail is
+ * kept, not the head. The exit code is spelled out too.
+ */
+function describeToolFailure(
+  error: Error & { code?: unknown; killed?: boolean; signal?: unknown },
+  stdout: string,
+  stderr: string
+): string {
+  if (error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
+    return "printed more output than Questarr accepts (an unusually large archive listing)";
+  }
+  if (error.killed || error.signal) return "timed out or was stopped";
+  const code = typeof error.code === "number" ? error.code : undefined;
+  const reason = code !== undefined ? TOOL_EXIT_REASONS[code] : undefined;
+  const source = (stderr || "").trim() || (stdout || "").trim() || error.message;
+  const meaningful = source
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(
+      (line) =>
+        line &&
+        !/^(UNRAR|7-Zip)\b/i.test(line) &&
+        !/^(Name|Type|Size|Packed size|Ratio|mtime|Attributes|CRC32|Host OS|Compression|Details|Archive):/i.test(
+          line
+        )
+    );
+  const tail = meaningful.slice(-6).join(" · ").slice(-500);
+  return [reason ? `exit ${code}: ${reason}` : code !== undefined ? `exit ${code}` : "", tail]
+    .filter(Boolean)
+    .join(" — ");
+}
+
+function runTool(
+  binary: string,
+  args: string[],
+  toolLabel: string,
+  options: { maxBuffer?: number } = {}
+): Promise<ExecFileResult> {
   return new Promise((resolve, reject) => {
     execFile(
       binary,
@@ -170,12 +233,11 @@ function runTool(binary: string, args: string[], toolLabel: string): Promise<Exe
         encoding: "utf8",
         timeout: EXEC_TIMEOUT_MS,
         windowsHide: true,
-        maxBuffer: EXEC_MAX_BUFFER,
+        maxBuffer: options.maxBuffer ?? EXEC_MAX_BUFFER,
       },
       (error, stdout, stderr) => {
         if (error) {
-          const detail = (stderr || stdout || error.message).trim().slice(0, 500);
-          reject(new Error(`${toolLabel} failed: ${detail}`));
+          reject(new Error(`${toolLabel} failed: ${describeToolFailure(error, stdout, stderr)}`));
           return;
         }
         resolve({ stdout, stderr });
@@ -184,7 +246,7 @@ function runTool(binary: string, args: string[], toolLabel: string): Promise<Exe
   });
 }
 
-function runSevenZip(args: string[]): Promise<ExecFileResult> {
+function runSevenZip(args: string[], options?: { maxBuffer?: number }): Promise<ExecFileResult> {
   const binary = resolveSevenZipBinary();
   if (!binary) {
     return Promise.reject(
@@ -193,10 +255,10 @@ function runSevenZip(args: string[]): Promise<ExecFileResult> {
       )
     );
   }
-  return runTool(binary, args, "7-Zip");
+  return runTool(binary, args, "7-Zip", options);
 }
 
-function runUnrar(args: string[]): Promise<ExecFileResult> {
+function runUnrar(args: string[], options?: { maxBuffer?: number }): Promise<ExecFileResult> {
   const binary = resolveUnrarBinary();
   if (!binary) {
     return Promise.reject(
@@ -205,7 +267,7 @@ function runUnrar(args: string[]): Promise<ExecFileResult> {
       )
     );
   }
-  return runTool(binary, args, "unrar");
+  return runTool(binary, args, "unrar", options);
 }
 
 // Splits one listing block into its "key<separator>value" fields.
@@ -399,9 +461,19 @@ export class ArchiveService {
     password?: string
   ): Promise<void> {
     if (tool === "unrar") {
-      await runUnrar(["t", "-y", password ? `-p${password}` : "-p-", "--", filePath]);
+      // -idq / -bso0 -bsp0: errors only, so a test of thousands of files can't overflow the
+      // output buffer with per-file "OK" lines.
+      await runUnrar(["t", "-idq", "-y", password ? `-p${password}` : "-p-", "--", filePath]);
     } else {
-      await runSevenZip(["t", "-y", ...(password ? [`-p${password}`] : []), "--", filePath]);
+      await runSevenZip([
+        "t",
+        "-bso0",
+        "-bsp0",
+        "-y",
+        ...(password ? [`-p${password}`] : []),
+        "--",
+        filePath,
+      ]);
     }
   }
 
@@ -838,10 +910,14 @@ export class ArchiveService {
     const passwordArg = password ? `-p${password}` : "-p-";
     if (resolveTool(filePath) === "unrar") {
       // -v lists every volume of a multi-volume set, not just the first.
-      const { stdout } = await runUnrar(["lt", "-v", passwordArg, "--", filePath]);
+      const { stdout } = await runUnrar(["lt", "-v", passwordArg, "--", filePath], {
+        maxBuffer: LISTING_MAX_BUFFER,
+      });
       return parseUnrarTechnicalListing(stdout);
     }
-    const { stdout } = await runSevenZip(["l", "-slt", passwordArg, "--", filePath]);
+    const { stdout } = await runSevenZip(["l", "-slt", passwordArg, "--", filePath], {
+      maxBuffer: LISTING_MAX_BUFFER,
+    });
     return parseSevenZipSltListing(stdout);
   }
 
@@ -926,7 +1002,11 @@ export class ArchiveService {
     if (/\.part\d+\.rar$/i.test(archiveBasename)) {
       volumeSuffix = "part\\d+\\.rar";
     } else if (/\.(rar|r\d{2,3})$/i.test(archiveBasename)) {
-      volumeSuffix = "r\\d{2,3}";
+      // Classic naming runs .r00–.r99 and then continues .s00–.s99, .t00… for big sets
+      // (a ~100 GB release in 500 MB volumes). Those later letters are only volumes when
+      // they share this .rar's stem, so they're matched here and never by isArchive (where
+      // .v64/.z64 are N64 ROMs, not archives).
+      volumeSuffix = "r\\d{2,3}|[s-z]\\d{2}";
     } else if (/\.7z(\.\d{3})?$/i.test(archiveBasename)) {
       volumeSuffix = "7z\\.\\d{3}";
     } else if (/\.zip(\.\d{3})?$/i.test(archiveBasename)) {

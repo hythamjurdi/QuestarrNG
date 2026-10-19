@@ -628,6 +628,152 @@ describe.skipIf(!toolsAvailable)("RomM + RAR pipeline (real rar/unrar)", () => {
   });
 });
 
+/** Classic volume name for index i of a set: .rar, .r00–.r99, then .s00–.s99, .t00… */
+function classicVolumeName(baseName: string, i: number): string {
+  if (i === 0) return `${baseName}.rar`;
+  const n = i - 1;
+  const letter = String.fromCharCode("r".charCodeAt(0) + Math.floor(n / 100));
+  return `${baseName}.${letter}${String(n % 100).padStart(2, "0")}`;
+}
+
+async function makeClassicRar(
+  workDir: string,
+  outDir: string,
+  baseName: string,
+  files: Record<string, Buffer>,
+  volumeSize: string
+): Promise<string[]> {
+  const contentDir = path.join(workDir, `classic-${baseName}`);
+  await fs.ensureDir(contentDir);
+  for (const [name, data] of Object.entries(files)) {
+    await fs.ensureDir(path.dirname(path.join(contentDir, name)));
+    await fs.writeFile(path.join(contentDir, name), data);
+  }
+  await fs.ensureDir(outDir);
+  execFileSync(
+    "rar",
+    [
+      "a",
+      "-idq",
+      "-ep1",
+      "-r",
+      "-m0",
+      `-v${volumeSize}`,
+      path.join(outDir, `${baseName}.rar`),
+      `${contentDir}${path.sep}*`,
+    ],
+    { stdio: "ignore" }
+  );
+  const parts = (await fs.readdir(outDir))
+    .filter((n) => n.startsWith(`${baseName}.part`))
+    .sort((a, b) => Number(/part(\d+)/.exec(a)![1]) - Number(/part(\d+)/.exec(b)![1]));
+  for (const [i, name] of parts.entries()) {
+    await fs.rename(path.join(outDir, name), path.join(outDir, classicVolumeName(baseName, i)));
+  }
+  return (await fs.readdir(outDir)).filter((n) => n.startsWith(baseName));
+}
+
+describe.skipIf(!toolsAvailable)("large classic RAR releases (real unrar)", () => {
+  it("handles a set that runs past .r99 into .s00+ without copying volumes into RomM", async () => {
+    const work = tempDir("big-work");
+    const downloads = tempDir("big-dl");
+    const rommRoot = tempDir("big-romm");
+    const release = path.join(downloads, "Huge.Game.PS5-GRP");
+    const data = payload("huge", 1_150 * 1024);
+    const volumes = await makeClassicRar(work, release, "huge", { "game.pkg": data }, "10k");
+    expect(volumes.some((v) => /\.s\d{2}$/.test(v))).toBe(true);
+
+    const storage = {
+      getGameDownload: vi.fn().mockResolvedValue({
+        id: "dl-1",
+        gameId: "g1",
+        downloaderId: "d1",
+        downloadTitle: "Huge.Game.PS5-GRP",
+      }),
+      getGame: vi
+        .fn()
+        .mockResolvedValue(makeGame({ id: "g1", userId: "u1", title: "Huge Game", platforms: [] })),
+      getImportConfig: vi
+        .fn()
+        .mockResolvedValue(makeImportConfig({ libraryRoot: tempDir("big-pc") })),
+      getRomMConfig: vi
+        .fn()
+        .mockResolvedValue(makeRomMConfig({ enabled: true, libraryRoot: rommRoot })),
+      getPlatformMapping: vi.fn(async (id: number) =>
+        id === 167 ? { rommPlatformSlug: "ps5" } : undefined
+      ),
+      getSystemConfig: vi.fn().mockResolvedValue(""),
+      getDownloader: vi.fn().mockResolvedValue(undefined),
+      updateGameDownloadStatus: vi.fn().mockResolvedValue(undefined),
+      updateGameStatus: vi.fn().mockResolvedValue(undefined),
+      updateGame: vi.fn().mockResolvedValue(undefined),
+      addNotification: vi.fn().mockResolvedValue(undefined),
+    };
+    const manager = new ImportManager(
+      storage as never, // NOSONAR
+      {
+        translatePath: vi.fn(async (p: string) => p),
+        getConfiguredRoots: vi.fn().mockResolvedValue([]),
+      } as never, // NOSONAR
+      {} as never, // NOSONAR
+      new ArchiveService()
+    );
+
+    await manager.processImport("dl-1", release);
+
+    expect(storage.updateGameDownloadStatus).not.toHaveBeenCalledWith(
+      "dl-1",
+      "manual_review_required",
+      expect.anything()
+    );
+    expect(await listTree(path.join(rommRoot, "ps5", "Huge Game"))).toEqual(["game.pkg"]);
+    expect(await fs.readFile(path.join(rommRoot, "ps5", "Huge Game", "game.pkg"))).toEqual(data);
+  }, 120_000);
+
+  it("lists an archive whose technical listing is larger than 10 MB", async () => {
+    const work = tempDir("many-work");
+    const src = tempDir("many-src");
+    const files: Record<string, Buffer> = {};
+    // ~40k entries: a console game's file count, enough to push `unrar lt -v` past 10 MB.
+    for (let i = 0; i < 40_000; i++) {
+      files[`app0/data/some_long_directory_name_${i % 50}/asset_file_with_long_name_${i}.bin`] =
+        Buffer.from([i % 256]);
+    }
+    const contentDir = path.join(work, "many");
+    for (const [name, data] of Object.entries(files)) {
+      await fs.outputFile(path.join(contentDir, name), data);
+    }
+    await fs.ensureDir(src);
+    execFileSync(
+      "rar",
+      ["a", "-idq", "-ep1", "-r", "-m0", path.join(src, "many.rar"), `${contentDir}${path.sep}*`],
+      { stdio: "ignore" }
+    );
+    const listingSize = execFileSync("unrar", ["lt", "-v", "-p-", path.join(src, "many.rar")], {
+      maxBuffer: 1024 ** 3,
+    }).length;
+    expect(listingSize).toBeGreaterThan(10 * 1024 * 1024);
+
+    const entries = await new ArchiveService().listEntries(path.join(src, "many.rar"));
+    expect(entries.filter((e) => !e.isDirectory)).toHaveLength(40_000);
+  }, 300_000);
+
+  it("explains a missing volume instead of echoing the file listing", async () => {
+    const work = tempDir("miss-work");
+    const src = tempDir("miss-src");
+    const dest = tempDir("miss-dest");
+    await makeClassicRar(work, src, "miss", { "game.pkg": payload("m", 400 * 1024) }, "100k");
+    await fs.remove(path.join(src, "miss.r01"));
+
+    const error = await new ArchiveService()
+      .extract(path.join(src, "miss.rar"), dest)
+      .catch((e: unknown) => e as Error);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toMatch(/Cannot find volume|volume/i);
+    expect(error.message).not.toMatch(/Host OS|Compression:/);
+  }, 120_000);
+});
+
 describe.skipIf(!toolsAvailable)("ArchiveService extraction temp directory (real unrar)", () => {
   it("extracts through a scratch dir on request and always removes it", async () => {
     const work = tempDir("as-work");

@@ -267,7 +267,7 @@ describe("ArchiveService", () => {
       expect(calls[0][0]).toBe(fakeSevenZipPath);
       expect(calls[0][1]).toEqual(["l", "-slt", "-p-", "--", "/downloads/game.zip"]);
       expect(calls[1][0]).toBe(fakeSevenZipPath);
-      expect(calls[1][1]).toEqual(["t", "-y", "--", "/downloads/game.zip"]);
+      expect(calls[1][1]).toEqual(["t", "-bso0", "-bsp0", "-y", "--", "/downloads/game.zip"]);
       expect(calls[2][0]).toBe(fakeSevenZipPath);
       expect(calls[2][1]).toEqual([
         "x",
@@ -409,7 +409,7 @@ describe("ArchiveService", () => {
       expect(calls).toHaveLength(4);
       expect(calls[0][1]).toEqual(["l", "-slt", "-p-", "--", "/downloads/settling.zip"]);
       expect(calls[1][1]).toEqual(["l", "-slt", "-p-", "--", "/downloads/settling.zip"]);
-      expect(calls[2][1]).toEqual(["t", "-y", "--", "/downloads/settling.zip"]);
+      expect(calls[2][1]).toEqual(["t", "-bso0", "-bsp0", "-y", "--", "/downloads/settling.zip"]);
       expect(calls[3][1]).toEqual([
         "x",
         "-bso0",
@@ -505,7 +505,7 @@ describe("ArchiveService", () => {
       expect(calls[0][0]).toBe(fakeUnrarPath);
       expect(calls[0][1]).toEqual(["lt", "-v", "-p-", "--", "/downloads/game.rar"]);
       expect(calls[1][0]).toBe(fakeUnrarPath);
-      expect(calls[1][1]).toEqual(["t", "-y", "-p-", "--", "/downloads/game.rar"]);
+      expect(calls[1][1]).toEqual(["t", "-idq", "-y", "-p-", "--", "/downloads/game.rar"]);
       expect(calls[2][0]).toBe(fakeUnrarPath);
       expect(calls[2][1]).toEqual([
         "x",
@@ -650,7 +650,7 @@ describe("ArchiveService", () => {
         "unrar",
         "/downloads/game.rar",
         "/tmp/rar-out",
-        ["t", "-y", "-phunter2", "--", "/downloads/game.rar"],
+        ["t", "-idq", "-y", "-phunter2", "--", "/downloads/game.rar"],
         [
           "x",
           "-idq",
@@ -665,7 +665,7 @@ describe("ArchiveService", () => {
         "7-Zip",
         "/downloads/game.zip",
         "/tmp/out",
-        ["t", "-y", "-phunter2", "--", "/downloads/game.zip"],
+        ["t", "-bso0", "-bsp0", "-y", "-phunter2", "--", "/downloads/game.zip"],
         [
           "x",
           "-bso0",
