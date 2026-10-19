@@ -53,6 +53,7 @@ const DEFAULT_RULES: DownloadRules = {
   minSeeders: 0,
   sortBy: "seeders",
   visibleCategories: ["main", "update", "dlc", "extra", "packs"],
+  multipleMatches: "notify",
 };
 
 export default function AutoDownloadRulesSettings({
@@ -66,6 +67,9 @@ export default function AutoDownloadRulesSettings({
   const [minSeeders, setMinSeeders] = useState<number>(rules?.minSeeders ?? 0);
   const [sortBy, setSortBy] = useState<"seeders" | "date" | "size" | "priority">(
     rules?.sortBy ?? "seeders"
+  );
+  const [multipleMatches, setMultipleMatches] = useState<"notify" | "best">(
+    rules?.multipleMatches ?? "notify"
   );
   const [visibleCategories, setVisibleCategories] = useState<Set<DownloadCategory>>(
     new Set(
@@ -107,6 +111,7 @@ export default function AutoDownloadRulesSettings({
     const source = rules ?? DEFAULT_RULES;
     setMinSeeders(source.minSeeders);
     setSortBy(source.sortBy);
+    setMultipleMatches(source.multipleMatches ?? "notify");
 
     // Only update set if the content has changed to avoid infinite loop
     setVisibleCategories((prev) => {
@@ -124,8 +129,9 @@ export default function AutoDownloadRulesSettings({
       minSeeders,
       sortBy,
       visibleCategories: Array.from(visibleCategories),
+      multipleMatches,
     });
-  }, [minSeeders, sortBy, visibleCategories, onChange]);
+  }, [minSeeders, sortBy, visibleCategories, multipleMatches, onChange]);
 
   const handleCategoryChange = (category: DownloadCategory) => {
     setVisibleCategories((prev) => {
@@ -227,6 +233,36 @@ export default function AutoDownloadRulesSettings({
             </p>
           </div>
 
+          {/* Several matching releases */}
+          <div className="space-y-2">
+            <Label htmlFor="multipleMatches" className="text-sm font-medium">
+              <InterfaceText source={"When several releases match"} />
+            </Label>
+            <Select
+              value={multipleMatches}
+              onValueChange={(v) => setMultipleMatches(v as "notify" | "best")}
+            >
+              <SelectTrigger id="multipleMatches">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="notify">
+                  <InterfaceText source={"Ask me to choose"} />
+                </SelectItem>
+                <SelectItem value="best">
+                  <InterfaceText source={"Download the best match"} />
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              <InterfaceText
+                source={
+                  "With auto-download on, “best” takes the top release by the sort order above, after your filters and release rules."
+                }
+              />
+            </p>
+          </div>
+
           {/* Categories */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">
@@ -282,6 +318,7 @@ export default function AutoDownloadRulesSettings({
                 minSeeders,
                 sortBy,
                 visibleCategories: Array.from(visibleCategories),
+                multipleMatches,
               };
               saveRulesMutation.mutate(rulesToSave);
             }}

@@ -796,6 +796,48 @@ describe("Cron - checkAutoSearch", () => {
       );
     });
 
+    it("downloads the best of several matches when the rules say so", async () => {
+      mockGetUserSettings.mockResolvedValue({
+        ...baseSettings,
+        autoDownloadEnabled: true,
+        downloadRules: JSON.stringify({ sortBy: "seeders", multipleMatches: "best" }),
+      });
+      mockGetEnabledDownloaders.mockResolvedValue([
+        { id: "dl-1", name: "qBittorrent", type: "torrent", enabled: true },
+      ]);
+      mockAddDownloadWithFallback.mockResolvedValue({
+        success: true,
+        id: "hash-best",
+        downloaderId: "dl-1",
+      });
+      mockSearchAllIndexers.mockResolvedValue({
+        items: [
+          { ...SKIDROW_ITEM, downloadType: "torrent" },
+          { ...CODEX_ITEM, downloadType: "torrent" },
+        ],
+        errors: [],
+        total: 2,
+      });
+
+      await checkAutoSearch();
+
+      // CODEX has more seeders, so it is the best match by the "seeders" sort.
+      expect(mockAddDownloadWithFallback).toHaveBeenCalledTimes(1);
+      expect(mockAddDownloadWithFallback).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ url: CODEX_ITEM.link })
+      );
+    });
+
+    it("still asks to choose among several matches by default", async () => {
+      mockGetUserSettings.mockResolvedValue({ ...baseSettings, autoDownloadEnabled: true });
+      mockSearchAllIndexers.mockResolvedValue({ ...TWO_MAIN_ITEMS });
+
+      await checkAutoSearch();
+
+      expect(mockAddDownloadWithFallback).not.toHaveBeenCalled();
+    });
+
     it("sends an auto-download notification through Apprise when in-app delivery is disabled", async () => {
       mockGetUserSettings.mockResolvedValue({
         ...baseSettings,

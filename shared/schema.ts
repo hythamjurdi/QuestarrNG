@@ -933,6 +933,9 @@ export const downloadRulesSchema = z.object({
   visibleCategories: z
     .array(z.enum(["main", "update", "dlc", "extra", "packs"]))
     .default(["main", "update", "dlc", "extra", "packs"]),
+  // With auto-download on and several releases matching: "notify" asks you to choose,
+  // "best" downloads the top one by the sort order above.
+  multipleMatches: z.enum(["notify", "best"]).default("notify"),
 });
 
 export type DownloadRules = z.infer<typeof downloadRulesSchema>;

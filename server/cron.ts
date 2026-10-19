@@ -155,6 +155,7 @@ export interface AutoSearchRules {
   minSeeders: number;
   sortBy: DownloadSortBy;
   visibleCategoriesSet: Set<string>;
+  multipleMatches: "notify" | "best";
 }
 
 export interface AutoSearchCategorizedItems {
@@ -231,6 +232,7 @@ function getAutoSearchRules(downloadRules: string | null): AutoSearchRules {
   let minSeeders = 0;
   let sortBy: DownloadSortBy = "seeders";
   let visibleCategoriesSet = new Set(["main", "update", "dlc", "extra", "packs"]);
+  let multipleMatches: "notify" | "best" = "notify";
 
   if (downloadRules) {
     const parsed = JSON.parse(downloadRules);
@@ -238,9 +240,10 @@ function getAutoSearchRules(downloadRules: string | null): AutoSearchRules {
     minSeeders = rules.minSeeders;
     sortBy = rules.sortBy;
     visibleCategoriesSet = new Set(rules.visibleCategories);
+    multipleMatches = rules.multipleMatches;
   }
 
-  return { minSeeders, sortBy, visibleCategoriesSet };
+  return { minSeeders, sortBy, visibleCategoriesSet, multipleMatches };
 }
 
 function releaseHealth(item: SearchItem): number {
@@ -1756,8 +1759,19 @@ export async function checkAutoSearch(
             // Always mark as available when filtered results exist
             await storage.updateGameSearchResultsAvailable(game.id, true);
 
-            if (mainItems.length === 1) {
-              // Single result found
+            // Several matching releases normally wait for the user to choose; with "download
+            // the best match" the top one (already ordered by the user's sort rules) is taken.
+            let pickBest = false;
+            if (settings.autoDownloadEnabled && mainItems.length > 1) {
+              try {
+                pickBest = getAutoSearchRules(settings.downloadRules).multipleMatches === "best";
+              } catch {
+                pickBest = false;
+              }
+            }
+
+            if (mainItems.length === 1 || pickBest) {
+              // Single result found (or the best of several, when configured)
               if (settings.autoDownloadEnabled) {
                 // Auto-download if enabled
                 const item = mainItems[0];
